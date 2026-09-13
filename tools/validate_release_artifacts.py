@@ -29,6 +29,11 @@ def artifact(path: Path, role: str) -> dict[str, object]:
     return {"role": role, "path": str(path), "bytes": path.stat().st_size, "sha256": digest(path)}
 
 
+def failure(message: str) -> int:
+    print(json.dumps({"outcome": "failed", "error": message, "certified": False}, indent=2), file=sys.stderr)
+    return 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True)
@@ -40,9 +45,9 @@ def main() -> int:
     args = parser.parse_args()
 
     if not VERSION.fullmatch(args.version):
-        parser.error("--version must be semantic version text")
+        return failure("--version must be semantic version text")
     if args.signature is not None and (not args.signature.is_file() or args.signature.stat().st_size == 0):
-        parser.error("--signature must name a non-empty detached signature")
+        return failure("--signature must name a non-empty detached signature")
 
     try:
         records = []
@@ -54,8 +59,7 @@ def main() -> int:
                 content = sibling if sibling.is_file() else executable.with_suffix(".pck")
             records.append(artifact(content.resolve(), "content"))
     except ValueError as error:
-        print(json.dumps({"outcome": "failed", "error": str(error), "certified": False}, indent=2), file=sys.stderr)
-        return 1
+        return failure(str(error))
 
     manifest = {
         "product": "MODUS",
