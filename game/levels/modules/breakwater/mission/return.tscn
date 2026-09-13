@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -17,6 +17,8 @@
 [ext_resource type="Script" path="res://shared/editor_core/actors/platform_actor.gd" id="platform_actor"]
 
 [ext_resource type="Script" path="res://shared/editor_core/actors/trigger_zone_actor.gd" id="trigger_zone_actor"]
+
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/coastal_return_presentation.tscn" id="coastal_presentation"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(8, 0.3, 12)
@@ -270,6 +272,7 @@ shape = SubResource("shape_10")
 position = Vector3(-2.2, 4.7, 3)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/LandingRail-2p2"]
+visible = false
 mesh = SubResource("box_11")
 material_override = ExtResource("mat_brass")
 
@@ -280,6 +283,7 @@ shape = SubResource("shape_11")
 position = Vector3(2.2, 4.7, 3)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/LandingRail2p2"]
+visible = false
 mesh = SubResource("box_11")
 material_override = ExtResource("mat_brass")
 
@@ -310,15 +314,15 @@ output_channel = "return_arrived"
 metadata/mission_objective = {"description": "Ride the powered lift to the return gallery", "requires": ["relay/transmit_switch"], "order": 70}
 
 [node name="LiftInstructions" type="Label3D" parent="Signage"]
-position = Vector3(0, 6.5, -5.7)
+position = Vector3(0, 6.5, -5.43)
 rotation = Vector3(0, 0, 0)
-text = "LIFT / WAIT ON BRASS DECK\nUPPER LANDING: SOUTH"
-font_size = 24
+text = "06 / RETURN LIFT\nWAIT BESIDE SHAFT / BOARD LOWERED DECK\nEXIT BEHIND AT UPPER FLOOR"
+font_size = 21
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="LiftPowered" type="OmniLight3D" parent="Lighting" groups=["breakwater_relay_lights"]]
 position = Vector3(0, 7, 0)
@@ -326,3 +330,6 @@ light_color = Color(0.55, 0.86, 0.9, 1)
 light_energy = 0.1
 omni_range = 13.0
 shadow_enabled = false
+
+[node name="CoastalPresentation" parent="Geometry" instance=ExtResource("coastal_presentation")]
+metadata/lift_clearance = "Guide columns remain outside x=+-2.3. No scenery crosses the 4x4 deck sweep at z=-4..0, y=0..4 or the upper south disembarkation."

@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3]
+[gd_scene load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -17,6 +17,8 @@
 [ext_resource type="Script" path="res://shared/editor_core/actors/secret_wall_actor.gd" id="secret_wall_actor"]
 
 [ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/coastal_cavern_presentation.tscn" id="coastal_presentation"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(20, 0.3, 40)
@@ -134,7 +136,7 @@ position = Vector3(0, 3.5, -19.825)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN0"]
 mesh = SubResource("box_1")
-material_override = ExtResource("mat_salt_concrete")
+material_override = ExtResource("mat_coast_rock")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallN0"]
 shape = SubResource("shape_1")
@@ -144,7 +146,7 @@ position = Vector3(0, 3.5, 19.825)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallS0"]
 mesh = SubResource("box_1")
-material_override = ExtResource("mat_salt_concrete")
+material_override = ExtResource("mat_coast_rock")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallS0"]
 shape = SubResource("shape_1")
@@ -154,7 +156,7 @@ position = Vector3(-9.825, 3.5, -19)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW0"]
 mesh = SubResource("box_2")
-material_override = ExtResource("mat_salt_concrete")
+material_override = ExtResource("mat_coast_rock")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallW0"]
 shape = SubResource("shape_2")
@@ -174,7 +176,7 @@ position = Vector3(-9.825, 3.5, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW1"]
 mesh = SubResource("box_4")
-material_override = ExtResource("mat_salt_concrete")
+material_override = ExtResource("mat_coast_rock")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallW1"]
 shape = SubResource("shape_4")
@@ -194,7 +196,7 @@ position = Vector3(-9.825, 3.5, 19)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW2"]
 mesh = SubResource("box_2")
-material_override = ExtResource("mat_salt_concrete")
+material_override = ExtResource("mat_coast_rock")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallW2"]
 shape = SubResource("shape_2")
@@ -204,7 +206,7 @@ position = Vector3(9.825, 3.5, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallE0"]
 mesh = SubResource("box_5")
-material_override = ExtResource("mat_salt_concrete")
+material_override = ExtResource("mat_coast_rock")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/WallE0"]
 shape = SubResource("shape_5")
@@ -238,41 +240,42 @@ mesh = SubResource("box_6")
 material_override = ExtResource("mat_teal_enamel")
 
 [node name="Emergency-17p0" type="OmniLight3D" parent="Lighting"]
-position = Vector3(0, 6, -17)
+position = Vector3(-8.35, 2.85, -12)
 light_color = Color(1, 0.67, 0.34, 1)
 light_energy = 1.2
 omni_range = 13.0
 shadow_enabled = false
 
 [node name="Emergency0" type="OmniLight3D" parent="Lighting"]
-position = Vector3(0, 6, 0)
+position = Vector3(-8.35, 2.85, 0)
 light_color = Color(1, 0.67, 0.34, 1)
 light_energy = 1.2
 omni_range = 13.0
 shadow_enabled = false
 
 [node name="Emergency17p0" type="OmniLight3D" parent="Lighting"]
-position = Vector3(0, 6, 17)
+position = Vector3(-8.35, 2.85, 12)
 light_color = Color(1, 0.67, 0.34, 1)
 light_energy = 1.2
 omni_range = 13.0
 shadow_enabled = false
 
 [node name="CaveSign" type="Label3D" parent="Signage"]
-position = Vector3(-5, 3, 15)
-rotation = Vector3(0, 0, 0)
-text = "OPTIONAL / SERVICE CAVERN\nDRY LEDGE TO TURBINE <"
-font_size = 26
-pixel_size = 0.01
+position = Vector3(-6.8, 2.8, 16)
+rotation = Vector3(0, -1.570796, 0)
+text = "SERVICE CAVERN / DRY LEDGE\n< TURN LEFT FOR TURBINE"
+font_size = 24
+pixel_size = 0.008
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="FloodBasin" type="Node3D" parent="Geometry"]
 position = Vector3(4, 0.03, 9)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/FloodBasin"]
+visible = false
 mesh = SubResource("box_7")
 material_override = ExtResource("mat_coast_water")
 
@@ -281,6 +284,7 @@ position = Vector3(5, 1.2, 17)
 rotation = Vector3(0, 0, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress0"]
+visible = false
 mesh = SubResource("box_8")
 material_override = ExtResource("mat_coast_rock")
 
@@ -292,6 +296,7 @@ position = Vector3(8, 1.2, 3)
 rotation = Vector3(0, 0.3, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress1"]
+visible = false
 mesh = SubResource("box_8")
 material_override = ExtResource("mat_coast_rock")
 
@@ -303,6 +308,7 @@ position = Vector3(2, 1.2, -1)
 rotation = Vector3(0, 0.6, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress2"]
+visible = false
 mesh = SubResource("box_8")
 material_override = ExtResource("mat_coast_rock")
 
@@ -314,6 +320,7 @@ position = Vector3(-3, 1.2, 0)
 rotation = Vector3(0, 0.9, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress3"]
+visible = false
 mesh = SubResource("box_8")
 material_override = ExtResource("mat_coast_rock")
 
@@ -412,7 +419,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="cavern_secretGlow" type="OmniLight3D" parent="Lighting"]
 position = Vector3(6, 2, -7)
@@ -448,18 +455,18 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="CaveExit" type="Label3D" parent="Signage"]
-position = Vector3(-6, 3, -15)
-rotation = Vector3(0, 0, 0)
-text = "04 / TURBINE ATRIUM <"
+position = Vector3(-9.48, 3.85, -16)
+rotation = Vector3(0, 1.570796, 0)
+text = "04 / TURBINE\nWEST EXIT BELOW"
 font_size = 28
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="ledge_health" type="Node3D" parent="Actors"]
 position = Vector3(-6, 0, 7)
@@ -469,3 +476,6 @@ pickup_category = 0
 item_id = "health_potion"
 respawn_time = 0.0
 auto_spawn = true
+
+[node name="CoastalPresentation" parent="Geometry" instance=ExtResource("coastal_presentation")]
+metadata/rock_shell = "Folded visual cliff shell overlaps the outside of the retained perimeter bodies to seal light leaks. It is nonblocking background geology, not additional navigable land. Existing dry ledge, secret approach and collisions are unchanged."

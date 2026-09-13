@@ -9,11 +9,24 @@ class Collector:
 	var max_health: int = 100
 	var blood_overlay: Control
 	var inventory: Inventory = Inventory.new()
-	var ammo_refills: int = 0
+	var weapon_manager: WeaponManager
 	var ammo_by_weapon: Dictionary = {}
 
-	func refill_ammo() -> void:
-		ammo_refills += 1
+	func _ready() -> void:
+		weapon_manager = WeaponManager.new()
+		weapon_manager.player = self
+		weapon_manager.inventory = WeaponInventory.new()
+		weapon_manager.ammo_system = WeaponAmmoSystem.new()
+		var weapon := WeaponData.new()
+		weapon.magazine_size = 12
+		weapon.max_reserve_ammo = 1000
+		weapon_manager.inventory.weapons = [weapon]
+		weapon_manager.add_child(weapon_manager.inventory)
+		weapon_manager.add_child(weapon_manager.ammo_system)
+		weapon_manager.ammo_system.setup(weapon_manager.inventory)
+		weapon_manager.ammo_system.initialize_ammo(weapon_manager.inventory.weapons)
+		weapon_manager.ammo_system.sync_ammo(0, 0, 0)
+		add_child(weapon_manager)
 
 	func add_ammo_for_weapon(kind: int, amount: int) -> void:
 		ammo_by_weapon[kind] = ammo_by_weapon.get(kind, 0) + amount
@@ -71,11 +84,12 @@ func _collect_supplies(expected_count: int) -> void:
 	for pickup: PickupBase in pickups:
 		_player.global_position = pickup.global_position
 		var previous_health := _player.health
-		var previous_refills := _player.ammo_refills
+		var previous_reserve: int = _player.weapon_manager.get_current_ammo()[1]
 		assert_true(pickup.collect_for_player(_player, 1))
 		assert_true(
-			_player.health > previous_health or _player.ammo_refills > previous_refills,
-			"Collecting prop loot must heal or refill ammo, not just remove a mesh"
+			_player.health > previous_health
+			or _player.weapon_manager.get_current_ammo()[1] > previous_reserve,
+			"Collecting prop loot must increase health or ammunition, not just remove a mesh"
 		)
 		assert_false(pickup.collect_for_player(_player, 1))
 

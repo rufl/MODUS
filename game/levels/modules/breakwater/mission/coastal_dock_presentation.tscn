@@ -1,0 +1,36 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_dock_salt_concrete.obj" id="mesh_salt_concrete"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/salt_concrete.tres" id="mat_salt_concrete"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_dock_glass.obj" id="mesh_glass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/glass.tres" id="mat_glass"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_dock_dark_metal.obj" id="mesh_dark_metal"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_dock_amber_light.obj" id="mesh_amber_light"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="mat_amber_light"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_dock_brass.obj" id="mesh_brass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+
+[node name="CoastalDock" type="Node3D"]
+metadata/presentation_only = "Baked visual dressing; existing module bodies retain all traversal collision. No actors or sockets are replaced."
+
+[node name="SaltConcrete" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_salt_concrete")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Glass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_glass")
+material_override = ExtResource("mat_glass")
+
+[node name="DarkMetal" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_dark_metal")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="AmberLight" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_amber_light")
+material_override = ExtResource("mat_amber_light")
+
+[node name="Brass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_brass")
+material_override = ExtResource("mat_brass")
+

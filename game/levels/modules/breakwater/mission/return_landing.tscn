@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -9,6 +9,8 @@
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/salt_concrete.tres" id="mat_salt_concrete"]
 
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/coastal_return_landing_presentation.tscn" id="coastal_presentation"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(24, 0.3, 8)
@@ -176,36 +178,36 @@ mesh = SubResource("box_4")
 material_override = ExtResource("mat_teal_enamel")
 
 [node name="Emergency-1p0" type="OmniLight3D" parent="Lighting"]
-position = Vector3(0, 5, -1)
+position = Vector3(-8, 4.6, 0)
 light_color = Color(1, 0.67, 0.34, 1)
 light_energy = 1.2
 omni_range = 13.0
 shadow_enabled = false
 
 [node name="Emergency0" type="OmniLight3D" parent="Lighting"]
-position = Vector3(0, 5, 0)
+position = Vector3(0, 4.6, 0)
 light_color = Color(1, 0.67, 0.34, 1)
 light_energy = 1.2
 omni_range = 13.0
 shadow_enabled = false
 
 [node name="Emergency1p0" type="OmniLight3D" parent="Lighting"]
-position = Vector3(0, 5, 1)
+position = Vector3(8, 4.6, 0)
 light_color = Color(1, 0.67, 0.34, 1)
 light_energy = 1.2
 omni_range = 13.0
 shadow_enabled = false
 
 [node name="LiftApproach" type="Label3D" parent="Signage"]
-position = Vector3(4, 3, 0)
-rotation = Vector3(0, 0, 0)
-text = "06 / RETURN LIFT\nBOARD AT FLOOR / DISEMBARK +4m"
-font_size = 27
-pixel_size = 0.01
+position = Vector3(10.7, 4.1, 0)
+rotation = Vector3(0, -1.570796, 0)
+text = "06 / RETURN LIFT AHEAD\nBOARD AT FLOOR / EXIT AT UPPER LANDING"
+font_size = 24
+pixel_size = 0.008
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="LiftPower" type="OmniLight3D" parent="Lighting" groups=["breakwater_relay_lights"]]
 position = Vector3(4, 4, 0)
@@ -213,3 +215,5 @@ light_color = Color(0.55, 0.86, 0.9, 1)
 light_energy = 0.1
 omni_range = 13.0
 shadow_enabled = false
+
+[node name="CoastalPresentation" parent="Geometry" instance=ExtResource("coastal_presentation")]

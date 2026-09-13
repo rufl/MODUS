@@ -17,13 +17,13 @@
 [ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/pump_hall_teal_enamel.obj" id="mesh_teal_enamel"]
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
 [ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/pump_hall_cool_light.obj" id="mesh_cool_light"]
-[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/cool_light.tres" id="mat_cool_light"]
 
 [ext_resource type="Script" path="res://shared/editor_core/actors/trigger_zone_actor.gd" id="trigger_zone_actor"]
 [ext_resource type="Script" path="res://shared/editor_core/actors/enemy_spawner_actor.gd" id="enemy_spawner_actor"]
 [ext_resource type="Script" path="res://shared/editor_core/actors/door_actor.gd" id="door_actor"]
 [ext_resource type="Script" path="res://shared/editor_core/actors/station_power_actor.gd" id="station_power_actor"]
 [ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_drive_rotor.obj" id="combat_rotor"]
 
 [sub_resource type="ConcavePolygonShape3D" id="Collision_architecture"]
 backface_collision = true
@@ -62,9 +62,9 @@ material_override = ExtResource("mat_brass")
 mesh = ExtResource("mesh_teal_enamel")
 material_override = ExtResource("mat_teal_enamel")
 
-[node name="CoolLight" type="MeshInstance3D" parent="Geometry"]
+[node name="CoolLight" type="MeshInstance3D" parent="Geometry" groups=["breakwater_aux_emissive"]]
 mesh = ExtResource("mesh_cool_light")
-material_override = ExtResource("mat_cool_light")
+material_override = ExtResource("mat_amber_light")
 cast_shadow = 0
 
 [node name="ArchitectureCollision" type="StaticBody3D" parent="."]
@@ -78,74 +78,74 @@ shape = SubResource("Collision_architecture")
 
 [node name="Signage" type="Node3D" parent="."]
 
-[node name="HallLightW8_N8" type="OmniLight3D" parent="Lighting"]
+[node name="HallLightW8_N8" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(-8, 8, -8)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLight0_N8" type="OmniLight3D" parent="Lighting"]
+[node name="HallLight0_N8" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(0, 8, -8)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLight8_N8" type="OmniLight3D" parent="Lighting"]
+[node name="HallLight8_N8" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(8, 8, -8)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLightW8_0" type="OmniLight3D" parent="Lighting"]
+[node name="HallLightW8_0" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(-8, 8, 0)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLight0_0" type="OmniLight3D" parent="Lighting"]
+[node name="HallLight0_0" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(0, 8, 0)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLight8_0" type="OmniLight3D" parent="Lighting"]
+[node name="HallLight8_0" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(8, 8, 0)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLightW8_8" type="OmniLight3D" parent="Lighting"]
+[node name="HallLightW8_8" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(-8, 8, 8)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLight0_8" type="OmniLight3D" parent="Lighting"]
+[node name="HallLight0_8" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(0, 8, 8)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
 
-[node name="HallLight8_8" type="OmniLight3D" parent="Lighting"]
+[node name="HallLight8_8" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
 position = Vector3(8, 8, 8)
-light_color = Color(0.65, 0.85, 0.89, 1)
-light_energy = 1.8
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.28
 omni_range = 12
 omni_attenuation = 1.2
 shadow_enabled = false
@@ -175,6 +175,7 @@ omni_attenuation = 1.2
 shadow_enabled = false
 
 [node name="PumpHallIdentification" type="Label3D" parent="Signage"]
+double_sided = false
 position = Vector3(0, 6.17, -11.46)
 rotation = Vector3(0, 0, 0)
 text = "02  /  PUMP HALL"
@@ -185,6 +186,7 @@ outline_size = 0
 no_depth_test = false
 
 [node name="ControlDirection" type="Label3D" parent="Signage"]
+double_sided = false
 position = Vector3(0, 5.62, -11.45)
 rotation = Vector3(0, 0, 0)
 text = "UPPER SERVICE DECK  +4.0m    /    INTAKE AHEAD"
@@ -195,6 +197,7 @@ outline_size = 0
 no_depth_test = false
 
 [node name="PumpTrainName" type="Label3D" parent="Signage"]
+double_sided = false
 position = Vector3(0, 3.63, 3.25)
 rotation = Vector3(0, 0, 0)
 text = "TIDAL INTAKE  /  TWIN DRIVE"
@@ -205,6 +208,7 @@ outline_size = 0
 no_depth_test = false
 
 [node name="SwitchBayLabel" type="Label3D" parent="Signage"]
+double_sided = false
 position = Vector3(6, 2.88, -9)
 rotation = Vector3(0, 0, 0)
 text = "POWER DISTRIBUTION"
@@ -215,6 +219,7 @@ outline_size = 0
 no_depth_test = false
 
 [node name="DeckRampW11" type="Label3D" parent="Signage"]
+double_sided = false
 position = Vector3(-11, 2.3, 10.83)
 rotation = Vector3(0, 3.141593, 0)
 text = "SERVICE DECK  /  RAMP"
@@ -225,6 +230,7 @@ outline_size = 0
 no_depth_test = false
 
 [node name="DeckRamp11" type="Label3D" parent="Signage"]
+double_sided = false
 position = Vector3(11, 2.3, 10.83)
 rotation = Vector3(0, 3.141593, 0)
 text = "SERVICE DECK  /  RAMP"
@@ -255,6 +261,7 @@ output_channel = "aux_power"
 metadata/mission_objective = {"description": "Energize the auxiliary bus in the pump hall", "requires": ["pump/maintenance_key", "pump/encounter_clear"], "order": 20}
 
 [node name="SwitchLabel" type="Label3D" parent="PowerSwitchAnchor"]
+double_sided = false
 position = Vector3(0, 0.65, 0.05)
 text = "AUXILIARY BUS\nMAINTENANCE KEY REQUIRED"
 font_size = 28
@@ -267,6 +274,7 @@ actor_id = "maintenance_key"
 metadata/mission_objective = {"description": "Collect the maintenance key card", "requires": [], "order": 10}
 
 [node name="KeyLabel" type="Label3D" parent="KeyAnchor"]
+double_sided = false
 position = Vector3(0, 0.5, 0.08)
 text = "MAINTENANCE\nKEY CARD"
 font_size = 26
@@ -278,10 +286,10 @@ modulate = Color(1, 0.67, 0.2, 1)
 
 
 [node name="encounter_entry" type="Node3D" parent="Actors"]
-position = Vector3(0, 1, 8)
+position = Vector3(0, 1, 5)
 script = ExtResource("trigger_zone_actor")
 actor_id = "encounter_entry"
-zone_size = Vector3(24, 2, 4)
+zone_size = Vector3(24, 2, 2)
 show_in_editor = false
 one_shot = true
 output_channel = "pump_encounter"
@@ -294,7 +302,7 @@ enemy_id = "grunt_basic"
 tier = 1
 behavior = 3
 spawn_count = 3
-spawn_interval = 1.6
+spawn_interval = 2.4
 auto_spawn = false
 one_shot = true
 input_channels = PackedStringArray("pump_encounter")
@@ -316,11 +324,13 @@ position = Vector3(0, 0, 0)
 script = ExtResource("station_power_actor")
 actor_id = "aux_lights"
 target_group = "breakwater_aux_lights"
+off_energy = 0.28
+on_energy = 1.2
 input_channels = PackedStringArray("aux_power")
 one_shot = true
 
 [node name="pump_health" type="Node3D" parent="Actors"]
-position = Vector3(7, 0, 7)
+position = Vector3(6, 0, 9)
 script = ExtResource("pickup_spawner_actor")
 actor_id = "pump_health"
 pickup_category = 0
@@ -329,7 +339,7 @@ respawn_time = 0.0
 auto_spawn = true
 
 [node name="pump_ammo" type="Node3D" parent="Actors"]
-position = Vector3(-7, 0, 7)
+position = Vector3(-6, 0, 9)
 script = ExtResource("pickup_spawner_actor")
 actor_id = "pump_ammo"
 pickup_category = 2
@@ -355,4 +365,30 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
+
+[node name="PumpDriveWest" type="Node3D" parent="Geometry" groups=["breakwater_aux_machinery"]]
+position = Vector3(-1.88, 1.85, 2.91)
+scale = Vector3(0.64, 0.64, 0.64)
+
+[node name="Rotor" type="MeshInstance3D" parent="Geometry/PumpDriveWest"]
+mesh = ExtResource("combat_rotor")
+material_override = ExtResource("mat_brass")
+
+[node name="PumpDriveEast" type="Node3D" parent="Geometry" groups=["breakwater_aux_machinery"]]
+position = Vector3(1.88, 1.85, 2.91)
+scale = Vector3(0.64, 0.64, 0.64)
+
+[node name="Rotor" type="MeshInstance3D" parent="Geometry/PumpDriveEast"]
+mesh = ExtResource("combat_rotor")
+material_override = ExtResource("mat_brass")
+
+[node name="EntrySupplySign" type="Label3D" parent="Signage"]
+position = Vector3(0, 3.0, 9.5)
+text = "AMMO <    PREPARE HERE    > FIRST AID\nSECURITY LINE AHEAD / USE BOTH MACHINE AISLES"
+font_size = 25
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false

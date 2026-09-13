@@ -134,6 +134,7 @@ func test_alive_save_revives_dead_player_and_cancels_pending_respawn() -> void:
 	player.downed_handler = DownedStateHandler.new()
 	player.add_child(player.downed_handler)
 	player.health_component = HealthComponent.new()
+	player.health_component.name = "HealthComponent"
 	player.add_child(player.health_component)
 	player.state_manager = PLAYER_STATE_SCRIPT.new()
 	player.add_child(player.state_manager)
@@ -142,7 +143,11 @@ func test_alive_save_revives_dead_player_and_cancels_pending_respawn() -> void:
 	player.health_component.died.connect(player.state_manager.enter_downed.unbind(1))
 	player.add_to_group("player")
 
-	player.health_component.set_health(0.0, 0.0)
+	var fall := FallDeathChecker.new()
+	fall.respawn_delay = 0.05
+	player.add_child(fall)
+	watch_signals(fall)
+	fall._handle_fall_death()
 	player.state_manager.enter_dead()
 	assert_true(player.health_component.is_dead)
 	assert_eq(player.state_manager.current_state, Enums.PlayerState.DEAD)
@@ -186,6 +191,8 @@ func test_alive_save_revives_dead_player_and_cancels_pending_respawn() -> void:
 	assert_eq(player.health_component.current_health, 25.0, "The old timer cannot refill saved HP")
 	assert_eq(player.health_component.current_armor, 10.0)
 	assert_signal_not_emitted(player.state_manager, "respawned")
+	assert_signal_not_emitted(fall, "respawned", "A void timer cannot overwrite loaded state")
+	assert_false(fall.is_dead, "Loading an alive checkpoint re-enables fall detection")
 	player.health_component.take_damage(DamageInfo.create(5.0))
 	assert_lt(
 		player.health_component.current_health, 25.0, "Restored players can take damage again"

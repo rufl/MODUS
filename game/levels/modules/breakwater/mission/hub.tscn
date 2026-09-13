@@ -1,4 +1,4 @@
-[gd_scene load_steps=54 format=3]
+[gd_scene load_steps=55 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -25,6 +25,8 @@
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="mat_coast_rock"]
 
 [ext_resource type="Script" path="res://shared/editor_core/actors/secret_wall_actor.gd" id="secret_wall_actor"]
+
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/coastal_hub_presentation.tscn" id="coastal_presentation"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(28, 0.3, 20)
@@ -333,26 +335,26 @@ omni_range = 13.0
 shadow_enabled = false
 
 [node name="PumpDirection" type="Label3D" parent="Signage"]
-position = Vector3(0, 4.5, -9.7)
+position = Vector3(0, 4.6, -9.42)
 rotation = Vector3(0, 0, 0)
-text = "02 / PUMP HALL\nMAINTENANCE KEY / AUXILIARY POWER"
-font_size = 40
+text = "02 / PUMP HALL AHEAD\nRESTORE AUXILIARY POWER"
+font_size = 34
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="Equipment" type="Label3D" parent="Signage"]
-position = Vector3(-6, 3, 6)
+position = Vector3(-6.8, 3.2, 4)
 rotation = Vector3(0, 0, 0)
-text = "ANCHORAGE / FIELD SUPPLIES"
-font_size = 30
+text = "01 / ANCHORAGE\n< FIELD SUPPLIES"
+font_size = 24
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="EquipmentBench" type="StaticBody3D" parent="Geometry"]
 position = Vector3(-7, 0.55, 7)
@@ -392,16 +394,17 @@ material_override = ExtResource("mat_brass")
 [node name="Collision" type="CollisionShape3D" parent="Geometry/ArrivalRail"]
 shape = SubResource("shape_11")
 
-[node name="ReturnSign" type="Label3D" parent="Signage"]
+[node name="ReturnSign" type="Label3D" parent="Signage" groups=["breakwater_relay_status"]]
 position = Vector3(11.5, 6, -3.8)
 rotation = Vector3(0, 0, 0)
-text = "RELAY RETURN / +4m\nLIFT OFFLINE UNTIL TRANSMISSION"
+text = "06 / RELAY RETURN\nTRANSMIT TO RELEASE LIFT"
 font_size = 23
+metadata/powered_text = "06 / RELAY RETURN\nLIFT ONLINE / WELCOME HOME"
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="return_gate" type="Node3D" parent="Actors"]
 position = Vector3(13.8, 5.7, 0)
@@ -545,7 +548,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="service_secretGlow" type="OmniLight3D" parent="Lighting"]
 position = Vector3(-9, 2, -5)
@@ -592,3 +595,5 @@ material_override = ExtResource("mat_dark_metal")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/UpperArrival"]
 shape = SubResource("shape_18")
+
+[node name="CoastalPresentation" parent="Geometry" instance=ExtResource("coastal_presentation")]

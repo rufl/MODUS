@@ -75,6 +75,50 @@ func test_platform_carries_character_through_both_endpoints_without_velocity_run
 	assert_lt(largest_floor_gap, 0.15, "Passenger stays on the lift during travel and reversal")
 
 
+func test_descending_platform_waits_for_character_to_clear_instead_of_crushing_floor() -> void:
+	var floor_body := StaticBody3D.new()
+	var floor_collision := CollisionShape3D.new()
+	var floor_box := BoxShape3D.new()
+	floor_box.size = Vector3(10, 0.3, 10)
+	floor_collision.shape = floor_box
+	floor_body.add_child(floor_collision)
+	floor_body.position.y = -0.15
+	add_child_autofree(floor_body)
+	var lift := PlatformScript.new()
+	lift.platform_size = Vector3(4, 0.3, 4)
+	lift.waypoints = PackedVector3Array([Vector3(0, 3.85, 0), Vector3(0, -0.15, 0)])
+	lift.move_speed = 1.5
+	lift.wait_at_points = 0.25
+	add_child_autofree(lift)
+	var passenger := Passenger.new()
+	passenger.collision_layer = CollisionLayers.LAYER_PLAYERS
+	passenger.collision_mask = CollisionLayers.LAYER_WORLD
+	var shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.4
+	capsule.height = 2.0
+	shape.shape = capsule
+	shape.position.y = 1.0
+	passenger.add_child(shape)
+	passenger.position.y = 0.01
+	add_child_autofree(passenger)
+	await wait_physics_frames(12)
+	lift.start_runtime()
+	lift.trigger()
+	var lowest_player := passenger.position.y
+	for frame: int in range(240):
+		await get_tree().physics_frame
+		lowest_player = minf(lowest_player, passenger.position.y)
+	assert_gt(lowest_player, -0.01, "A waiting character never penetrates the shaft floor")
+	assert_gt(lift.platform_body.position.y, 2.0, "The descending deck stops above the character")
+	passenger.position.x = 3.0
+	var lowest_deck := lift.platform_body.position.y
+	for frame: int in range(180):
+		await get_tree().physics_frame
+		lowest_deck = minf(lowest_deck, lift.platform_body.position.y)
+	assert_lt(lowest_deck, 0.0, "The lift resumes and reaches its lower stop once clear")
+
+
 func test_wait_trigger_advances_instead_of_retriggering_same_waypoint() -> void:
 	var lift := PlatformScript.new()
 	lift.carry_passengers = false

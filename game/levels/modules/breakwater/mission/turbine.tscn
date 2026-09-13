@@ -1,4 +1,4 @@
-[gd_scene load_steps=51 format=3]
+[gd_scene load_steps=57 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -27,6 +27,11 @@
 [ext_resource type="Script" path="res://shared/editor_core/actors/station_power_actor.gd" id="station_power_actor"]
 
 [ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_turbine_dark_metal.obj" id="combat_steel"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_turbine_teal_enamel.obj" id="combat_teal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_turbine_brass.obj" id="combat_brass"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_drive_rotor.obj" id="combat_rotor"]
+[ext_resource type="ConcavePolygonShape3D" path="res://game/levels/modules/breakwater/meshes/combat_turbine_collision.tres" id="combat_collision"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(28, 0.3, 28)
@@ -76,11 +81,12 @@ size = Vector3(4, 0.8, 6)
 [sub_resource type="BoxShape3D" id="shape_7"]
 size = Vector3(4, 0.8, 6)
 
-[sub_resource type="BoxMesh" id="box_8"]
-size = Vector3(3.2, 2.8, 4.8)
+[sub_resource type="CylinderMesh" id="box_8"]
+top_radius = 1.6
+bottom_radius = 1.6
+height = 4.8
+radial_segments = 32
 
-[sub_resource type="BoxShape3D" id="shape_8"]
-size = Vector3(3.2, 2.8, 4.8)
 
 [sub_resource type="BoxMesh" id="box_9"]
 size = Vector3(1.4, 0.4, 5)
@@ -135,6 +141,12 @@ size = Vector3(0.15, 1.2, 9.84886)
 
 [sub_resource type="BoxShape3D" id="RampRailShape"]
 size = Vector3(0.15, 1.2, 9.84886)
+
+[sub_resource type="BoxMesh" id="CombatRecoveryCoverMesh"]
+size = Vector3(2.4, 1.35, 1)
+
+[sub_resource type="BoxShape3D" id="CombatRecoveryCoverShape"]
+size = Vector3(2.4, 1.35, 1)
 
 [node name="Turbine" type="Node3D"]
 script = ExtResource("module")
@@ -321,7 +333,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="TurbinePlinth-4" type="StaticBody3D" parent="Geometry"]
 position = Vector3(-4, 0.4, 0)
@@ -334,17 +346,18 @@ material_override = ExtResource("mat_dark_metal")
 shape = SubResource("shape_7")
 
 [node name="TurbineCasing-4" type="StaticBody3D" parent="Geometry"]
-position = Vector3(-4, 1.8, 0)
+position = Vector3(-4, 2.4, 0)
+rotation = Vector3(1.5707963, 0, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/TurbineCasing-4"]
 mesh = SubResource("box_8")
 material_override = ExtResource("mat_teal_enamel")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/TurbineCasing-4"]
-shape = SubResource("shape_8")
+shape = ExtResource("combat_collision")
 
 [node name="TurbineSpine-4" type="StaticBody3D" parent="Geometry"]
-position = Vector3(-4, 3.4, 0)
+position = Vector3(-4, 4.15, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/TurbineSpine-4"]
 mesh = SubResource("box_9")
@@ -364,17 +377,18 @@ material_override = ExtResource("mat_dark_metal")
 shape = SubResource("shape_7")
 
 [node name="TurbineCasing4" type="StaticBody3D" parent="Geometry"]
-position = Vector3(4, 1.8, 0)
+position = Vector3(4, 2.4, 0)
+rotation = Vector3(1.5707963, 0, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/TurbineCasing4"]
 mesh = SubResource("box_8")
 material_override = ExtResource("mat_teal_enamel")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/TurbineCasing4"]
-shape = SubResource("shape_8")
+shape = ExtResource("combat_collision")
 
 [node name="TurbineSpine4" type="StaticBody3D" parent="Geometry"]
-position = Vector3(4, 3.4, 0)
+position = Vector3(4, 4.15, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/TurbineSpine4"]
 mesh = SubResource("box_9")
@@ -412,7 +426,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="UpperDeck10p5" type="StaticBody3D" parent="Geometry"]
 position = Vector3(10.5, 3.8, -3)
@@ -443,7 +457,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="UpperBridge" type="StaticBody3D" parent="Geometry"]
 position = Vector3(0, 3.8, -6)
@@ -476,19 +490,19 @@ material_override = ExtResource("mat_brass")
 shape = SubResource("shape_15")
 
 [node name="encounter_entry" type="Node3D" parent="Actors"]
-position = Vector3(0, 1, 10)
+position = Vector3(0, 1, 7)
 script = ExtResource("trigger_zone_actor")
 actor_id = "encounter_entry"
-zone_size = Vector3(25, 2, 5)
+zone_size = Vector3(25, 2, 2)
 show_in_editor = false
 one_shot = true
 output_channel = "turbine_encounter"
 
 [node name="cavern_entry" type="Node3D" parent="Actors"]
-position = Vector3(11.5, 1, 0)
+position = Vector3(9.5, 1, 0)
 script = ExtResource("trigger_zone_actor")
 actor_id = "cavern_entry"
-zone_size = Vector3(4, 2, 4)
+zone_size = Vector3(2, 2, 4)
 show_in_editor = false
 one_shot = true
 output_channel = "turbine_encounter"
@@ -501,7 +515,7 @@ enemy_id = "grunt_basic"
 tier = 1
 behavior = 3
 spawn_count = 4
-spawn_interval = 1.6
+spawn_interval = 2.0
 auto_spawn = false
 one_shot = true
 input_channels = PackedStringArray("turbine_encounter")
@@ -515,7 +529,7 @@ enemy_id = "imp"
 tier = 1
 behavior = 3
 spawn_count = 2
-spawn_interval = 1.6
+spawn_interval = 3.0
 auto_spawn = false
 one_shot = true
 input_channels = PackedStringArray("turbine_encounter")
@@ -538,7 +552,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="relay_gate" type="Node3D" parent="Actors"]
 position = Vector3(0, 1.7, -13.7)
@@ -587,16 +601,16 @@ omni_range = 13.0
 shadow_enabled = false
 
 [node name="lower_health" type="Node3D" parent="Actors"]
-position = Vector3(-8, 0, 8)
+position = Vector3(-6, 0, 11.5)
 script = ExtResource("pickup_spawner_actor")
 actor_id = "lower_health"
 pickup_category = 0
-item_id = "health_potion"
+item_id = "health_large"
 respawn_time = 0.0
 auto_spawn = true
 
 [node name="lower_ammo" type="Node3D" parent="Actors"]
-position = Vector3(8, 0, 8)
+position = Vector3(6, 0, 11.5)
 script = ExtResource("pickup_spawner_actor")
 actor_id = "lower_ammo"
 pickup_category = 2
@@ -678,3 +692,106 @@ material_override = ExtResource("mat_brass")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/RampRightOuterRail"]
 shape = SubResource("RampRailShape")
+
+[node name="MachineStructure" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_steel")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="CoolantManifolds" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_teal")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="MachineTrim" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_brass")
+material_override = ExtResource("mat_brass")
+
+[node name="TurbineDriveWest" type="Node3D" parent="Geometry" groups=["breakwater_coolant_machinery"]]
+position = Vector3(-4, 2.4, 2.66)
+
+[node name="Rotor" type="MeshInstance3D" parent="Geometry/TurbineDriveWest"]
+mesh = ExtResource("combat_rotor")
+material_override = ExtResource("mat_brass")
+
+[node name="TurbineDriveEast" type="Node3D" parent="Geometry" groups=["breakwater_coolant_machinery"]]
+position = Vector3(4, 2.4, 2.66)
+
+[node name="Rotor" type="MeshInstance3D" parent="Geometry/TurbineDriveEast"]
+mesh = ExtResource("combat_rotor")
+material_override = ExtResource("mat_brass")
+
+[node name="RecoveryCoverWest" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-5.8, 0.675, 9)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/RecoveryCoverWest"]
+mesh = SubResource("CombatRecoveryCoverMesh")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/RecoveryCoverWest"]
+shape = SubResource("CombatRecoveryCoverShape")
+
+[node name="RecoveryCoverEast" type="StaticBody3D" parent="Geometry"]
+position = Vector3(5.8, 0.675, 9)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/RecoveryCoverEast"]
+mesh = SubResource("CombatRecoveryCoverMesh")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/RecoveryCoverEast"]
+shape = SubResource("CombatRecoveryCoverShape")
+
+[node name="cavern_entry_health" type="Node3D" parent="Actors"]
+position = Vector3(12.2, 0, -3.2)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "cavern_entry_health"
+pickup_category = 0
+item_id = "health_potion"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="cavern_entry_ammo" type="Node3D" parent="Actors"]
+position = Vector3(12.2, 0, 3.2)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "cavern_entry_ammo"
+pickup_category = 2
+item_id = "ammo_small"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="SouthRecoverySign" type="Label3D" parent="Signage"]
+position = Vector3(0, 3.1, 11.7)
+text = "FIRST AID <    DRY SERVICE BAY    > AMMO\nSECURITY: LOWER PATROL / UPPER RANGED SENTRIES"
+font_size = 25
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+
+[node name="CavernRecoverySign" type="Label3D" parent="Signage"]
+position = Vector3(11.8, 2.7, 0)
+rotation = Vector3(0, 1.5707963, 0)
+text = "PREPARE BEFORE ENTERING\nFIRST AID / AMMO ALONG THIS WALL"
+font_size = 23
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+
+[node name="MachineWestIdentity" type="Label3D" parent="Signage"]
+double_sided = false
+position = Vector3(-4, 4.65, 2.7)
+text = "T-01 / TIDAL GENERATOR"
+font_size = 24
+pixel_size = 0.008
+modulate = Color(0.73, 0.83, 0.8, 1)
+outline_size = 0
+
+[node name="MachineEastIdentity" type="Label3D" parent="Signage"]
+double_sided = false
+position = Vector3(4, 4.65, 2.7)
+text = "T-02 / COOLANT RETURN"
+font_size = 24
+pixel_size = 0.008
+modulate = Color(0.73, 0.83, 0.8, 1)
+outline_size = 0

@@ -1,0 +1,68 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_cavern_coast_rock.obj" id="mesh_coast_rock"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="mat_coast_rock"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_cavern_coast_water.obj" id="mesh_coast_water"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_water.tres" id="mat_coast_water"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_cavern_floor.obj" id="mesh_floor"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/floor.tres" id="mat_floor"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_cavern_brass.obj" id="mesh_brass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_cavern_dark_metal.obj" id="mesh_dark_metal"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_cavern_amber_light.obj" id="mesh_amber_light"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="mat_amber_light"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_cavern_teal_enamel.obj" id="mesh_teal_enamel"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+
+[node name="CoastalCavern" type="Node3D"]
+metadata/presentation_only = "Baked visual dressing; existing module bodies retain all traversal collision. No actors or sockets are replaced."
+
+[node name="CoastRock" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_coast_rock")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="CoastWater" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_coast_water")
+material_override = ExtResource("mat_coast_water")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_floor")
+material_override = ExtResource("mat_floor")
+
+[node name="Brass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_brass")
+material_override = ExtResource("mat_brass")
+
+[node name="DarkMetal" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_dark_metal")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="AmberLight" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_amber_light")
+material_override = ExtResource("mat_amber_light")
+
+[node name="TealEnamel" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_teal_enamel")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="LedgeNorth" type="Label3D" parent="."]
+position = Vector3(-6.6, 2.4, 4)
+rotation = Vector3(0, 0, 0)
+text = "DRY LEDGE / TURBINE AHEAD\nKEEP ROCK WALL ON YOUR LEFT"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="LedgeSouth" type="Label3D" parent="."]
+position = Vector3(-7, 2.7, 15.8)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "INTAKE / WEST EXIT >"
+font_size = 23
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false

@@ -434,6 +434,8 @@ func _init_generator_map() -> void:
 		"footstep_landing_heavy":
 		func() -> AudioStream: return SoundGeneratorScript.generate_land_sound(),
 		"ui_click": func() -> AudioStream: return SoundGeneratorScript.generate_ui_sound("click"),
+		"ui_hover": func() -> AudioStream: return SoundGeneratorScript.generate_ui_sound("hover"),
+		"shell_casing": func() -> AudioStream: return SoundGeneratorScript.generate_shell_casing_sound(),
 		"ui_back": func() -> AudioStream: return SoundGeneratorScript.generate_ui_sound("back"),
 		"pain": func() -> AudioStream: return SoundGeneratorScript.generate_vocal_pain_sound(false),
 		"pain_heavy":
@@ -454,6 +456,10 @@ func _get_event_stream(event_name: String) -> AudioStream:
 		return stream
 	if event_name.begins_with("fire_"):
 		return _get_event_stream("shoot")
+	if event_name.begins_with("reload_"):
+		var stream := SoundGeneratorScript.generate_reload_sound(event_name.trim_prefix("reload_"))
+		_stream_cache[event_name] = stream
+		return stream
 	return null
 
 

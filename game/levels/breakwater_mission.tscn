@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/level_root.gd" id="level"]
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/dock.tscn" id="dock"]
@@ -12,6 +12,17 @@
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return.tscn" id="return"]
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return_gallery.tscn" id="return_gallery"]
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return_elbow.tscn" id="return_elbow"]
+[ext_resource type="Script" path="res://game/levels/breakwater_presentation.gd" id="presentation"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_exterior.tres" id="audio_exterior"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_shelter.tres" id="audio_shelter"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_pump.tres" id="audio_pump"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_coolant.tres" id="audio_coolant"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_station.tres" id="audio_station"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_cavern.tres" id="audio_cavern"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_water.tres" id="water"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="rock"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="emergency_lens"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/cool_light.tres" id="powered_lens"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_coastal"]
 sky_top_color = Color(0.19, 0.33, 0.43, 1)
@@ -31,9 +42,48 @@ ambient_light_color = Color(0.6, 0.71, 0.74, 1)
 ambient_light_energy = 0.72
 reflected_light_source = 2
 tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.49, 0.6, 0.65, 1)
+fog_light_energy = 0.65
+fog_sun_scatter = 0.06
+fog_density = 0.001
+fog_sky_affect = 0.28
 
 [sub_resource type="CameraAttributesPractical" id="Camera_station"]
 auto_exposure_enabled = false
+
+[sub_resource type="PlaneMesh" id="Mesh_ocean"]
+material = ExtResource("water")
+size = Vector2(550, 550)
+
+[sub_resource type="PrismMesh" id="Mesh_islet"]
+material = ExtResource("rock")
+size = Vector3(38, 23, 24)
+left_to_right = 0.38
+
+[sub_resource type="PrismMesh" id="Mesh_islet_shelf"]
+material = ExtResource("rock")
+size = Vector3(62, 11, 37)
+left_to_right = 0.68
+
+[sub_resource type="CylinderMesh" id="Mesh_seastack"]
+material = ExtResource("rock")
+top_radius = 5.0
+bottom_radius = 11.0
+height = 29.0
+radial_segments = 7
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="Material_rain"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.64, 0.78, 0.82, 0.22)
+cull_mode = 2
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="Mesh_rain"]
+material = SubResource("Material_rain")
+size = Vector2(0.014, 0.36)
 
 [node name="BreakwaterMission" type="Node3D"]
 script = ExtResource("level")
@@ -88,3 +138,242 @@ light_color = Color(1, 0.89, 0.72, 1)
 light_energy = 0.85
 shadow_enabled = true
 directional_shadow_max_distance = 160.0
+
+[node name="CoastalDepth" type="Node3D" parent="."]
+
+[node name="TidalReach" type="MeshInstance3D" parent="CoastalDepth"]
+position = Vector3(60, -3.2, -64)
+mesh = SubResource("Mesh_ocean")
+cast_shadow = 0
+
+[node name="OuterReef" type="MeshInstance3D" parent="CoastalDepth"]
+position = Vector3(-96, -2, -51)
+rotation = Vector3(0, 0.35, 0)
+mesh = SubResource("Mesh_islet_shelf")
+
+[node name="OuterReefCrown" type="MeshInstance3D" parent="CoastalDepth"]
+position = Vector3(-99, 6, -58)
+rotation = Vector3(0.08, 0.6, -0.12)
+mesh = SubResource("Mesh_islet")
+
+[node name="OffshoreStack" type="MeshInstance3D" parent="CoastalDepth"]
+position = Vector3(-64, 7, -137)
+rotation = Vector3(0.03, 0.22, -0.09)
+mesh = SubResource("Mesh_seastack")
+
+[node name="OffshoreStackShelf" type="MeshInstance3D" parent="CoastalDepth"]
+position = Vector3(-67, -3, -140)
+rotation = Vector3(0, -0.3, 0)
+scale = Vector3(0.55, 0.8, 0.65)
+mesh = SubResource("Mesh_islet_shelf")
+
+[node name="LeewardHeadland" type="MeshInstance3D" parent="CoastalDepth"]
+position = Vector3(123, 5, -90)
+rotation = Vector3(0, -0.5, 0.04)
+scale = Vector3(1.5, 1.2, 1.1)
+mesh = SubResource("Mesh_islet")
+
+[node name="AuxiliaryHubRoute" type="OmniLight3D" parent="." groups=["breakwater_aux_lights"]]
+position = Vector3(0, 5, -25)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 0.1
+omni_range = 9.0
+shadow_enabled = false
+
+[node name="Presentation" type="Node3D" parent="."]
+script = ExtResource("presentation")
+emergency_lens = ExtResource("emergency_lens")
+powered_lens = ExtResource("powered_lens")
+
+[node name="DockCoast" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(-8, 2, 0)
+stream = ExtResource("audio_exterior")
+volume_db = -80.0
+unit_size = 9.0
+max_distance = 32.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(7, 6, 9)
+metadata/mix_db = -13.0
+
+[node name="DockShelter" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(3, 3, 2)
+stream = ExtResource("audio_shelter")
+volume_db = -80.0
+unit_size = 6.0
+max_distance = 23.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(5, 4, 7)
+metadata/mix_db = -18.0
+
+[node name="HubRainOnRoof" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(0, 4, -18)
+stream = ExtResource("audio_shelter")
+volume_db = -80.0
+unit_size = 8.0
+max_distance = 28.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(14, 5, 8)
+metadata/mix_db = -23.0
+
+[node name="AuxiliaryPumps" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(0, 2, -40)
+stream = ExtResource("audio_pump")
+volume_db = -80.0
+unit_size = 8.0
+max_distance = 29.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(14, 8, 13)
+metadata/power_stage = "aux"
+metadata/mix_db = -18.0
+
+[node name="IntakeFlow" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(-5, 0, -64)
+stream = ExtResource("audio_coolant")
+volume_db = -80.0
+unit_size = 7.0
+max_distance = 28.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(10, 8, 10)
+metadata/power_stage = "aux"
+metadata/mix_db = -23.0
+
+[node name="CavernSeepage" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(26, 0, -74)
+stream = ExtResource("audio_cavern")
+volume_db = -80.0
+unit_size = 9.0
+max_distance = 30.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(10, 6, 20)
+metadata/mix_db = -19.0
+
+[node name="TurbineCooling" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(0, 2, -90)
+stream = ExtResource("audio_coolant")
+volume_db = -80.0
+unit_size = 10.0
+max_distance = 32.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(15, 9, 15)
+metadata/power_stage = "coolant"
+metadata/mix_db = -17.0
+
+[node name="RelayCoast" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(-8, 4, -116)
+stream = ExtResource("audio_exterior")
+volume_db = -80.0
+unit_size = 10.0
+max_distance = 29.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(15, 8, 9)
+metadata/mix_db = -20.0
+
+[node name="RelayTransformer" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(5, 4, -116)
+stream = ExtResource("audio_station")
+volume_db = -80.0
+unit_size = 7.0
+max_distance = 27.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(14, 8, 9)
+metadata/power_stage = "relay"
+metadata/mix_db = -17.0
+
+[node name="ReturnLiftMotor" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(42, 2, -112)
+stream = ExtResource("audio_pump")
+volume_db = -80.0
+unit_size = 6.0
+max_distance = 25.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(7, 8, 12)
+metadata/power_stage = "relay"
+metadata/mix_db = -23.0
+
+[node name="ReturnGalleryRain" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(42, 7, -65)
+stream = ExtResource("audio_shelter")
+volume_db = -80.0
+unit_size = 20.0
+max_distance = 58.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(5, 5, 40)
+metadata/mix_db = -24.0
+
+[node name="ReturnElbowRain" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(28, 7, -18)
+stream = ExtResource("audio_shelter")
+volume_db = -80.0
+unit_size = 14.0
+max_distance = 26.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(17, 5, 5)
+metadata/mix_db = -24.0
+
+[node name="PoweredAnchorage" type="AudioStreamPlayer3D" parent="Presentation"]
+position = Vector3(0, 4, -18)
+stream = ExtResource("audio_station")
+volume_db = -80.0
+unit_size = 10.0
+max_distance = 30.0
+bus = &"SFX"
+metadata/zone_half_extents = Vector3(16, 6, 9)
+metadata/power_stage = "relay"
+metadata/mix_db = -15.0
+
+[node name="DockRainWest" type="CPUParticles3D" parent="Presentation"]
+position = Vector3(-16, 7, 0)
+cast_shadow = 0
+fixed_fps = 30
+emitting = false
+amount = 80
+lifetime = 1.5
+preprocess = 1.5
+local_coords = true
+mesh = SubResource("Mesh_rain")
+emission_shape = 3
+emission_box_extents = Vector3(2, 1, 7)
+direction = Vector3(0.18, -1, 0.08)
+spread = 4.0
+gravity = Vector3(0, -2, 0)
+initial_velocity_min = 7.0
+initial_velocity_max = 9.0
+visibility_aabb = AABB(-4, -15, -9, 9, 17, 18)
+
+[node name="DockRainEast" type="CPUParticles3D" parent="Presentation"]
+position = Vector3(16, 7, 0)
+cast_shadow = 0
+fixed_fps = 30
+emitting = false
+amount = 80
+lifetime = 1.5
+preprocess = 1.5
+local_coords = true
+mesh = SubResource("Mesh_rain")
+emission_shape = 3
+emission_box_extents = Vector3(2, 1, 7)
+direction = Vector3(0.18, -1, 0.08)
+spread = 4.0
+gravity = Vector3(0, -2, 0)
+initial_velocity_min = 7.0
+initial_velocity_max = 9.0
+visibility_aabb = AABB(-4, -15, -9, 9, 17, 18)
+
+[node name="RelayRain" type="CPUParticles3D" parent="Presentation"]
+position = Vector3(-19, 8, -116)
+cast_shadow = 0
+fixed_fps = 30
+emitting = false
+amount = 96
+lifetime = 1.5
+preprocess = 1.5
+local_coords = true
+mesh = SubResource("Mesh_rain")
+emission_shape = 3
+emission_box_extents = Vector3(2, 1, 10)
+direction = Vector3(0.18, -1, 0.08)
+spread = 4.0
+gravity = Vector3(0, -2, 0)
+initial_velocity_min = 7.0
+initial_velocity_max = 9.0
+visibility_aabb = AABB(-4, -15, -12, 9, 17, 24)

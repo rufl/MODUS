@@ -17,6 +17,7 @@ var is_dead: bool = false
 var spawn_position: Vector3 = Vector3.ZERO
 
 var _player: Node3D = null
+var _respawn_timer: SceneTreeTimer
 
 
 func _log(message: String, category: String = "FallDeathChecker") -> void:
@@ -28,6 +29,7 @@ func _log(message: String, category: String = "FallDeathChecker") -> void:
 
 
 func _exit_tree() -> void:
+	_cancel_pending_respawn()
 	# === SIGNAL HYGIENE: Disconnect signals to prevent memory leaks ===
 	var cfg: Node = GameManager.get_core_system("config")
 	if cfg and cfg.config_reloaded.is_connected(_load_config):
@@ -72,6 +74,10 @@ func _load_config(_file_path: String = "") -> void:
 
 func _process(delta: float) -> void:
 	if is_dead:
+		var health := _player.get_node_or_null("HealthComponent") as HealthComponent
+		if health and not health.is_dead:
+			_cancel_pending_respawn()
+			is_dead = false
 		return
 
 	# Only run on server in multiplayer (or always in singleplayer)
@@ -104,31 +110,16 @@ func _handle_fall_death() -> void:
 	var death_pos: Vector3 = _player.global_position
 	_log("[FallDeathChecker] Player fell to death - bypassing godmode")
 
-	# Kill player directly (bypasses godmode)
-	var health_comp: Node = _player.get_node_or_null("HealthComponent")
+	# Use the typed health lifecycle; direct flag writes leave downed state inconsistent.
+	var health_comp := _player.get_node_or_null("HealthComponent") as HealthComponent
 	if health_comp:
-		# Force death state
-		if "is_dead" in health_comp:
-			health_comp.is_dead = true
-		if "current_health" in health_comp:
-			health_comp.current_health = 0.0
-		# Emit died signal
-		if health_comp.has_signal("died"):
-			health_comp.died.emit(null)
-
+		health_comp.current_health = 0.0
+		health_comp.last_weapon_id = "void"
+		health_comp.die(0)
+		health_comp.set_health(0.0)
 	# Emit event
 	fell_to_death.emit(death_pos)
 
-	# Notify game events
-	if GameManager:
-		# Use standard event format
-		var p_id: int = _player.name.to_int()
-		if p_id == 0:
-			p_id = _player.get_instance_id()  # Fallback
-
-		GameManager.emit_event(
-			"player_died", {"peer_id": p_id, "killer_id": 0, "weapon_id": "void"}
-		)  # Environment
 
 	# Sync death to clients in multiplayer
 	if multiplayer.has_multiplayer_peer() and multiplayer.is_server():
@@ -146,17 +137,27 @@ func _sync_fall_death(position: Vector3) -> void:
 	fell_to_death.emit(position)
 
 
+func _cancel_pending_respawn() -> void:
+	if _respawn_timer and _respawn_timer.timeout.is_connected(_respawn_player):
+		_respawn_timer.timeout.disconnect(_respawn_player)
+	_respawn_timer = null
+
+
 func _start_respawn() -> void:
-	## Start respawn timer
-	await get_tree().create_timer(respawn_delay).timeout
-
-	if not is_instance_valid(_player):
-		return
-
-	_respawn_player()
+	_cancel_pending_respawn()
+	_respawn_timer = get_tree().create_timer(respawn_delay)
+	_respawn_timer.timeout.connect(_respawn_player)
 
 
 func _respawn_player() -> void:
+	_respawn_timer = null
+	if not is_instance_valid(_player):
+		return
+	var health_comp := _player.get_node_or_null("HealthComponent") as HealthComponent
+	# A checkpoint load or revive owns the newer position and health.
+	if health_comp and not health_comp.is_dead:
+		is_dead = false
+		return
 	## Respawn player at spawn point
 	# Find spawn point
 	var respawn_pos: Vector3 = _find_respawn_position()
@@ -169,17 +170,12 @@ func _respawn_player() -> void:
 		var cb: CharacterBody3D = _player as CharacterBody3D
 		cb.velocity = Vector3.ZERO
 
-	# Heal player
-	var health_comp: Node = _player.get_node_or_null("HealthComponent")
-	if health_comp:
-		if health_comp.has_method("heal"):
-			health_comp.heal(9999.0)
-		elif health_comp.has_method("set_health"):
-			health_comp.set_health(health_comp.max_health if "max_health" in health_comp else 100.0)
-
-		# Reset death flag
-		if "is_dead" in health_comp:
-			health_comp.is_dead = false
+	# Restore the complete player lifecycle, not only its health number.
+	if _player is Player and _player.state_manager and health_comp:
+		_player.state_manager.restore_health(health_comp.max_health, health_comp.current_armor)
+	elif health_comp:
+		health_comp.reset_death_state()
+		health_comp.set_health(health_comp.max_health)
 
 	is_dead = false
 	respawned.emit(respawn_pos)

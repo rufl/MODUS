@@ -1,0 +1,110 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_gallery_brass.obj" id="mesh_brass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_gallery_dark_metal.obj" id="mesh_dark_metal"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_gallery_cool_light.obj" id="mesh_cool_light"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="mat_cool_light"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_gallery_glass.obj" id="mesh_glass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/glass.tres" id="mat_glass"]
+
+[node name="CoastalReturnGallery" type="Node3D"]
+metadata/presentation_only = "Baked visual dressing; existing module bodies retain all traversal collision. No actors or sockets are replaced."
+
+[node name="Brass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_brass")
+material_override = ExtResource("mat_brass")
+
+[node name="DarkMetal" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_dark_metal")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="CoolLight" type="MeshInstance3D" parent="." groups=["breakwater_relay_fixtures"]]
+mesh = ExtResource("mesh_cool_light")
+material_override = ExtResource("mat_cool_light")
+
+[node name="Glass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_glass")
+material_override = ExtResource("mat_glass")
+
+[node name="HomeBay01" type="Label3D" parent="."]
+position = Vector3(0, 3.05, -32)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "ANCHORAGE / BAY 01\nCONTINUE AHEAD"
+font_size = 24
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="LiftBay01" type="Label3D" parent="."]
+position = Vector3(0, 3.05, -32.07)
+rotation = Vector3(0, 0, 0)
+text = "RETURN LIFT / BAY 01\nCONTINUE AHEAD"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="HomeBay02" type="Label3D" parent="."]
+position = Vector3(0, 3.05, -10)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "ANCHORAGE / BAY 02\nCONTINUE AHEAD"
+font_size = 24
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="LiftBay02" type="Label3D" parent="."]
+position = Vector3(0, 3.05, -10.07)
+rotation = Vector3(0, 0, 0)
+text = "RETURN LIFT / BAY 02\nCONTINUE AHEAD"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="HomeBay03" type="Label3D" parent="."]
+position = Vector3(0, 3.05, 12)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "ANCHORAGE / BAY 03\nCONTINUE AHEAD"
+font_size = 24
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="LiftBay03" type="Label3D" parent="."]
+position = Vector3(0, 3.05, 11.93)
+rotation = Vector3(0, 0, 0)
+text = "RETURN LIFT / BAY 03\nCONTINUE AHEAD"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="HomeBay04" type="Label3D" parent="."]
+position = Vector3(0, 3.05, 33)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "ANCHORAGE / BAY 04\nCONTINUE AHEAD"
+font_size = 24
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="LiftBay04" type="Label3D" parent="."]
+position = Vector3(0, 3.05, 32.93)
+rotation = Vector3(0, 0, 0)
+text = "RETURN LIFT / BAY 04\nCONTINUE AHEAD"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false

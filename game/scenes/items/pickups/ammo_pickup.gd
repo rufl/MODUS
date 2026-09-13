@@ -23,15 +23,13 @@ func _ready() -> void:
 		base_glow.light_energy = 0.3
 
 
-func _on_pickup(player: CharacterBody3D) -> void:
-	if player.has_method("refill_ammo"):
-		player.refill_ammo()
-	elif "weapon_ammo" in player and "current_weapon_index" in player:
-		var idx: int = player.current_weapon_index
-		if idx < player.weapon_ammo.size():
-			player.weapon_ammo[idx][1] += ammo_amount  # Add to reserve
-
-	# Blue screen flash for ammo pickup
+func _apply_pickup(player: CharacterBody3D) -> bool:
+	if not "weapon_manager" in player or not player.weapon_manager:
+		return false
+	var ammo: WeaponAmmoSystem = player.weapon_manager.ammo_system
+	if not ammo or ammo.add_reserve_ammo(ammo_amount) == 0:
+		return false
 	var blood_overlay: Control = player.blood_overlay
 	if blood_overlay and blood_overlay.has_method("show_ammo_flash"):
 		blood_overlay.show_ammo_flash()
+	return true

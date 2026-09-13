@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -23,6 +23,9 @@
 [ext_resource type="Script" path="res://shared/editor_core/actors/door_actor.gd" id="door_actor"]
 
 [ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_relay_dark_metal.obj" id="combat_steel"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_relay_teal_enamel.obj" id="combat_teal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_relay_brass.obj" id="combat_brass"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(28, 0.3, 24)
@@ -31,10 +34,10 @@ size = Vector3(28, 0.3, 24)
 size = Vector3(28, 0.3, 24)
 
 [sub_resource type="BoxMesh" id="box_1"]
-size = Vector3(28, 7, 0.35)
+size = Vector3(28, 1.4, 0.35)
 
 [sub_resource type="BoxShape3D" id="shape_1"]
-size = Vector3(28, 7, 0.35)
+size = Vector3(28, 1.4, 0.35)
 
 [sub_resource type="BoxMesh" id="box_2"]
 size = Vector3(12, 7, 0.35)
@@ -49,16 +52,16 @@ size = Vector3(4, 3.5, 0.35)
 size = Vector3(4, 3.5, 0.35)
 
 [sub_resource type="BoxMesh" id="box_4"]
-size = Vector3(0.35, 7, 24)
+size = Vector3(0.35, 1.4, 24)
 
 [sub_resource type="BoxShape3D" id="shape_4"]
-size = Vector3(0.35, 7, 24)
+size = Vector3(0.35, 1.4, 24)
 
 [sub_resource type="BoxMesh" id="box_5"]
-size = Vector3(0.35, 7, 10)
+size = Vector3(0.35, 1.4, 10)
 
 [sub_resource type="BoxShape3D" id="shape_5"]
-size = Vector3(0.35, 7, 10)
+size = Vector3(0.35, 1.4, 10)
 
 [sub_resource type="BoxMesh" id="box_6"]
 size = Vector3(0.35, 3.5, 4)
@@ -102,6 +105,9 @@ size = Vector3(3, 1.2, 1)
 [sub_resource type="BoxShape3D" id="shape_12"]
 size = Vector3(3, 1.2, 1)
 
+[sub_resource type="BoxShape3D" id="CombatCrownGantryShape"]
+size = Vector3(16, 0.25, 2)
+
 [node name="Relay" type="Node3D"]
 script = ExtResource("module")
 definition = ExtResource("definition")
@@ -130,7 +136,7 @@ material_override = ExtResource("mat_floor")
 shape = SubResource("shape_0")
 
 [node name="WallN0" type="StaticBody3D" parent="Geometry"]
-position = Vector3(0, 3.5, -11.825)
+position = Vector3(0, 0.7, -11.825)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN0"]
 mesh = SubResource("box_1")
@@ -170,7 +176,7 @@ material_override = ExtResource("mat_salt_concrete")
 shape = SubResource("shape_2")
 
 [node name="WallW0" type="StaticBody3D" parent="Geometry"]
-position = Vector3(-13.825, 3.5, 0)
+position = Vector3(-13.825, 0.7, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW0"]
 mesh = SubResource("box_4")
@@ -180,7 +186,7 @@ material_override = ExtResource("mat_salt_concrete")
 shape = SubResource("shape_4")
 
 [node name="WallE0" type="StaticBody3D" parent="Geometry"]
-position = Vector3(13.825, 3.5, -7)
+position = Vector3(13.825, 0.7, -7)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallE0"]
 mesh = SubResource("box_5")
@@ -200,7 +206,7 @@ material_override = ExtResource("mat_salt_concrete")
 shape = SubResource("shape_6")
 
 [node name="WallE1" type="StaticBody3D" parent="Geometry"]
-position = Vector3(13.825, 3.5, 7)
+position = Vector3(13.825, 0.7, 7)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/WallE1"]
 mesh = SubResource("box_5")
@@ -267,7 +273,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="Cover-7" type="StaticBody3D" parent="Geometry"]
 position = Vector3(-7, 0.8, 0)
@@ -373,8 +379,8 @@ actor_id = "encounter_clear"
 enemy_id = "grunt_basic"
 tier = 1
 behavior = 3
-spawn_count = 3
-spawn_interval = 1.6
+spawn_count = 2
+spawn_interval = 1.8
 auto_spawn = false
 one_shot = true
 input_channels = PackedStringArray("relay_encounter")
@@ -388,7 +394,7 @@ enemy_id = "imp"
 tier = 1
 behavior = 3
 spawn_count = 2
-spawn_interval = 1.6
+spawn_interval = 2.6
 auto_spawn = false
 one_shot = true
 input_channels = PackedStringArray("relay_encounter")
@@ -397,13 +403,13 @@ metadata/mission_objective = {"description": "Clear relay ranged sentries", "req
 [node name="WaveCue" type="Label3D" parent="Signage"]
 position = Vector3(0, 3.2, 4)
 rotation = Vector3(0, 0, 0)
-text = "SECURITY REINFORCEMENTS / NORTH BAYS"
+text = "SECURITY LINE / SUPPLIES BEHIND YOU\nREINFORCEMENTS: TWO NORTH BAYS"
 font_size = 26
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="LiftDirection" type="Label3D" parent="Signage"]
 position = Vector3(7, 3, 0)
@@ -414,7 +420,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="return_gate" type="Node3D" parent="Actors"]
 position = Vector3(13.8, 1.7, 0)
@@ -474,3 +480,51 @@ light_color = Color(0.55, 0.86, 0.9, 1)
 light_energy = 0.1
 omni_range = 13.0
 shadow_enabled = false
+
+[node name="CrownStructure" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_steel")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="CrownReceiver" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_teal")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="CrownTrim" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_brass")
+material_override = ExtResource("mat_brass")
+
+[node name="CrownGantry" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 6.2, -8)
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/CrownGantry"]
+shape = SubResource("CombatCrownGantryShape")
+
+[node name="WestReinforcementBay" type="Label3D" parent="Signage"]
+double_sided = false
+position = Vector3(-7, 3.5, -5)
+text = "01 / SECURITY ACCESS"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+
+[node name="EastReinforcementBay" type="Label3D" parent="Signage"]
+double_sided = false
+position = Vector3(7, 3.5, -5)
+text = "02 / RANGED SECURITY"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+
+[node name="EntrySupplySign" type="Label3D" parent="Signage"]
+position = Vector3(0, 2.9, 10)
+text = "FIRST AID <    LAST SERVICE POINT    > AMMO"
+font_size = 25
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false

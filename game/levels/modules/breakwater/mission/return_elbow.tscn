@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -7,6 +7,8 @@
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
 
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/coastal_return_elbow_presentation.tscn" id="coastal_presentation"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(32, 0.3, 8)
@@ -63,6 +65,7 @@ shape = SubResource("shape_0")
 position = Vector3(0, 0.7, 3.8)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/SouthRail"]
+visible = false
 mesh = SubResource("box_1")
 material_override = ExtResource("mat_brass")
 
@@ -73,6 +76,7 @@ shape = SubResource("shape_1")
 position = Vector3(-3, 0.7, -3.8)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/NorthRail"]
+visible = false
 mesh = SubResource("box_2")
 material_override = ExtResource("mat_brass")
 
@@ -83,6 +87,7 @@ shape = SubResource("shape_2")
 position = Vector3(15.8, 0.7, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/EastRail"]
+visible = false
 mesh = SubResource("box_3")
 material_override = ExtResource("mat_brass")
 
@@ -90,15 +95,15 @@ material_override = ExtResource("mat_brass")
 shape = SubResource("shape_3")
 
 [node name="HomeReveal" type="Label3D" parent="Signage"]
-position = Vector3(-6, 2.8, 0)
-rotation = Vector3(0, 0, 0)
-text = "ANCHORAGE / WELCOME BACK <"
-font_size = 32
+position = Vector3(-13, 2.65, 0)
+rotation = Vector3(0, 1.570796, 0)
+text = "01 / ANCHORAGE AHEAD\nWELCOME HOME"
+font_size = 27
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="HubApproach" type="OmniLight3D" parent="Lighting" groups=["breakwater_relay_lights"]]
 position = Vector3(-10, 3, 0)
@@ -106,3 +111,5 @@ light_color = Color(0.55, 0.86, 0.9, 1)
 light_energy = 0.1
 omni_range = 13.0
 shadow_enabled = false
+
+[node name="CoastalPresentation" parent="Geometry" instance=ExtResource("coastal_presentation")]

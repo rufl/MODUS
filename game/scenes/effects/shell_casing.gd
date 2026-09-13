@@ -53,7 +53,7 @@ func _on_body_entered(_body: Node) -> void:
 
 
 func _play_bounce_sound() -> void:
-	# Optional: play a small metallic clink sound
+	# Play the existing synthesized metallic casing impact.
 	var audio: Node = GameManager.get_core_system("audio") if GameManager else null
 	if audio and audio.has_method("play_event"):
-		audio.play_event("shell_bounce", global_position)
+		audio.play_event("shell_casing", global_position)

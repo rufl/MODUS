@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -15,6 +15,10 @@
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
 
 [ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_intake_dark_metal.obj" id="combat_steel"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_intake_teal_enamel.obj" id="combat_teal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/combat_intake_brass.obj" id="combat_brass"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(28, 0.3, 24)
@@ -237,7 +241,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="ArcBarrier-8p5" type="StaticBody3D" parent="Geometry"]
 position = Vector3(-8.5, 1.8, 1)
@@ -270,6 +274,7 @@ damage_interval = 0.5
 active_duration = 2.0
 inactive_duration = 3.0
 starts_active = true
+recovery_anchor = NodePath("../../ArcRecovery")
 
 [node name="WarningStripeNear" type="Node3D" parent="Geometry"]
 position = Vector3(0, 0.012, 3)
@@ -288,13 +293,13 @@ material_override = ExtResource("mat_brass")
 [node name="SafeStage" type="Label3D" parent="Signage"]
 position = Vector3(0, 2.8, 5)
 rotation = Vector3(0, 0, 0)
-text = "DRY REFUGE\nWAIT FOR ARC TO GO DARK"
+text = "DRY REFUGE / OBSERVE ONE CYCLE\nCROSS ONLY WHEN THE ARC GOES DARK"
 font_size = 25
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="CavernDirection" type="Label3D" parent="Signage"]
 position = Vector3(7, 2.8, 6)
@@ -305,7 +310,7 @@ pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
 
 [node name="recovery_health" type="Node3D" parent="Actors"]
 position = Vector3(-5, 0, 7)
@@ -368,3 +373,28 @@ material_override = ExtResource("mat_salt_concrete")
 
 [node name="Collision" type="CollisionShape3D" parent="Geometry/EastLintel"]
 shape = SubResource("shape_5")
+
+[node name="ArcRecovery" type="Marker3D" parent="."]
+position = Vector3(0, 0.1, 6)
+
+[node name="RecoveryDirection" type="Label3D" parent="Signage"]
+position = Vector3(-5, 2.6, 7)
+text = "FIRST AID / SAFE RESTART\nARC CONTACT RETURNS YOU TO THIS REFUGE"
+font_size = 23
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+
+[node name="IntakeStructure" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_steel")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="InsulatorsAndMains" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_teal")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="CrossingMarks" type="MeshInstance3D" parent="Geometry"]
+mesh = ExtResource("combat_brass")
+material_override = ExtResource("mat_brass")

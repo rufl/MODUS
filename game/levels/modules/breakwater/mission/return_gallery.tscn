@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
 
@@ -9,6 +9,8 @@
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
 
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/coastal_return_gallery_presentation.tscn" id="coastal_presentation"]
 
 [sub_resource type="BoxMesh" id="box_0"]
 size = Vector3(4, 0.3, 86)
@@ -59,6 +61,7 @@ shape = SubResource("shape_0")
 position = Vector3(-2.2, 0.7, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/GalleryRail-2p2"]
+visible = false
 mesh = SubResource("box_1")
 material_override = ExtResource("mat_brass")
 
@@ -69,6 +72,7 @@ shape = SubResource("shape_1")
 position = Vector3(2.2, 0.7, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Geometry/GalleryRail2p2"]
+visible = false
 mesh = SubResource("box_1")
 material_override = ExtResource("mat_brass")
 
@@ -160,13 +164,16 @@ light_energy = 0.1
 omni_range = 13.0
 shadow_enabled = false
 
-[node name="HubAhead" type="Label3D" parent="Signage"]
-position = Vector3(0, 2.8, 34)
+[node name="HubAhead" type="Label3D" parent="Signage" groups=["breakwater_relay_status"]]
+position = Vector3(0, 2.5, 39.5)
 rotation = Vector3(0, 3.14159, 0)
-text = "ANCHORAGE / POWER RESTORED\nFOLLOW THE SKY BRIDGE"
-font_size = 26
+text = "ANCHORAGE / RETURN BRIDGE\nTURN RIGHT AT THE PAVILION"
+font_size = 24
+metadata/powered_text = "ANCHORAGE / POWER RESTORED\nTURN RIGHT AT THE PAVILION"
 pixel_size = 0.01
 modulate = Color(0.95, 0.88, 0.7, 1)
 outline_size = 8
 outline_modulate = Color(0.03, 0.055, 0.06, 1)
-double_sided = true
+double_sided = false
+
+[node name="CoastalPresentation" parent="Geometry" instance=ExtResource("coastal_presentation")]

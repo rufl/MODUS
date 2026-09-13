@@ -41,6 +41,21 @@ func get_ammo_for_weapon(weapon_idx: int) -> Dictionary:
 	return {"current": ammo[0], "reserve": ammo[1]}
 
 
+## Adds only reserve ammunition for the equipped weapon; magazines require reloading.
+func add_reserve_ammo(amount: int) -> int:
+	if amount <= 0 or not _weapon_inventory:
+		return 0
+	var index := _weapon_inventory.current_weapon_index
+	var weapon := _weapon_inventory.get_current_weapon()
+	if not weapon or index < 0 or index >= weapon_ammo.size():
+		return 0
+	var accepted := mini(amount, maxi(0, weapon.max_reserve_ammo - int(weapon_ammo[index][1])))
+	if accepted > 0:
+		weapon_ammo[index][1] += accepted
+		emit_ammo_update()
+	return accepted
+
+
 func consume_ammo(weapon_idx: int, amount: int = 1) -> bool:
 	if weapon_idx < 0 or weapon_idx >= weapon_ammo.size():
 		return false

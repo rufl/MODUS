@@ -20,6 +20,7 @@ var _direction: int = 1
 var _is_moving: bool = false
 var _wait_timer: float = 0.0
 var _finished: bool = false
+var _motion_collision := KinematicCollision3D.new()
 
 
 func _init() -> void:
@@ -38,6 +39,7 @@ func _on_actor_ready() -> void:
 func _create_platform() -> void:
 	platform_body = AnimatableBody3D.new() if carry_passengers else StaticBody3D.new()
 	platform_body.name = "PlatformBody"
+	platform_body.collision_mask = CollisionLayers.MASK_DAMAGEABLE
 	if platform_body is AnimatableBody3D:
 		platform_body.sync_to_physics = true
 	platform_body.position = waypoints[0]
@@ -78,7 +80,16 @@ func _physics_process(delta: float) -> void:
 	# AnimatableBody3D supplies floor velocity to move_and_slide(), including
 	# the arrival tick. Never add platform velocity to passenger.velocity.
 	var target := waypoints[_current_waypoint]
-	platform_body.position = platform_body.position.move_toward(target, move_speed * delta)
+	var next_position := platform_body.position.move_toward(target, move_speed * delta)
+	var motion := global_basis * (next_position - platform_body.position)
+	if platform_body.test_move(platform_body.global_transform, motion, _motion_collision):
+		for index: int in range(_motion_collision.get_collision_count()):
+			var normal := _motion_collision.get_normal(index)
+			# Rising decks carry bodies above them; other contacts must not
+			# push a character through the world while following the path.
+			if not (motion.y > 0.0 and normal.y < -0.7):
+				return
+	platform_body.position = next_position
 	if platform_body.position.is_equal_approx(target):
 		platform_body.position = target
 		_on_waypoint_reached()

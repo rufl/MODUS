@@ -1,0 +1,67 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_hub_dark_metal.obj" id="mesh_dark_metal"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_hub_amber_light.obj" id="mesh_amber_light"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="mat_amber_light"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_hub_cool_light.obj" id="mesh_cool_light"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="mat_cool_light"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_hub_teal_enamel.obj" id="mesh_teal_enamel"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_hub_brass.obj" id="mesh_brass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+
+[node name="CoastalHub" type="Node3D"]
+metadata/presentation_only = "Baked visual dressing; existing module bodies retain all traversal collision. No actors or sockets are replaced."
+
+[node name="DarkMetal" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_dark_metal")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="AmberLight" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_amber_light")
+material_override = ExtResource("mat_amber_light")
+
+[node name="CoolLight" type="MeshInstance3D" parent="." groups=["breakwater_relay_fixtures"]]
+mesh = ExtResource("mesh_cool_light")
+material_override = ExtResource("mat_cool_light")
+
+[node name="TealEnamel" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_teal_enamel")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Brass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_brass")
+material_override = ExtResource("mat_brass")
+
+[node name="StationBoard" type="Label3D" parent="."]
+position = Vector3(7.5, 5.5, -9.53)
+rotation = Vector3(0, 0, 0)
+text = "01  ANCHORAGE / SAFE HARBOR\n02  PUMP > 03  INTAKE > 04  COOLING\n05  RELAY > 06  LIFT > HOME"
+font_size = 22
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="ReturnWelcome" type="Label3D" parent="." groups=["breakwater_relay_status"]]
+position = Vector3(12.95, 6.65, 0)
+rotation = Vector3(0, 1.5707963267948966, 0)
+text = "ANCHORAGE / RETURN ACCESS\nTRANSMISSION REQUIRED"
+font_size = 25
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+metadata/powered_text = "ANCHORAGE / WELCOME HOME\nSTATION POWER RESTORED"
+[node name="BenchIdentity" type="Label3D" parent="."]
+position = Vector3(-7, 3.2, 7.77)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "FIELD SERVICE / A-01\nSUPPLIES BELOW"
+font_size = 27
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false

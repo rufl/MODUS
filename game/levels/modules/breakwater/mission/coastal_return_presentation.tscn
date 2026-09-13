@@ -1,0 +1,50 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_dark_metal.obj" id="mesh_dark_metal"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_brass.obj" id="mesh_brass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_teal_enamel.obj" id="mesh_teal_enamel"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_cool_light.obj" id="mesh_cool_light"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="mat_cool_light"]
+
+[node name="CoastalReturn" type="Node3D"]
+metadata/presentation_only = "Baked visual dressing; existing module bodies retain all traversal collision. No actors or sockets are replaced."
+
+[node name="DarkMetal" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_dark_metal")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="Brass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_brass")
+material_override = ExtResource("mat_brass")
+
+[node name="TealEnamel" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_teal_enamel")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="CoolLight" type="MeshInstance3D" parent="." groups=["breakwater_relay_fixtures"]]
+mesh = ExtResource("mesh_cool_light")
+material_override = ExtResource("mat_cool_light")
+
+[node name="DeckBoard" type="Label3D" parent="."]
+position = Vector3(2.95, 2.3, -2)
+rotation = Vector3(0, -1.5707963267948966, 0)
+text = "06 / LIFT\nWAIT BESIDE SHAFT\nBOARD LOWERED DECK / EXIT ABOVE"
+font_size = 23
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="LandingExit" type="Label3D" parent="."]
+position = Vector3(0, 6.2, 5.55)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "07 / ANCHORAGE\nEXIT AHEAD"
+font_size = 27
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false

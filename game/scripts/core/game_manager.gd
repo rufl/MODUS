@@ -401,6 +401,7 @@ func _register_core_events() -> void:
 
 	# Weapon events
 	register_event("ammo_changed")
+	register_event("weapon_fired")
 	register_event("weapon_switched")
 	register_event("reload_started")
 	register_event("reload_finished")

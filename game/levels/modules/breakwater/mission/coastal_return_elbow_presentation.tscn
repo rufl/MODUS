@@ -1,0 +1,50 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_elbow_brass.obj" id="mesh_brass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_elbow_dark_metal.obj" id="mesh_dark_metal"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_elbow_cool_light.obj" id="mesh_cool_light"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="mat_cool_light"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coastal_return_elbow_glass.obj" id="mesh_glass"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/glass.tres" id="mat_glass"]
+
+[node name="CoastalReturnElbow" type="Node3D"]
+metadata/presentation_only = "Baked visual dressing; existing module bodies retain all traversal collision. No actors or sockets are replaced."
+
+[node name="Brass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_brass")
+material_override = ExtResource("mat_brass")
+
+[node name="DarkMetal" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_dark_metal")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="CoolLight" type="MeshInstance3D" parent="." groups=["breakwater_relay_fixtures"]]
+mesh = ExtResource("mesh_cool_light")
+material_override = ExtResource("mat_cool_light")
+
+[node name="Glass" type="MeshInstance3D" parent="."]
+mesh = ExtResource("mesh_glass")
+material_override = ExtResource("mat_glass")
+
+[node name="TurnHome" type="Label3D" parent="."]
+position = Vector3(12, 2.4, 3.55)
+rotation = Vector3(0, 3.141592653589793, 0)
+text = "ANCHORAGE / TURN RIGHT >\nFOLLOW THE BRASS DECK LINE"
+font_size = 26
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false
+[node name="ReturnRelay" type="Label3D" parent="."]
+position = Vector3(-11, 2.8, 0)
+rotation = Vector3(0, -1.5707963267948966, 0)
+text = "RELAY / LIFT AHEAD\nTURN LEFT AT FAR PAVILION"
+font_size = 24
+pixel_size = 0.008
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 6
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = false

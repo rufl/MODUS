@@ -714,6 +714,7 @@ static func _is_runtime_script(path: String) -> bool:
 		and (
 			path.begins_with("res://shared/editor_core/")
 			or path == "res://game/scripts/map_generator/prefab_metadata.gd"
+			or path == "res://game/levels/breakwater_presentation.gd"
 		)
 	)
 

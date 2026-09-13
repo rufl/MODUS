@@ -28,10 +28,15 @@ var icon_colors: Dictionary = {
 @onready var player_icon: Control = $CircleMask/MapContainer/PlayerIcon
 @onready var circle_mask: Control = $CircleMask
 
+var _mission: MissionMgr
+
 
 func _ready() -> void:
 	# Load configuration
 	_load_config()
+	_mission = MissionMgr.get_instance()
+	if _mission:
+		_mission.mission_context_changed.connect(_update_visibility)
 	_update_visibility()
 
 	# Prevent blocking mouse input
@@ -52,9 +57,6 @@ func _ready() -> void:
 	# Setup player icon
 	if player_icon:
 		_setup_player_icon()
-
-	# Start tracking
-	set_process(true)
 
 	# Listen for enemy death for immediate cleanup
 	var entity_service: Node = GameManager.get_core_system("entities")
@@ -181,6 +183,10 @@ func _update_visibility() -> void:
 	else:
 		# Default to visible if UI service not available
 		visible = true
+	# Authored documents use their own wayfinding, not the generated-map capture.
+	if _mission and is_instance_valid(_mission.mission_level):
+		visible = false
+	set_process(visible)
 
 
 func _try_load_static_map() -> bool:
@@ -203,6 +209,8 @@ func _try_load_static_map() -> bool:
 
 
 func _capture_level_map() -> void:
+	if not visible:
+		return
 	# Dynamic capture fallback
 	# ... (setup camera) ...
 	if capture_camera:

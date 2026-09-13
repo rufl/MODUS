@@ -10,6 +10,22 @@ class Collector:
 	var health: int = 20
 	var max_health: int = 100
 	var blood_overlay: Control
+	var weapon_manager: WeaponManager
+
+	func _ready() -> void:
+		weapon_manager = WeaponManager.new()
+		weapon_manager.player = self
+		weapon_manager.inventory = WeaponInventory.new()
+		weapon_manager.ammo_system = WeaponAmmoSystem.new()
+		var weapon := WeaponData.new()
+		weapon.magazine_size = 12
+		weapon.max_reserve_ammo = 48
+		weapon_manager.inventory.weapons = [weapon, weapon.duplicate()]
+		weapon_manager.add_child(weapon_manager.inventory)
+		weapon_manager.add_child(weapon_manager.ammo_system)
+		weapon_manager.ammo_system.setup(weapon_manager.inventory)
+		weapon_manager.ammo_system.initialize_ammo(weapon_manager.inventory.weapons)
+		add_child(weapon_manager)
 
 
 func test_author_document_cannot_spawn_rewards_or_start_encounters() -> void:
@@ -142,3 +158,31 @@ func test_actual_medkit_collection_checkpoints_synchronously_and_cannot_duplicat
 	supplies.trigger()
 	assert_eq(collector.health, 45, "Restoring consumed rewards is silent")
 	assert_null(supplies._current_pickup)
+
+
+func test_ammo_box_adds_advertised_reserve_without_refilling_magazines_or_other_weapons() -> void:
+	var collector := Collector.new()
+	add_child_autofree(collector)
+	var ammo := collector.weapon_manager.ammo_system
+	ammo.sync_ammo(0, 2, 5)
+	ammo.sync_ammo(1, 1, 3)
+	var pickup := AmmoPickup.new()
+	pickup.ammo_amount = 30
+	add_child_autofree(pickup)
+	assert_true(pickup.collect_for_player(collector, 1))
+	assert_eq(ammo.get_ammo_for_weapon(0), {"current": 2, "reserve": 35})
+	assert_eq(ammo.get_ammo_for_weapon(1), {"current": 1, "reserve": 3})
+	assert_false(pickup.collect_for_player(collector, 1))
+
+
+func test_full_ammunition_leaves_box_available_until_reserve_is_needed() -> void:
+	var collector := Collector.new()
+	add_child_autofree(collector)
+	var ammo := collector.weapon_manager.ammo_system
+	var pickup := AmmoPickup.new()
+	add_child_autofree(pickup)
+	assert_false(pickup.collect_for_player(collector, 1))
+	assert_false(pickup.collected)
+	ammo.sync_ammo(0, 2, 40)
+	assert_true(pickup.collect_for_player(collector, 1))
+	assert_eq(ammo.get_ammo_for_weapon(0), {"current": 2, "reserve": 48})
