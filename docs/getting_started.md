@@ -9,9 +9,8 @@
 - A writable `/tmp` for the isolated headless runner environment.
 - A graphical session for editor, visual, input, and manual gameplay evidence.
 
-There is no installer, portable Godot binary, bundled GodotSteam extension, configured Workshop item, or supported released build in this repository. The first editor launch performs an asset import and can expose renderer, driver, or missing-integration issues before the main scene is usable.
-
-No GodotSteam extension is bundled. Steam-specific behavior requires separate installation and proof.
+- A Linux portable package helper is available for local artifact packaging and user-local install/uninstall; it is not a signed or published release.
+- No GodotSteam extension is bundled. Steam-specific behavior requires separate installation and proof.
 
 ## Open and launch
 
@@ -43,6 +42,23 @@ tools/run_export_smoke.sh --platform linux --executable standalone/client/modus.
 The smoke covers bounded Linux launch only. It does not prove installer quality,
 signing, Steam/GodotSteam behavior, target-Windows runtime, manual gameplay,
 or long-session stability.
+
+## Package a local Linux client
+
+From the repository root, after building `standalone/client/modus.x86_64` and its adjacent `.pck`:
+
+```bash
+tools/package_linux_portable.sh package \
+  --artifact-dir standalone/client \
+  --output logs/modus-linux-0.9.5-beta.tar.gz
+tools/package_linux_portable.sh install \
+  --archive logs/modus-linux-0.9.5-beta.tar.gz \
+  --prefix "$HOME/.local/opt/modus"
+tools/package_linux_portable.sh verify --prefix "$HOME/.local/opt/modus"
+tools/package_linux_portable.sh uninstall --prefix "$HOME/.local/opt/modus"
+```
+
+The installer owns only `$prefix/modus` and its manifest. It preserves user save/config data in the XDG data and config directories. This is a local unsigned portable package, not installer, signing, target-Windows, Steam, manual-gameplay, or release-version proof.
 
 ## Verify the checkout
 

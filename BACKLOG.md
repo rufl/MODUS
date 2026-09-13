@@ -41,6 +41,8 @@ The September 10 refreshed headless aggregate passed 1,568/1,568 tests with 21,7
 - Progress 2026-09-12 save/load repair: accepted integer-valued JSON floats for persisted peer/ownership fields, reset CharacterBody3D velocity during player restoration, and replaced the missing `enemies.max_count` lookup with a bounded fallback. Golden-demo smoke passes all 8 framework-loop steps. `[truth:runtime]` `[truth:test]`
 - Progress 2026-09-12 UI input integration repair: matched runtime player discovery to the canonical `player` group and deferred one frame when player setup had not completed. Golden-demo smoke passes without the previous missing-local-player warning. `[truth:runtime]` `[truth:test]`
 - Progress 2026-09-13 enemy recovery hardening: extreme enemy coordinates now use the existing recovery chain instead of remaining active outside the playable area. Golden-demo runtime remains 8/8; stress and long-session proof remain open. `[truth:runtime]` `[truth:source-audit]`
+- Progress 2026-09-13 Linux portable packaging tranche: `tools/package_linux_portable.sh` creates a versioned x86_64 archive, installs/verifies it under a caller-owned prefix, and uninstalls only its manifest-owned files while preserving XDG save/config data. A clean temporary lifecycle with the exported Black Start binary passes package/install/verify/uninstall and save-preservation checks; signed installers, target-Windows packaging and published release artifacts remain open. `[truth:runtime]` `[truth:test]`
+
 
 ## Active Queue
 
@@ -49,7 +51,7 @@ The September 10 refreshed headless aggregate passed 1,568/1,568 tests with 21,7
 September 13 [research and acceptance plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md): primary-source comparison and source audit complete; an isolated Godot probe reproduced key/secret nondeterminism. The owner selected a bundled full-feature runtime and generator correctness as the first implementation delivery; no Steamworks app exists yet. Remaining deliveries stay queued. No release or gameplay row below is closed by planning alone. `[truth:source-audit]` `[truth:runtime]`
 
 - [x] Repair generator seed isolation, retain gameplay outputs, validate all-lock progression and loaded-scene navigation/collision: revision 2 passes 55 focused tests/1,319 assertions and a separate source-generation smoke. This closes generator correctness, not runtime pickup/door actors, mission production or cross-runtime determinism. `[truth:source-audit]` `[truth:runtime]` `[truth:test]`
-- [ ] Deliver installable packages with upgrade/uninstall and save preservation; prove clean target installation. `[truth:source-audit]`
+- [x] Deliver a local Linux portable package with install/upgrade/uninstall and save preservation; prove clean target installation. The helper owns only its manifest-listed payload and deliberately preserves user data. Signed installers, target-Windows packaging and published release artifacts remain separate. `[truth:runtime]` `[truth:test]`
 - [ ] Publish versioned client/server/editor release artifacts with locked dependencies, hashes and bounded target evidence; CI artifacts alone do not close this row. `[truth:source-audit]`
 - [ ] Bundle a compatible GodotSteam/peer/runtime combination and cleared native dependency notices; player-side manual extension installation must not be required. `[truth:source-audit]`
 - [ ] Configure an app-owned Workshop showcase item with persistent PublishedFileId and approved visibility. Requires owner/AppID/permissions. `[truth:blocked]`
