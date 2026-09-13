@@ -435,7 +435,8 @@ func _init_generator_map() -> void:
 		func() -> AudioStream: return SoundGeneratorScript.generate_land_sound(),
 		"ui_click": func() -> AudioStream: return SoundGeneratorScript.generate_ui_sound("click"),
 		"ui_hover": func() -> AudioStream: return SoundGeneratorScript.generate_ui_sound("hover"),
-		"shell_casing": func() -> AudioStream: return SoundGeneratorScript.generate_shell_casing_sound(),
+		"shell_casing":
+		func() -> AudioStream: return SoundGeneratorScript.generate_shell_casing_sound(),
 		"ui_back": func() -> AudioStream: return SoundGeneratorScript.generate_ui_sound("back"),
 		"pain": func() -> AudioStream: return SoundGeneratorScript.generate_vocal_pain_sound(false),
 		"pain_heavy":

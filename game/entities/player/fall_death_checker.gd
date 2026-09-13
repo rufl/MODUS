@@ -120,7 +120,6 @@ func _handle_fall_death() -> void:
 	# Emit event
 	fell_to_death.emit(death_pos)
 
-
 	# Sync death to clients in multiplayer
 	if multiplayer.has_multiplayer_peer() and multiplayer.is_server():
 		_sync_fall_death.rpc(death_pos)

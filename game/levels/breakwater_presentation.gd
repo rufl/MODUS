@@ -46,7 +46,9 @@ func _bind_power() -> void:
 			_power[stage] = actor.is_active
 		var group := "breakwater_%s_machinery" % stage
 		_rotors[stage] = _document_group(group)
-		var fixture_group := "breakwater_relay_fixtures" if stage == "relay" else "breakwater_%s_emissive" % stage
+		var fixture_group := (
+			"breakwater_relay_fixtures" if stage == "relay" else "breakwater_%s_emissive" % stage
+		)
 		_fixtures[stage] = []
 		for node: Node in _document_group(fixture_group):
 			if node is MeshInstance3D:
@@ -85,7 +87,11 @@ func _apply_power_presentation(stage: String) -> void:
 		fixture.material_override = powered_lens if powered else emergency_lens
 	if stage == "relay":
 		for label: Label3D in _labels:
-			label.text = str(label.get_meta("powered_text", label.text)) if powered else str(label.get_meta("unpowered_text", label.text))
+			label.text = (
+				str(label.get_meta("powered_text", label.text))
+				if powered
+				else str(label.get_meta("unpowered_text", label.text))
+			)
 
 
 func _process(delta: float) -> void:
@@ -109,7 +115,9 @@ func _process(delta: float) -> void:
 			var offset := source.to_local(listener).abs() - half
 			var edge := maxf(maxf(offset.x, offset.y), offset.z)
 			target = 1.0 - smoothstep(0.0, 4.0, edge)
-		var gain := target if _gains[index] < 0.0 else move_toward(_gains[index], target, delta * 0.7)
+		var gain := (
+			target if _gains[index] < 0.0 else move_toward(_gains[index], target, delta * 0.7)
+		)
 		_gains[index] = gain
 		if gain <= 0.001:
 			if source.playing:
@@ -118,14 +126,18 @@ func _process(delta: float) -> void:
 		source.volume_db = float(source.get_meta("mix_db", -16.0)) + linear_to_db(gain)
 		if not source.playing and source.stream:
 			# Distinct offsets avoid comb filtering where reused loops meet at a doorway.
-			source.play(fmod(Time.get_ticks_msec() * 0.001 + index * 1.73, source.stream.get_length()))
+			source.play(
+				fmod(Time.get_ticks_msec() * 0.001 + index * 1.73, source.stream.get_length())
+			)
 	if not _reduced_motion:
 		for stage: String in _rotors:
 			if not _power[stage]:
 				continue
 			for rotor: Node in _rotors[stage]:
 				if rotor is Node3D:
-					rotor.rotate_object_local(Vector3.BACK, delta * (0.55 if stage == "aux" else 0.8))
+					rotor.rotate_object_local(
+						Vector3.BACK, delta * (0.55 if stage == "aux" else 0.8)
+					)
 	for rain: CPUParticles3D in _rain:
 		rain.visible = audible and _weather_enabled and not _reduced_motion
 		rain.emitting = rain.visible and listener.distance_squared_to(rain.global_position) < 1444.0
@@ -133,12 +145,21 @@ func _process(delta: float) -> void:
 
 func _update_settings() -> void:
 	var ui := UISystem.get_service()
-	_reduced_motion = ui != null and ui.theme_manager != null and ui.theme_manager.is_reduced_motion()
+	_reduced_motion = (
+		ui != null and ui.theme_manager != null and ui.theme_manager.is_reduced_motion()
+	)
 	var config: Node = GameManager.get_core_system("config")
 	if config:
-		_reduced_motion = _reduced_motion or bool(config.get_value("ui.accessibility.reduced_motion", false))
-		_weather_enabled = str(config.get_value("graphics.effect_quality", "MEDIUM")).to_upper() != "LOW"
-		_weather_enabled = _weather_enabled and int(config.get_value("graphics.particles.max_particles", 10000)) > 0
+		_reduced_motion = (
+			_reduced_motion or bool(config.get_value("ui.accessibility.reduced_motion", false))
+		)
+		_weather_enabled = (
+			str(config.get_value("graphics.effect_quality", "MEDIUM")).to_upper() != "LOW"
+		)
+		_weather_enabled = (
+			_weather_enabled
+			and int(config.get_value("graphics.particles.max_particles", 10000)) > 0
+		)
 	# All light changes are steady, with no lightning, flashing, pulsing, bloom or camera motion.
 
 

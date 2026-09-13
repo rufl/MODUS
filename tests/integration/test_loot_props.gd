@@ -87,8 +87,10 @@ func _collect_supplies(expected_count: int) -> void:
 		var previous_reserve: int = _player.weapon_manager.get_current_ammo()[1]
 		assert_true(pickup.collect_for_player(_player, 1))
 		assert_true(
-			_player.health > previous_health
-			or _player.weapon_manager.get_current_ammo()[1] > previous_reserve,
+			(
+				_player.health > previous_health
+				or _player.weapon_manager.get_current_ammo()[1] > previous_reserve
+			),
 			"Collecting prop loot must increase health or ammunition, not just remove a mesh"
 		)
 		assert_false(pickup.collect_for_player(_player, 1))

@@ -173,6 +173,7 @@ func test_ammo_box_adds_advertised_reserve_without_refilling_magazines_or_other_
 	assert_eq(ammo.get_ammo_for_weapon(0), {"current": 2, "reserve": 35})
 	assert_eq(ammo.get_ammo_for_weapon(1), {"current": 1, "reserve": 3})
 	assert_false(pickup.collect_for_player(collector, 1))
+	await get_tree().process_frame
 
 
 func test_full_ammunition_leaves_box_available_until_reserve_is_needed() -> void:
@@ -186,3 +187,4 @@ func test_full_ammunition_leaves_box_available_until_reserve_is_needed() -> void
 	ammo.sync_ammo(0, 2, 40)
 	assert_true(pickup.collect_for_player(collector, 1))
 	assert_eq(ammo.get_ammo_for_weapon(0), {"current": 2, "reserve": 48})
+	await get_tree().process_frame
