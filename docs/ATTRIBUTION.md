@@ -7,7 +7,7 @@
 
 ## Current Ledger Boundary
 
-`tools/generate_provenance_ledger.py` inventories the asset/resource extensions distributed from `game/`, `shared/`, `standalone/`, and `mods/`, plus the derived blood-pool script. The current ledger contains **268 assets: 268 cleared and 0 unverified**, including 50 original Breakwater module meshes, materials and metadata resources. The twelve private Suno tracks were removed from the repository and are no longer distributed.
+`tools/generate_provenance_ledger.py` inventories the asset/resource extensions distributed from `game/`, `shared/`, `standalone/`, and `mods/`, plus the derived blood-pool script. The current ledger contains **318 assets: 318 cleared and 0 unverified**, including original Breakwater geometry, materials, metadata, baked collision and six synthesized ambience streams. The audio authoring source uses deterministic standard-library synthesis, not third-party recordings. The twelve private Suno tracks were removed from the repository and are no longer distributed.
 
 Run `tools/generate_provenance_ledger.py --check` after asset changes. `--strict` intentionally fails until every distributed row is cleared or removed.
 

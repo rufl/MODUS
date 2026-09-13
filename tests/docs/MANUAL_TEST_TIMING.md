@@ -54,3 +54,32 @@ tools/validate_manual_evidence.sh --strict
 ```
 
 Keep failed and skipped rows truthful. Fixing or accepting an observation requires a new reviewed session, not editing an old CSV into a pass.
+
+## Black Start production acceptance
+
+The September 13 production candidate is retained locally under `logs/breakwater_production/`. Its native client and `.mdsl` package are not a published release or fresh-clone dependency. Automation has not supplied human acceptance.
+
+For a **human-operated** playthrough, use a dedicated disposable VM/container desktop with isolated display/session sockets. Inside that environment, run from the repository root:
+
+```bash
+logs/breakwater_production/install/client/modus.x86_64 \
+  --rendering-method gl_compatibility -- \
+  --level "$PWD/logs/breakwater_production/breakwater_black_start.mdsl"
+```
+
+Use normal damage, the default movement kit and no automation mods. Record tester, build/package SHA-256, input device, renderer, resolution, difficulty, active elapsed time, deaths, ammunition shortages and observations. `logs/breakwater_production/evidence.json` identifies the retained candidate. The existing showcase recorder does not automatically count this separate mission checklist.
+
+| Check | Required human observation |
+| --- | --- |
+| Arrival and hub | Identify the pump-hall route from authored signs; inspect coastal framing, HUD readability and supplies without a debug marker. |
+| Pump hall | Clear security, collect the key and restore auxiliary power. Judge cover, hit feedback, recovery supplies and the visible/audible power change. |
+| Intake and cavern | Recognize the 2-second live / 3-second safe arc cycle; recover from contact. Walk the optional dry cavern route and inspect its lighting and water treatment. |
+| Turbine atrium | Clear lower and ranged teams with finite ammunition; climb the ordinary ramp, restart cooling and observe moving machinery. |
+| Relay crown | Recognize reinforcement entrances, use the final service point and transmit. Transmission must not complete the return journey for you. |
+| Return lift | Wait beside the shaft and board the lowered deck. A descending deck stops above an obstructing character and resumes once clear. Save with F5 during travel, load with F9, then exit behind the lift at the upper floor. |
+| Powered hub | Traverse the elevated gallery, reach Anchorage, confirm mission completion and reload a completed checkpoint without replaying rewards. |
+| Secrets and recovery | Shoot and enter both cued caches; verify discovered/consumed state after reload. Confirm death followed by checkpoint loading does not cause a delayed second respawn. |
+| Audiovisual comfort | Listen through the complete route, including loop transitions, weapons and reloads. Inspect all eleven rooms in motion; test SFX/Master mute, reduced motion and low/zero-particle settings. |
+| Pacing and verdict | Record actual first-play time and difficulty. The 15–20 minute target remains unvalidated; automated route duration is not player pacing. Record Pass/Fail and concrete defects, not an inferred approval. |
+
+All graphical verification must remain on a disposable isolated display, including the human review environment. These instructions do not authorize an agent to operate, capture or reconfigure the developer's active desktop.

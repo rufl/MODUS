@@ -186,6 +186,16 @@ The existing 15–20 minute goal remains a playtesting target. Encounter duratio
 
 Finish this one room in motion before producing variants: trim-sheet/material consistency, deliberate roughness, original machinery silhouette, layered ambience, spatially legible combat sounds, readable hit feedback, stable exposure and clean collision seams. Keep combat silhouettes clear of fog and busy backgrounds. Bake static module geometry; retain interactables as separate actors. Review low/reduced-effects settings and controller navigation, not only a chosen screenshot.
 
+### Production candidate and acceptance boundary
+
+The September 13 production pass applies the pump-hall palette/detail discipline to all eleven modules: sheltered coastal arrival, hub service equipment, intake conductors/refuges, faceted cavern/water, cylindrical turbine machinery, a distinct relay crown and an articulated return bridge/lift. Static collision remains baked; turbine casing collision matches its cylinder mesh.
+
+Three power stages drive steady lighting, emissive fixtures, machinery and ambience without replaying gameplay on restoration. Six original synthesized loops feed thirteen finite spatial zones. Reduced motion freezes decorative rotors/rain; low or zero-particle settings disable rain. Authored signs supplement color, and the generated-map minimap is hidden for mission documents.
+
+The current authored economy has thirteen enemies across pump, turbine and relay encounters, with recovery supplies before commitment and no regenerating mission crates. Reserve pickups no longer refill magazines or every weapon. Real-weapon native completion proves the route is feasible with finite resources; it does not establish first-play difficulty or the 15–20 minute target. No artificial delays were added to manufacture that duration.
+
+The local Linux client completes the packaged mission, including obstructed-lift recovery, mid-ride and completed-state checkpoints. Isolated native rendering covers fourteen views/all eleven rooms, with measured spatial audio, mute, restored-power and reduced-effects checks. See [Current Status](CURRENT_STATUS.md) for exact results and the [human production checklist](../tests/docs/MANUAL_TEST_TIMING.md#black-start-production-acceptance) for the remaining gate. Human-operated completion, listening/visual approval and pacing remain open; this candidate is not release approval.
+
 ### Feature-to-scenario coverage
 
 This is a **planned coverage assignment**, not proof that these combinations work. Each row needs an observed gameplay result and state restoration where applicable; update the table when the supported feature inventory changes.

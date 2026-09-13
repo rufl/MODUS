@@ -257,15 +257,17 @@ func _make_decal_drip(decal: Sprite3D, surface_normal: Vector3) -> void:
 func _spawn_drip_trail(decal: Sprite3D, duration: float) -> void:
 	## Spawn dripping particles during slide
 	var drip_count := int(duration / 0.5)  # Drip every 0.5s
+	var decal_id := decal.get_instance_id()
 
 	for i in drip_count:
 		var delay := i * 0.5
 		get_tree().create_timer(delay).timeout.connect(
-			_spawn_single_drip.bind(decal), CONNECT_ONE_SHOT
+			_spawn_single_drip.bind(decal_id), CONNECT_ONE_SHOT
 		)
 
 
-func _spawn_single_drip(decal: Sprite3D) -> void:
+func _spawn_single_drip(decal_id: int) -> void:
+	var decal := instance_from_id(decal_id) as Sprite3D
 	if not is_instance_valid(decal):
 		return
 

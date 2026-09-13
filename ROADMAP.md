@@ -54,7 +54,7 @@ ENet fallback, local filesystem simulation, and Steam-unavailable handling are s
 - Standalone Undo/Redo now routes through the shared runtime history manager, and the standalone File/Edit/View/Help menus provide selection actions, maintained local guidance, stateful view toggles, and `.mdsl` export through the existing LevelPackager. Native exported-app and full graphical proof remain required.
 - Focused mod packaging and local Workshop behavior are documented as a `.mdsl` distribution workflow; real Steam publication remains blocked.
 - Advanced brush geometry and density-aware fill are implemented and focused-tested; native visual/editor workflow proof remains separate.
-- Provenance is complete for the current 218-row ledger: 218 cleared and 0 unverified. A local Linux desktop artifact now builds and launches through bounded smoke; installer definition/toolchain, target-Windows runtime, and external distribution proof remain open.
+- Provenance is complete for the current 318-row ledger: 318 cleared and 0 unverified. The local Linux client completes the packaged Black Start mission, and isolated native rendering covers all eleven rooms. Human audiovisual/pacing acceptance, installer definition/toolchain, target-Windows runtime and external distribution proof remain open.
 - Add contextualized benchmark tables for supported hardware/build profiles.
 - Review the completed evidence index and replace automated-only media with approved manual marketing captures where required.
 - Promote version/release wording only after automated, manual, performance, packaging, and distribution-clearance gates agree.

@@ -34,7 +34,7 @@ If you want a polished game to play immediately, MODUS is the wrong download. If
 
 ### Release and World-Building Direction
 
-The [release and world-building plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) defines the path from this systems lab to an installable product. **Breakwater Station: Black Start** now has an eleven-module authored mission with encounters, power/cooling objectives, optional caches and a powered hub-return route. Headless package playback exercises the real player, navigation, combat and checkpoints; the three-room editor gate remains available separately. Graphical acceptance, balance, persistent hubs, installer and external-service gates remain open. No superiority over other generators is claimed.
+The [release and world-building plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) defines the path from this systems lab to an installable product. **Breakwater Station: Black Start** now has eleven detailed mission modules, power-driven machinery/lighting, zoned original ambience, finite supplies and a powered hub-return route. The exported Linux client completes the `.mdsl` mission using real pistol fire, default movement and checkpoints; isolated native captures cover every room. Human-operated completion, audiovisual approval and first-play pacing remain open, alongside persistent hubs, installer and external-service gates. See the [human acceptance checklist](tests/docs/MANUAL_TEST_TIMING.md#black-start-production-acceptance).
 
 
 ## Why MODUS
@@ -271,4 +271,4 @@ Record lasting changes in `CHANGELOG.md` and maintained guides rather than addin
 
 ## License and Provenance
 
-The project MIT text is retained at `LICENSE` and `docs/LICENSE`; vendored GUT carries its MIT notice under `addons/gut/LICENSE.md`. Kenney, Quaternius, dip000 blood-pool material, project-owned artwork, and generated assets have retained local provenance records. The current ledger contains **218 assets: 218 cleared and 0 unverified**. See [Licensing and Provenance Inventory](docs/ATTRIBUTION.md) before redistributing the project.
+The project MIT text is retained at `LICENSE` and `docs/LICENSE`; vendored GUT carries its MIT notice under `addons/gut/LICENSE.md`. Kenney, Quaternius, dip000 blood-pool material, project-owned artwork, and generated assets have retained local provenance records. The current ledger contains **318 assets: 318 cleared and 0 unverified**. See [Licensing and Provenance Inventory](docs/ATTRIBUTION.md) before redistributing the project.
