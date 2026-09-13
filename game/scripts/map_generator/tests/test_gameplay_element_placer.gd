@@ -38,18 +38,10 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	# Clean up resources to prevent orphans
-	if placer:
-		placer.free()
-		placer = null
-
-	if context:
-		context.free()
-		context = null
-
-	if grid_manager:
-		grid_manager.free()
-		grid_manager = null
+	# These helpers are RefCounted; releasing references is the cleanup operation.
+	placer = null
+	context = null
+	grid_manager = null
 
 
 func _create_test_rooms() -> void:
