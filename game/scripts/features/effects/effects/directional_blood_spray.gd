@@ -322,20 +322,19 @@ func _try_spawn_pool(decal: Sprite3D, _fall_direction: Vector3) -> void:
 	## Raycast down to find ground and spawn pool
 	if not is_instance_valid(decal):
 		return
-
 	var space_state := get_tree().root.get_world_3d().direct_space_state
+
 	var ray_origin := decal.global_position
 	var ray_end := ray_origin + Vector3.DOWN * 10.0
-
 	var query := PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
 	query.collision_mask = 1  # World geometry
-
 	var result := space_state.intersect_ray(query)
 	if result:
-		_spawn_blood_pool(result.position, result.normal)
+		var surface := result.get("collider") as Node3D
+		_spawn_blood_pool(result.position, result.normal, surface)
 
 
-func _spawn_blood_pool(position: Vector3, normal: Vector3) -> void:
+func _spawn_blood_pool(position: Vector3, normal: Vector3, surface: Node3D = null) -> void:
 	## Spawn blood pool decal on ground
 	var pool := Sprite3D.new()
 
@@ -347,10 +346,12 @@ func _spawn_blood_pool(position: Vector3, normal: Vector3) -> void:
 	pool.no_depth_test = false
 	pool.layers = 0xFFFFF
 
-	get_tree().root.add_child(pool)
-
-	pool.global_position = position + normal * 0.01
-	pool.look_at(position + normal, Vector3.FORWARD)
+	var parent: Node = get_tree().root
+	if is_instance_valid(surface) and surface.is_inside_tree():
+		parent = surface
+	parent.add_child(pool)
+	pool.global_position = position + normal.normalized() * 0.01
+	pool.look_at(position + normal.normalized(), Vector3.FORWARD)
 	# Use procedural blood splat (larger for pool)
 	pool.texture = PROCEDURAL_SPLAT_GENERATOR.create_blood_splat_texture()
 

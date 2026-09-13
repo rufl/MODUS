@@ -325,7 +325,7 @@ func _return_droplet_to_pool(droplet: RigidBody3D) -> void:
 		droplet.queue_free()
 
 
-func _on_droplet_collision(_body: Node, droplet: RigidBody3D) -> void:
+func _on_droplet_collision(body: Node, droplet: RigidBody3D) -> void:
 	## Spawn small blood decal when droplet hits surface
 	if not spawn_decals or not is_instance_valid(droplet):
 		return
@@ -334,19 +334,20 @@ func _on_droplet_collision(_body: Node, droplet: RigidBody3D) -> void:
 	if droplet.linear_velocity.length() < 1.0:
 		return
 
-	_spawn_blood_decal(droplet.global_position)
+	var surface := body as Node3D
+	_spawn_blood_decal(droplet.global_position, surface)
 
 
-func _spawn_blood_decal(decal_position: Vector3) -> void:
-	call_deferred("_finish_spawn_blood_decal", decal_position)
+func _spawn_blood_decal(decal_position: Vector3, surface: Node3D = null) -> void:
+	call_deferred("_finish_spawn_blood_decal", decal_position, surface)
 
 
-func _finish_spawn_blood_decal(decal_position: Vector3) -> void:
+func _finish_spawn_blood_decal(decal_position: Vector3, surface: Node3D = null) -> void:
 	## Spawn blood pool using shader-based mesh for better visuals
-	_spawn_shader_blood_pool(decal_position)
+	_spawn_shader_blood_pool(decal_position, surface)
 
 
-func _spawn_shader_blood_pool(pool_position: Vector3) -> void:
+func _spawn_shader_blood_pool(pool_position: Vector3, surface: Node3D = null) -> void:
 	## Spawn blood pool decal using texture from decals folder
 	var decal := Sprite3D.new()
 	decal.name = "BloodPoolDecal"
@@ -376,9 +377,11 @@ func _spawn_shader_blood_pool(pool_position: Vector3) -> void:
 	# Random rotation for variety
 	decal.rotate_object_local(Vector3.FORWARD, randf_range(0, TAU))
 
-	# Slight offset to prevent z-fighting	pool_position.y += 0.02
-
-	get_tree().root.add_child(decal)
+	# Slight offset to prevent z-fighting
+	var parent: Node = get_tree().root
+	if is_instance_valid(surface) and surface.is_inside_tree():
+		parent = surface
+	parent.add_child(decal)
 	decal.global_position = pool_position
 
 	# Point decal downward

@@ -3,6 +3,9 @@ const DIRECTIONAL_BLOOD_SPRAY = preload(
 	"res://game/scripts/features/effects/effects/directional_blood_spray.gd"
 )
 const DECAL_SPAWNER = preload("res://game/scripts/features/effects/decal_spawner.gd")
+const BLOOD_HIT_SPAWNER = preload(
+	"res://game/scripts/features/effects/effects/blood_hit_spawner.gd"
+)
 
 
 func before_each() -> void:
@@ -71,4 +74,22 @@ func test_pooled_decal_follows_moving_collision_body() -> void:
 	assert_true(
 		decal.global_position.is_equal_approx(initial_position + Vector3(3, 0, 0)),
 		"Pooled decal follows a moving collision body instead of floating in world space"
+	)
+
+
+func test_droplet_blood_pool_follows_collision_body() -> void:
+	var spawner: Node = BLOOD_HIT_SPAWNER.new()
+	spawner.use_directional_spray = false
+	add_child_autofree(spawner)
+	add_child_autofree(carrier)
+
+	spawner._spawn_shader_blood_pool(Vector3.ZERO, carrier)
+	assert_eq(carrier.get_child_count(), 1, "Droplet blood pool is attached to its hit body")
+	var pool := carrier.get_child(0) as Sprite3D
+	var initial_position: Vector3 = pool.global_position
+	carrier.global_position = Vector3(3, 0, 0)
+
+	assert_true(
+		pool.global_position.is_equal_approx(initial_position + Vector3(3, 0, 0)),
+		"Droplet blood pool follows a moving collision body instead of floating in world space"
 	)
