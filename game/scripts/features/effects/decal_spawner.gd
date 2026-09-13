@@ -242,17 +242,6 @@ func _load_random_blood_texture() -> Texture2D:
 
 	var texture: Texture2D = load(texture_path)
 
-	if not bullet_hole.get_parent():
-		get_tree().root.add_child(bullet_hole)
-
-	var surface := _resolve_surface(pos, normal)
-	if surface and surface.is_inside_tree():
-		bullet_hole.reparent(surface, true)
-	elif bullet_hole.get_parent() != get_tree().root:
-		bullet_hole.reparent(get_tree().root, true)
-
-	bullet_hole.global_position = pos + normal.normalized() * 0.01
-
 	return texture
 
 
@@ -275,7 +264,13 @@ func spawn_bullet_hole(pos: Vector3, normal: Vector3) -> void:
 	if not bullet_hole.get_parent():
 		get_tree().root.add_child(bullet_hole)
 
-	bullet_hole.global_position = pos + normal * 0.01
+	var surface := _resolve_surface(pos, normal)
+	if surface and surface.is_inside_tree():
+		bullet_hole.reparent(surface, true)
+	elif bullet_hole.get_parent() != get_tree().root:
+		bullet_hole.reparent(get_tree().root, true)
+
+	bullet_hole.global_position = pos + normal.normalized() * 0.01
 
 	if normal != Vector3.ZERO:
 		if abs(normal.dot(Vector3.UP)) < 0.99:
