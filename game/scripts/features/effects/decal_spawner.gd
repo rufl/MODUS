@@ -72,6 +72,10 @@ func _return_decal(decal: Sprite3D) -> void:
 	if idx != -1:
 		_active_decals.remove_at(idx)
 
+	# Pooled decals must outlive moving hit bodies and remain reusable.
+	if decal.get_parent() != get_tree().root:
+		decal.reparent(get_tree().root, true)
+
 	# Reset and return to pool
 	decal.visible = false
 	decal.modulate = Color(1, 1, 1, 1)
@@ -82,6 +86,21 @@ func _return_decal(decal: Sprite3D) -> void:
 		_decal_pool.append(decal)
 	else:
 		decal.queue_free()
+
+
+func _resolve_surface(pos: Vector3, normal: Vector3) -> Node3D:
+	if normal.length_squared() < 0.0001:
+		return null
+
+	var space_state := get_tree().root.get_world_3d().direct_space_state
+	var surface_normal := normal.normalized()
+	var query := PhysicsRayQueryParameters3D.create(
+		pos + surface_normal * 0.05, pos - surface_normal * 0.2
+	)
+	query.collision_mask = 0xFFFFFFFF
+	query.collide_with_areas = false
+	var result := space_state.intersect_ray(query)
+	return result.get("collider") as Node3D if result else null
 
 
 func set_quality(quality: int) -> void:
@@ -100,12 +119,19 @@ func spawn_decal(
 	if not decal:
 		return null
 
+	var surface := _resolve_surface(pos, normal)
+	if surface and surface.is_inside_tree():
+		decal.reparent(surface, true)
+	else:
+		decal.reparent(get_tree().root, true)
+
 	decal.texture = texture
 	decal.modulate = Color(1, 1, 1, 1)
 	decal.visible = true
 
 	# Position slightly off surface to avoid z-fighting
-	decal.global_position = pos + normal * 0.01
+	var surface_normal := normal.normalized()
+	decal.global_position = pos + surface_normal * 0.01
 
 	# Set size using pixel_size (Sprite3D sizing)
 	# Approximate the decal_size.x as the desired world size
@@ -113,12 +139,12 @@ func spawn_decal(
 	decal.pixel_size = world_size / 64.0  # Assuming ~64px textures
 
 	# Orient to normal
-	if normal != Vector3.ZERO:
+	if normal.length_squared() > 0.0001:
 		# Check if normal is parallel to up vector to avoid colinear warning
 		var up := Vector3.UP
-		if abs(normal.dot(up)) > 0.99:
+		if abs(surface_normal.dot(up)) > 0.99:
 			up = Vector3.RIGHT
-		decal.look_at(pos + normal, up)
+		decal.look_at(pos + surface_normal, up)
 
 	# Random rotation for variety
 	decal.rotate_object_local(Vector3.FORWARD, randf() * TAU)

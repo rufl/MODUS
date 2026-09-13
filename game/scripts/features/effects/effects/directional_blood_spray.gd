@@ -158,7 +158,8 @@ func _spawn_surface_decals(spray_origin: Vector3, direction: Vector3, damage: in
 
 		var result := space_state.intersect_ray(query)
 		if result:
-			_spawn_blood_decal_on_surface(result.position, result.normal)
+			var surface := result.get("collider") as Node3D
+			_spawn_blood_decal_on_surface(result.position, result.normal, surface)
 
 
 func _get_random_spray_direction(base_direction: Vector3) -> Vector3:
@@ -181,7 +182,9 @@ func _get_random_spray_direction(base_direction: Vector3) -> Vector3:
 	return (base_direction + offset).normalized()
 
 
-func _spawn_blood_decal_on_surface(decal_position: Vector3, normal: Vector3) -> void:
+func _spawn_blood_decal_on_surface(
+	decal_position: Vector3, normal: Vector3, surface: Node3D = null
+) -> void:
 	## Spawn blood decal on any surface (wall, ceiling, floor)
 	var decal := Sprite3D.new()
 
@@ -194,20 +197,23 @@ func _spawn_blood_decal_on_surface(decal_position: Vector3, normal: Vector3) -> 
 	decal.layers = 0xFFFFF
 
 	var parent: Node = get_tree().current_scene
-	if not parent:
+	if is_instance_valid(surface) and surface.is_inside_tree():
+		parent = surface
+	elif not parent:
 		parent = get_tree().root
 	parent.add_child(decal)
 
-	# Position and orient to surface
-	decal.global_position = decal_position + normal * 0.01
-
+	# Keep the decal attached to the hit body. A world-space child would remain
+	# suspended when a character, lift, door, or other moving surface leaves it.
+	decal.global_position = decal_position + normal.normalized() * 0.01
 	# Orient to normal - check for colinear vectors to avoid warnings
-	if normal != Vector3.ZERO:
+	if normal.length_squared() > 0.0001:
+		var surface_normal := normal.normalized()
 		var up := Vector3.UP
 		# If normal is parallel to up vector, use a different up vector
-		if abs(normal.dot(up)) > 0.99:
+		if abs(surface_normal.dot(up)) > 0.99:
 			up = Vector3.RIGHT
-		decal.look_at(decal_position + normal, up)
+		decal.look_at(decal_position + surface_normal, up)
 
 	# Random size
 	var decal_size := randf_range(decal_size_min, decal_size_max) * 0.6
