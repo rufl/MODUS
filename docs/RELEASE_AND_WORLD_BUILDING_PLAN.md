@@ -88,6 +88,14 @@ godot --headless --path . -s addons/gut/gut_cmdln.gd -gconfig= \
   -gtest=res://tests/unit/test_map_generator_threading.gd -gexit
 ```
 
+Source-controlled resource references are checked independently of Godot's generated `.godot` import cache:
+
+```bash
+tools/validate_asset_integrity.py --root .
+```
+
+The gate scans authored `path=` and `preload` references under runtime roots, excludes fixture-only test resources, and never treats generated imports as release evidence.
+
 **Compatibility and exclusions:** revision 2 intentionally changes old seed-to-content output; replay must pin runtime, generator and content. Existing saved geometry is not automatically regenerated. Key/door/reward records and the grid solver do not implement collision-blocking door actors, pickup collection or objectives. There was no visual/manual playthrough, full test matrix, native voxel path, rule/module assembly, exported-editor, WAN, Steam/Workshop or target-Windows proof in this delivery. The remaining program below is still open.
 
 ### Editor persistence reproduction

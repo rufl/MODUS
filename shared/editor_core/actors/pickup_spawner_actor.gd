@@ -245,7 +245,17 @@ func _get_pickup_scene() -> PackedScene:
 				_:
 					push_warning("[PickupSpawnerActor] Unknown weapon_id: %s" % weapon_id)
 		PickupCategory.POWERUP:
-			scene_path = "res://game/scenes/items/pickups/powerup_pickup.tscn"
+			match item_id:
+				"speed", "speed_powerup":
+					scene_path = "res://game/scenes/items/pickups/speed_powerup.tscn"
+				"damage", "damage_powerup":
+					scene_path = "res://game/scenes/items/pickups/damage_powerup.tscn"
+				"dodge", "dodge_powerup":
+					scene_path = "res://game/scenes/items/pickups/dodge_powerup.tscn"
+				"double_jump", "double_jump_powerup":
+					scene_path = "res://game/scenes/items/pickups/double_jump_powerup.tscn"
+				_:
+					push_warning("[PickupSpawnerActor] Unknown powerup item_id: %s" % item_id)
 
 	if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
 		return null
