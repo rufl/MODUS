@@ -39,22 +39,30 @@ func setup(
 	pos: Vector3,
 	normal: Vector3,
 	decal_size: Vector2 = Vector2(1.0, 1.0),
-	life: float = 30.0
+	life: float = 30.0,
+	surface: Node3D = null
 ) -> void:
 	texture = tex
-	global_position = pos + normal * 0.01  # Slight offset to avoid z-fighting
 	lifetime = life
+	_age = 0.0
+	modulate.a = 1.0
+
+	if is_instance_valid(surface) and surface.is_inside_tree():
+		reparent(surface, true)
+
+	var surface_normal := normal.normalized()
+	global_position = pos + surface_normal * 0.01  # Slight offset to avoid z-fighting
 
 	# Set pixel size based on desired world size
 	pixel_size = decal_size.x / 64.0  # Assuming 64px texture
 
 	# Orient to surface normal
-	if normal != Vector3.ZERO:
+	if normal.length_squared() > 0.0001:
 		# Check if normal is parallel to up vector to avoid colinear warning
 		var up := Vector3.UP
-		if abs(normal.dot(up)) > 0.99:
+		if abs(surface_normal.dot(up)) > 0.99:
 			up = Vector3.RIGHT
-		look_at(pos + normal, up)
+		look_at(pos + surface_normal, up)
 
 	# Random rotation for variety
 	rotate_object_local(Vector3.FORWARD, randf() * TAU)

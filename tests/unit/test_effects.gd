@@ -6,6 +6,7 @@ const DECAL_SPAWNER = preload("res://game/scripts/features/effects/decal_spawner
 const BLOOD_HIT_SPAWNER = preload(
 	"res://game/scripts/features/effects/effects/blood_hit_spawner.gd"
 )
+const SPRITE3D_DECAL = preload("res://game/scripts/features/effects/effects/sprite3d_decal.gd")
 
 
 func before_each() -> void:
@@ -81,6 +82,7 @@ func test_droplet_blood_pool_follows_collision_body() -> void:
 	var spawner: Node = BLOOD_HIT_SPAWNER.new()
 	spawner.use_directional_spray = false
 	add_child_autofree(spawner)
+	var carrier := Node3D.new()
 	add_child_autofree(carrier)
 
 	spawner._spawn_shader_blood_pool(Vector3.ZERO, carrier)
@@ -92,4 +94,20 @@ func test_droplet_blood_pool_follows_collision_body() -> void:
 	assert_true(
 		pool.global_position.is_equal_approx(initial_position + Vector3(3, 0, 0)),
 		"Droplet blood pool follows a moving collision body instead of floating in world space"
+	)
+
+
+func test_reusable_sprite_decal_follows_moving_surface() -> void:
+	var carrier := Node3D.new()
+	add_child_autofree(carrier)
+	var decal: Sprite3D = SPRITE3D_DECAL.new()
+	carrier.add_child(decal)
+
+	decal.setup(null, Vector3.ZERO, Vector3.FORWARD, Vector2.ONE, 30.0, carrier)
+	var initial_position: Vector3 = decal.global_position
+	carrier.global_position = Vector3(3, 0, 0)
+
+	assert_true(
+		decal.global_position.is_equal_approx(initial_position + Vector3(3, 0, 0)),
+		"Reusable Sprite3D decal follows its moving surface"
 	)
