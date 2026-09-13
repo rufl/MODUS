@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PrefabMetadata" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/scripts/map_generator/prefab_metadata.gd" id="1_metadata"]
+
+[resource]
+script = ExtResource("1_metadata")
+resource_name = "Breakwater / ControlRoom"
+module_id = "control"
+scene_path = "res://game/levels/modules/breakwater/control_room.tscn"
+content_revision = 1
+dimensions = Vector3(16, 8, 20)
+sockets = Array[Dictionary]([{
+"id": "in",
+"kind": "walk",
+"local_transform": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 10),
+"opening": Vector2(4, 3),
+"clearance": AABB(-2, 0, 8, 4, 3, 3)
+}])
+required_capabilities = PackedStringArray("walk")
+tags = Array[String](["module", "breakwater", "industrial"])

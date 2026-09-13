@@ -26,6 +26,8 @@ var _title: Label = null
 var _menu_hint: Label = null
 var _play_btn: Button = null
 var _showcase_btn: Button = null
+var _breakwater_btn: Button = null
+var _package_btn: Button = null
 var _multiplayer_btn: Button = null
 var _options_btn: Button = null
 var _mods_btn: Button = null
@@ -252,6 +254,20 @@ func _build_menu_ui() -> void:
 	_showcase_btn.pressed.connect(_on_showcase_pressed)
 	_menu_container.add_child(_showcase_btn)
 
+	var authored_row := HBoxContainer.new()
+	authored_row.add_theme_constant_override("separation", 8)
+	_menu_container.add_child(authored_row)
+	_breakwater_btn = _create_menu_button("menu_breakwater", "Breakwater Station")
+	_breakwater_btn.name = "BreakwaterButton"
+	_breakwater_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_breakwater_btn.pressed.connect(func(): LevelGame.launch())
+	authored_row.add_child(_breakwater_btn)
+	_package_btn = _create_menu_button("menu_open_level", "Open level package")
+	_package_btn.name = "OpenLevelButton"
+	_package_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_package_btn.pressed.connect(_on_open_level_pressed)
+	authored_row.add_child(_package_btn)
+
 	# Multiplayer Button
 	_multiplayer_btn = _create_menu_button("menu_multiplayer", "Multiplayer")
 	_multiplayer_btn.name = "MultiplayerButton"
@@ -296,10 +312,14 @@ func _build_menu_ui() -> void:
 
 	_connect_menu_hint(_play_btn, "Launch the current single-player build.")
 	_connect_menu_hint(_showcase_btn, "Tour the maintained gameplay showcase and capture route.")
+	_connect_menu_hint(_breakwater_btn, "Restore power across three connected authored rooms.")
+	_connect_menu_hint(_package_btn, "Play a trusted .mdsl exported by the level editor.")
 	_connect_menu_hint(_multiplayer_btn, "Host or join through the maintained multiplayer menu.")
 	_connect_menu_hint(_options_btn, "Adjust controls, audio, graphics, and accessibility.")
 	_connect_menu_hint(_mods_btn, "Review installed mods and local package state.")
-	_connect_menu_hint(_editor_btn, "Open the showcase with editor participation enabled.")
+	_connect_menu_hint(
+		_editor_btn, "Author modules, connect gameplay, playtest, and export a level package."
+	)
 	_connect_menu_hint(_quit_btn, "Exit MODUS after confirmation.")
 
 	var version := Label.new()
@@ -418,6 +438,10 @@ func _setup_focus() -> void:
 		buttons.append(_play_btn)
 	if _showcase_btn:
 		buttons.append(_showcase_btn)
+	if _breakwater_btn:
+		buttons.append(_breakwater_btn)
+	if _package_btn:
+		buttons.append(_package_btn)
 	if _multiplayer_btn:
 		buttons.append(_multiplayer_btn)
 	if _options_btn:
@@ -512,11 +536,32 @@ func _quit_game() -> void:
 
 
 func _on_editor_pressed() -> void:
-	# Enable editor mode
-	var globals: Node = GameManager.get_core_system("globals")
-	if globals and "join_as_editor" in globals:
-		globals.join_as_editor = true
-	_launch_scene(SHOWCASE_SCENE)
+	_launch_scene("res://standalone/editor/main.tscn")
+
+
+func _on_open_level_pressed() -> void:
+	var picker := FileDialog.new()
+	picker.title = "Open trusted level package"
+	picker.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	picker.access = FileDialog.ACCESS_FILESYSTEM
+	picker.filters = PackedStringArray(["*.mdsl ; MODUS level package"])
+	picker.file_selected.connect(
+		func(path: String):
+			var confirmation := ConfirmationDialog.new()
+			confirmation.title = "Trust this level package?"
+			confirmation.dialog_text = (
+				"Level packages may execute scripts. Only open content you trust.\\n\\n"
+				+ path.get_file()
+			)
+			confirmation.confirmed.connect(func(): LevelGame.launch(path))
+			confirmation.canceled.connect(confirmation.queue_free)
+			add_child(confirmation)
+			confirmation.popup_centered(Vector2i(600, 220))
+			picker.queue_free()
+	)
+	picker.canceled.connect(picker.queue_free)
+	add_child(picker)
+	picker.popup_centered_ratio(0.75)
 
 
 # ============================================================================
@@ -533,6 +578,14 @@ func _on_language_changed(_lang: String) -> void:
 		_play_btn.text = _translate_or_fallback(localization, "menu_play", "Play")
 	if _showcase_btn:
 		_showcase_btn.text = _translate_or_fallback(localization, "menu_showcase", "Showcase")
+	if _breakwater_btn:
+		_breakwater_btn.text = _translate_or_fallback(
+			localization, "menu_breakwater", "Breakwater Station"
+		)
+	if _package_btn:
+		_package_btn.text = _translate_or_fallback(
+			localization, "menu_open_level", "Open level package"
+		)
 	if _multiplayer_btn:
 		_multiplayer_btn.text = _translate_or_fallback(
 			localization, "menu_multiplayer", "Multiplayer"

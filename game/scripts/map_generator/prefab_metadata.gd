@@ -4,6 +4,12 @@ extends Resource
 ## Metadata for prefab placement in generated maps
 ## Defines dimensions, anchor points, theme requirements, and placement rules
 
+@export var module_id: String = ""
+@export_file("*.tscn") var scene_path: String = ""
+@export var content_revision: int = 1
+@export var sockets: Array[Dictionary] = []
+@export var required_capabilities: PackedStringArray = []
+
 @export var dimensions: Vector3 = Vector3.ZERO  # Bounding box size
 @export var anchor_points: Array[Vector3] = []  # Snap points for placement
 @export var required_theme: GenerationConfig.ThemeType = GenerationConfig.ThemeType.TECH
@@ -15,13 +21,85 @@ extends Resource
 
 ## Validate that the metadata has all required fields
 func is_valid() -> bool:
-	return dimensions.length() > 0.0
+	if not dimensions.is_finite() or dimensions.x <= 0 or dimensions.y <= 0 or dimensions.z <= 0:
+		return false
+	if module_id.is_empty():
+		return sockets.is_empty()
+	if scene_path.is_empty() or content_revision < 1 or "/" in module_id:
+		return false
+	var ids := {}
+	for socket in sockets:
+		if not socket.get("id") is String or socket.id.is_empty() or "/" in socket.id:
+			return false
+		if ids.has(socket.id) or not socket.get("kind", "walk") is String:
+			return false
+		ids[socket.id] = true
+		if socket.get("kind", "walk").is_empty():
+			return false
+		if not socket.get("local_transform") is Transform3D:
+			return false
+		if not socket.get("opening") is Vector2 or not socket.get("clearance") is AABB:
+			return false
+		var pose: Transform3D = socket.local_transform
+		var opening: Vector2 = socket.opening
+		var clearance: AABB = socket.clearance
+		if not pose.is_finite() or not opening.is_finite() or opening.x <= 0 or opening.y <= 0:
+			return false
+		if not clearance.position.is_finite() or not clearance.size.is_finite():
+			return false
+		if clearance.size.x <= 0 or clearance.size.y <= 0 or clearance.size.z <= 0:
+			return false
+	return true
 
 
 ## Parse JSON metadata from a dictionary
 ## Returns a PrefabMetadata object or null if parsing fails
 static func from_dict(data: Dictionary) -> PrefabMetadata:
 	var metadata := PrefabMetadata.new()
+	metadata.module_id = str(data.get("module_id", ""))
+	metadata.scene_path = str(data.get("scene_path", ""))
+	metadata.content_revision = int(data.get("content_revision", 1))
+	var capabilities: Variant = data.get("required_capabilities", [])
+	if not capabilities is Array:
+		return null
+	for capability: Variant in capabilities:
+		if not capability is String:
+			return null
+		metadata.required_capabilities.append(capability)
+	var socket_data: Variant = data.get("sockets", [])
+	if not socket_data is Array:
+		return null
+	for entry: Variant in socket_data:
+		if not entry is Dictionary:
+			return null
+		var pose: Variant = entry.get("local_transform")
+		var opening: Variant = entry.get("opening")
+		var clearance: Variant = entry.get("clearance")
+		if not pose is Dictionary or not clearance is Dictionary:
+			return null
+		var axes: Variant = pose.get("basis")
+		if not axes is Array or axes.size() != 3 or not _is_vector(pose.get("origin"), 3):
+			return null
+		for axis: Variant in axes:
+			if not _is_vector(axis, 3):
+				return null
+		if not _is_vector(opening, 2):
+			return null
+		if not _is_vector(clearance.get("position"), 3) or not _is_vector(clearance.get("size"), 3):
+			return null
+		metadata.sockets.append(
+			{
+				"id": entry.get("id", ""),
+				"kind": entry.get("kind", "walk"),
+				"local_transform":
+				Transform3D(
+					Basis(_vector3(axes[0]), _vector3(axes[1]), _vector3(axes[2])),
+					_vector3(pose.origin)
+				),
+				"opening": Vector2(opening[0], opening[1]),
+				"clearance": AABB(_vector3(clearance.position), _vector3(clearance.size))
+			}
+		)
 
 	# Parse dimensions (required)
 	if not data.has("dimensions"):
@@ -29,21 +107,21 @@ static func from_dict(data: Dictionary) -> PrefabMetadata:
 		return null
 
 	var dims: Variant = data["dimensions"]
-	if dims is Array and dims.size() == 3:
+	if _is_vector(dims, 3):
 		metadata.dimensions = Vector3(dims[0], dims[1], dims[2])
 	else:
 		push_error("PrefabMetadata: Invalid 'dimensions' format, expected array of 3 numbers")
 		return null
 
-	# Parse anchor_points (required)
-	if not data.has("anchor_points"):
+	# Legacy prop metadata still requires anchors; modules use sockets instead.
+	if not data.has("anchor_points") and metadata.module_id.is_empty():
 		push_error("PrefabMetadata: Missing required field 'anchor_points'")
 		return null
 
-	var anchors: Variant = data["anchor_points"]
+	var anchors: Variant = data.get("anchor_points", [])
 	if anchors is Array:
 		for anchor: Variant in anchors:
-			if anchor is Array and anchor.size() == 3:
+			if _is_vector(anchor, 3):
 				metadata.anchor_points.append(Vector3(anchor[0], anchor[1], anchor[2]))
 			else:
 				push_error(
@@ -55,11 +133,11 @@ static func from_dict(data: Dictionary) -> PrefabMetadata:
 		return null
 
 	# Parse required_theme (required)
-	if not data.has("required_theme"):
+	if not data.has("required_theme") and metadata.module_id.is_empty():
 		push_error("PrefabMetadata: Missing required field 'required_theme'")
 		return null
 
-	var theme_str: String = data["required_theme"]
+	var theme_str: String = str(data.get("required_theme", "tech"))
 	match theme_str.to_lower():
 		"tech":
 			metadata.required_theme = GenerationConfig.ThemeType.TECH
@@ -74,8 +152,8 @@ static func from_dict(data: Dictionary) -> PrefabMetadata:
 		_:
 			push_error(
 				(
-					"PrefabMetadata: Invalid theme '%s', "
-					+ "expected tech/hell/urban/cave/jumbled" % theme_str
+					"PrefabMetadata: Invalid theme '%s', expected tech/hell/urban/cave/jumbled"
+					% theme_str
 				)
 			)
 			return null
@@ -106,6 +184,8 @@ static func from_dict(data: Dictionary) -> PrefabMetadata:
 				"PrefabMetadata: Invalid 'placement_rules' format, " + "expected dictionary"
 			)
 
+	if not metadata.is_valid():
+		return null
 	return metadata
 
 
@@ -152,6 +232,30 @@ static func from_file(file_path: String) -> PrefabMetadata:
 ## Convert metadata to a dictionary for JSON export
 func to_dict() -> Dictionary:
 	var data := {}
+	data["module_id"] = module_id
+	data["scene_path"] = scene_path
+	data["content_revision"] = content_revision
+	data["required_capabilities"] = Array(required_capabilities)
+	var socket_data: Array[Dictionary] = []
+	for socket in sockets:
+		var pose: Transform3D = socket.local_transform
+		var opening: Vector2 = socket.opening
+		var clearance: AABB = socket.clearance
+		socket_data.append(
+			{
+				"id": socket.id,
+				"kind": socket.get("kind", "walk"),
+				"local_transform":
+				{
+					"basis": [_array3(pose.basis.x), _array3(pose.basis.y), _array3(pose.basis.z)],
+					"origin": _array3(pose.origin)
+				},
+				"opening": [opening.x, opening.y],
+				"clearance":
+				{"position": _array3(clearance.position), "size": _array3(clearance.size)}
+			}
+		)
+	data["sockets"] = socket_data
 
 	# Export dimensions
 	data["dimensions"] = [dimensions.x, dimensions.y, dimensions.z]
@@ -204,3 +308,20 @@ func save_to_file(file_path: String) -> bool:
 	file.store_string(to_json_string())
 	file.close()
 	return true
+
+
+static func _is_vector(value: Variant, count: int) -> bool:
+	if not value is Array or value.size() != count:
+		return false
+	for component: Variant in value:
+		if not (component is float or component is int) or not is_finite(float(component)):
+			return false
+	return true
+
+
+static func _vector3(value: Array) -> Vector3:
+	return Vector3(value[0], value[1], value[2])
+
+
+static func _array3(value: Vector3) -> Array:
+	return [value.x, value.y, value.z]

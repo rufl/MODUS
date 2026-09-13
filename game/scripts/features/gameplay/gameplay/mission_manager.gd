@@ -14,6 +14,8 @@ var active_mission_data: Dictionary = {}
 var objective_state: Dictionary = {}  # obj_id -> current_count
 var objective_totals: Dictionary = {}  # obj_id -> initial/total_count
 var available_missions: Dictionary = {}  # id -> data
+var mission_level: Node3D
+var completed_mission_id: String = ""
 
 
 static func get_instance() -> MissionMgr:
@@ -170,9 +172,16 @@ func start_mission(mission_id: String) -> void:
 		push_error("[MissionManager] Mission not found: " + mission_id)
 		return
 
+	_begin_mission(mission_id, available_missions[mission_id], null)
+
+
+func _begin_mission(mission_id: String, definition: Dictionary, level: Node3D) -> void:
 	active_mission_id = mission_id
-	active_mission_data = available_missions[mission_id].duplicate(true)
+	completed_mission_id = ""
+	active_mission_data = definition.duplicate(true)
+	mission_level = level
 	objective_state.clear()
+	objective_totals.clear()
 
 	# Initialize objectives
 	var objectives: Array = active_mission_data.get("objectives", [])
@@ -182,6 +191,9 @@ func start_mission(mission_id: String) -> void:
 			var group: String = obj.get("target_group", "enemies")
 			var total := get_tree().get_nodes_in_group(group).size()
 			objective_totals[obj.id] = total
+			objective_state[obj.id] = 0
+		elif type == "activate_actor":
+			objective_totals[obj.id] = int(obj.get("required_count", 1))
 			objective_state[obj.id] = 0
 
 	var logger: Variant = GameManager.get_core_system("logger")
@@ -198,13 +210,108 @@ func start_mission(mission_id: String) -> void:
 	set_process(true)
 
 
+func start_document_mission(level: Node3D) -> bool:
+	if not level or not level.has_method("get_actor_identity"):
+		return false
+	var objectives: Array[Dictionary] = []
+	for node: Node in level.find_children("*", "", true, false):
+		if not node.has_meta("mission_objective"):
+			continue
+		var authored: Variant = node.get_meta("mission_objective")
+		if not authored is Dictionary or not "activation_count" in node:
+			return false
+		var identity: String = level.get_actor_identity(node)
+		if identity.is_empty():
+			return false
+		objectives.append(
+			{
+				"id": identity,
+				"type": "activate_actor",
+				"target_actor": identity,
+				"description": str(authored.get("description", node.name)),
+				"required_count": 1,
+				"requires": [],
+				"final": authored.get("final", false)
+			}
+		)
+	for objective: Dictionary in objectives:
+		if objective.final:
+			for prerequisite: Dictionary in objectives:
+				if not prerequisite.final:
+					objective.requires.append(prerequisite.id)
+	_begin_mission(
+		str(level.get_meta("mission_id", "document_mission")),
+		{"name": str(level.get("level_name")), "objectives": objectives, "ends_match": false},
+		level
+	)
+	return true
+
+
+func can_activate_actor(actor: Node) -> bool:
+	if not is_instance_valid(mission_level) or not mission_level.is_ancestor_of(actor):
+		return true
+	var identity: String = mission_level.get_actor_identity(actor)
+	for objective: Dictionary in active_mission_data.get("objectives", []):
+		if objective.id != identity:
+			continue
+		for required: String in objective.get("requires", []):
+			if int(objective_state.get(required, 0)) < int(objective_totals.get(required, 1)):
+				return false
+	return true
+
+
+func capture_runtime_state() -> Dictionary:
+	return {
+		"active_id": active_mission_id,
+		"completed_id": completed_mission_id,
+		"definition": active_mission_data.duplicate(true),
+		"state": objective_state.duplicate(),
+		"totals": objective_totals.duplicate()
+	}
+
+
+func restore_runtime_state(state: Dictionary, level: Node3D = null) -> bool:
+	if (
+		not state.get("active_id") is String
+		or not state.get("completed_id") is String
+		or not state.get("definition") is Dictionary
+		or not state.get("state") is Dictionary
+		or not state.get("totals") is Dictionary
+	):
+		return false
+	active_mission_id = state.active_id
+	completed_mission_id = state.completed_id
+	active_mission_data = state.definition.duplicate(true)
+	objective_state = state.state.duplicate()
+	objective_totals = state.totals.duplicate()
+	mission_level = level
+	set_process(not active_mission_id.is_empty())
+	if not active_mission_id.is_empty():
+		mission_started.emit(active_mission_id)
+	return true
+
+
+func _check_actor_objective(objective: Dictionary) -> bool:
+	if not is_instance_valid(mission_level):
+		return false
+	var actor: Node = mission_level.find_actor(objective.target_actor)
+	if not is_instance_valid(actor) or not can_activate_actor(actor):
+		return false
+	var required: int = int(objective_totals[objective.id])
+	var current: int = mini(int(actor.activation_count), required)
+	if int(objective_state.get(objective.id, 0)) != current:
+		objective_state[objective.id] = current
+		objective_updated.emit(active_mission_id, objective.id, current, required)
+	return current >= required
+
+
 func _process(_delta: float) -> void:
 	if active_mission_id == "":
 		set_process(false)
 		return
 
 	# Check objectives
-	var all_complete: bool = true
+	var all_complete: bool = not active_mission_data.get("objectives", []).is_empty()
 	var objectives: Array = active_mission_data.get("objectives", [])
 
 	for obj: Dictionary in objectives:
@@ -213,6 +320,8 @@ func _process(_delta: float) -> void:
 
 		if type == "eliminate_group":
 			is_complete = _check_eliminate_group(obj)
+		elif type == "activate_actor":
+			is_complete = _check_actor_objective(obj)
 
 		if not is_complete:
 			all_complete = false
@@ -266,18 +375,16 @@ func _check_eliminate_group(obj: Dictionary) -> bool:
 	if required != -1:
 		total = required
 
-	var killed := total - living_count
-	if required == -1:
-		killed = total - living_count
-
-	objective_updated.emit(active_mission_id, obj.id, killed, total)
+	var killed: int = maxi(0, int(objective_totals.get(obj.id, total)) - living_count)
+	if int(objective_state.get(obj.id, -1)) != killed:
+		objective_state[obj.id] = killed
+		objective_updated.emit(active_mission_id, obj.id, killed, total)
 
 	# If required is -1, we need 0 living.
 	if required == -1:
 		return living_count == 0
 
-	# MVP supports "Kill All" (-1)
-	return living_count == 0
+	return killed >= required
 
 
 func _complete_mission() -> void:
@@ -286,19 +393,26 @@ func _complete_mission() -> void:
 		logger.info("[MissionManager] Mission Complete: " + active_mission_id, "Core")
 	else:
 		print("[MissionManager] Mission Complete: " + active_mission_id)
+	completed_mission_id = active_mission_id
 	mission_completed.emit(active_mission_id)
 	active_mission_id = ""
 	set_process(false)
+	if not active_mission_data.get("ends_match", true):
+		return
 
 	# Trigger Match End
 	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
 	if gs and gs.match_service:
 		# 1 = Generic Winner/Player Team
-		gs.match_service.end_match.rpc(1)
+		if multiplayer.has_multiplayer_peer():
+			gs.match_service.end_match.rpc(1)
+		else:
+			gs.match_service.end_match(1)
 
 
 func abort_mission() -> void:
 	if active_mission_id != "":
+		var aborted_id := active_mission_id
 		active_mission_id = ""
-		mission_failed.emit(active_mission_id)
+		mission_failed.emit(aborted_id)
 		set_process(false)

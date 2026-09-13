@@ -140,16 +140,19 @@ static func setup_local(player: Node) -> void:
 	_setup_blood(player)
 	_setup_advanced_movement(player)
 	_setup_fall_checker(player)
-	_setup_progression(player)
+	if not player.isolated_session:
+		_setup_progression(player)
 	_setup_input(player)
 	_setup_interaction(player)
 	_setup_movement_state_machine(player)
 	_setup_movement_component(player)
-	_setup_persistence(player)
+	if not player.isolated_session:
+		_setup_persistence(player)
 	_setup_camera(player)
 	_setup_weapon_pose(player)
-	_setup_menu_controller(player)
-	_setup_progression_bridge(player)
+	if not player.isolated_session:
+		_setup_menu_controller(player)
+		_setup_progression_bridge(player)
 	_connect_input_signals(player)
 	_setup_extended_hud(player)
 	_setup_targeting(player)

@@ -18,32 +18,17 @@ func before_each():
 	rng.seed = 12345  # Fixed seed for deterministic tests
 
 
-func test_generate_area_creates_cave_cells():
-	# Arrange
-	var grid_size := Vector2i(20, 20)
-	var grid := _create_empty_grid(grid_size)
-	var region := Rect2i(5, 5, 10, 10)
-
-	# Act
-	engine.generate_area(region, grid, rng, Cell.Type.CAVE, 5)
-
-	# Assert - should have some cave cells in the region
-	var cave_count := _count_cells_in_region(grid, region, Cell.Type.CAVE)
-	assert_gt(cave_count, 0, "Should generate at least some cave cells")
-
-
-func test_generate_area_creates_outdoor_cells():
-	# Arrange
-	var grid_size := Vector2i(20, 20)
-	var grid := _create_empty_grid(grid_size)
-	var region := Rect2i(5, 5, 10, 10)
-
-	# Act
-	engine.generate_area(region, grid, rng, Cell.Type.OUTDOOR, 5)
-
-	# Assert - should have some outdoor cells in the region
-	var outdoor_count := _count_cells_in_region(grid, region, Cell.Type.OUTDOOR)
-	assert_gt(outdoor_count, 0, "Should generate at least some outdoor cells")
+func test_area_growth_preserves_authored_room_and_hallway_cells() -> void:
+	var grid := _create_empty_grid(Vector2i(20, 20))
+	for x in range(5, 15):
+		grid[10][x].type = Cell.Type.ROOM if x < 10 else Cell.Type.HALLWAY
+	engine.generate_area(Rect2i(5, 5, 10, 10), grid, rng, Cell.Type.CAVE, 6)
+	for x in range(5, 15):
+		assert_eq(
+			grid[10][x].type,
+			Cell.Type.ROOM if x < 10 else Cell.Type.HALLWAY,
+			"Organic regions cannot erase the existing playable route"
+		)
 
 
 func test_generate_area_respects_region_bounds():
@@ -65,19 +50,6 @@ func test_generate_area_respects_region_bounds():
 					Cell.Type.EMPTY,
 					"Cells outside region should remain empty at (%d, %d)" % [x, y]
 				)
-
-
-func test_generate_area_with_zero_iterations_warns():
-	# Arrange
-	var grid_size := Vector2i(20, 20)
-	var grid := _create_empty_grid(grid_size)
-	var region := Rect2i(5, 5, 10, 10)
-
-	# Act & Assert - should handle gracefully
-	engine.generate_area(region, grid, rng, Cell.Type.CAVE, 0)
-	# Should still generate something (uses 1 iteration minimum)
-	var cave_count := _count_cells_in_region(grid, region, Cell.Type.CAVE)
-	assert_gt(cave_count, 0, "Should generate cells even with 0 iterations (uses minimum 1)")
 
 
 func test_generate_area_with_invalid_cell_type_errors():
@@ -120,43 +92,6 @@ func test_deterministic_generation_with_same_seed():
 				grid2[y][x].type,
 				"Grids should be identical with same seed at (%d, %d)" % [x, y]
 			)
-
-
-func test_ca_iterations_create_organic_shapes():
-	# Arrange
-	var grid_size := Vector2i(30, 30)
-	var grid := _create_empty_grid(grid_size)
-	var region := Rect2i(5, 5, 20, 20)
-
-	# Act
-	engine.generate_area(region, grid, rng, Cell.Type.CAVE, 6)
-
-	# Assert - should have clusters (not just random noise)
-	# Check that cells tend to be near other cells
-	var clustered_cells := 0
-	var total_cells := 0
-
-	for y in range(region.position.y + 1, region.end.y - 1):
-		for x in range(region.position.x + 1, region.end.x - 1):
-			if grid[y][x].type == Cell.Type.CAVE:
-				total_cells += 1
-				# Count neighbors
-				var neighbors := 0
-				for dy in [-1, 0, 1]:
-					for dx in [-1, 0, 1]:
-						if dy == 0 and dx == 0:
-							continue
-						if grid[y + dy][x + dx].type == Cell.Type.CAVE:
-							neighbors += 1
-
-				# If cell has 3+ neighbors, it's part of a cluster
-				if neighbors >= 3:
-					clustered_cells += 1
-
-	# Most cells should be clustered (organic shapes)
-	if total_cells > 0:
-		var cluster_ratio := float(clustered_cells) / float(total_cells)
-		assert_gt(cluster_ratio, 0.5, "Most cells should be clustered (organic shapes)")
 
 
 func test_edge_smoothing_removes_isolated_cells():

@@ -3,13 +3,7 @@ extends EditorNode3DGizmoPlugin
 
 
 func _init() -> void:
-	# Channel colors
-	create_material("channel_red", Color(1.0, 0.3, 0.3, 0.8))
-	create_material("channel_blue", Color(0.3, 0.5, 1.0, 0.8))
-	create_material("channel_green", Color(0.3, 0.8, 0.3, 0.8))
-	create_material("channel_yellow", Color(1.0, 0.8, 0.2, 0.8))
-	create_material("channel_purple", Color(0.7, 0.3, 1.0, 0.8))
-	create_material("channel_default", Color(0.8, 0.8, 0.8, 0.6))
+	create_material("channel_wire", Color.WHITE)
 
 
 func _get_gizmo_name() -> String:
@@ -22,13 +16,7 @@ func _has_gizmo(node: Node3D) -> bool:
 
 
 func _has_channel_data(node: Node3D) -> bool:
-	# Check if node has channel metadata
-	if node.has_meta("level_editor_channels"):
-		return true
-	# Check for our custom component
-	if node.has_node("ChannelConnector"):
-		return true
-	return false
+	return not _get_connections(node).is_empty()
 
 
 func _redraw(gizmo: EditorNode3DGizmo) -> void:
@@ -48,41 +36,33 @@ func _redraw(gizmo: EditorNode3DGizmo) -> void:
 
 
 func _get_connections(node: Node3D) -> Array:
-	# Get from metadata
-	if node.has_meta("level_editor_channels"):
-		return node.get_meta("level_editor_channels")
-
-	# Get from component
-	var connector := node.get_node_or_null("ChannelConnector")
-	if connector and connector.has_method("get_connections"):
-		return connector.get_connections()
-
+	var current: Node = node.get_parent()
+	while current:
+		if current.has_method("get_channel_system"):
+			var result: Array[Dictionary] = []
+			for connection: Dictionary in current.get_channel_system().get_node_connections(node):
+				if connection.role == "source":
+					result.append(connection)
+			return result
+		current = current.get_parent()
 	return []
 
 
 func _draw_connection(gizmo: EditorNode3DGizmo, source: Node3D, connection: Dictionary) -> void:
-	if not connection.has("target_path"):
-		return
-
-	var target := source.get_node_or_null(connection.target_path) as Node3D
-	if not target:
+	var target := connection.get("other") as Node3D
+	if not is_instance_valid(target):
 		return
 
 	var lines := PackedVector3Array()
 	var start := Vector3.ZERO  # Local to source
-	var end := target.global_position - source.global_position
+	var end := source.to_local(target.global_position)
 
 	# Draw curved wire
 	_draw_wire(lines, start, end)
 
-	# Get material based on channel color
-	var channel_name: String = connection.get("channel", "default")
-	var mat_name := "channel_" + _get_channel_color(channel_name)
-	var material := get_material(mat_name, gizmo)
-	if not material:
-		material = get_material("channel_default", gizmo)
-
-	gizmo.add_lines(lines, material, false)
+	gizmo.add_lines(
+		lines, get_material("channel_wire", gizmo), false, connection.get("color", Color.WHITE)
+	)
 
 
 func _draw_wire(lines: PackedVector3Array, start: Vector3, end: Vector3) -> void:
@@ -120,21 +100,3 @@ func _bezier(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: float) -> Ve
 	var r0 := q0.lerp(q1, t)
 	var r1 := q1.lerp(q2, t)
 	return r0.lerp(r1, t)
-
-
-func _get_channel_color(channel_name: String) -> String:
-	# Map common channel names to colors
-	var name_lower := channel_name.to_lower()
-
-	if name_lower.contains("red") or name_lower.contains("1"):
-		return "red"
-	if name_lower.contains("blue") or name_lower.contains("2"):
-		return "blue"
-	if name_lower.contains("green") or name_lower.contains("3"):
-		return "green"
-	if name_lower.contains("yellow") or name_lower.contains("4"):
-		return "yellow"
-	if name_lower.contains("purple") or name_lower.contains("5"):
-		return "purple"
-
-	return "default"

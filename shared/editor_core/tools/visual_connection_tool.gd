@@ -248,9 +248,10 @@ func complete_connection(channel_name: String = "") -> bool:
 	if channel_name.is_empty():
 		channel_name = _generate_channel_name(source_node, target_node)
 
-	# Create connection in channel system
-	if channel_system and channel_system.has_method("quick_connect"):
-		channel_system.quick_connect(source_node, target_node, channel_name)
+	if not channel_system:
+		cancel_connection()
+		return false
+	channel_system.create_connection(source_node, target_node, channel_name)
 
 	connection_completed.emit(source_node, target_node, channel_name)
 
@@ -304,9 +305,9 @@ func quick_connect_to(target: Node3D) -> bool:
 	if not _can_connect(source_node, target):
 		return false
 
-	# Create connection
-	if channel_system and channel_system.has_method("quick_connect"):
-		channel_system.quick_connect(source_node, target, quick_connect_channel)
+	if not channel_system:
+		return false
+	channel_system.create_connection(source_node, target, quick_connect_channel)
 
 	connection_completed.emit(source_node, target, quick_connect_channel)
 	return true

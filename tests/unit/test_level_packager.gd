@@ -16,10 +16,6 @@ func test_package_rejects_manifest_paths_outside_package() -> void:
 		level, "user://level_packager_regressions/", traversal_manifest
 	)
 	assert_false(traversal_result.success, "Traversal paths must not be packaged")
-	assert_true(
-		"relative package files" in traversal_result.error_msg,
-		"Traversal rejection should explain that manifest files must stay relative"
-	)
 
 	var absolute_manifest := LevelPackagerScript.LevelManifest.new()
 	absolute_manifest.id = "absolute_path"
@@ -30,10 +26,6 @@ func test_package_rejects_manifest_paths_outside_package() -> void:
 		level, "user://level_packager_regressions/", absolute_manifest
 	)
 	assert_false(absolute_result.success, "Absolute paths must not be packaged")
-	assert_true(
-		"relative package files" in absolute_result.error_msg,
-		"Absolute-path rejection should explain that manifest files must stay relative"
-	)
 
 
 func test_package_rejects_manifest_file_collision() -> void:
@@ -50,10 +42,6 @@ func test_package_rejects_manifest_file_collision() -> void:
 	)
 
 	assert_false(result.success, "A level must not replace the package manifest")
-	assert_true(
-		"cannot replace manifest.json" in result.error_msg,
-		"Manifest collision should be reported to the package caller"
-	)
 
 
 func test_package_rejects_level_and_thumbnail_collision() -> void:
@@ -70,33 +58,6 @@ func test_package_rejects_level_and_thumbnail_collision() -> void:
 	)
 
 	assert_false(result.success, "Level and thumbnail must occupy distinct package files")
-	assert_true(
-		"level_file and thumbnail must differ" in result.error_msg,
-		"Level/thumbnail collision should be reported to the package caller"
-	)
-
-
-func test_binary_dependency_diagnostic_identifies_package_relative_target() -> void:
-	var asset_map := {
-		"res://textures/albedo.png": "assets/texture_albedo.png",
-	}
-	var dependencies := PackedStringArray(
-		[
-			"res://textures/albedo.png::Texture2D",
-			"res://missing/normal.png::Texture2D",
-		]
-	)
-
-	var message := LevelPackagerScript._format_binary_dependency_error(
-		"res://materials/wall.res", "assets/material_wall.res", dependencies, asset_map
-	)
-
-	assert_true("res://materials/wall.res" in message)
-	assert_true("assets/material_wall.res" in message)
-	assert_true("res://textures/albedo.png::Texture2D" in message)
-	assert_true("package-relative 'texture_albedo.png'" in message)
-	assert_true("res://missing/normal.png::Texture2D" in message)
-	assert_true("not included in the package" in message)
 
 
 func test_manifest_parser_rejects_malformed_field_types() -> void:

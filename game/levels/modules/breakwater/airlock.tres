@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PrefabMetadata" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/scripts/map_generator/prefab_metadata.gd" id="1_metadata"]
+
+[resource]
+script = ExtResource("1_metadata")
+resource_name = "Breakwater / Airlock"
+module_id = "airlock"
+scene_path = "res://game/levels/modules/breakwater/airlock.tscn"
+content_revision = 1
+dimensions = Vector3(12, 6, 16)
+sockets = Array[Dictionary]([{
+"id": "out",
+"kind": "walk",
+"local_transform": Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8),
+"opening": Vector2(4, 3),
+"clearance": AABB(-2, 0, -9, 4, 3, 3)
+}])
+required_capabilities = PackedStringArray("walk")
+tags = Array[String](["module", "breakwater", "industrial"])

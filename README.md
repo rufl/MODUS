@@ -27,10 +27,14 @@ The parts most likely to frustrate you:
 - First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
 - Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
 - The Showcase route is an automated smoke path, not proof that the game feels good. Manual gameplay evidence is still zero reviewed hours.
-- Multiplayer proof is strongest on local ENet and focused authority contracts. WAN sessions, Steam, Workshop, target-Windows, exported-editor, and long-session proof remain open.
+- Multiplayer proof is strongest on local ENet and focused authority contracts. WAN sessions, Steam, Workshop, target-Windows, graphical exported-editor acceptance, and long-session proof remain open.
 - The current release line is `0.9.5-beta`; production readiness is explicitly **NOT READY**.
 
 If you want a polished game to play immediately, MODUS is the wrong download. If you want an inspectable FPS systems lab that you can bend, profile, test, and extend, it is the right kind of unfinished.
+
+### Release and World-Building Direction
+
+The [release and world-building plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) defines the path from this systems lab to an installable product. The **Breakwater Station three-room gate** now has shared socketed modules and actual key/switch/door/objective gameplay. Source and exported Linux editor → package → game workflows are exercised headlessly; graphical acceptance, the full composed mission, persistent hubs, installer and external-service gates remain separate. No superiority over other generators is claimed.
 
 
 ## Why MODUS
@@ -158,9 +162,9 @@ See [Multiplayer Authority](docs/MULTIPLAYER_AUTHORITY_MODEL.md), [Profile Smoke
 
 ### Editor and Workshop
 
-- Focused save/export/reload proof passes for a constructed level.
+- Historical constructed-level save/export/reload proof passes through `LevelSaveSystem`; it does not cover every embedded-editor path.
 - Local filesystem Workshop upload/download/browse/subscription simulation passes.
-- Native exported-app startup, full graphical editor workflow, and real Steam Workshop transfer remain unproven.
+- September 13 repairs embedded document replacement, nested ownership, root metadata, cursor RPC compilation and document-owned channels. Focused editor/history tests pass 36/36 with 204 assertions. Source and exported Linux editors assemble/wire three modules, play, reopen/resave and export `.mdsl`; the exported Linux game completes that package without losing geometry or behavior. Graphical verification is blocked by the isolated-display pressure guard.
 
 See [Editor Round-Trip Proof](docs/EDITOR_ROUNDTRIP_PROOF.md) and [Workshop Local Simulation](docs/WORKSHOP_LOCAL_SIMULATION_PROOF.md).
 
@@ -172,7 +176,11 @@ No display-synchronized solo, splitscreen, multiplayer, low-end hardware, or lon
 
 ### Map Generator
 
-The current map-generator proof includes 79/79 unit tests, 8/8 threading tests, 10/10 export tests, and 8/8 seed/RNG tests. Automated proof alone does not establish production readiness. Historical map-generator “production ready” reports are archived snapshots, not current truth.
+September 13 generator-correctness proof passes **55/55 focused tests with 1,319 assertions** on Godot 4.7.2. It covers seed isolation, connected layouts, retained keys/secrets, simultaneous-lock progression, collision-backed navigation, saved-scene routes and cancellation/restart. Separate 64×64 and default 128×128 source-generation smokes pass; the latter produces 1,405 navigation polygons. Historical unit/threading/export counts are not a current full-suite result.
+
+Generator revision **2** changes seed-to-content output. Saved scenes retain seed, configuration, revision and typed gameplay records; replay requires the same generator/runtime/content. The authored Breakwater gate uses real pickup/door/objective actors, but the generator's retained records are not yet automatically realized through that runtime. Rule/module/voxel generation integration, full mission production and persistent hubs remain open. See the [repair evidence and next deliveries](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#generator-correctness-delivery).
+
+Play the built-in gate from **Breakwater Station** in the main menu, or launch `godot --path . -- --breakwater`. Launch the authoring app with `godot --path . -- --editor`; its Modules tab places socketed rooms and wires gameplay actors. See the [standalone guide](standalone/editor/README.md). The [production brief](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#mission-direction-and-quality-reference) still governs the larger mission, audiovisual review, cyclic generation and hubs.
 
 ## Data and Configuration
 

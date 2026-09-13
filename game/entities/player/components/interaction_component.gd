@@ -82,12 +82,12 @@ func try_pickup() -> void:
 	if result:
 		var collider: Object = result["collider"]
 
-		# Handle Interactables (Keys, Switches)
-		var interactable: Node = null
-		if collider is Node:
-			interactable = collider.get_node_or_null("Interactable")
-		if interactable and interactable.has_method("interact"):
-			interactable.interact(_player)
+		var interactable := _find_interactable(collider as Node)
+		if interactable:
+			if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
+				_request_interaction.rpc_id(1, interactable.get_path())
+			else:
+				interactable.interact(_player)
 			return
 
 		# Handle Physics Objects
@@ -96,6 +96,40 @@ func try_pickup() -> void:
 				perform_pickup(collider)
 			else:
 				_request_pickup_object.rpc_id(1, collider.get_path())
+
+
+func _find_interactable(collider: Node) -> Node:
+	var node := collider
+	while node:
+		if node.has_method("interact"):
+			return node
+		var component := node.get_node_or_null("Interactable")
+		if component and component.has_method("interact"):
+			return component
+		node = node.get_parent()
+	return null
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_interaction(target_path: NodePath) -> void:
+	if (
+		not multiplayer.is_server()
+		or not _validate_client_rpc("_request_interaction", [target_path])
+	):
+		return
+	var target := get_node_or_null(target_path)
+	if not target or not target.has_method("interact") or not _camera:
+		return
+	# The server independently resolves the first reachable collider; a path is not authority.
+	var query := PhysicsRayQueryParameters3D.create(
+		_camera.global_position,
+		_camera.global_position - _camera.global_basis.z * pickup_range,
+		CollisionLayers.LAYER_INTERACTABLES | CollisionLayers.LAYER_WORLD,
+		[_player.get_rid()]
+	)
+	var hit := _player.get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty() and _find_interactable(hit["collider"] as Node) == target:
+		target.interact(_player)
 
 
 func throw_object() -> void:
@@ -119,19 +153,29 @@ func collect_key(key_id: String) -> void:
 		return
 
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
-		_request_collect_key.rpc_id(1, key_id)
+		# Only an authoritative, physically reachable interactable may grant a key.
 		return
 
 	_collected_keys.append(key_id)
-	_sync_collected_keys.rpc(_collected_keys)
+	if multiplayer.has_multiplayer_peer():
+		_sync_collected_keys.rpc(_collected_keys)
 	item_collected.emit(key_id)
 
 
-@rpc("any_peer", "call_local", "reliable")
-func _request_collect_key(key_id: String) -> void:
-	if not multiplayer.is_server() or not _validate_client_rpc("_request_collect_key", [key_id]):
-		return
-	collect_key(key_id)
+func get_collected_keys() -> Array[String]:
+	return _collected_keys.duplicate()
+
+
+func restore_collected_keys(keys: Array) -> bool:
+	var restored: Array[String] = []
+	for key: Variant in keys:
+		if not key is String or key.is_empty() or key in restored:
+			return false
+		restored.append(key)
+	_collected_keys = restored
+	if multiplayer.has_multiplayer_peer() and multiplayer.is_server():
+		_sync_collected_keys.rpc(_collected_keys)
+	return true
 
 
 # Internal Logic

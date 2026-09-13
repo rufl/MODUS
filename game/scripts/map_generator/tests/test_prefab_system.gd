@@ -4,6 +4,7 @@ extends GutTest
 
 const PrefabMetadata = preload("res://game/scripts/map_generator/prefab_metadata.gd")
 const MapPrefabSystem = preload("res://game/scripts/map_generator/prefab_system.gd")
+const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 
 var prefab_system: MapPrefabSystem
 
@@ -49,6 +50,7 @@ func test_prefab_metadata_from_dict_missing_dimensions() -> void:
 	var metadata := PrefabMetadata.from_dict(data)
 
 	assert_null(metadata, "Metadata should be null when dimensions are missing")
+	assert_push_error_count(1)
 
 
 ## Test PrefabMetadata parsing with invalid theme
@@ -62,21 +64,7 @@ func test_prefab_metadata_from_dict_invalid_theme() -> void:
 	var metadata := PrefabMetadata.from_dict(data)
 
 	assert_null(metadata, "Metadata should be null when theme is invalid")
-
-
-## Test PrefabMetadata parsing with default values
-func test_prefab_metadata_from_dict_defaults() -> void:
-	var data := {
-		"dimensions": [2.0, 3.0, 2.0], "anchor_points": [[0.0, 0.0, 0.0]], "required_theme": "hell"
-	}
-
-	var metadata := PrefabMetadata.from_dict(data)
-
-	assert_not_null(metadata, "Metadata should be parsed successfully")
-	assert_eq(metadata.density_weight, 1.0, "Default density weight should be 1.0")
-	assert_eq(metadata.tags.size(), 0, "Default tags should be empty")
-	assert_eq(metadata.collision_radius, 0.5, "Default collision radius should be 0.5")
-	assert_eq(metadata.placement_rules.size(), 0, "Default placement rules should be empty")
+	assert_push_error_count(1)
 
 
 ## Test PrefabMetadata to_dict conversion
@@ -184,17 +172,141 @@ func test_prefab_system_statistics() -> void:
 	assert_eq(stats["total_prefabs"], 0, "Initial total should be 0")
 
 
-## Test PrefabMetadata JSON string export
-func test_prefab_metadata_to_json_string() -> void:
-	var metadata := PrefabMetadata.new()
-	metadata.dimensions = Vector3(2.0, 3.0, 2.0)
-	metadata.anchor_points = [Vector3(0.0, 0.0, 0.0)]
-	metadata.required_theme = GenerationConfig.ThemeType.TECH
+func test_module_json_roundtrip_retains_attachable_socket_geometry() -> void:
+	var original := PrefabMetadata.new()
+	original.module_id = "rotated_room"
+	original.scene_path = "res://room.tscn"
+	original.content_revision = 3
+	original.dimensions = Vector3(12, 6, 16)
+	original.required_capabilities = PackedStringArray(["walk"])
+	var pose := Transform3D(Basis(Vector3.UP, PI / 2), Vector3(-6, 0, 0))
+	original.sockets = [
+		{
+			"id": "west",
+			"kind": "walk",
+			"local_transform": pose,
+			"opening": Vector2(4, 3),
+			"clearance": AABB(Vector3(-7, 0, -2), Vector3(3, 3, 4))
+		}
+	]
+	var decoded := PrefabMetadata.from_dict(JSON.parse_string(original.to_json_string()))
+	assert_not_null(decoded)
+	if decoded == null:
+		return
+	var restored_pose: Transform3D = decoded.sockets[0].local_transform
+	assert_true(
+		restored_pose.is_equal_approx(pose),
+		"JSON must preserve outward orientation and socket floor position"
+	)
+	assert_true(
+		decoded.sockets[0].clearance.has_point(Vector3(-6, 1, 0)),
+		"The reserved walk approach survives JSON"
+	)
+	assert_eq(
+		decoded.to_dict(),
+		original.to_dict(),
+		"Content identity and all authored metadata survive serialization"
+	)
+	assert_true(
+		decoded.anchor_points.is_empty(), "Room sockets must not become decorative prop anchors"
+	)
+	var duplicate := decoded.to_dict()
+	duplicate.sockets.append(duplicate.sockets[0].duplicate(true))
+	assert_null(PrefabMetadata.from_dict(duplicate), "Ambiguous socket IDs cannot be authored")
+	var malformed := decoded.to_dict()
+	malformed.sockets[0].local_transform.basis[0] = ["not a number", 0, 0]
+	assert_null(
+		PrefabMetadata.from_dict(malformed), "Malformed socket geometry cannot enter the catalog"
+	)
 
-	var json_str := metadata.to_json_string()
 
-	assert_not_null(json_str, "JSON string should not be null")
-	assert_true(json_str.length() > 0, "JSON string should not be empty")
-	assert_true(json_str.contains("dimensions"), "JSON should contain dimensions")
-	assert_true(json_str.contains("anchor_points"), "JSON should contain anchor_points")
-	assert_true(json_str.contains("required_theme"), "JSON should contain required_theme")
+func test_editor_library_retains_canonical_module_definition_through_json() -> void:
+	var definition := PrefabMetadata.new()
+	definition.module_id = "room"
+	definition.scene_path = "res://room.tscn"
+	definition.dimensions = Vector3(12, 6, 16)
+	var info := PrefabSystem.PrefabInfo.new()
+	info.definition = definition
+	info.bounds = AABB(Vector3(-6, 0, -8), definition.dimensions)
+	var restored := PrefabSystem.PrefabInfo.from_dict(
+		JSON.parse_string(JSON.stringify(info.to_dict()))
+	)
+	assert_eq(restored.bounds, info.bounds, "Library bounds must remain usable after loading JSON")
+	assert_not_null(restored.definition)
+	assert_eq(
+		restored.definition.to_dict(),
+		definition.to_dict(),
+		"The editor library must use canonical metadata"
+	)
+
+
+func test_module_rotation_undo_and_pack_preserve_geometry_and_graph() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root: Node3D = LevelRootScript.new()
+	root.authoring_mode = true
+	add_child(root)
+	var catalog := ModuleAssembly.get_catalog()
+	var first := ModuleAssembly.place_module(root, catalog[0], "", "", "", 1)
+	var second := ModuleAssembly.place_module(root, catalog[1], "airlock", "out", "in")
+	assert_true(first.success)
+	assert_true(second.success)
+	if second.success:
+		var instance: ModuleInstance = second.instance
+		var pose := instance.transform
+		var graph: Array[Dictionary] = root.module_connections.duplicate(true)
+		assert_true(ModuleAssembly.validate_level(root).valid)
+		EditorGlobals.get_undo_redo().undo()
+		assert_eq(ModuleAssembly.get_instances(root).size(), 1)
+		assert_true(root.module_connections.is_empty())
+		EditorGlobals.get_undo_redo().redo()
+		assert_eq(instance.instance_id, "pump")
+		assert_true(
+			instance.transform.is_equal_approx(pose),
+			"Redo restores rotated placement, not source-scene geometry"
+		)
+		assert_eq(root.module_connections, graph)
+		root.prepare_for_save()
+		var packed := PackedScene.new()
+		assert_eq(packed.pack(root), OK)
+		var reopened := packed.instantiate() as Node3D
+		assert_true(
+			ModuleAssembly.validate_level(reopened).valid,
+			"Packed modules keep their socket geometry and graph"
+		)
+		assert_eq(reopened.module_connections, graph)
+		reopened.free()
+	EditorGlobals._runtime_undo_redo.clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
+func test_rejected_module_placement_does_not_mutate_document() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root: Node3D = LevelRootScript.new()
+	root.authoring_mode = true
+	add_child(root)
+	var catalog := ModuleAssembly.get_catalog()
+	assert_true(ModuleAssembly.place_module(root, catalog[0]).success)
+	var wrong_kind := catalog[1].duplicate(true) as PrefabMetadata
+	wrong_kind.sockets[0]["kind"] = "vent"
+	assert_false(ModuleAssembly.place_module(root, wrong_kind, "airlock", "out", "in").success)
+	assert_eq(ModuleAssembly.get_instances(root).size(), 1)
+	assert_true(root.module_connections.is_empty())
+	var wrong_opening := catalog[1].duplicate(true) as PrefabMetadata
+	wrong_opening.sockets[0]["opening"] = Vector2(3, 3)
+	assert_false(ModuleAssembly.place_module(root, wrong_opening, "airlock", "out", "in").success)
+	assert_eq(ModuleAssembly.get_instances(root).size(), 1)
+	assert_true(root.module_connections.is_empty())
+	assert_true(ModuleAssembly.place_module(root, catalog[1], "airlock", "out", "in").success)
+	var before: Array[Dictionary] = root.module_connections.duplicate(true)
+	assert_false(
+		ModuleAssembly.place_module(root, catalog[2], "airlock", "out", "in").success,
+		"An occupied socket cannot be reused"
+	)
+	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
+	assert_eq(root.module_connections, before, "Failed attachment must preserve existing graph")
+	EditorGlobals._runtime_undo_redo.clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()

@@ -61,7 +61,8 @@ func generate_room_shape(
 		lsystem_string = _apply_lsystem_rules(lsystem_string, rules)
 
 	# Convert L-system string to polygon points
-	var points := _lsystem_to_polygon(lsystem_string, Vector2(center))
+	var world_center := (Vector2(center) + Vector2(0.5, 0.5)) * STEP_SIZE
+	var points := _lsystem_to_polygon(lsystem_string, world_center)
 
 	# Simplify polygon to match target size
 	points = _simplify_polygon(points, target_size, rng)
@@ -225,7 +226,7 @@ func polygon_to_grid_cells(points: PackedVector2Array, grid_size: Vector2i) -> A
 	for y in range(int(bounds.position.y), int(bounds.end.y) + 1):
 		for x in range(int(bounds.position.x), int(bounds.end.x) + 1):
 			var cell_pos := Vector2i(x, y)
-			var world_pos := Vector2(x, y) * STEP_SIZE
+			var world_pos := (Vector2(x, y) + Vector2(0.5, 0.5)) * STEP_SIZE
 
 			# Check if cell center is inside polygon
 			if _is_point_in_polygon(world_pos, points):
@@ -342,6 +343,8 @@ func _ensure_connected_cells(cells: Array[Vector2i]) -> Array[Vector2i]:
 			if not visited.has(cell):
 				# Find nearest connected cell and add bridge
 				var nearest := _find_nearest_cell(cell, connected)
+				connected.append(cell)
+				visited[cell] = true
 				var bridge := _create_bridge(cell, nearest)
 				for bridge_cell in bridge:
 					if not visited.has(bridge_cell):
@@ -477,18 +480,18 @@ func generate_room(
 	# Ensure minimum size requirements are met
 	cells = _ensure_minimum_size(cells, room_type, center, context.grid_size)
 
-	# Create room object
-	var room := Room.new(room_id, center, room_type)
+	# Keep the logical center on a real cell for hallways and spawn placement.
+	var actual_center := _find_nearest_cell(center, cells)
+	var room := Room.new(room_id, actual_center, room_type)
 	room.poly_points = poly_points
 	room.cells = cells
 
 	# Find connection points (cells on the edge of the room)
 	room.entrance_points = _find_entrance_points(cells)
 
-	# Ensure at least one connection point
-	if room.entrance_points.is_empty():
-		# Add center as fallback connection point
-		room.entrance_points.append(center)
+	# A fully clipped shape cannot provide a usable entrance.
+	if room.entrance_points.is_empty() and not cells.is_empty():
+		room.entrance_points.append(actual_center)
 
 	return room
 
@@ -525,43 +528,34 @@ func _ensure_minimum_size(
 	if cells.size() >= min_size:
 		return cells
 
-	# Add cells in a spiral pattern from center until minimum size is reached
+	# Grow from actual cells, preserving connectivity even near map boundaries.
 	var result := cells.duplicate()
+	if result.is_empty():
+		if center.x < 0 or center.y < 0 or center.x >= grid_size.x or center.y >= grid_size.y:
+			return result
+		result.append(center)
 	var cell_set := {}
-	for cell in cells:
+	for cell in result:
 		cell_set[cell] = true
 
-	var radius := 1
-	while result.size() < min_size and radius < 20:
-		var added := false
-
-		# Check cells at current radius
-		for dy in range(-radius, radius + 1):
-			for dx in range(-radius, radius + 1):
-				if abs(dx) != radius and abs(dy) != radius:
-					continue  # Only check perimeter
-
-				var candidate := center + Vector2i(dx, dy)
-
-				# Check if valid and not already added
-				if (
-					candidate.x >= 0
-					and candidate.x < grid_size.x
-					and candidate.y >= 0
-					and candidate.y < grid_size.y
-					and not cell_set.has(candidate)
-				):
-					result.append(candidate)
-					cell_set[candidate] = true
-					added = true
-
-					if result.size() >= min_size:
-						return result
-
-		if not added:
-			break  # No more cells can be added
-
-		radius += 1
+	var cursor := 0
+	var directions := [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+	while result.size() < min_size and cursor < result.size():
+		var current: Vector2i = result[cursor]
+		cursor += 1
+		for direction: Vector2i in directions:
+			var candidate := current + direction
+			if (
+				candidate.x >= 0
+				and candidate.x < grid_size.x
+				and candidate.y >= 0
+				and candidate.y < grid_size.y
+				and not cell_set.has(candidate)
+			):
+				result.append(candidate)
+				cell_set[candidate] = true
+				if result.size() >= min_size:
+					break
 
 	return result
 
@@ -687,7 +681,7 @@ func _determine_room_types(room_count: int, context: GenerationContext) -> Array
 			types.append(Room.RoomType.LARGE)
 
 	# Shuffle to randomize placement order
-	types.shuffle()
+	context.shuffle(types)
 
 	return types
 

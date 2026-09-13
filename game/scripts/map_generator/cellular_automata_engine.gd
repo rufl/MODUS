@@ -51,6 +51,8 @@ func _initialize_with_noise(
 			# Skip if out of bounds
 			if y < 0 or y >= grid.size() or x < 0 or x >= grid[y].size():
 				continue
+			if grid[y][x].type != Cell.Type.EMPTY:
+				continue
 
 			# 45% chance to fill cell
 			if rng.randf() < 0.45:
@@ -67,6 +69,8 @@ func _apply_ca_iteration(region: Rect2i, grid: Array[Array], cell_type: Cell.Typ
 		for x in range(region.position.x + 1, region.end.x - 1):
 			# Skip if out of bounds
 			if y < 0 or y >= grid.size() or x < 0 or x >= grid[y].size():
+				continue
+			if grid[y][x].type not in [Cell.Type.EMPTY, cell_type]:
 				continue
 
 			var alive_neighbors := _count_alive_neighbors(grid, x, y, cell_type)
@@ -134,7 +138,7 @@ func _smooth_edges(region: Rect2i, grid: Array[Array], cell_type: Cell.Type) -> 
 				changes[pos] = Cell.Type.EMPTY
 
 			# Fill small gaps (6+ neighbors)
-			elif grid[y][x].type != cell_type and alive_neighbors >= 6:
+			elif grid[y][x].type == Cell.Type.EMPTY and alive_neighbors >= 6:
 				changes[pos] = cell_type
 
 	# Apply changes

@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This index separates published references and curated evidence from local-only generated outputs and historical snapshots.
 
-**Updated:** September 9, 2026
+**Updated:** September 13, 2026
 
 ## Canonical Current Truth
 
@@ -11,6 +11,7 @@
 - [Ship-Readiness Estimate](SHIP_READINESS_ESTIMATE.md): explicit evidence gateboard and calendar estimate
 - [Active Backlog](../BACKLOG.md): open work and current progress
 - [Root Roadmap](../ROADMAP.md) and [Product Roadmap](ROADMAP.md): proof sequence and product-area gaps
+- [Release and World-Building Plan](RELEASE_AND_WORLD_BUILDING_PLAN.md): researched proposal for the first mission, modular generation/editor, hubs and distribution acceptance; not shipped-feature evidence
 
 ## Local Reports and Published Evidence
 

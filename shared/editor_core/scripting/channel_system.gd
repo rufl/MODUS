@@ -15,6 +15,7 @@ const CHANNEL_COLORS := {
 }
 
 var channels: Dictionary = {}
+var document_root: Node
 
 
 func create_channel(channel_name: String, color: Color = Color.WHITE) -> void:
@@ -38,11 +39,11 @@ func delete_channel(channel_name: String) -> void:
 	if not channels.has(channel_name):
 		return
 
-	# Notify all connected nodes
 	var channel: Dictionary = channels[channel_name]
-	for source: Node in channel.sources:
-		for target: Node in channel.targets:
-			connection_removed.emit(source, target, channel_name)
+	for source: Node in channel.sources.duplicate():
+		disconnect_node(source, channel_name)
+	for target: Node in channel.targets.duplicate():
+		disconnect_node(target, channel_name)
 
 	channels.erase(channel_name)
 
@@ -53,6 +54,8 @@ func delete_channel(channel_name: String) -> void:
 func connect_source(node: Node, channel_name: String) -> void:
 	if not channels.has(channel_name):
 		create_channel(channel_name)
+	if node is ActorBase and node.output_channel.is_empty():
+		node.output_channel = channel_name
 
 	if node not in channels[channel_name].sources:
 		channels[channel_name].sources.append(node)
@@ -68,6 +71,8 @@ func connect_source(node: Node, channel_name: String) -> void:
 func connect_target(node: Node, channel_name: String) -> void:
 	if not channels.has(channel_name):
 		create_channel(channel_name)
+	if node is ActorBase and channel_name not in node.input_channels:
+		node.input_channels.append(channel_name)
 
 	if node not in channels[channel_name].targets:
 		channels[channel_name].targets.append(node)
@@ -90,6 +95,14 @@ func disconnect_node(node: Node, channel_name: String) -> void:
 
 	channel.sources.erase(node)
 	channel.targets.erase(node)
+	if node is ActorBase:
+		node.input_channels.erase(channel_name)
+		if node.output_channel == channel_name:
+			node.output_channel = ""
+			for other: String in channels:
+				if node in channels[other].sources:
+					node.output_channel = other
+					break
 
 	# Emit removal events
 	if was_source:
@@ -117,13 +130,19 @@ func create_connection(source: Node, target: Node, channel_name: String = "") ->
 	connect_source(source, channel_name)
 	connect_target(target, channel_name)
 
-	# Store connection metadata on source node for gizmo rendering
-	_store_connection_metadata(source, target, channel_name)
-
 	return channel_name
 
 
 ## Emit a channel event (called by sources at runtime)
+
+
+func emit_from(source: Node, value: bool, data: Dictionary) -> void:
+	var payload := data.duplicate()
+	payload["value"] = value
+	payload["source"] = data.get("source", source)
+	for channel_name: String in channels.keys():
+		if source in channels[channel_name].sources:
+			emit(channel_name, payload)
 
 
 func emit(channel_name: String, data: Dictionary = {}) -> void:
@@ -141,16 +160,21 @@ func emit(channel_name: String, data: Dictionary = {}) -> void:
 		await get_tree().create_timer(channel.delay).timeout
 
 	# Trigger targets
-	var trigger_value: bool = not channel.inverted
+	var trigger_value: bool = bool(data.get("value", true)) != bool(channel.inverted)
 	for target: Node in channel.targets:
 		if is_instance_valid(target):
 			_trigger_target(target, channel_name, data, trigger_value)
 
 
 func _trigger_target(target: Node, channel_name: String, data: Dictionary, value: bool) -> void:
+	var payload := data.duplicate()
+	payload["value"] = value
+	if target is ActorBase:
+		target.receive_channel_input(channel_name, payload)
+		return
 	# Try various callback methods
 	if target.has_method("on_channel_triggered"):
-		target.on_channel_triggered(channel_name, data, value)
+		target.on_channel_triggered(channel_name, payload, value)
 	elif target.has_method("trigger"):
 		target.trigger()
 	elif target.has_method("activate"):
@@ -163,23 +187,6 @@ func _trigger_target(target: Node, channel_name: String, data: Dictionary, value
 			target.open_door()
 		else:
 			target.close_door()
-
-
-func _store_connection_metadata(source: Node, target: Node, channel_name: String) -> void:
-	# Store for gizmo visualization
-	var connections: Array = []
-	if source.has_meta("level_editor_channels"):
-		connections = source.get_meta("level_editor_channels")
-
-	connections.append(
-		{
-			"channel": channel_name,
-			"target_path": source.get_path_to(target),
-			"color": channels[channel_name].color
-		}
-	)
-
-	source.set_meta("level_editor_channels", connections)
 
 
 ## Get all channels a node is connected to
@@ -253,57 +260,184 @@ func set_channel_color(channel_name: String, color: Color) -> void:
 		channels[channel_name].color = color
 
 
+func get_channel_color(channel_name: String) -> Color:
+	return channels[channel_name].color if channels.has(channel_name) else Color.WHITE
+
+
 ## Serialize all channels to dictionary
 
 
 func serialize() -> Dictionary:
 	var data := {}
-
 	for channel_name: String in channels:
 		var channel: Dictionary = channels[channel_name]
 		data[channel_name] = {
-			"sources": _paths_from_nodes(channel.sources),
-			"targets": _paths_from_nodes(channel.targets),
+			"sources": _ids_from_nodes(channel.sources),
+			"targets": _ids_from_nodes(channel.targets),
 			"color": channel.color.to_html(),
 			"enabled": channel.enabled,
 			"delay": channel.delay,
 			"inverted": channel.inverted
 		}
-
 	return data
 
 
-## Deserialize channels from dictionary
-
-
 func deserialize(data: Dictionary, root_node: Node) -> void:
+	document_root = root_node
 	channels.clear()
-
+	_clear_actor_channels(document_root)
 	for channel_name: String in data:
-		var channel_data: Dictionary = data[channel_name]
-
+		var saved: Dictionary = data[channel_name]
 		channels[channel_name] = {
-			"sources": _nodes_from_paths(channel_data.sources, root_node),
-			"targets": _nodes_from_paths(channel_data.targets, root_node),
-			"color": Color.html(channel_data.get("color", "#ffffff")),
-			"enabled": channel_data.get("enabled", true),
-			"delay": channel_data.get("delay", 0.0),
-			"inverted": channel_data.get("inverted", false)
+			"sources": _nodes_from_ids(saved.get("sources", [])),
+			"targets": _nodes_from_ids(saved.get("targets", [])),
+			"color": Color.html(saved.get("color", "ffffff")),
+			"enabled": saved.get("enabled", true),
+			"delay": saved.get("delay", 0.0),
+			"inverted": saved.get("inverted", false)
 		}
+		for source: Node in channels[channel_name].sources:
+			if source is ActorBase:
+				source.output_channel = channel_name
+		for target: Node in channels[channel_name].targets:
+			if target is ActorBase and channel_name not in target.input_channels:
+				target.input_channels.append(channel_name)
 
 
-func _paths_from_nodes(nodes: Array) -> Array:
-	var paths := []
+func _clear_actor_channels(node: Node) -> void:
+	for child: Node in node.get_children():
+		if child.get_meta("editor_runtime_only", false):
+			continue
+		if child is ActorBase:
+			child.output_channel = ""
+			child.input_channels = PackedStringArray()
+		_clear_actor_channels(child)
+
+
+func get_binding_id(node: Node) -> String:
+	if not is_instance_valid(node) or not is_instance_valid(document_root):
+		return ""
+	if not document_root.is_ancestor_of(node):
+		return ""
+	if node is ActorBase:
+		if node.actor_id.is_empty():
+			node.actor_id = String(document_root.get_path_to(node)).replace("/", "_")
+		var current := node.get_parent()
+		while current and current != document_root:
+			if "instance_id" in current:
+				return "%s/%s" % [current.get("instance_id"), node.actor_id]
+			current = current.get_parent()
+		return node.actor_id
+	# Non-actor connections retain document-relative paths, never SceneTree paths.
+	return String(document_root.get_path_to(node))
+
+
+func find_actor(identity: String) -> Node:
+	if not is_instance_valid(document_root):
+		return null
+	return _find_binding(document_root, identity)
+
+
+func _find_binding(node: Node, identity: String) -> Node:
+	for child: Node in node.get_children():
+		if child.get_meta("editor_runtime_only", false):
+			continue
+		if get_binding_id(child) == identity:
+			return child
+		var found := _find_binding(child, identity)
+		if found:
+			return found
+	return null
+
+
+func _ids_from_nodes(nodes: Array) -> Array[String]:
+	var identities: Array[String] = []
 	for node: Node in nodes:
-		if is_instance_valid(node):
-			paths.append(node.get_path())
-	return paths
+		if not is_instance_valid(node):
+			continue
+		var identity := get_binding_id(node)
+		if not identity.is_empty():
+			identities.append(identity)
+	return identities
 
 
-func _nodes_from_paths(paths: Array, root: Node) -> Array:
-	var nodes := []
-	for path: NodePath in paths:
-		var node := root.get_node_or_null(path)
+func _nodes_from_ids(identities: Array) -> Array[Node]:
+	var nodes: Array[Node] = []
+	for identity: Variant in identities:
+		var node := find_actor(str(identity))
 		if node:
 			nodes.append(node)
 	return nodes
+
+
+func get_all_connections() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for channel_name: String in channels:
+		var channel: Dictionary = channels[channel_name]
+		for source: Node in channel.sources:
+			for target: Node in channel.targets:
+				if (
+					is_instance_valid(source)
+					and is_instance_valid(target)
+					and document_root.is_ancestor_of(source)
+					and document_root.is_ancestor_of(target)
+				):
+					result.append(
+						{
+							"source": source,
+							"target": target,
+							"channel": channel_name,
+							"color": channel.color
+						}
+					)
+	return result
+
+
+func validate_data(data: Dictionary) -> Array[String]:
+	var errors: Array[String] = []
+	var identities: Dictionary = {}
+	_collect_actor_identities(document_root, identities, errors)
+	for channel_name: Variant in data:
+		if (
+			not channel_name is String
+			or String(channel_name).is_empty()
+			or not data[channel_name] is Dictionary
+		):
+			errors.append("Invalid channel record.")
+			continue
+		var saved: Dictionary = data[channel_name]
+		if not saved.get("enabled", true) is bool or not saved.get("inverted", false) is bool:
+			errors.append("Channel '%s' has invalid boolean settings." % channel_name)
+		var delay: Variant = saved.get("delay", 0.0)
+		if not (delay is int or delay is float) or not is_finite(float(delay)) or float(delay) < 0:
+			errors.append("Channel '%s' has invalid delay." % channel_name)
+		if (
+			not saved.get("color", "ffffff") is String
+			or not Color.html_is_valid(saved.get("color", "ffffff"))
+		):
+			errors.append("Channel '%s' has invalid color." % channel_name)
+		for role: String in ["sources", "targets"]:
+			if not saved.get(role, []) is Array:
+				errors.append("Channel '%s' has invalid %s." % [channel_name, role])
+				continue
+			for identity: Variant in saved.get(role, []):
+				if not identity is String or find_actor(identity) == null:
+					errors.append(
+						(
+							"Channel '%s' has an unresolved %s binding: %s."
+							% [channel_name, role, identity]
+						)
+					)
+	return errors
+
+
+func _collect_actor_identities(node: Node, identities: Dictionary, errors: Array[String]) -> void:
+	for child: Node in node.get_children():
+		if child.get_meta("editor_runtime_only", false):
+			continue
+		if child is ActorBase:
+			var identity := get_binding_id(child)
+			if identities.has(identity):
+				errors.append("Duplicate actor identity: " + identity)
+			identities[identity] = child
+		_collect_actor_identities(child, identities, errors)

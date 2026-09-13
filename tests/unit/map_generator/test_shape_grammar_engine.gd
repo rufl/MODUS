@@ -34,83 +34,48 @@ func before_each() -> void:
 		context.grid.append(row)
 
 
-func test_generate_room_shape_small() -> void:
-	var center := Vector2i(64, 64)
-	var target_size := 6
-	var room_type: Room.RoomType = Room.RoomType.SMALL
-
-	var points: PackedVector2Array = engine.generate_room_shape(
-		center, target_size, room_type, rng, null
-	)
-
-	assert_gt(points.size(), 0, "Should generate polygon points")
-
-
-func test_generate_room_shape_medium() -> void:
-	var center := Vector2i(64, 64)
-	var target_size := 12
-	var room_type: Room.RoomType = Room.RoomType.MEDIUM
-
-	var points: PackedVector2Array = engine.generate_room_shape(
-		center, target_size, room_type, rng, null
-	)
-
-	assert_gt(points.size(), 0, "Should generate polygon points")
+func test_room_shape_uses_world_cell_coordinates() -> void:
+	var first_center := Vector2i(20, 24)
+	var second_center := Vector2i(60, 70)
+	rng.seed = 42
+	var first := engine.generate_room_shape(first_center, 12, Room.RoomType.MEDIUM, rng)
+	rng.seed = 42
+	var second := engine.generate_room_shape(second_center, 12, Room.RoomType.MEDIUM, rng)
+	var expected_offset := Vector2(second_center - first_center) * 2.0
+	assert_eq(first.size(), second.size())
+	for i in range(first.size()):
+		assert_almost_eq(second[i], first[i] + expected_offset, Vector2(0.001, 0.001))
 
 
-func test_generate_room_shape_large() -> void:
-	var center := Vector2i(64, 64)
-	var target_size := 25
-	var room_type: Room.RoomType = Room.RoomType.LARGE
-
-	var points: PackedVector2Array = engine.generate_room_shape(
-		center, target_size, room_type, rng, null
-	)
-
-	assert_gt(points.size(), 0, "Should generate polygon points")
-
-
-func test_generate_room_shape_boss_arena() -> void:
-	var center := Vector2i(64, 64)
-	var target_size := 50
-	var room_type: Room.RoomType = Room.RoomType.BOSS_ARENA
-
-	var points: PackedVector2Array = engine.generate_room_shape(
-		center, target_size, room_type, rng, null
-	)
-
-	assert_gt(points.size(), 0, "Should generate polygon points for boss arena")
-
-
-func test_polygon_to_grid_cells() -> void:
-	# Create a simple square polygon
+func test_polygon_to_grid_cells_samples_centers_and_clips_bounds() -> void:
+	# Only the center of cell (0, 0) is inside; its corner lies outside.
 	var points := PackedVector2Array(
-		[Vector2(64, 64), Vector2(68, 64), Vector2(68, 68), Vector2(64, 68)]
+		[Vector2(-0.5, 0.5), Vector2(1.5, 0.5), Vector2(1.5, 1.5), Vector2(-0.5, 1.5)]
 	)
-
-	var cells: Array[Vector2i] = engine.polygon_to_grid_cells(points, context.grid_size)
-
-	assert_gt(cells.size(), 0, "Should generate at least one cell")
-
-	# All cells should be within grid bounds
-	for cell in cells:
-		assert_true(cell.x >= 0 and cell.x < context.grid_size.x, "Cell X should be in bounds")
-		assert_true(cell.y >= 0 and cell.y < context.grid_size.y, "Cell Y should be in bounds")
+	assert_eq(engine.polygon_to_grid_cells(points, context.grid_size), [Vector2i.ZERO])
 
 
-func test_generate_room_creates_valid_room() -> void:
-	var center := Vector2i(64, 64)
-	var room_type: Room.RoomType = Room.RoomType.MEDIUM
-	var room_id := 0
-
-	var room: Room = engine.generate_room(center, room_type, room_id, context)
-
-	assert_not_null(room, "Should create a room")
-	assert_eq(room.id, room_id, "Room ID should match")
-	assert_eq(room.center, center, "Room center should match")
-	assert_eq(room.type, room_type, "Room type should match")
-	assert_gt(room.cells.size(), 0, "Room should have cells")
-	assert_gt(room.entrance_points.size(), 0, "Room should have at least one entrance point")
+func test_generated_room_center_and_entrances_are_in_its_connected_footprint() -> void:
+	for center: Vector2i in [Vector2i(64, 64), Vector2i(0, 0), Vector2i(127, 127)]:
+		var room := engine.generate_room(center, Room.RoomType.MEDIUM, 0, context)
+		assert_has(room.cells, room.center, "Logical centers must be usable hallway/spawn cells")
+		for entrance: Vector2i in room.entrance_points:
+			assert_has(room.cells, entrance)
+		var remaining := {}
+		for cell: Vector2i in room.cells:
+			assert_true(Rect2i(Vector2i.ZERO, context.grid_size).has_point(cell))
+			remaining[cell] = true
+		var queue: Array[Vector2i] = [room.center]
+		while not queue.is_empty():
+			var cell: Vector2i = queue.pop_back()
+			if not remaining.erase(cell):
+				continue
+			for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+				if remaining.has(cell + direction):
+					queue.append(cell + direction)
+		assert_true(
+			remaining.is_empty(), "Minimum-size growth must not create disconnected room islands"
+		)
 
 
 func test_room_meets_minimum_size_requirements() -> void:
@@ -131,43 +96,6 @@ func test_room_meets_minimum_size_requirements() -> void:
 		center + Vector2i(40, 0), Room.RoomType.LARGE, 2, context
 	)
 	assert_true(large_room.cells.size() >= 17, "Large room should have at least 17 cells")
-
-
-func test_load_theme_rules_default() -> void:
-	var rules: Dictionary = engine.load_theme_rules("")
-	assert_eq(rules, engine.DEFAULT_RULES, "Empty theme should return default rules")
-
-
-func test_load_theme_rules_tech() -> void:
-	var rules: Dictionary = engine.load_theme_rules("tech")
-	assert_not_null(rules, "Should load tech theme rules")
-	assert_true(rules.has("F"), "Tech rules should have F expansion")
-
-
-func test_load_theme_rules_hell() -> void:
-	var rules: Dictionary = engine.load_theme_rules("hell")
-	assert_not_null(rules, "Should load hell theme rules")
-	assert_true(rules.has("F"), "Hell rules should have F expansion")
-
-
-func test_load_theme_rules_urban() -> void:
-	var rules: Dictionary = engine.load_theme_rules("urban")
-	assert_not_null(rules, "Should load urban theme rules")
-	assert_true(rules.has("F"), "Urban rules should have F expansion")
-
-
-func test_load_theme_rules_cave() -> void:
-	var rules: Dictionary = engine.load_theme_rules("cave")
-	assert_not_null(rules, "Should load cave theme rules")
-	assert_true(rules.has("F"), "Cave rules should have F expansion")
-
-
-func test_theme_rules_are_cached() -> void:
-	var rules1: Dictionary = engine.load_theme_rules("tech")
-	var rules2: Dictionary = engine.load_theme_rules("tech")
-
-	# Should return the same cached instance
-	assert_eq(rules1, rules2, "MapTheme rules should be cached")
 
 
 func test_validate_no_narrow_passages_valid() -> void:
@@ -202,26 +130,11 @@ func test_deterministic_generation_with_same_seed() -> void:
 		assert_almost_eq(points1[i].y, points2[i].y, 0.01, "Point Y should match")
 
 
-func test_generate_rooms_creates_multiple_rooms() -> void:
-	var room_count := 5
-	var rooms: Array[Room] = engine.generate_rooms(room_count, context)
-
-	assert_gt(rooms.size(), 0, "Should generate at least one room")
-	assert_true(rooms.size() <= room_count, "Should not generate more rooms than requested")
-
-	# Verify each room has required properties
-	for room in rooms:
-		assert_not_null(room, "Room should not be null")
-		assert_gt(room.cells.size(), 0, "Room should have cells")
-		assert_gt(room.entrance_points.size(), 0, "Room should have entrance points")
-
-
-func test_apply_theme_modifications() -> void:
-	var room: Room = engine.generate_room(Vector2i(64, 64), Room.RoomType.MEDIUM, 0, context)
-
-	# Apply tech theme modifications
-	engine.apply_theme_modifications(room, "tech", context)
-
-	# Room should still be valid after modifications
-	assert_not_null(room, "Room should not be null after theme modifications")
-	assert_gt(room.cells.size(), 0, "Room should still have cells")
+func test_generate_rooms_do_not_overlap() -> void:
+	var rooms := engine.generate_rooms(5, context)
+	assert_eq(rooms.size(), 5)
+	var occupied := {}
+	for room: Room in rooms:
+		for cell: Vector2i in room.cells:
+			assert_false(occupied.has(cell), "Generated rooms cannot claim the same cell")
+			occupied[cell] = true

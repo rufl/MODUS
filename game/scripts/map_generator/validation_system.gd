@@ -79,218 +79,294 @@ func validate_room_generation(context: RefCounted) -> ValidationResult:
 	return result
 
 
-## Validate connectivity - all rooms reachable from player start
+## Every non-secret walkable cell and every room entrance must be reachable.
 func validate_connectivity(context: RefCounted) -> ValidationResult:
-	var result := ValidationResult.new()
-
-	# Find player start position
-	var player_start := _find_player_start_position(context)
-	if player_start == Vector2i(-1, -1):
-		result.error_message = "No valid player start position found"
-		return result
-
-	# Perform flood fill from player start
-	var reachable_count := _flood_fill_count(context.grid, player_start)
-	var total_walkable := _count_walkable_cells(context.grid)
-
-	if total_walkable == 0:
-		result.error_message = "No walkable cells in map"
-		return result
-
-	# At least 90% of walkable cells should be reachable
-	var coverage_ratio := float(reachable_count) / float(total_walkable)
-	if coverage_ratio < 0.9:
-		result.error_message = (
-			"Connectivity validation failed: only %.1f%% of walkable area reachable (minimum 90%%)"
-			% (coverage_ratio * 100.0)
-		)
-		return result
-
-	if coverage_ratio < 0.95:
-		result.warnings.append(
-			"Connectivity coverage is %.1f%% (below ideal 95%%)" % (coverage_ratio * 100.0)
-		)
-
-	result.is_valid = true
-	return result
-
-
-## Validate navigation mesh coverage
-func validate_navigation_mesh(context: RefCounted) -> ValidationResult:
-	var result := ValidationResult.new()
-
-	if not context.navigation_region:
-		result.error_message = "Navigation region is null"
-		return result
-
-	var navmesh: NavigationMesh = context.navigation_region.navigation_mesh
-	if not navmesh:
-		result.error_message = "Navigation mesh is null"
-		return result
-
-	# Calculate approximate navigation mesh coverage
-	var polygon_count := navmesh.get_polygon_count()
-	if polygon_count == 0:
-		result.error_message = "Navigation mesh has no polygons"
-		return result
-
-	# Approximate coverage: each polygon covers ~4 square meters
-	var navmesh_coverage := float(polygon_count) * 4.0
-	var walkable_area := float(_count_walkable_cells(context.grid)) * 4.0  # Each cell is 2x2m
-
-	if walkable_area == 0:
-		result.error_message = "No walkable area in map"
-		return result
-
-	var coverage_ratio := navmesh_coverage / walkable_area
-
-	# Navigation mesh should cover at least 90% of walkable area
-	if coverage_ratio < 0.9:
-		result.error_message = (
-			"Navigation mesh covers only %.1f%% of walkable area (minimum 90%%)"
-			% (coverage_ratio * 100.0)
-		)
-		return result
-
-	if coverage_ratio < 0.95:
-		result.warnings.append(
-			"Navigation mesh coverage is %.1f%% (below ideal 95%%)" % (coverage_ratio * 100.0)
-		)
-
-	result.is_valid = true
-	return result
-
-
-## Validate monster spawn points have navigation coverage
-func validate_monster_spawns(context: RefCounted) -> ValidationResult:
-	var result := ValidationResult.new()
-
-	if not context.monster_spawns:
-		result.warnings.append("No monster spawns to validate")
-		result.is_valid = true
-		return result
-
-	if not context.navigation_region or not context.navigation_region.navigation_mesh:
-		result.error_message = "Cannot validate monster spawns: navigation mesh not available"
-		return result
-
-	var invalid_spawns: int = 0
-
-	for spawn_data: Variant in context.monster_spawns:
-		var spawn: Dictionary = spawn_data as Dictionary
-		if not spawn:
-			continue
-
-		var spawn_pos: Vector3 = spawn.get("world_position", Vector3.ZERO)
-
-		# Check if spawn position is on navigation mesh
-		var closest_point := NavigationServer3D.map_get_closest_point(
-			context.navigation_region.get_navigation_map(), spawn_pos
-		)
-
-		# If closest point is too far, spawn is not on navmesh
-		var distance := spawn_pos.distance_to(closest_point)
-		if distance > 2.0:  # 2 meter tolerance
-			invalid_spawns += 1
-			result.warnings.append(
-				"Monster spawn at %s is %.1fm from navigation mesh" % [spawn_pos, distance]
-			)
-
-	if invalid_spawns > 0:
-		var invalid_ratio := float(invalid_spawns) / float(context.monster_spawns.size())
-		if invalid_ratio > 0.1:  # More than 10% invalid
-			result.error_message = (
-				"%d/%d monster spawns lack navigation coverage (%.1f%%)"
-				% [invalid_spawns, context.monster_spawns.size(), invalid_ratio * 100.0]
-			)
-			return result
-
-	result.is_valid = true
-	return result
-
-
-## Validate key-lock progression order
-func validate_key_lock_progression(context: RefCounted) -> ValidationResult:
-	var result := ValidationResult.new()
-
-	if not context.key_placements or context.key_placements.is_empty():
-		result.warnings.append("No key-lock system to validate")
-		result.is_valid = true
-		return result
-
-	# Build key positions from placement records and locked doors from cell metadata.
-	var key_positions: Dictionary = {}  # Color -> Vector2i
-	var locked_door_positions: Dictionary = {}  # Color -> Array[Vector2i]
-
-	for placement_data: Variant in context.key_placements:
-		var placement: Dictionary = placement_data as Dictionary
-		if not placement:
-			continue
-
-		var color: String = placement.get("color", "")
-		var pos: Vector2i = placement.get("grid_position", Vector2i(-1, -1))
-		if color == "" or pos == Vector2i(-1, -1):
-			continue
-		if placement.get("is_door", false):
-			if not locked_door_positions.has(color):
-				locked_door_positions[color] = []
-			locked_door_positions[color].append(pos)
-		else:
-			key_positions[color] = pos
-
+	var start := _find_player_start_position(context)
+	if not _is_valid_grid_position(context.grid, start):
+		return ValidationResult.new(false, "No valid player start position found")
+	var reachable := _flood_fill_cells(context.grid, start)
 	for y in range(context.grid.size()):
-		var row: Array = context.grid[y] as Array
-		if not row:
-			continue
-		for x in range(row.size()):
-			var cell: Cell = row[x] as Cell
-			if not cell or not cell.metadata.get("has_locked_door", false):
-				continue
-			var door_color: String = cell.metadata.get("door_color", "")
-			if door_color == "":
-				continue
-			if not locked_door_positions.has(door_color):
-				locked_door_positions[door_color] = []
-			locked_door_positions[door_color].append(Vector2i(x, y))
+		for x in range(context.grid[y].size()):
+			var cell: Cell = context.grid[y][x]
+			if _is_walkable_cell(cell) and cell.type != Cell.Type.SECRET:
+				if not reachable.has(Vector2i(x, y)):
+					return ValidationResult.new(
+						false, "Disconnected walkable cell at %s" % Vector2i(x, y)
+					)
+	for room: Room in context.rooms:
+		if room.cells.is_empty():
+			return ValidationResult.new(false, "Room %d has no cells" % room.id)
+		for pos: Vector2i in room.cells + room.entrance_points:
+			if not reachable.has(pos):
+				return ValidationResult.new(false, "Room %d is disconnected at %s" % [room.id, pos])
+	return ValidationResult.new(true)
 
-	# Validate each locked door has a corresponding key placed earlier
-	for color: String in locked_door_positions:
-		if not key_positions.has(color):
-			result.error_message = "Locked door with color '%s' has no corresponding key" % color
-			return result
 
-	var player_start := _find_player_start_position(context)
-	if player_start == Vector2i(-1, -1):
-		result.error_message = "Cannot validate key-lock progression without a player start"
-		return result
+## Prove paths on this mesh only; never query a scene's default navigation map.
+func validate_navigation_mesh(context: RefCounted) -> ValidationResult:
+	var points: Array[Vector3] = []
+	var error := _collect_navigation_points(context, points)
+	if not error.is_empty():
+		return ValidationResult.new(false, error)
+	return _validate_navigation_points(context, points)
 
-	for color: String in locked_door_positions:
-		var key_pos: Vector2i = key_positions[color]
-		var doors: Array = locked_door_positions[color]
 
-		if not _is_valid_grid_position(context.grid, key_pos):
-			result.error_message = "Key '%s' is outside the generated grid" % color
-			return result
+func validate_monster_spawns(context: RefCounted) -> ValidationResult:
+	if context.monster_spawns.is_empty():
+		return ValidationResult.new(true)
+	var points: Array[Vector3] = []
+	for spawn: Variant in context.monster_spawns:
+		var error := _append_spawn_point(context, spawn, points)
+		if not error.is_empty():
+			return ValidationResult.new(false, error)
+	return _validate_navigation_points(context, points)
 
-		if not _flood_fill_reaches(context.grid, player_start, key_pos):
-			result.error_message = "Key '%s' is unreachable from the player start" % color
-			return result
 
-		for door_pos: Vector2i in doors:
-			if not _is_valid_grid_position(context.grid, door_pos):
-				result.error_message = "Locked door '%s' is outside the generated grid" % color
-				return result
+func _grid_world_position(context: RefCounted, pos: Vector2i) -> Vector3:
+	var cell: Cell = context.grid[pos.y][pos.x]
+	return Vector3(pos.x * 2.0 + 1.0, cell.height, pos.y * 2.0 + 1.0)
 
-			var blocked := {door_pos: true}
-			if not _flood_fill_reaches(context.grid, player_start, key_pos, blocked):
-				result.error_message = (
-					"Key '%s' is behind a locked door and cannot be collected before progression"
-					% color
-				)
-				return result
 
-	result.is_valid = true
+func _append_spawn_point(context: RefCounted, spawn: Variant, points: Array[Vector3]) -> String:
+	if not spawn is Dictionary:
+		return "Malformed monster spawn"
+	var position: Variant = spawn.get("position")
+	if position is Vector2i:
+		if not _is_valid_grid_position(context.grid, position):
+			return "Monster spawn is outside walkable grid"
+		points.append(_grid_world_position(context, position))
+		# Grid and world coordinates are both part of the placer contract.
+		if spawn.has("world_position"):
+			var world_position: Variant = spawn["world_position"]
+			if not world_position is Vector3 or not world_position.is_finite():
+				return "Malformed monster world position"
+			points.append(world_position)
+	elif position is Vector3 and position.is_finite():
+		points.append(position)
+	else:
+		return "Monster spawn requires a valid position"
+	return ""
+
+
+func _collect_navigation_points(context: RefCounted, points: Array[Vector3]) -> String:
+	for room: Room in context.rooms:
+		if room.cells.is_empty():
+			return "Room %d has no cells" % room.id
+		# Organic room centers can be holes. Use the nearest actual room cell.
+		var representative := Vector2i(-1, -1)
+		var distance := INF
+		for pos: Vector2i in room.cells:
+			if _is_valid_grid_position(context.grid, pos):
+				var candidate_distance := Vector2(pos).distance_squared_to(Vector2(room.center))
+				if candidate_distance < distance:
+					distance = candidate_distance
+					representative = pos
+		if representative == Vector2i(-1, -1):
+			return "Room %d has no walkable cells" % room.id
+		points.append(_grid_world_position(context, representative))
+		for entrance: Vector2i in room.entrance_points:
+			if not _is_valid_grid_position(context.grid, entrance):
+				return "Room %d has an invalid entrance" % room.id
+			points.append(_grid_world_position(context, entrance))
+	var progression := _collect_progression(context)
+	if not progression.error.is_empty():
+		return progression.error
+	for key: Dictionary in progression.keys:
+		points.append(_grid_world_position(context, key.grid_position))
+	for door_pos: Vector2i in progression.doors:
+		points.append(_grid_world_position(context, door_pos))
+	for records: Array in [context.key_placements, context.metadata.get("locked_doors", [])]:
+		for record: Dictionary in records:
+			if record.has("position"):
+				var position: Variant = record.position
+				if not position is Vector3 or not position.is_finite():
+					return "Malformed key or door world position"
+				points.append(position)
+	for spawn: Variant in context.monster_spawns:
+		var error := _append_spawn_point(context, spawn, points)
+		if not error.is_empty():
+			return error
+	return ""
+
+
+func _validate_navigation_points(context: RefCounted, points: Array[Vector3]) -> ValidationResult:
+	if not is_instance_valid(context.navigation_region):
+		return ValidationResult.new(false, "Navigation region is null")
+	var region: NavigationRegion3D = context.navigation_region
+	var mesh := region.navigation_mesh
+	if mesh == null or mesh.get_polygon_count() == 0:
+		return ValidationResult.new(false, "Navigation mesh has no polygons")
+	var start := _find_player_start_position(context)
+	if not _is_valid_grid_position(context.grid, start):
+		return ValidationResult.new(false, "No valid player start position found")
+	var map_rid := NavigationServer3D.map_create()
+	var region_rid := NavigationServer3D.region_create()
+	# force_update is synchronous only when both private objects disable async work.
+	NavigationServer3D.map_set_use_async_iterations(map_rid, false)
+	NavigationServer3D.region_set_use_async_iterations(region_rid, false)
+	NavigationServer3D.map_set_cell_size(map_rid, mesh.cell_size)
+	NavigationServer3D.map_set_cell_height(map_rid, mesh.cell_height)
+	NavigationServer3D.map_set_use_edge_connections(map_rid, false)
+	NavigationServer3D.region_set_navigation_mesh(region_rid, mesh)
+	var region_transform := region.transform
+	if region.is_inside_tree():
+		region_transform = region.global_transform
+	NavigationServer3D.region_set_transform(region_rid, region_transform)
+	NavigationServer3D.region_set_map(region_rid, map_rid)
+	NavigationServer3D.map_force_update(map_rid)
+	var result := _query_required_paths(map_rid, mesh, _grid_world_position(context, start), points)
+	NavigationServer3D.free_rid(region_rid)
+	NavigationServer3D.free_rid(map_rid)
 	return result
+
+
+func _query_required_paths(
+	map_rid: RID, mesh: NavigationMesh, start: Vector3, points: Array[Vector3]
+) -> ValidationResult:
+	# Voxelization lifts the surface slightly; pickups may sit 0.5m above it.
+	# Horizontal proximity is tighter so projecting across a wall cannot pass.
+	var horizontal_tolerance := maxf(mesh.cell_size * 2.0, mesh.agent_radius)
+	var vertical_tolerance := maxf(mesh.cell_height * 2.0, 0.75)
+	var projected_start := NavigationServer3D.map_get_closest_point(map_rid, start)
+	if not _point_on_surface(
+		map_rid, start, projected_start, horizontal_tolerance, vertical_tolerance
+	):
+		return ValidationResult.new(false, "Player start is outside the navigation mesh")
+	for target: Vector3 in points:
+		var projected := NavigationServer3D.map_get_closest_point(map_rid, target)
+		if not _point_on_surface(
+			map_rid, target, projected, horizontal_tolerance, vertical_tolerance
+		):
+			return ValidationResult.new(
+				false, "Required position %s is outside the navigation mesh" % target
+			)
+		var path := NavigationServer3D.map_get_path(map_rid, projected_start, projected, true)
+		if (
+			path.is_empty()
+			or path[0].distance_to(projected_start) > 0.01
+			or path[-1].distance_to(projected) > 0.01
+		):
+			return ValidationResult.new(false, "No complete navigation path to %s" % target)
+	return ValidationResult.new(true)
+
+
+func _point_on_surface(
+	map_rid: RID, point: Vector3, projected: Vector3, horizontal: float, vertical: float
+) -> bool:
+	return (
+		point.is_finite()
+		and NavigationServer3D.map_get_closest_point_owner(map_rid, point).is_valid()
+		and Vector2(point.x, point.z).distance_to(Vector2(projected.x, projected.z)) <= horizontal
+		and absf(point.y - projected.y) <= vertical
+	)
+
+
+## Solve all locks together; a key never opens its own gate speculatively.
+func validate_key_lock_progression(context: RefCounted) -> ValidationResult:
+	var progression := _collect_progression(context)
+	if not progression.error.is_empty():
+		return ValidationResult.new(false, progression.error)
+	var keys: Array = progression.keys
+	var doors: Dictionary = progression.doors
+	if keys.is_empty() and doors.is_empty():
+		return ValidationResult.new(true)
+	var colors: Dictionary = {}
+	for key: Dictionary in keys:
+		colors[key.color] = true
+	for color: String in doors.values():
+		if not colors.has(color):
+			return ValidationResult.new(false, "Locked door '%s' has no corresponding key" % color)
+	var start := _find_player_start_position(context)
+	if not _is_valid_grid_position(context.grid, start):
+		return ValidationResult.new(false, "Cannot validate progression without a player start")
+	var acquired: Dictionary = {}
+	var reachable: Dictionary = {}
+	while true:
+		var blocked: Dictionary = {}
+		for pos: Vector2i in doors:
+			if not acquired.has(doors[pos]):
+				blocked[pos] = true
+		reachable = _flood_fill_cells(context.grid, start, blocked)
+		var changed := false
+		for key: Dictionary in keys:
+			if reachable.has(key.grid_position) and not acquired.has(key.color):
+				acquired[key.color] = true
+				changed = true
+		if not changed:
+			break
+	for key: Dictionary in keys:
+		if not reachable.has(key.grid_position):
+			return ValidationResult.new(
+				false, "Key '%s' is unreachable in locked progression" % key.color
+			)
+	for pos: Vector2i in doors:
+		if not reachable.has(pos):
+			return ValidationResult.new(
+				false, "Locked door '%s' is unreachable after key acquisition" % doors[pos]
+			)
+	return ValidationResult.new(true)
+
+
+## Merge explicit and grid records, rejecting malformed or conflicting locks.
+func _collect_progression(context: RefCounted) -> Dictionary:
+	var data := {"keys": [], "key_colors": {}, "doors": {}, "error": ""}
+	for record: Variant in context.key_placements:
+		data.error = _add_progression_record(context.grid, record, false, data)
+		if not data.error.is_empty():
+			return data
+	var explicit_doors: Variant = context.metadata.get("locked_doors", [])
+	if not explicit_doors is Array:
+		data.error = "Locked door records must be an array"
+		return data
+	for record: Variant in explicit_doors:
+		data.error = _add_progression_record(context.grid, record, true, data)
+		if not data.error.is_empty():
+			return data
+	for y in range(context.grid.size()):
+		for x in range(context.grid[y].size()):
+			var cell: Cell = context.grid[y][x]
+			var pos := Vector2i(x, y)
+			if cell.metadata.get("has_key", false):
+				if (
+					not data.key_colors.has(pos)
+					or data.key_colors[pos] != cell.metadata.get("key_color")
+				):
+					data.error = "Grid key marker has no matching retained key at %s" % pos
+					return data
+			if cell.metadata.get("has_locked_door", false):
+				var record := {"color": cell.metadata.get("door_color"), "grid_position": pos}
+				data.error = _add_progression_record(context.grid, record, true, data)
+				if not data.error.is_empty():
+					return data
+	return data
+
+
+func _add_progression_record(
+	grid: Array, record: Variant, is_door: bool, data: Dictionary
+) -> String:
+	if not record is Dictionary:
+		return "Malformed key or locked door record"
+	var color: Variant = record.get("color")
+	var pos: Variant = record.get("grid_position")
+	if not color is String or color.strip_edges().is_empty() or not pos is Vector2i:
+		return "Key or locked door requires a color and grid position"
+	if not _is_valid_grid_position(grid, pos):
+		return "Key or locked door is outside the walkable grid"
+	if (
+		record.has("position")
+		and (not record.position is Vector3 or not record.position.is_finite())
+	):
+		return "Malformed key or door world position"
+	if is_door or record.get("is_door", false):
+		if data.doors.has(pos) and data.doors[pos] != color:
+			return "Conflicting locked door colors at %s" % pos
+		data.doors[pos] = color
+	else:
+		if data.key_colors.has(pos) and data.key_colors[pos] != color:
+			return "Conflicting key colors at %s" % pos
+		data.key_colors[pos] = color
+		data.keys.append({"color": color, "grid_position": pos})
+	return ""
 
 
 ## Validate player start position is accessible
@@ -373,6 +449,8 @@ func _count_walkable_cells(grid: Array) -> int:
 
 ## Check if cell is walkable
 func _is_walkable_cell(cell: Cell) -> bool:
+	if cell == null:
+		return false
 	return (
 		cell.type
 		in [
@@ -400,60 +478,28 @@ func _is_valid_grid_position(grid: Array, position: Vector2i) -> bool:
 func _flood_fill_reaches(
 	grid: Array, start: Vector2i, target: Vector2i, blocked: Dictionary = {}
 ) -> bool:
-	if blocked.has(start) or blocked.has(target):
-		return false
-	if not _is_valid_grid_position(grid, start) or not _is_valid_grid_position(grid, target):
-		return false
-
-	var visited: Dictionary = {}
-	var queue: Array[Vector2i] = [start]
-	while not queue.is_empty():
-		var current: Vector2i = queue.pop_front()
-		if visited.has(current) or blocked.has(current):
-			continue
-		if not _is_valid_grid_position(grid, current):
-			continue
-		if current == target:
-			return true
-
-		visited[current] = true
-		queue.append(Vector2i(current.x + 1, current.y))
-		queue.append(Vector2i(current.x - 1, current.y))
-		queue.append(Vector2i(current.x, current.y + 1))
-		queue.append(Vector2i(current.x, current.y - 1))
-
-	return false
+	return _flood_fill_cells(grid, start, blocked).has(target)
 
 
-## Flood fill to count reachable cells from start position
 func _flood_fill_count(grid: Array, start: Vector2i) -> int:
+	return _flood_fill_cells(grid, start).size()
+
+
+func _flood_fill_cells(grid: Array, start: Vector2i, blocked: Dictionary = {}) -> Dictionary:
 	var visited: Dictionary = {}
+	if blocked.has(start) or not _is_valid_grid_position(grid, start):
+		return visited
 	var queue: Array[Vector2i] = [start]
-	var count: int = 0
-
-	while not queue.is_empty():
-		var current: Vector2i = queue.pop_front()
-
-		if visited.has(current):
-			continue
-
-		# Check bounds
-		if current.y < 0 or current.y >= grid.size():
-			continue
-		if current.x < 0 or current.x >= grid[0].size():
-			continue
-
-		var cell: Cell = grid[current.y][current.x]
-		if not _is_walkable_cell(cell):
-			continue
-
-		visited[current] = true
-		count += 1
-
-		# Add neighbors (4-directional)
-		queue.append(Vector2i(current.x + 1, current.y))
-		queue.append(Vector2i(current.x - 1, current.y))
-		queue.append(Vector2i(current.x, current.y + 1))
-		queue.append(Vector2i(current.x, current.y - 1))
-
-	return count
+	visited[start] = true
+	var index := 0
+	while index < queue.size():
+		var current := queue[index]
+		index += 1
+		for offset: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+			var neighbor := current + offset
+			if visited.has(neighbor) or blocked.has(neighbor):
+				continue
+			if _is_valid_grid_position(grid, neighbor):
+				visited[neighbor] = true
+				queue.append(neighbor)
+	return visited

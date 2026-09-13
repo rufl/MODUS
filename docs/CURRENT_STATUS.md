@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
-**Updated:** September 12, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
+**Updated:** September 13, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -15,6 +15,18 @@ MODUS contains broad FPS framework code plus focused and golden-demo runtime pro
 The canonical publication rules are in [Documentation Truth](DOCUMENTATION_TRUTH.md).
 
 Publication cleanup preserves old local evidence without refreshing it. Fresh clones retain this summary, maintained guides, licenses, and curated media—not raw `logs/`, historical session/archive files, or generated reports. See [local report regeneration](DOCUMENTATION_TRUTH.md#regenerating-local-reports) for commands and prerequisites. Missing local inputs must remain missing evidence; earlier PASS results below are dated observations, not checkout guarantees.
+
+### September 13 Generator Correctness and World-Building Plan
+
+The [release and world-building plan](RELEASE_AND_WORLD_BUILDING_PLAN.md) separates research, implemented generator/module/editor contracts and remaining release acceptance. The three-room Breakwater gate is now implemented; this does not deliver the larger composed mission, installer, bundled native integrations or external-service proof.
+
+The initial disposable Godot 4.7.2 probe reproduced key/secret nondeterminism at context seed `424242` under global seeds `111`/`999`. Generator revision **2** now isolates random choices, fixes double-offset room polygons and overwritten entrances, connects room components and organic areas, retains gameplay output, and bakes collision-backed navigation before packing. The nine-script focused selection passes **55/55 tests, 1,319 assertions**. Separate 64×64 and default 128×128 source-generation smokes pass; the latter produces 1,405 navigation polygons, 27 rooms, 28 hallways and one secret. Saved-scene tests exercise reachable room/key/monster destinations, player-floor collision, repeatable gameplay/navigation and cancellation/restart; no visual/manual gameplay or full matrix was run.
+
+The owner selected a **bundled full-feature runtime**; no Steamworks app exists yet. Remaining generator rule/voxel/module integration, automatic realization of generated gameplay records, full mission production, hubs, release packaging and external-service proof stay open.
+
+The earlier embedded editor experiment reproduced **4 saved nodes becoming 1 after load/resave**. Transactional document replacement now preserves root names/metadata, nested ownership, transforms and collision; the unresolved `sync_cursor` dependency is repaired, and actors use one document-owned channel service. Editor/history regressions pass **36/36 with 204 assertions**; module/navigation regressions pass **25/25 with 105 assertions**, including moving doors not permanently severing navigation. Both focused runs report no GUT orphans; stock-engine ObjectDB exit warnings remain.
+
+Source and exported Linux standalone editors place/wire three real modules, play the key/switch/blocking-door/objective loop, return to unchanged author data, save/reopen/resave and export/extract `.mdsl`. The exported Linux game completes that package, including pre-gate/completed checkpoint restoration and navigation through every room and the upper walkway. The document retains 23 meshes with 24,764 vertices, three architectural collision shapes, four actors and one player spawn. [Editor Round-Trip Proof](EDITOR_ROUNDTRIP_PROOF.md) records artifact evidence and the pressure-blocked graphical boundary; these headless observations are not reviewed manual play.
 
 ## Readiness Snapshot
 
@@ -95,10 +107,10 @@ These results are narrower than the aggregate suite and must not be summed into 
 | Lazy loading property | 4/4; deferred construction is verified without a wall-clock microbenchmark |
 | Frame-time property | 5/5 at default counts in 331.79s; stability uses the middle 90% to exclude host descheduling, while absolute spikes stay in the performance lane |
 | Visual configuration/reload | Editor, lazy-loading, graphics, and map focus passes 52/52 with 443 assertions; graphics preset coverage is 27/27; all ConfigurationManager reload subscribers accept the emitted path |
-| Map-generator unit directory | 79/79, 5,439 assertions |
-| Map-generator threading | 8/8, 30 assertions; generated geometry/navigation survive PackedScene instantiation; zero GUT orphans |
-| Map-generator export | 10/10, 34 assertions; zero GUT orphans |
-| Map-generator seed/RNG | 8/8, 29 assertions |
+| Map-generator correctness | September 13: 55/55 focused tests, 1,319 assertions across nine scripts; not a refreshed full-suite count |
+| Map-generator saved-scene routes | 64×64 `generator-correctness`: export/reload, real navigation paths and player-floor collision; cancellation/replacement succeeds |
+| Map-generator export history | Historical 10/10, 34 assertions; current roundtrip proof is included in the focused correctness selection above |
+| Map-generator seed/RNG | Revision 2: global `111`/`999` cannot change tested gameplay records or baked navigation vertices; old unconditional determinism claim superseded |
 | Map playability | 15/15, 40 assertions |
 | Showcase structure | 17/17, 46 assertions |
 | Reference integrity | 22/22, 119 assertions; shared blood-pool shader/controller parse and load |

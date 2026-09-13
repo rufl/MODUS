@@ -357,6 +357,13 @@ func update_cursor(pos: Vector3, normal: Vector3) -> void:
 	):
 		return
 	sync_cursor.rpc(sender_id, pos, normal)
+	cursor_updated.emit(sender_id, pos, normal)
+
+
+@rpc("authority", "call_remote", "unreliable")
+func sync_cursor(peer_id: int, pos: Vector3, normal: Vector3) -> void:
+	if peer_id > 0 and _is_finite_vector(pos) and _is_finite_vector(normal):
+		cursor_updated.emit(peer_id, pos, normal)
 
 
 func _execute_local(action: String, data: Dictionary) -> void:

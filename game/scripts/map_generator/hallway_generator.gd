@@ -94,7 +94,10 @@ func _get_neighbors(
 		var is_walkable := (
 			cell.type == Cell.Type.EMPTY
 			or cell.type == Cell.Type.HALLWAY
-			or (cell.type == Cell.Type.ROOM and (neighbor_pos == start or neighbor_pos == goal))
+			or (
+				cell.type in [Cell.Type.ROOM, Cell.Type.BOSS_ARENA]
+				and (neighbor_pos == start or neighbor_pos == goal)
+			)
 		)
 		if is_walkable:
 			neighbors.append(neighbor_pos)
@@ -109,60 +112,127 @@ func _get_neighbors(
 ## Requirement 3.6: Hallways connect exactly two rooms or one room and a junction
 func generate_hallways(rooms: Array[Room], grid: Array[Array]) -> Array[Hallway]:
 	var hallways: Array[Hallway] = []
-	var hallway_id := 0
+	var components: Dictionary = {}
+	var edges: Array[Dictionary] = []
+	for room in rooms:
+		components[room.id] = room.id
+		room.connections.clear()
+		room.entrance_points.clear()
 
-	# Connect adjacent rooms
 	for i in range(rooms.size()):
 		for j in range(i + 1, rooms.size()):
-			var room_a := rooms[i]
-			var room_b := rooms[j]
+			var points := _find_best_connection_points(rooms[i], rooms[j])
+			if not points.is_empty():
+				edges.append(
+					{
+						"a": rooms[i],
+						"b": rooms[j],
+						"points": points,
+						"distance": _manhattan_distance(points[0], points[1])
+					}
+				)
+	edges.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			if a["distance"] != b["distance"]:
+				return a["distance"] < b["distance"]
+			if a["a"].id != b["a"].id:
+				return a["a"].id < b["a"].id
+			return a["b"].id < b["b"].id
+	)
 
-			# Keep the generated room graph connected.  A* already bounds the
-			# actual route, so a small fixed cutoff can strand rooms on larger
-			# maps and make connectivity validation fail at 0% coverage.
-			var distance := _manhattan_distance(room_a.center, room_b.center)
-			if distance > 64:
-				continue
-			# Build a spanning-style room graph instead of attempting every
-			# possible pair. Once both rooms are connected, another route only
-			# adds work and can push the threaded test path past its timeout.
-			if not room_a.connections.is_empty() and not room_b.connections.is_empty():
-				continue
+	# Connect components, not merely rooms with no edges. Two connected pairs
+	# still need a bridge, including when their distance exceeds 64 cells.
+	for edge in edges:
+		var room_a: Room = edge["a"]
+		var room_b: Room = edge["b"]
+		if components[room_a.id] == components[room_b.id]:
+			continue
+		var points: Array[Vector2i] = edge["points"]
+		var path := find_hallway_path(points[0], points[1], grid)
+		if path.is_empty():
+			continue
+		var hallway := Hallway.new(hallways.size(), room_a.id, room_b.id)
+		hallway.path = path
+		hallway.width = 2
+		_apply_hallway_to_grid(hallway, grid)
+		room_a.connections.append(room_b.id)
+		room_b.connections.append(room_a.id)
+		room_a.entrance_points.append(points[0])
+		room_b.entrance_points.append(points[1])
+		hallways.append(hallway)
 
-			# Find best connection points (closest cells between rooms)
-			var connection_points := _find_best_connection_points(room_a, room_b)
-			if connection_points.is_empty():
-				continue
+		var old_component: int = components[room_b.id]
+		var merged_component: int = components[room_a.id]
+		for room_id: int in components:
+			if components[room_id] == old_component:
+				components[room_id] = merged_component
+		if hallways.size() == rooms.size() - 1:
+			break
 
-			var start_pos: Vector2i = connection_points[0]
-			var end_pos: Vector2i = connection_points[1]
-
-			# Find path using A*
-			var path := find_hallway_path(start_pos, end_pos, grid)
-			if path.is_empty():
-				continue
-
-			# Create hallway with minimum width of 2 cells
-			var hallway := Hallway.new(hallway_id, room_a.id, room_b.id)
-			hallway.path = path
-			hallway.width = 2  # Requirement 3.4
-
-			# Apply hallway to grid with width
-			_apply_hallway_to_grid(hallway, grid)
-
-			# Update room connections
-			if room_b.id not in room_a.connections:
-				room_a.connections.append(room_b.id)
-			if room_a.id not in room_b.connections:
-				room_b.connections.append(room_a.id)
-
-			hallways.append(hallway)
-			hallway_id += 1
-
-	# Detect and mark junctions (Requirement 3.5)
 	_detect_and_mark_junctions(hallways, grid)
-
 	return hallways
+
+
+## Keep a connected organic footprint and join it to existing playable geometry.
+## Disconnected CA noise is removed before rooms, spawns or secrets refer to it.
+func connect_generated_area(
+	context: GenerationContext, region: Rect2i, cell_type: Cell.Type
+) -> void:
+	var grid := context.grid
+	var remaining: Dictionary = {}
+	for y in range(region.position.y, region.end.y):
+		for x in range(region.position.x, region.end.x):
+			if _is_valid_grid_pos(Vector2i(x, y), grid) and grid[y][x].type == cell_type:
+				remaining[Vector2i(x, y)] = true
+	var components: Array[Array] = []
+	var largest: Array[Vector2i] = []
+	const DIRECTIONS := [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+	while not remaining.is_empty():
+		var component: Array[Vector2i] = [remaining.keys()[0]]
+		remaining.erase(component[0])
+		var index := 0
+		while index < component.size():
+			var point := component[index]
+			index += 1
+			for direction: Vector2i in DIRECTIONS:
+				var next := point + direction
+				if remaining.has(next):
+					remaining.erase(next)
+					component.append(next)
+		components.append(component)
+		if component.size() > largest.size():
+			largest = component
+	for component in components:
+		if component != largest:
+			for point: Vector2i in component:
+				grid[point.y][point.x].type = Cell.Type.EMPTY
+
+	# Multi-source BFS finds the shortest bridge without an all-cell pair scan.
+	var pending: Array[Vector2i] = largest.duplicate()
+	var visited: Dictionary = {}
+	var came_from: Dictionary = {}
+	for point in largest:
+		visited[point] = true
+	var index := 0
+	while index < pending.size():
+		var point := pending[index]
+		index += 1
+		for direction: Vector2i in DIRECTIONS:
+			var next := point + direction
+			if not _is_valid_grid_pos(next, grid) or visited.has(next):
+				continue
+			visited[next] = true
+			came_from[next] = point
+			if grid[next.y][next.x].type != Cell.Type.EMPTY:
+				var hallway := Hallway.new(
+					context.hallways.size(), -1, grid[next.y][next.x].room_id
+				)
+				hallway.path = _reconstruct_path(came_from, next)
+				hallway.width = 2
+				_apply_hallway_to_grid(hallway, grid)
+				context.hallways.append(hallway)
+				return
+			pending.append(next)
 
 
 ## Find the best connection points between two rooms

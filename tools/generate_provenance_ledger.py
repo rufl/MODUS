@@ -168,6 +168,47 @@ QUATERNIUS_SOURCE = "https://quaternius.com/packs/universalanimationlibrary.html
 QUATERNIUS_NOTICE = "docs/licenses/QUATERNIUS_CC0-1.0.txt"
 HERO_PATH = "game/art/ui/main_menu_warrior_lineup.png"
 SUNO_ID = re.compile(rb"id=([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})")
+BREAKWATER_ASSETS = {
+    "game/levels/modules/breakwater/airlock.tres",
+    "game/levels/modules/breakwater/pump_hall.tres",
+    "game/levels/modules/breakwater/control_room.tres",
+    "game/levels/modules/breakwater/materials/coast_water.tres",
+    "game/levels/modules/breakwater/materials/salt_concrete.tres",
+    "game/levels/modules/breakwater/materials/coast_rock.tres",
+    "game/levels/modules/breakwater/materials/screen.tres",
+    "game/levels/modules/breakwater/materials/glass.tres",
+    "game/levels/modules/breakwater/materials/amber_light.tres",
+    "game/levels/modules/breakwater/materials/cool_light.tres",
+    "game/levels/modules/breakwater/materials/brass.tres",
+    "game/levels/modules/breakwater/materials/teal_enamel.tres",
+    "game/levels/modules/breakwater/materials/dark_metal.tres",
+    "game/levels/modules/breakwater/materials/floor.tres",
+    "game/levels/modules/breakwater/meshes/coast_coast_rock.obj",
+    "game/levels/modules/breakwater/meshes/coast_coast_water.obj",
+    "game/levels/modules/breakwater/meshes/control_room_cool_light.obj",
+    "game/levels/modules/breakwater/meshes/control_room_screen.obj",
+    "game/levels/modules/breakwater/meshes/control_room_teal_enamel.obj",
+    "game/levels/modules/breakwater/meshes/control_room_brass.obj",
+    "game/levels/modules/breakwater/meshes/control_room_amber_light.obj",
+    "game/levels/modules/breakwater/meshes/control_room_dark_metal.obj",
+    "game/levels/modules/breakwater/meshes/control_room_glass.obj",
+    "game/levels/modules/breakwater/meshes/control_room_floor.obj",
+    "game/levels/modules/breakwater/meshes/control_room_salt_concrete.obj",
+    "game/levels/modules/breakwater/meshes/pump_hall_cool_light.obj",
+    "game/levels/modules/breakwater/meshes/pump_hall_teal_enamel.obj",
+    "game/levels/modules/breakwater/meshes/pump_hall_brass.obj",
+    "game/levels/modules/breakwater/meshes/pump_hall_amber_light.obj",
+    "game/levels/modules/breakwater/meshes/pump_hall_dark_metal.obj",
+    "game/levels/modules/breakwater/meshes/pump_hall_floor.obj",
+    "game/levels/modules/breakwater/meshes/pump_hall_salt_concrete.obj",
+    "game/levels/modules/breakwater/meshes/airlock_cool_light.obj",
+    "game/levels/modules/breakwater/meshes/airlock_teal_enamel.obj",
+    "game/levels/modules/breakwater/meshes/airlock_brass.obj",
+    "game/levels/modules/breakwater/meshes/airlock_amber_light.obj",
+    "game/levels/modules/breakwater/meshes/airlock_dark_metal.obj",
+    "game/levels/modules/breakwater/meshes/airlock_floor.obj",
+    "game/levels/modules/breakwater/meshes/airlock_salt_concrete.obj",
+}
 
 FIELDNAMES = (
     "path",
@@ -218,6 +259,15 @@ def classify(path: Path, digest: str) -> dict[str, str]:
         "notes": "No repository-local provenance record currently clears this distributed asset.",
     }
 
+    if relative in BREAKWATER_ASSETS:
+        return {
+            "status": "cleared",
+            "author": "LichForge / AI-assisted original assets",
+            "source": "Original Breakwater Station geometry, materials and module metadata, 2026-09-13",
+            "license": "MIT",
+            "local_notice": "LICENSE",
+            "notes": "Baked OBJ geometry and native Godot resources authored for MODUS; no external asset source.",
+        }
     if relative in LIQUID_PATHS:
         return {
             "status": "cleared",

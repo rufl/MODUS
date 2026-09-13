@@ -24,6 +24,7 @@ class PrefabInfo:
 	var tags: PackedStringArray
 	var node_count: int
 	var bounds: AABB
+	var definition: PrefabMetadata
 
 	func to_dict() -> Dictionary:
 		return {
@@ -34,7 +35,12 @@ class PrefabInfo:
 			"created_at": created_at,
 			"tags": Array(tags),
 			"node_count": node_count,
-			"bounds": {"position": bounds.position, "size": bounds.size}
+			"bounds":
+			{
+				"position": [bounds.position.x, bounds.position.y, bounds.position.z],
+				"size": [bounds.size.x, bounds.size.y, bounds.size.z]
+			},
+			"definition": definition.to_dict() if definition else {}
 		}
 
 	static func from_dict(data: Dictionary) -> PrefabInfo:
@@ -48,9 +54,22 @@ class PrefabInfo:
 		info.node_count = data.get("node_count", 0)
 		var bounds_data: Dictionary = data.get("bounds", {})
 		info.bounds = AABB(
-			bounds_data.get("position", Vector3.ZERO), bounds_data.get("size", Vector3.ONE)
+			_read_vector(bounds_data.get("position", [0, 0, 0])),
+			_read_vector(bounds_data.get("size", [1, 1, 1]))
 		)
+		var definition_data: Dictionary = data.get("definition", {})
+		if not definition_data.is_empty():
+			info.definition = PrefabMetadata.from_dict(definition_data)
 		return info
+
+	static func _read_vector(value: Variant) -> Vector3:
+		if value is Vector3:
+			return value
+		if value is String:
+			value = value.trim_prefix("(").trim_suffix(")").split(",")
+		if (value is Array or value is PackedStringArray) and value.size() == 3:
+			return Vector3(float(value[0]), float(value[1]), float(value[2]))
+		return Vector3.ZERO
 
 
 ## Library of all prefabs
@@ -104,27 +123,37 @@ func save_nodes_as_prefab(
 ) -> String:
 	if nodes.is_empty():
 		return ""
+	for node: Node in nodes:
+		if node is ModuleInstance and nodes.size() != 1:
+			push_error(
+				"[PrefabSystem] Save modules individually; use a level document for connected assemblies."
+			)
+			return ""
 
 	# Generate unique ID
 	var prefab_id: String = _generate_id()
 	var safe_name: String = prefab_name.to_snake_case().validate_filename()
 	var prefab_path: String = PREFAB_DIR + safe_name + "_" + prefab_id + ".tscn"
 
-	# Create container node
-	var container := Node3D.new()
-	container.name = prefab_name
-
-	# Calculate center of selection
+	# A module retains its canonical definition and floor origin; props remain centered selections.
+	var module := nodes[0] as ModuleInstance if nodes.size() == 1 else null
+	var container: Node3D
 	var bounds := _calculate_bounds(nodes)
-	var center: Vector3 = bounds.position + bounds.size * 0.5
-
-	# Clone nodes into container (centered)
-	for node: Node in nodes:
-		if node is Node3D:
-			var clone: Node = node.duplicate()
-			clone.position -= center
-			container.add_child(clone)
-			clone.owner = container
+	if module:
+		container = module.duplicate() as Node3D
+		container.transform = Transform3D.IDENTITY
+		bounds = module.get_local_bounds()
+	else:
+		container = Node3D.new()
+		container.name = prefab_name
+		var center: Vector3 = bounds.position + bounds.size * 0.5
+		for node: Node in nodes:
+			if node is Node3D:
+				var clone := node.duplicate() as Node3D
+				clone.position -= center
+				container.add_child(clone)
+	for child in container.get_children():
+		_set_prefab_owner(child, container)
 
 	# Pack and save
 	var packed := PackedScene.new()
@@ -150,6 +179,8 @@ func save_nodes_as_prefab(
 	info.tags = tags
 	info.node_count = nodes.size()
 	info.bounds = bounds
+	if module:
+		info.definition = module.definition
 
 	# Generate thumbnail
 	info.thumbnail_path = await _generate_thumbnail(nodes, prefab_id)
@@ -277,6 +308,12 @@ func _calculate_bounds(nodes: Array) -> AABB:
 				bounds = bounds.expand(pos)
 
 	return bounds
+
+
+func _set_prefab_owner(node: Node, root: Node) -> void:
+	node.owner = root
+	for child in node.get_children():
+		_set_prefab_owner(child, root)
 
 
 ## Generate thumbnail for prefab

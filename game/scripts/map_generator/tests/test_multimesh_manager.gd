@@ -38,7 +38,9 @@ func test_group_prefab_instances() -> void:
 		placement_results.append(result)
 
 	# Group instances
-	var groups := multimesh_manager.group_prefab_instances(placement_results)
+	var groups := multimesh_manager.group_prefab_instances(
+		placement_results, GenerationContext.new().create_cosmetic_rng()
+	)
 
 	# Verify grouping
 	assert_eq(groups.size(), 2, "Should have 2 groups")
@@ -150,7 +152,9 @@ func test_batch_prefabs_disabled() -> void:
 	for i in range(15):
 		placement_results.append(_create_mock_placement_result("res://prefab.tscn"))
 
-	var stats := multimesh_manager.batch_prefabs(placement_results, test_scene_root, config)
+	var stats := multimesh_manager.batch_prefabs(
+		placement_results, test_scene_root, config, GenerationContext.new().create_cosmetic_rng()
+	)
 
 	# Verify no batching occurred
 	assert_false(stats["enabled"], "Should be disabled")
@@ -168,30 +172,14 @@ func test_batch_prefabs_no_candidates() -> void:
 	for i in range(5):
 		placement_results.append(_create_mock_placement_result("res://prefab.tscn"))
 
-	var stats := multimesh_manager.batch_prefabs(placement_results, test_scene_root, config)
+	var stats := multimesh_manager.batch_prefabs(
+		placement_results, test_scene_root, config, GenerationContext.new().create_cosmetic_rng()
+	)
 
 	# Verify no batching occurred
 	assert_true(stats["enabled"], "Should be enabled")
 	assert_eq(stats["batched_count"], 0, "Should not batch any prefabs")
 	assert_eq(stats["multimesh_count"], 0, "Should not create any MultiMesh")
-
-
-## Test: Color variation is applied during grouping
-func test_color_variation_applied() -> void:
-	# Create mock placement results
-	var placement_results := []
-	for i in range(3):
-		var result := _create_mock_placement_result("res://prefab.tscn")
-		placement_results.append(result)
-
-	# Group instances (which applies color variation)
-	var groups := multimesh_manager.group_prefab_instances(placement_results)
-
-	# Verify that instance data has colors
-	var instances: Array = groups["res://prefab.tscn"]
-	for instance_data in instances:
-		assert_not_null(instance_data.color, "Should have color")
-		assert_true(instance_data.color is Color, "Should be Color type")
 
 
 ## Test: Apply multimesh batching with invalid context
@@ -200,6 +188,7 @@ func test_apply_multimesh_batching_invalid_context() -> void:
 	var stats := multimesh_manager.apply_multimesh_batching(
 		placement_results, test_scene_root, null
 	)
+	assert_push_error_count(1)
 
 	# Verify error handling
 	assert_false(stats["enabled"], "Should be disabled due to invalid context")

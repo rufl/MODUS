@@ -8,6 +8,7 @@ const LEVEL_FILE := "level.tscn"
 const ASSETS_DIR := "assets/"
 const THUMBNAIL_FILE := "thumbnail.png"
 const JSONHelperClass = preload("res://game/core/json_helper.gd")
+const RUNTIME_API_VERSION := 1
 
 
 class LevelManifest:
@@ -24,6 +25,8 @@ class LevelManifest:
 	var level_file: String = LEVEL_FILE
 	var asset_count: int = 0
 	var workshop_id: String = ""
+	var runtime_api_version: int = 0
+	var runtime_scripts: PackedStringArray = []
 
 	func to_dict() -> Dictionary:
 		return {
@@ -39,7 +42,9 @@ class LevelManifest:
 			"thumbnail": thumbnail,
 			"level_file": level_file,
 			"asset_count": asset_count,
-			"workshop_id": workshop_id
+			"workshop_id": workshop_id,
+			"runtime_api_version": runtime_api_version,
+			"runtime_scripts": Array(runtime_scripts)
 		}
 
 	static func from_dict(data: Dictionary) -> LevelManifest:
@@ -59,6 +64,8 @@ class LevelManifest:
 		manifest.level_file = data.get("level_file", LEVEL_FILE)
 		manifest.asset_count = data.get("asset_count", 0)
 		manifest.workshop_id = data.get("workshop_id", "")
+		manifest.runtime_api_version = data.get("runtime_api_version", 0)
+		manifest.runtime_scripts = PackedStringArray(data.get("runtime_scripts", []))
 		return manifest
 
 	static func _is_valid_dict(data: Dictionary) -> bool:
@@ -74,12 +81,23 @@ class LevelManifest:
 		]:
 			if data.has(field_name) and not data[field_name] is String:
 				return false
-		for field_name: String in ["created_at", "updated_at", "asset_count"]:
-			if data.has(field_name) and not data[field_name] is int:
+		for field_name: String in [
+			"created_at", "updated_at", "asset_count", "runtime_api_version"
+		]:
+			var value: Variant = data.get(field_name, 0)
+			if not (
+				value is int
+				or (
+					value is float
+					and is_finite(value)
+					and value == floor(value)
+					and absf(value) <= 9007199254740991.0
+				)
+			):
 				return false
 		if data.has("asset_count") and data["asset_count"] < 0:
 			return false
-		for field_name: String in ["tags", "dependencies"]:
+		for field_name: String in ["tags", "dependencies", "runtime_scripts"]:
 			if not data.has(field_name):
 				continue
 			var values: Variant = data[field_name]
@@ -124,6 +142,16 @@ static func _validate_manifest(manifest: LevelManifest) -> String:
 		return "Manifest level_file and thumbnail must differ"
 	if manifest.asset_count < 0:
 		return "Manifest asset_count cannot be negative"
+	if manifest.runtime_api_version not in [0, RUNTIME_API_VERSION]:
+		return "The package requires an unsupported document runtime API."
+	if (
+		not manifest.runtime_scripts.is_empty()
+		and manifest.runtime_api_version != RUNTIME_API_VERSION
+	):
+		return "Runtime script dependencies require a document runtime API version."
+	for script_path: String in manifest.runtime_scripts:
+		if not _is_runtime_script(script_path) or not ResourceLoader.exists(script_path):
+			return "Required built-in runtime script is unavailable: " + script_path
 	return ""
 
 
@@ -143,6 +171,8 @@ static func package_level(
 	if not manifest_error.is_empty():
 		result.error_msg = manifest_error
 		return result
+	if level_root.has_method("prepare_for_save"):
+		level_root.prepare_for_save()
 
 	if manifest.name.is_empty():
 		manifest.name = level_root.name
@@ -173,7 +203,10 @@ static func package_level(
 			result, temp_dir, "Failed to create staging directory: %s" % error_string(root_err)
 		)
 
-	var assets := _collect_assets(level_root)
+	var runtime_scripts: Array[String] = []
+	var assets := _collect_assets(level_root, runtime_scripts)
+	manifest.runtime_scripts = PackedStringArray(runtime_scripts)
+	manifest.runtime_api_version = RUNTIME_API_VERSION if not runtime_scripts.is_empty() else 0
 	var asset_map := _build_asset_map(assets)
 	if asset_map.values().has(level_rel_path) or asset_map.values().has(thumbnail_rel_path):
 		return _package_failure(result, temp_dir, "Manifest path conflicts with packaged asset")
@@ -212,10 +245,22 @@ static func package_level(
 				temp_dir,
 				"Failed to create asset directory: %s" % error_string(destination_dir_err)
 			)
-		var copy_err: Error = DirAccess.copy_absolute(
-			ProjectSettings.globalize_path(source_path),
-			ProjectSettings.globalize_path(destination_path)
-		)
+		var copy_err: Error
+		if source_path.get_extension().to_lower() == "obj":
+			# External packages cannot invoke the editor's OBJ importer.
+			var mesh := ResourceLoader.load(source_path) as Mesh
+			copy_err = ResourceSaver.save(mesh, destination_path) if mesh else ERR_FILE_UNRECOGNIZED
+		elif FileAccess.file_exists(source_path):
+			copy_err = DirAccess.copy_absolute(
+				ProjectSettings.globalize_path(source_path),
+				ProjectSettings.globalize_path(destination_path)
+			)
+		else:
+			# Exported editors may expose a resource only through its PCK remap.
+			var resource := ResourceLoader.load(source_path)
+			copy_err = (
+				ResourceSaver.save(resource, destination_path) if resource else ERR_FILE_NOT_FOUND
+			)
 		if copy_err != OK:
 			return _package_failure(
 				result,
@@ -575,21 +620,25 @@ static func read_thumbnail(mdsl_path: String) -> Image:
 
 
 ## Collect all referenced assets, including transitive ResourceLoader dependencies.
-static func _collect_assets(level_root: Node) -> Array[String]:
+static func _collect_assets(level_root: Node, runtime_scripts: Array[String] = []) -> Array[String]:
 	var assets: Array[String] = []
-	var visited: Dictionary = {}
+	var visited: Dictionary = {"runtime_scripts": runtime_scripts}
 	_collect_node_assets(level_root, assets, visited)
 	return assets
 
 
 static func _collect_node_assets(node: Node, assets: Array[String], visited: Dictionary) -> void:
-	if not node:
+	if not node or node.get_meta("editor_runtime_only", false):
 		return
 	var node_key := "node:%s" % str(node.get_instance_id())
 	if visited.has(node_key):
 		return
 	visited[node_key] = true
+	if not node.scene_file_path.is_empty():
+		_collect_file_dependencies(node.scene_file_path, assets, visited)
 	for property_info: Dictionary in node.get_property_list():
+		if not (int(property_info.get("usage", 0)) & PROPERTY_USAGE_STORAGE):
+			continue
 		var property_name: String = property_info.get("name", "")
 		if not property_name.is_empty():
 			_collect_variant_assets(node.get(property_name), assets, visited)
@@ -609,6 +658,8 @@ static func _collect_variant_assets(
 		if not resource.resource_path.is_empty():
 			_collect_file_dependencies(resource.resource_path, assets, visited)
 		for property_info: Dictionary in resource.get_property_list():
+			if not (int(property_info.get("usage", 0)) & PROPERTY_USAGE_STORAGE):
+				continue
 			var property_name: String = property_info.get("name", "")
 			if not property_name.is_empty():
 				_collect_variant_assets(resource.get(property_name), assets, visited)
@@ -624,21 +675,47 @@ static func _collect_variant_assets(
 static func _collect_file_dependencies(
 	source_path: String, assets: Array[String], visited: Dictionary
 ) -> void:
-	var normalized := source_path.replace("\\", "/").simplify_path()
+	var normalized := source_path.get_slice("::", 0).replace("\\", "/").simplify_path()
 	if normalized.is_empty() or normalized.begins_with("uid://"):
+		return
+	if _is_runtime_script(normalized):
+		if normalized not in visited.runtime_scripts:
+			visited.runtime_scripts.append(normalized)
 		return
 	var path_key := "path:%s" % normalized
 	if visited.has(path_key):
 		return
 	visited[path_key] = true
-	if FileAccess.file_exists(normalized):
+	if FileAccess.file_exists(normalized) or ResourceLoader.exists(normalized):
 		assets.append(normalized)
 	else:
 		return
 	var dependencies: PackedStringArray = ResourceLoader.get_dependencies(normalized)
 	for dependency_entry: String in dependencies:
-		var dependency := dependency_entry.get_slice("::", 0)
+		var dependency := _dependency_path(dependency_entry)
 		_collect_file_dependencies(dependency, assets, visited)
+
+
+static func _dependency_path(entry: String) -> String:
+	for part: String in entry.split("::"):
+		if part.begins_with("res://") or part.begins_with("user://"):
+			return part
+	var path := entry.get_slice("::", 0)
+	if path.begins_with("uid://"):
+		var id := ResourceUID.text_to_id(path)
+		if ResourceUID.has_id(id):
+			return ResourceUID.get_id_path(id)
+	return path
+
+
+static func _is_runtime_script(path: String) -> bool:
+	return (
+		path.get_extension() in ["gd", "gdc"]
+		and (
+			path.begins_with("res://shared/editor_core/")
+			or path == "res://game/scripts/map_generator/prefab_metadata.gd"
+		)
+	)
 
 
 static func _build_asset_map(assets: Array[String]) -> Dictionary:
@@ -646,6 +723,8 @@ static func _build_asset_map(assets: Array[String]) -> Dictionary:
 	var destinations: Dictionary = {}
 	for source_path: String in assets:
 		var basename := source_path.get_file().validate_filename()
+		if source_path.get_extension().to_lower() == "obj":
+			basename = basename.get_basename() + ".tres"
 		if basename.is_empty():
 			basename = "asset"
 		var identity := source_path.replace("\\", "/").sha256_text()
@@ -684,7 +763,7 @@ static func _format_binary_dependency_error(
 	var dependency_messages: Array[String] = []
 	var source_package_dir := source_package_path.get_base_dir()
 	for dependency_entry: String in dependency_entries:
-		var dependency_path := dependency_entry.get_slice("::", 0)
+		var dependency_path := _dependency_path(dependency_entry)
 		if dependency_path.is_empty():
 			dependency_path = dependency_entry
 		var normalized_dependency := dependency_path.replace("\\", "/").simplify_path()
@@ -746,6 +825,11 @@ static func _rewrite_text_resource(
 	sources.sort_custom(func(a: String, b: String) -> bool: return a.length() > b.length())
 	for source_path: String in sources:
 		content = content.replace(source_path, relative_map[source_path])
+	if path.get_extension().to_lower() in ["tscn", "tres"]:
+		# Host UIDs would resolve back into the editor installation instead of package assets.
+		var uid_attribute := RegEx.new()
+		uid_attribute.compile('\\s+uid="uid://[^"]+"')
+		content = uid_attribute.sub(content, "", true)
 	var write_file := FileAccess.open(path, FileAccess.WRITE)
 	if not write_file:
 		return ERR_FILE_CANT_OPEN
@@ -786,6 +870,8 @@ static func _find_unresolved_scene_paths(path: String) -> PackedStringArray:
 		return unresolved
 	for match: RegExMatch in regex.search_all(content):
 		var candidate := match.get_string()
+		if _is_runtime_script(candidate) and ResourceLoader.exists(candidate):
+			continue
 		if not unresolved.has(candidate):
 			unresolved.append(candidate)
 	return unresolved

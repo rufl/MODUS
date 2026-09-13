@@ -219,7 +219,7 @@ func paste(position: Vector3, parent: Node) -> Array[Node3D]:
 			if edited_root:
 				undo.add_do_property(node, "owner", edited_root)
 			undo.add_undo_method(Callable(parent, "remove_child").bind(node))
-			undo.add_undo_method(Callable(node, "queue_free"))
+			undo.add_do_reference(node)
 
 			pasted.append(node)
 
@@ -246,6 +246,8 @@ func _apply_pasted_transform(
 
 
 func duplicate_selection(offset: Vector3 = Vector3(1, 0, 1)) -> Array[Node3D]:
+	if selected_nodes.is_empty():
+		return []
 	copy()
 
 	# Calculate paste position
@@ -317,8 +319,8 @@ func delete_selected() -> int:
 
 		var parent := node.get_parent()
 		undo.add_do_method(Callable(parent, "remove_child").bind(node))
-		undo.add_do_method(Callable(node, "queue_free"))
 		undo.add_undo_method(Callable(parent, "add_child").bind(node))
+		undo.add_undo_property(node, "owner", node.owner)
 		undo.add_undo_reference(node)
 		count += 1
 

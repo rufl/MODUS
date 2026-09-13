@@ -61,19 +61,6 @@ func test_calculate_secret_count_based_on_map_size() -> void:
 	assert_lte(count_large, 3, "Large map should have max 3 secrets")
 
 
-## Test that secret rooms are generated when enabled
-## Requirement 11.1
-func test_generate_secret_rooms_when_enabled() -> void:
-	# Create a simple room
-	_create_test_room(context, Vector2i(10, 10), 5)
-
-	var secret_rooms: Array = generator.generate_secret_rooms(context)
-
-	# Should generate at least one secret room if conditions are met
-	# (may be 0 if no suitable locations found)
-	assert_true(secret_rooms.size() >= 0, "Should return array of secret rooms")
-
-
 ## Test that secret rooms are not generated when disabled
 func test_no_secret_rooms_when_disabled() -> void:
 	context.config.enable_secrets = false

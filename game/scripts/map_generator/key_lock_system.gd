@@ -34,7 +34,7 @@ func generate_key_lock_system(context: GenerationContext) -> Dictionary:
 		var key_color: KeyColor = i as KeyColor
 		var key_lock_pair := _place_key_lock_pair(context, progression_order, key_color, i)
 
-		if key_lock_pair.has("key") and key_lock_pair.has("door"):
+		if not key_lock_pair.is_empty():
 			keys.append(key_lock_pair.key)
 			locked_doors.append(key_lock_pair.door)
 
@@ -118,7 +118,11 @@ func _place_key_lock_pair(
 	var door_segment_end: int = min(door_segment_start + segment_size * 2, progression.size())
 
 	# Ensure valid ranges
-	if key_segment_end >= progression.size() or door_segment_start >= progression.size():
+	if (
+		key_segment_start >= key_segment_end
+		or key_segment_end >= progression.size()
+		or door_segment_start >= door_segment_end
+	):
 		return {}
 
 	# Select rooms for key and door
@@ -128,11 +132,14 @@ func _place_key_lock_pair(
 	var key_room: Room = progression[key_room_idx]
 	var door_room: Room = progression[door_room_idx]
 
-	# Place key in key_room
-	var key_data := _place_key(context, key_room, key_color)
+	if key_room.cells.is_empty():
+		return {}
 
-	# Place locked door blocking entrance to door_room
+	# Commit the key only after its paired door has a valid placement.
 	var door_data := _place_locked_door(context, door_room, key_color)
+	if door_data.is_empty():
+		return {}
+	var key_data := _place_key(context, key_room, key_color)
 
 	return {"key": key_data, "door": door_data}
 
@@ -140,12 +147,13 @@ func _place_key_lock_pair(
 ## Place a key in a room
 func _place_key(context: GenerationContext, room: Room, key_color: KeyColor) -> Dictionary:
 	# Find a good position in the room (not at entrance)
-	var key_pos := _find_key_position(room)
+	var key_pos := _find_key_position(room, context.rng)
+	var cell: Cell = context.grid[key_pos.y][key_pos.x]
 
 	var key_data := {
 		"id": context.key_placements.size(),
 		"color": KeyColor.keys()[key_color],
-		"position": Vector3(key_pos.x * 2.0, 0.5, key_pos.y * 2.0),
+		"position": Vector3(key_pos.x * 2.0 + 1.0, cell.height + 0.5, key_pos.y * 2.0 + 1.0),
 		"room_id": room.id,
 		"grid_position": key_pos
 	}
@@ -154,7 +162,6 @@ func _place_key(context: GenerationContext, room: Room, key_color: KeyColor) -> 
 	context.key_placements.append(key_data)
 
 	# Mark cell metadata
-	var cell: Cell = context.grid[key_pos.y][key_pos.x]
 	cell.metadata["has_key"] = true
 	cell.metadata["key_color"] = KeyColor.keys()[key_color]
 
@@ -162,7 +169,7 @@ func _place_key(context: GenerationContext, room: Room, key_color: KeyColor) -> 
 
 
 ## Find a suitable position for a key in a room
-func _find_key_position(room: Room) -> Vector2i:
+func _find_key_position(room: Room, rng: RandomNumberGenerator) -> Vector2i:
 	if room.cells.is_empty():
 		return Vector2i.ZERO
 
@@ -180,7 +187,7 @@ func _find_key_position(room: Room) -> Vector2i:
 		candidates = room.cells.duplicate()
 
 	# Return random candidate
-	return candidates[randi() % candidates.size()]
+	return candidates[rng.randi_range(0, candidates.size() - 1)]
 
 
 ## Place a locked door at a room entrance
@@ -192,17 +199,18 @@ func _place_locked_door(context: GenerationContext, room: Room, key_color: KeyCo
 		push_warning("Could not find valid door position for room %d" % room.id)
 		return {}
 
+	var cell: Cell = context.grid[door_pos.y][door_pos.x]
+
 	var door_data := {
-		"id": len(context.grid),  # Temporary ID
+		"id": context.key_placements.size(),
 		"color": KeyColor.keys()[key_color],
-		"position": Vector3(door_pos.x * 2.0, 0.0, door_pos.y * 2.0),
+		"position": Vector3(door_pos.x * 2.0 + 1.0, cell.height, door_pos.y * 2.0 + 1.0),
 		"room_id": room.id,
 		"grid_position": door_pos,
 		"blocks_progression": true
 	}
 
 	# Mark cell metadata
-	var cell: Cell = context.grid[door_pos.y][door_pos.x]
 	cell.metadata["has_locked_door"] = true
 	cell.metadata["door_color"] = KeyColor.keys()[key_color]
 	cell.metadata["blocks_progression"] = true
@@ -213,11 +221,20 @@ func _place_locked_door(context: GenerationContext, room: Room, key_color: KeyCo
 ## Find a suitable position for a locked door (at room entrance)
 func _find_door_position(context: GenerationContext, room: Room) -> Vector2i:
 	# Use entrance points if available
-	if not room.entrance_points.is_empty():
-		return room.entrance_points[0]
+	for entrance: Vector2i in room.entrance_points:
+		if not _is_in_bounds(context, entrance):
+			continue
+		var cell: Cell = context.grid[entrance.y][entrance.x]
+		if cell.type != Cell.Type.EMPTY and not cell.metadata.get("has_locked_door", false):
+			return entrance
 
 	# Otherwise find a hallway connection
 	for cell_pos: Vector2i in room.cells:
+		if not _is_in_bounds(context, cell_pos):
+			continue
+		var cell: Cell = context.grid[cell_pos.y][cell_pos.x]
+		if cell.type == Cell.Type.EMPTY or cell.metadata.get("has_locked_door", false):
+			continue
 		# Check if adjacent to hallway
 		var neighbors := [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]
 
@@ -240,49 +257,11 @@ func _is_in_bounds(context: GenerationContext, pos: Vector2i) -> bool:
 func validate_key_lock_progression(
 	context: GenerationContext, keys: Array, locked_doors: Array
 ) -> bool:
-	# For each key-door pair, verify the key is reachable before the door
-	for i in range(min(keys.size(), locked_doors.size())):
-		var key: Dictionary = keys[i]
-		var door: Dictionary = locked_doors[i]
-
-		# Check that key room comes before door room in progression
-		var key_room := _find_room_by_id(context, key.room_id)
-		var door_room := _find_room_by_id(context, door.room_id)
-
-		if not key_room or not door_room:
-			push_warning("Invalid room references in key-lock pair %d" % i)
-			return false
-
-		# Verify key is accessible from start
-		if not _is_room_reachable(context, key_room):
-			push_warning("Key room %d is not reachable from start" % key_room.id)
-			return false
-
-	return true
-
-
-## Check if a room is reachable from the start
-func _is_room_reachable(context: GenerationContext, target_room: Room) -> bool:
-	var start_room := _find_start_room(context)
-	if not start_room:
-		return false
-
-	# BFS to check reachability
-	var visited: Dictionary = {}
-	var queue: Array[Room] = [start_room]
-	visited[start_room.id] = true
-
-	while not queue.is_empty():
-		var current: Room = queue.pop_front()
-
-		if current.id == target_room.id:
-			return true
-
-		for connected_id: int in current.connections:
-			if not visited.has(connected_id):
-				var connected_room := _find_room_by_id(context, connected_id)
-				if connected_room:
-					queue.append(connected_room)
-					visited[connected_id] = true
-
-	return false
+	var validation_context := GenerationContext.new()
+	validation_context.grid = context.grid
+	validation_context.grid_size = context.grid_size
+	validation_context.rooms = context.rooms
+	validation_context.player_start_position = context.player_start_position
+	validation_context.key_placements = keys
+	validation_context.metadata["locked_doors"] = locked_doors
+	return ValidationSystem.new().validate_key_lock_progression(validation_context).is_valid

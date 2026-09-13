@@ -19,7 +19,6 @@ const HotbarScene = preload("res://shared/editor_core/ui/hotbar.tscn")
 const PlacementPreviewScript = preload("res://shared/editor_core/tools/placement_preview.gd")
 const EditorConsoleScript = preload("res://shared/editor_core/ui/editor_console.gd")
 const ActorRegistryScript = preload("res://shared/editor_core/actors/actor_registry.gd")
-const ChannelSystemScript = preload("res://shared/editor_core/scripting/channel_system.gd")
 const VisConnToolScript = preload("res://shared/editor_core/tools/visual_connection_tool.gd")
 const ConnRendererScript = preload("res://shared/editor_core/gizmos/connection_renderer.gd")
 const ConnPropsScript = preload("res://shared/editor_core/ui/connection_properties_panel.gd")
@@ -111,8 +110,8 @@ func _init_placement_preview() -> void:
 	placement_preview.set_script(PlacementPreviewScript)
 	placement_preview.name = "PlacementPreview"
 
-	if level_root:
-		level_root.add_child(placement_preview)
+	if level_root and level_root.get_parent():
+		level_root.get_parent().add_child(placement_preview)
 	else:
 		add_child(placement_preview)
 
@@ -169,21 +168,11 @@ func _init_actor_registry() -> void:
 
 
 func _init_channel_system() -> void:
-	# Check if parent already has ChannelSystem
-	var parent: Node = get_parent()
-	if parent and parent.has_node("ChannelSystem"):
-		channel_system = parent.get_node("ChannelSystem")
-		feature_ready.emit("channel_system")
-		return
-
-	if not ChannelSystemScript:
-		push_warning("[EditorFeatures] ChannelSystem script not found")
-		return
-
-	channel_system = Node.new()
-	channel_system.set_script(ChannelSystemScript)
-	channel_system.name = "ChannelSystem"
-	add_child(channel_system)
+	channel_system = (
+		level_root.get_channel_system()
+		if level_root and level_root.has_method("get_channel_system")
+		else null
+	)
 
 	feature_ready.emit("channel_system")
 
@@ -197,7 +186,10 @@ func _init_visual_connection_system() -> void:
 		visual_connection_tool = Node.new()
 		visual_connection_tool.set_script(VisConnToolScript)
 		visual_connection_tool.name = "VisualConnectionTool"
-		add_child(visual_connection_tool)
+		if level_root and level_root.get_parent():
+			level_root.get_parent().add_child(visual_connection_tool)
+		else:
+			add_child(visual_connection_tool)
 
 		# Setup references
 		if visual_connection_tool.has_method("setup"):
@@ -211,13 +203,14 @@ func _init_visual_connection_system() -> void:
 		connection_renderer.set_script(ConnRendererScript)
 		connection_renderer.name = "ConnectionRenderer"
 
-		if level_root:
-			level_root.add_child(connection_renderer)
+		if level_root and level_root.get_parent():
+			level_root.get_parent().add_child(connection_renderer)
 		else:
 			add_child(connection_renderer)
 
 		if connection_renderer.has_method("setup"):
 			connection_renderer.setup(channel_system, level_root)
+			connection_renderer.refresh_all()
 
 		# Link renderer to tool
 		if visual_connection_tool and visual_connection_tool.has_method("set_renderer"):
@@ -234,6 +227,11 @@ func _init_visual_connection_system() -> void:
 
 		if connection_properties.has_method("setup"):
 			connection_properties.setup(channel_system)
+		connection_properties.connection_updated.connect(
+			func(_channel: String) -> void:
+				if is_instance_valid(connection_renderer):
+					connection_renderer.refresh_all()
+		)
 
 		feature_ready.emit("connection_properties")
 
@@ -529,13 +527,23 @@ func get_available_actors() -> Array[Dictionary]:
 
 func set_level_root(root: Node3D) -> void:
 	level_root = root
-
-	# Reparent placement preview
-	if placement_preview and placement_preview.get_parent() != root:
-		placement_preview.reparent(root)
-
-	# Update console
-	if command_console and command_console.has_method("setup"):
+	_init_channel_system()
+	clear_placement()
+	if visual_connection_tool:
+		visual_connection_tool.cancel_connection()
+		visual_connection_tool.setup(channel_system, editor_camera, root)
+	if is_instance_valid(connection_renderer):
+		connection_renderer.free()
+	connection_renderer = ConnRendererScript.new()
+	root.get_parent().add_child(connection_renderer)
+	connection_renderer.setup(channel_system, root)
+	connection_renderer.refresh_all()
+	if visual_connection_tool:
+		visual_connection_tool.set_renderer(connection_renderer)
+	if connection_properties:
+		connection_properties.setup(channel_system)
+		connection_properties.hide()
+	if command_console:
 		command_console.level_root = root
 
 
@@ -544,6 +552,8 @@ func set_level_root(root: Node3D) -> void:
 
 func set_camera(camera: Camera3D) -> void:
 	editor_camera = camera
+	if visual_connection_tool:
+		visual_connection_tool.editor_camera = camera
 
 
 ## Handle 3D input

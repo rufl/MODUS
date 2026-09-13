@@ -43,6 +43,22 @@ func _init() -> void:
 	rng = RandomNumberGenerator.new()
 
 
+## Shuffle in place without consuming the process-global random stream.
+func shuffle(values: Array) -> void:
+	for i in range(values.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var value: Variant = values[i]
+		values[i] = values[j]
+		values[j] = value
+
+
+## Each cosmetic pass gets a deterministic stream independent of gameplay.
+func create_cosmetic_rng() -> RandomNumberGenerator:
+	var cosmetic_rng := RandomNumberGenerator.new()
+	cosmetic_rng.seed = seed_hash ^ 0x4D554C54494D4553
+	return cosmetic_rng
+
+
 ## Compatibility helper for callers that also accept dictionary contexts.
 ## RefCounted properties must be inspected through get_property_list() rather
 ## than Dictionary.has().

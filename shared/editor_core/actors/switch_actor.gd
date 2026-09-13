@@ -24,19 +24,22 @@ func _on_actor_ready() -> void:
 
 
 func _create_visual() -> void:
-	# Create a simple switch visual
-	if Engine.is_editor_hint():
-		# Editor preview
-		var mesh := CSGBox3D.new()
-		mesh.size = Vector3(0.3, 0.3, 0.1)
-		mesh.position = Vector3(0, 0, 0.05)
-
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.2, 0.6, 0.2) if is_active else Color(0.6, 0.2, 0.2)
-		mesh.material = material
-
-		add_child(mesh)
-		switch_mesh = mesh
+	var body := StaticBody3D.new()
+	body.name = "SwitchBody"
+	var mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(0.65, 0.65, 0.18)
+	mesh.mesh = box
+	mesh.material_override = StandardMaterial3D.new()
+	body.add_child(mesh)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = box.size
+	collision.shape = shape
+	body.add_child(collision)
+	add_child(body)
+	switch_mesh = mesh
+	_update_visual()
 
 
 func _process(delta: float) -> void:
@@ -61,30 +64,30 @@ func _on_deactivated() -> void:
 
 
 func _update_visual() -> void:
-	if switch_mesh and switch_mesh is CSGShape3D:
-		var csg: CSGShape3D = switch_mesh
-		if csg.material is StandardMaterial3D:
-			var mat: StandardMaterial3D = csg.material
-			mat.albedo_color = Color(0.2, 0.6, 0.2) if is_active else Color(0.6, 0.2, 0.2)
+	if switch_mesh is MeshInstance3D:
+		var material := switch_mesh.material_override as StandardMaterial3D
+		material.albedo_color = Color(0.1, 0.85, 0.65) if is_active else Color(0.95, 0.45, 0.1)
+		material.emission_enabled = true
+		material.emission = material.albedo_color
+		material.emission_energy_multiplier = 0.6
 
 
 ## Called when player interacts
 
 
 func interact(player: Node = null) -> bool:
-	# Check key requirement
+	if not is_enabled or is_authoring() or (one_shot and activation_count > 0):
+		return false
 	if not require_key.is_empty():
-		if player and player.has_method("has_key"):
-			if not player.has_key(require_key):
-				return false
-		else:
+		if not player or not player.has_method("has_item") or not player.has_item(require_key):
 			return false
-
-	if switch_type == SwitchType.TOGGLE:
-		toggle()
+	var mission := MissionMgr.get_instance()
+	if mission and not mission.can_activate_actor(self):
+		return false
+	if switch_type == SwitchType.TOGGLE and is_active:
+		deactivate()
 	else:
 		trigger(player, {"interacted": true})
-
 	return true
 
 
@@ -94,6 +97,14 @@ func interact(player: Node = null) -> bool:
 func release() -> void:
 	if switch_type == SwitchType.HOLD:
 		deactivate()
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if not super.restore_runtime_state(state):
+		return false
+	_momentary_timer = momentary_duration if is_active else 0.0
+	_update_visual()
+	return true
 
 
 func get_inspector_properties() -> Array[Dictionary]:

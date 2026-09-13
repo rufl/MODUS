@@ -105,6 +105,8 @@ func _is_location_suitable_for_outdoor(region: Rect2i, context: GenerationContex
 
 			if context.grid[y][x].type == Cell.Type.EMPTY:
 				empty_count += 1
+			elif context.grid[y][x].type in [Cell.Type.OUTDOOR, Cell.Type.CAVE]:
+				return false
 
 	# At least 80% of cells should be empty
 	return empty_count >= total_cells * 0.8
@@ -115,6 +117,7 @@ func _generate_outdoor_region(region: Rect2i, context: GenerationContext) -> voi
 	# Use cellular automata to create organic outdoor shape
 	# 5 iterations for organic shape
 	ca_engine.generate_area(region, context.grid, context.rng, Cell.Type.OUTDOOR, 5)
+	HallwayGenerator.new().connect_generated_area(context, region, Cell.Type.OUTDOOR)
 
 	# Create transitions to adjacent indoor areas
 	_create_outdoor_transitions(region, context)
@@ -145,7 +148,7 @@ func _create_outdoor_transitions(region: Rect2i, context: GenerationContext) -> 
 
 	# Create doorways at transition points (limit to 2-4 per region)
 	var num_transitions: int = clamp(transition_points.size() / 8, 2, 4)
-	transition_points.shuffle()
+	context.shuffle(transition_points)
 
 	for i in range(min(num_transitions, transition_points.size())):
 		var pos := transition_points[i]

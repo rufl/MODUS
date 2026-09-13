@@ -209,6 +209,8 @@ func _build_walls() -> void:
 			_create_wall_if_needed(wall_combiner, Vector2i(x, y), Vector2i(1, 0), created_walls)
 			# South
 			_create_wall_if_needed(wall_combiner, Vector2i(x, y), Vector2i(0, 1), created_walls)
+			_create_wall_if_needed(wall_combiner, Vector2i(x, y), Vector2i(-1, 0), created_walls)
+			_create_wall_if_needed(wall_combiner, Vector2i(x, y), Vector2i(0, -1), created_walls)
 
 	_csg_root.add_child(wall_combiner)
 

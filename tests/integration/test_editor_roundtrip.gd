@@ -4,6 +4,7 @@ const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const SpawnPointScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 const ActorBaseScript = preload("res://shared/editor_core/actors/actor_base.gd")
 const SaveSystemScript = preload("res://shared/editor_core/data/level_save_system.gd")
+const ModuleInstanceScript = preload("res://shared/editor_core/nodes/module_instance.gd")
 
 const ROUNDTRIP_DIR := "user://editor_roundtrip_proof/"
 const SAVE_PATH := ROUNDTRIP_DIR + "authored_level.tscn"
@@ -77,6 +78,82 @@ func test_editor_save_export_reload_preserves_key_actors() -> void:
 		exported_level.free()
 
 	_cleanup_roundtrip_artifacts()
+
+
+func test_module_channel_ids_and_execution_survive_root_relocation() -> void:
+	var document := LevelRootScript.new()
+	document.name = "Original"
+	add_child_autofree(document)
+	var pump := ModuleInstanceScript.new()
+	pump.name = "PumpHall"
+	pump.instance_id = "pump"
+	document.add_child(pump)
+	var control := ModuleInstanceScript.new()
+	control.name = "ControlRoom"
+	control.instance_id = "control"
+	document.add_child(control)
+	var source := ActorBaseScript.new()
+	source.actor_id = "switch"
+	pump.add_child(source)
+	var target := ActorBaseScript.new()
+	target.actor_id = "door"
+	control.add_child(target)
+	document.get_channel_system().create_connection(source, target, "power")
+	document.prepare_for_save()
+	assert_eq(document.channel_data.power.sources, ["pump/switch"])
+	assert_eq(document.channel_data.power.targets, ["control/door"])
+	var packed := PackedScene.new()
+	assert_eq(packed.pack(document), OK)
+	var restored: Node3D = packed.instantiate()
+	restored.name = "Relocated"
+	add_child_autofree(restored)
+	var instigator := Node.new()
+	add_child_autofree(instigator)
+	var received: Array[Dictionary] = []
+	restored.find_actor("control/door").activated.connect(
+		func(data: Dictionary) -> void: received.append(data)
+	)
+	restored.find_actor("pump/switch").trigger(instigator, {"key": "maintenance"})
+	assert_eq(restored.find_actor("control/door").activation_count, 1)
+	assert_eq(received.size(), 1)
+	assert_same(received[0].source, instigator, "Channels must preserve the interacting player")
+	assert_eq(received[0].key, "maintenance")
+	assert_eq(target.activation_count, 0, "Restored channels must not reach the author document")
+
+
+func test_actor_checkpoint_restore_is_silent_and_cancels_pending_activation() -> void:
+	var actor := ActorBaseScript.new()
+	add_child_autofree(actor)
+	actor.activation_delay = 0.5
+	var events: Array[Dictionary] = []
+	actor.activated.connect(func(data: Dictionary) -> void: events.append(data))
+	actor.trigger(null, {"reward": "pending"})
+	assert_true(
+		actor.restore_runtime_state({"enabled": true, "is_active": true, "activation_count": 3})
+	)
+	actor._process(1.0)
+	assert_eq(actor.activation_count, 3)
+	assert_true(events.is_empty(), "Loading a checkpoint must not emit/replay actor activation")
+	assert_false(
+		actor.restore_runtime_state({"enabled": true, "is_active": false, "activation_count": -1})
+	)
+	assert_eq(actor.activation_count, 3)
+	assert_true(actor.is_active, "Rejected state must leave the actor unchanged")
+
+
+func test_delayed_activation_keeps_original_source_and_payload() -> void:
+	var actor := ActorBaseScript.new()
+	add_child_autofree(actor)
+	var source := Node.new()
+	add_child_autofree(source)
+	actor.activation_delay = 0.5
+	var events: Array[Dictionary] = []
+	actor.activated.connect(func(data: Dictionary) -> void: events.append(data))
+	actor.trigger(source, {"key": "maintenance"})
+	actor._process(1.0)
+	assert_eq(events.size(), 1)
+	assert_same(events[0].source, source)
+	assert_eq(events[0].key, "maintenance")
 
 
 func _cleanup_roundtrip_artifacts() -> void:

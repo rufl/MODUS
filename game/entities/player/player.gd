@@ -38,6 +38,8 @@ const DEFAULT_BASE_HEALTH: float = 100.0
 @export var standing_camera_height: float = 1.75
 @export var crouching_camera_height: float = 1.0
 @export var crouch_transition_speed: float = 10.0
+## Private editor sessions use the real controller without altering campaign inventory/registries.
+@export var isolated_session: bool = false
 
 var respawn_time: float = 5.0
 var health: float:
@@ -225,7 +227,7 @@ func _exit_tree() -> void:
 	# Unregister from entity registry
 	var peer_id: int = name.to_int()
 	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
-	if gs and gs.entity_registry:
+	if not isolated_session and gs and gs.entity_registry:
 		gs.entity_registry.unregister_player(peer_id)
 
 
@@ -260,15 +262,15 @@ func _ready() -> void:
 	# Register with entity registry
 	var peer_id: int = name.to_int()
 	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
-	if gs and gs.entity_registry:
+	if not isolated_session and gs and gs.entity_registry:
 		gs.entity_registry.register_player(peer_id, self)
 
 	# Service Injection
-	match_service = gs.match_service if gs else null
-	_player_service = gs.player if gs else null
+	match_service = gs.match_service if gs and not isolated_session else null
+	_player_service = gs.player if gs and not isolated_session else null
 	_effects_service = gs.effects if gs else null
 
-	_inventory_manager = gs.inventory if gs else null
+	_inventory_manager = gs.inventory if gs and not isolated_session else null
 	var inventory_peer_id: int = get_multiplayer_authority()
 	if _inventory_manager:
 		inventory = _inventory_manager.get_inventory(inventory_peer_id)

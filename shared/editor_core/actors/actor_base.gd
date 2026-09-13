@@ -26,6 +26,8 @@ var _cooldown_timer: float = 0.0
 var _delay_timer: float = 0.0
 var _is_delaying: bool = false
 var _pending_action: String = ""  # "activate" or "deactivate"
+var _pending_data: Dictionary = {}
+var _initial_activation_pending: bool = false
 
 
 func _ready() -> void:
@@ -33,11 +35,34 @@ func _ready() -> void:
 	set_meta("level_editor_placed", true)
 	set_meta("actor_type", actor_category)
 
-	# Initialize state
-	if starts_active:
-		call_deferred("_do_activate", {})
-
+	# Generated geometry is rebuilt on every instance, not serialized into it.
+	var authored_children := get_children()
 	_on_actor_ready()
+	for child: Node in get_children():
+		if child not in authored_children:
+			child.set_meta("editor_runtime_only", true)
+
+	var system := _find_channel_system()
+	if system:
+		system.get_binding_id(self)
+		if not output_channel.is_empty():
+			system.connect_source(self, output_channel)
+		for channel: String in input_channels:
+			system.connect_target(self, channel)
+	if starts_active and not is_authoring():
+		_initial_activation_pending = true
+		call_deferred("_activate_initial_state")
+	if is_authoring():
+		set_process(false)
+		set_physics_process(false)
+		set_process_input(false)
+		set_process_unhandled_input(false)
+
+
+func _activate_initial_state() -> void:
+	if _initial_activation_pending:
+		_initial_activation_pending = false
+		_do_activate({})
 
 
 func _process(delta: float) -> void:
@@ -50,11 +75,14 @@ func _process(delta: float) -> void:
 		_delay_timer -= delta
 		if _delay_timer <= 0:
 			_is_delaying = false
-			if _pending_action == "activate":
-				_do_activate({})
-			elif _pending_action == "deactivate":
-				_do_deactivate()
+			var action := _pending_action
+			var data := _pending_data
 			_pending_action = ""
+			_pending_data = {}
+			if action == "activate":
+				_do_activate(data)
+			elif action == "deactivate":
+				_do_deactivate()
 
 
 ## Override in subclasses for custom ready logic
@@ -68,32 +96,35 @@ func _on_actor_ready() -> void:
 
 
 func trigger(source: Node = null, data: Dictionary = {}) -> void:
-	if not is_enabled:
+	if not is_enabled or is_authoring():
 		return
 
 	if one_shot and activation_count > 0:
 		return
 
-	if _cooldown_timer > 0:
+	if _cooldown_timer > 0 or _is_delaying:
 		return
 
-	# Add source to data
-	data["source"] = source
+	var payload := data.duplicate()
+	payload["source"] = source
 
 	# Handle delay
 	if activation_delay > 0 and not _is_delaying:
 		_is_delaying = true
 		_delay_timer = activation_delay
 		_pending_action = "activate"
+		_pending_data = payload
 		return
 
-	_do_activate(data)
+	_do_activate(payload)
 
 
 ## Internal activation
 
 
 func _do_activate(data: Dictionary) -> void:
+	if is_authoring():
+		return
 	is_active = true
 	activation_count += 1
 
@@ -122,7 +153,7 @@ func _on_activated(_data: Dictionary) -> void:
 
 
 func deactivate() -> void:
-	if not is_active:
+	if not is_active or is_authoring() or _is_delaying:
 		return
 
 	# Handle delay
@@ -139,6 +170,8 @@ func deactivate() -> void:
 
 
 func _do_deactivate() -> void:
+	if is_authoring():
+		return
 	is_active = false
 
 	deactivated.emit()
@@ -170,38 +203,44 @@ func toggle() -> void:
 
 
 func _emit_to_channel(value: bool, data: Dictionary) -> void:
-	if output_channel.is_empty():
-		return
-
-	# Find ChannelSystem
 	var channel_system: Node = _find_channel_system()
-	if channel_system and channel_system.has_method("emit"):
-		data["value"] = value
-		channel_system.emit(output_channel, data)
+	if channel_system:
+		channel_system.emit_from(self, value, data)
 
 
 ## Find ChannelSystem in tree
 
 
 func _find_channel_system() -> Node:
-	var current: Node = self
+	var current: Node = get_parent()
 	while current:
-		if current.has_node("ChannelSystem"):
-			return current.get_node("ChannelSystem")
+		if current.has_method("get_channel_system"):
+			return current.get_channel_system()
 		current = current.get_parent()
 	return null
+
+
+func is_authoring() -> bool:
+	if Engine.is_editor_hint():
+		return true
+	var current: Node = get_parent()
+	while current:
+		if "authoring_mode" in current:
+			return bool(current.get("authoring_mode"))
+		current = current.get_parent()
+	return false
 
 
 ## Handle input from channel
 
 
 func receive_channel_input(channel: String, data: Dictionary) -> void:
-	if channel in input_channels:
-		var value: bool = data.get("value", true)
-		if value:
-			trigger(data.get("source"), data)
-		else:
-			deactivate()
+	# Membership is owned by ChannelSystem, including visual-editor connections.
+	var value: bool = data.get("value", true)
+	if value:
+		trigger(data.get("source"), data)
+	else:
+		deactivate()
 
 
 ## Reset to initial state
@@ -214,8 +253,33 @@ func reset() -> void:
 	_delay_timer = 0.0
 	_is_delaying = false
 	_pending_action = ""
+	_pending_data = {}
 
 	_on_reset()
+
+
+func capture_runtime_state() -> Dictionary:
+	return {"enabled": is_enabled, "is_active": is_active, "activation_count": activation_count}
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if (
+		not state.get("enabled") is bool
+		or not state.get("is_active") is bool
+		or not state.get("activation_count") is int
+		or state.get("activation_count", -1) < 0
+	):
+		return false
+	is_enabled = state.enabled
+	is_active = state.is_active
+	activation_count = state.activation_count
+	_cooldown_timer = 0.0
+	_delay_timer = 0.0
+	_is_delaying = false
+	_pending_action = ""
+	_pending_data = {}
+	_initial_activation_pending = false
+	return true
 
 
 ## Override for custom reset
@@ -315,11 +379,10 @@ func _get_category_icon() -> String:
 
 
 func _get_connection_targets() -> Array[NodePath]:
-	# Would return paths to connected actors
 	var targets: Array[NodePath] = []
-	if has_meta("level_editor_channels"):
-		var channels: Array = get_meta("level_editor_channels")
-		for conn: Dictionary in channels:
-			if conn.has("target_path"):
-				targets.append(conn.target_path)
+	var system := _find_channel_system()
+	if system:
+		for connection: Dictionary in system.get_node_connections(self):
+			if connection.role == "source" and is_instance_valid(connection.other):
+				targets.append(get_path_to(connection.other))
 	return targets

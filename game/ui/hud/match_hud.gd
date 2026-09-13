@@ -6,8 +6,6 @@ var objective_label: Label
 @onready var state_label: Label = $StateLabel
 @onready var background: ColorRect = $Background
 
-var _last_killed_count: int = -1
-
 
 func _ready() -> void:
 	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
@@ -177,13 +175,14 @@ func _on_objective_updated(_mission_id: String, _obj_id: String, current: int, t
 			"UI"
 		)
 
-	if current == _last_killed_count:
-		return
-
-	_last_killed_count = current
-
-	# Quake-style formatting
-	objective_label.text = "Enemies Killed - %d/%d" % [current, total]
+	var description := _obj_id.replace("_", " ").capitalize()
+	var mission := MissionMgr.get_instance()
+	if mission:
+		for objective: Dictionary in mission.active_mission_data.get("objectives", []):
+			if objective.get("id") == _obj_id:
+				description = objective.get("description", description)
+				break
+	objective_label.text = "%s - %d/%d" % [description, current, total]
 	objective_label.visible = true
 
 	if logger and logger.has_method("info"):

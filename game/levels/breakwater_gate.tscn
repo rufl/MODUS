@@ -1,0 +1,84 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/level_root.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/airlock.tscn" id="2_airlock"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/pump_hall.tscn" id="3_pump"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/control_room.tscn" id="4_control"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coast_coast_water.obj" id="5_water_mesh"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_water.tres" id="6_water_mat"]
+[ext_resource type="ArrayMesh" path="res://game/levels/modules/breakwater/meshes/coast_coast_rock.obj" id="7_rock_mesh"]
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="8_rock_mat"]
+
+[sub_resource type="ProceduralSkyMaterial" id="Sky_coastal"]
+sky_top_color = Color(0.19, 0.33, 0.43, 1)
+sky_horizon_color = Color(0.64, 0.72, 0.72, 1)
+ground_bottom_color = Color(0.12, 0.18, 0.21, 1)
+ground_horizon_color = Color(0.64, 0.72, 0.72, 1)
+sun_angle_max = 20.0
+
+[sub_resource type="Sky" id="Sky_station"]
+sky_material = SubResource("Sky_coastal")
+
+[sub_resource type="Environment" id="Environment_station"]
+background_mode = 2
+sky = SubResource("Sky_station")
+ambient_light_source = 3
+ambient_light_color = Color(0.6, 0.71, 0.74, 1)
+ambient_light_energy = 0.72
+reflected_light_source = 2
+tonemap_mode = 2
+
+[sub_resource type="CameraAttributesPractical" id="Camera_station"]
+auto_exposure_enabled = false
+
+[node name="BreakwaterGate" type="Node3D"]
+script = ExtResource("1_level")
+level_name = "Breakwater Station — Black Start"
+level_author = "MODUS"
+level_description = "Restore the coastal plant: airlock, twin-pump hall and glazed grid-control room."
+level_tags = Array[String](["breakwater", "three_room_gate", "industrial"])
+module_connections = Array[Dictionary]([{
+"from_instance": "airlock",
+"from_socket": "out",
+"to_instance": "pump",
+"to_socket": "in"
+}, {
+"from_instance": "pump",
+"from_socket": "out",
+"to_instance": "control",
+"to_socket": "in"
+}])
+channel_data = {"aux_power": {"sources": ["pump/power_switch"], "targets": ["control/security_door"], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}}
+metadata/mission_id = "breakwater_black_start"
+
+[node name="Airlock" parent="." instance=ExtResource("2_airlock")]
+
+[node name="PumpHall" parent="." instance=ExtResource("3_pump")]
+position = Vector3(0, 0, -20)
+
+[node name="ControlRoom" parent="." instance=ExtResource("4_control")]
+position = Vector3(0, 0, -42)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_station")
+camera_attributes = SubResource("Camera_station")
+
+[node name="CoastalSun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.65, -0.95, 0)
+light_color = Color(1, 0.89, 0.72, 1)
+light_energy = 0.85
+shadow_enabled = true
+directional_shadow_max_distance = 120.0
+
+[node name="CoastalBackdrop" type="Node3D" parent="."]
+metadata/non_playable_backdrop = true
+
+[node name="Sea" type="MeshInstance3D" parent="CoastalBackdrop"]
+mesh = ExtResource("5_water_mesh")
+material_override = ExtResource("6_water_mat")
+cast_shadow = 0
+
+[node name="DistantCoast" type="MeshInstance3D" parent="CoastalBackdrop"]
+mesh = ExtResource("7_rock_mesh")
+material_override = ExtResource("8_rock_mat")
+cast_shadow = 0

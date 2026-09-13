@@ -173,6 +173,7 @@ func autosave() -> bool:
 		_cleanup_old_autosaves()
 		autosave_completed.emit()
 		return true
+	return false
 
 
 ## Start autosave timer

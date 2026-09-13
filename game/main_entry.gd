@@ -29,6 +29,16 @@ func _ready() -> void:
 
 	if _is_standalone_editor():
 		_launch_editor()
+	elif "--breakwater" in OS.get_cmdline_user_args():
+		LevelGame.launch()
+	elif "--level" in OS.get_cmdline_user_args():
+		var arguments := OS.get_cmdline_user_args()
+		var index := arguments.find("--level")
+		if index + 1 < arguments.size():
+			LevelGame.launch(arguments[index + 1])
+		else:
+			push_error("--level requires a trusted .mdsl or .tscn document path")
+			_launch_game()
 	else:
 		_launch_game()
 
@@ -54,7 +64,7 @@ func _on_tree_changed() -> void:
 func _is_standalone_editor() -> bool:
 	return (
 		OS.has_feature("standalone_editor")
-		or "--editor" in OS.get_cmdline_args()
+		or "--editor" in OS.get_cmdline_user_args()
 		or OS.has_feature("editor_mode")
 	)
 
@@ -62,7 +72,7 @@ func _is_standalone_editor() -> bool:
 func _launch_editor() -> void:
 	var logger: Node = GameManager.get_core_system("logger")
 	logger.info("[MainEntry] Launching Standalone Editor...", "MainEntry")
-	var editor_scene: String = "res://plugins/editor/editor_runtime.tscn"
+	var editor_scene: String = "res://standalone/editor/main.tscn"
 	if ResourceLoader.exists(editor_scene):
 		get_tree().change_scene_to_file(editor_scene)
 	else:

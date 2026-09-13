@@ -453,6 +453,12 @@ const ALLOWED_RPCS: Dictionary = {
 		"validator_method": "_validate_revive_request",
 		"description": "Start revive process"
 	},
+	"_request_interaction":
+	{
+		"calls_per_second": 5.0,
+		"requires_validation": false,
+		"description": "Owning player's interaction; component validates the server ray and target"
+	},
 	"_request_pickup_object":
 	{
 		"calls_per_second": 5.0,

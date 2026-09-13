@@ -278,7 +278,7 @@ func _apply_block_brush() -> int:
 		if edited_root:
 			undo.add_do_property(block, "owner", edited_root)
 		undo.add_undo_method(Callable(parent, "remove_child").bind(block))
-		undo.add_undo_method(Callable(block, "queue_free"))
+		undo.add_do_reference(block)
 		undo.commit_action()
 		return LocalEditorGlobals.AFTER_GUI_INPUT_STOP
 
@@ -345,8 +345,8 @@ func _apply_eraser() -> int:
 
 	undo.create_action("Erase Node")
 	undo.add_do_method(Callable(parent, "remove_child").bind(target))
-	undo.add_do_method(Callable(target, "queue_free"))
 	undo.add_undo_method(Callable(parent, "add_child").bind(target))
+	undo.add_undo_property(target, "owner", target.owner)
 	undo.add_undo_reference(target)
 	undo.commit_action()
 
@@ -389,7 +389,7 @@ func _apply_entity_placer() -> int:
 			if edited_root:
 				undo.add_do_property(instance, "owner", edited_root)
 			undo.add_undo_method(Callable(parent, "remove_child").bind(instance))
-			undo.add_undo_method(Callable(instance, "queue_free"))
+			undo.add_do_reference(instance)
 			undo.commit_action()
 			return LocalEditorGlobals.AFTER_GUI_INPUT_STOP
 
@@ -445,7 +445,7 @@ func _apply_entity_placer() -> int:
 			if edited_root:
 				undo.add_do_property(spawn, "owner", edited_root)
 			undo.add_undo_method(Callable(parent, "remove_child").bind(spawn))
-			undo.add_undo_method(Callable(spawn, "queue_free"))
+			undo.add_do_reference(spawn)
 			undo.commit_action()
 			return LocalEditorGlobals.AFTER_GUI_INPUT_STOP
 
@@ -468,7 +468,7 @@ func _apply_static_scene(scene: PackedScene) -> int:
 		if edited_root:
 			undo.add_do_property(instance, "owner", edited_root)
 		undo.add_undo_method(Callable(parent, "remove_child").bind(instance))
-		undo.add_undo_method(Callable(instance, "queue_free"))
+		undo.add_do_reference(instance)
 		undo.commit_action()
 		return LocalEditorGlobals.AFTER_GUI_INPUT_STOP
 	return LocalEditorGlobals.AFTER_GUI_INPUT_PASS
@@ -509,7 +509,7 @@ func _apply_spawn_point() -> int:
 		if edited_root:
 			undo.add_do_property(spawn, "owner", edited_root)
 		undo.add_undo_method(Callable(parent, "remove_child").bind(spawn))
-		undo.add_undo_method(Callable(spawn, "queue_free"))
+		undo.add_do_reference(spawn)
 		undo.commit_action()
 		return LocalEditorGlobals.AFTER_GUI_INPUT_STOP
 
@@ -643,7 +643,7 @@ func remote_place_block(data: Dictionary) -> void:
 	var parent := _get_level_root()
 	if parent:
 		parent.add_child(block)
-		block.owner = parent.get_tree().edited_scene_root
+		block.owner = LocalEditorGlobals.get_edited_scene_root()
 
 
 func remote_delete_node(relative_path: String) -> void:
@@ -653,6 +653,7 @@ func remote_delete_node(relative_path: String) -> void:
 
 	var node: Node = parent.get_node_or_null(relative_path)
 	if node:
+		LocalEditorGlobals.get_undo_redo().clear_history()
 		node.queue_free()
 
 
@@ -689,7 +690,7 @@ func remote_place_entity(data: Dictionary) -> void:
 		var parent := _get_level_root()
 		if parent:
 			parent.add_child(instance)
-			instance.owner = parent.get_tree().edited_scene_root
+			instance.owner = LocalEditorGlobals.get_edited_scene_root()
 
 	elif subtype == "spawn_point":
 		var spawn: Node3D = Node3D.new()
@@ -703,7 +704,7 @@ func remote_place_entity(data: Dictionary) -> void:
 		var parent := _get_level_root()
 		if parent:
 			parent.add_child(spawn)
-			spawn.owner = parent.get_tree().edited_scene_root
+			spawn.owner = LocalEditorGlobals.get_edited_scene_root()
 
 
 func remote_connect_nodes(data: Dictionary) -> void:
@@ -721,9 +722,8 @@ func remote_connect_nodes(data: Dictionary) -> void:
 	var from_node: Node = parent.get_node_or_null(from_path)
 	var to_node: Node = parent.get_node_or_null(to_path)
 
-	if from_node and to_node and parent.has_method("register_to_channel"):
-		parent.register_to_channel(from_node, channel, true)
-		parent.register_to_channel(to_node, channel, false)
+	if from_node and to_node and parent.has_method("get_channel_system"):
+		parent.get_channel_system().create_connection(from_node, to_node, channel)
 
 
 func remote_change_environment(data: Dictionary) -> void:

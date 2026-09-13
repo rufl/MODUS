@@ -56,7 +56,12 @@ func place_monster_spawns(context: GenerationContext) -> void:
 			"type": "monster",
 			"tier": tier,
 			"room_id": room.id,
-			"world_position": Vector3(spawn_pos.x * 2.0, 0.0, spawn_pos.y * 2.0),
+			"world_position":
+			Vector3(
+				spawn_pos.x * 2.0 + 1.0,
+				context.grid[spawn_pos.y][spawn_pos.x].height,
+				spawn_pos.y * 2.0 + 1.0
+			),
 			"progression": progression
 		}
 
@@ -336,7 +341,9 @@ func place_boss_monsters(context: GenerationContext) -> void:
 			# Ensure proper spawn marker configuration
 			if not spawn.has("world_position"):
 				var pos: Vector2i = spawn["position"]
-				spawn["world_position"] = Vector3(pos.x * 2.0, 0.0, pos.y * 2.0)
+				spawn["world_position"] = Vector3(
+					pos.x * 2.0 + 1.0, context.grid[pos.y][pos.x].height, pos.y * 2.0 + 1.0
+				)
 
 			if not spawn.has("tier"):
 				spawn["tier"] = 5  # Boss tier is always maximum
@@ -405,7 +412,12 @@ func _place_weapons(context: GenerationContext, player_start: Vector2i) -> void:
 			"type": "weapon",
 			"quality": quality,
 			"room_id": room.id,
-			"world_position": Vector3(spawn_pos.x * 2.0, 0.5, spawn_pos.y * 2.0),
+			"world_position":
+			Vector3(
+				spawn_pos.x * 2.0 + 1.0,
+				context.grid[spawn_pos.y][spawn_pos.x].height + 0.5,
+				spawn_pos.y * 2.0 + 1.0
+			),
 			"progression": progression
 		}
 
@@ -449,7 +461,12 @@ func _place_ammo(context: GenerationContext, player_start: Vector2i) -> void:
 			"type": "ammo",
 			"quality": quality,
 			"room_id": room.id,
-			"world_position": Vector3(spawn_pos.x * 2.0, 0.5, spawn_pos.y * 2.0),
+			"world_position":
+			Vector3(
+				spawn_pos.x * 2.0 + 1.0,
+				context.grid[spawn_pos.y][spawn_pos.x].height + 0.5,
+				spawn_pos.y * 2.0 + 1.0
+			),
 			"progression": progression
 		}
 
@@ -581,7 +598,12 @@ func place_health_pickups(context: GenerationContext) -> void:
 			"type": "health",
 			"amount": amount,
 			"room_id": room.id,
-			"world_position": Vector3(spawn_pos.x * 2.0, 0.5, spawn_pos.y * 2.0),
+			"world_position":
+			Vector3(
+				spawn_pos.x * 2.0 + 1.0,
+				context.grid[spawn_pos.y][spawn_pos.x].height + 0.5,
+				spawn_pos.y * 2.0 + 1.0
+			),
 			"progression": progression
 		}
 

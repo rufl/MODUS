@@ -7,6 +7,7 @@ const LevelPackager = preload("res://shared/editor_core/data/level_packager.gd")
 var _editor: Control
 var _current_save_path: String = ""
 var _view_menu: PopupMenu
+var _layout: VBoxContainer
 
 
 func _ready() -> void:
@@ -14,27 +15,28 @@ func _ready() -> void:
 	get_window().title = "MODUS Level Editor"
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
-	# Create the embedded editor (it's the same core, just different entry point)
-	_editor = EmbeddedEditor.new()
-	add_child(_editor)
-
-	# Open immediately since we're standalone
-	_editor.open()
-
-	# Add menu bar for file operations
+	_layout = VBoxContainer.new()
+	_layout.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_layout)
 	_create_menu_bar()
+	_editor = EmbeddedEditor.new()
+	_editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_layout.add_child(_editor)
+	_editor.level_saved.connect(_on_document_path_changed)
+	_editor.level_loaded.connect(_on_document_path_changed)
+	_editor.open()
 
 
 func _create_menu_bar() -> void:
 	var menu_bar: MenuBar = MenuBar.new()
 	menu_bar.name = "MenuBar"
-	add_child(menu_bar)
-	move_child(menu_bar, 0)
+	_layout.add_child(menu_bar)
 
 	# File Menu
 	var file_menu: PopupMenu = PopupMenu.new()
 	file_menu.name = "FileMenu"
 	file_menu.add_item("New Level", 0)
+	file_menu.add_item("Open Breakwater Station", 6)
 	file_menu.add_item("Open Level...", 1)
 	file_menu.add_separator()
 	file_menu.add_item("Save", 2)
@@ -105,9 +107,13 @@ func _on_file_menu_pressed(id: int) -> void:
 			_export_mod_dialog()
 		5:  # Exit
 			get_tree().quit()
+		6:
+			open_breakwater_station()
 
 
 func _on_edit_menu_pressed(id: int) -> void:
+	if _editor and _editor.is_playtesting():
+		return
 	match id:
 		0:  # Undo
 			EditorGlobals.get_undo_redo().undo()
@@ -148,10 +154,22 @@ func _on_help_menu_pressed(id: int) -> void:
 
 
 func _new_level() -> void:
-	# Clear the level root
-	if _editor and _editor.level_root:
-		for child: Node in _editor.level_root.get_children():
-			child.queue_free()
+	if _editor and _editor.new_level():
+		_current_save_path = ""
+		get_window().title = "MODUS Level Editor — Untitled"
+
+
+func open_breakwater_station() -> bool:
+	if not _editor or not _editor.load_level("res://game/levels/breakwater_gate.tscn"):
+		return false
+	_current_save_path = ""
+	get_window().title = "MODUS Level Editor — Breakwater Station (Copy)"
+	return true
+
+
+func _on_document_path_changed(path: String) -> void:
+	_current_save_path = path
+	get_window().title = "MODUS Level Editor — " + path.get_file()
 
 
 func _open_level_dialog() -> void:
@@ -159,12 +177,14 @@ func _open_level_dialog() -> void:
 	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
 	dialog.filters = ["*.tscn ; Level Files", "*.scn ; Scene Files"]
+	dialog.use_native_dialog = true
 	dialog.file_selected.connect(
 		func(path: String) -> void:
 			if _editor:
 				_editor.load_level(path)
 			dialog.queue_free()
 	)
+	dialog.canceled.connect(dialog.queue_free)
 	add_child(dialog)
 	dialog.popup_centered(Vector2i(800, 600))
 
@@ -181,13 +201,14 @@ func _save_as_dialog() -> void:
 	dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
 	dialog.filters = ["*.tscn ; Level Files"]
+	dialog.use_native_dialog = true
 	dialog.file_selected.connect(
 		func(path: String) -> void:
-			_current_save_path = path
 			if _editor:
 				_editor.save_level(path)
 			dialog.queue_free()
 	)
+	dialog.canceled.connect(dialog.queue_free)
 	add_child(dialog)
 	dialog.popup_centered(Vector2i(800, 600))
 
@@ -216,7 +237,7 @@ func _export_mod_to_directory(output_dir: String) -> bool:
 		return false
 
 	var manifest := LevelPackager.LevelManifest.new()
-	manifest.name = _editor.level_root.name
+	manifest.name = _editor.level_root.level_name
 	manifest.author = "MODUS Editor"
 	manifest.description = "Level exported from the MODUS standalone editor."
 	var result = LevelPackager.package_level(_editor.level_root, output_dir, manifest)

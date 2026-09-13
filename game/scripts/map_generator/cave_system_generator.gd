@@ -120,6 +120,8 @@ func _is_location_suitable_for_cave(region: Rect2i, context: GenerationContext) 
 
 			if context.grid[y][x].type == Cell.Type.EMPTY:
 				empty_count += 1
+			elif context.grid[y][x].type in [Cell.Type.OUTDOOR, Cell.Type.CAVE]:
+				return false
 
 	# At least 75% of cells should be empty (caves can overlap slightly more)
 	return empty_count >= total_cells * 0.75
@@ -133,6 +135,7 @@ func _generate_cave_region(region: Rect2i, context: GenerationContext) -> void:
 
 	# Smooth cave edges for natural appearance
 	_smooth_cave_edges(region, context)
+	HallwayGenerator.new().connect_generated_area(context, region, Cell.Type.CAVE)
 
 	# Ensure caves connect to main level structure
 	_create_cave_connections(region, context)
@@ -242,7 +245,7 @@ func _create_cave_connections(region: Rect2i, context: GenerationContext) -> voi
 
 	# Create connections at transition points (1-3 per cave region)
 	var num_connections: int = clamp(connection_points.size() / 10, 1, 3)
-	connection_points.shuffle()
+	context.shuffle(connection_points)
 
 	for i in range(min(num_connections, connection_points.size())):
 		var pos := connection_points[i]

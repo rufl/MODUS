@@ -15,6 +15,8 @@ enum OpenDirection { POSITIVE, NEGATIVE, AUTO }  ## Opens in positive axis direc
 @export var auto_close_delay: float = 3.0
 @export var locked: bool = false
 @export var required_key: String = ""
+@export var door_size := Vector3(1.5, 2.5, 0.2)
+@export var require_channel: bool = false
 
 var door_mesh: Node3D = null
 
@@ -22,6 +24,9 @@ var _closed_transform: Transform3D
 var _open_transform: Transform3D
 var _current_tween: Tween = null
 var _auto_close_timer: float = 0.0
+var _second_leaf: Node3D
+var _second_closed: Transform3D
+var _second_open: Transform3D
 
 
 func _init() -> void:
@@ -36,53 +41,65 @@ func _on_actor_ready() -> void:
 
 
 func _create_visual() -> void:
-	# Create a simple door visual
-	door_mesh = CSGBox3D.new()
-	door_mesh.name = "DoorMesh"
-
-	match door_type:
-		DoorType.SLIDE_X, DoorType.SLIDE_Z:
-			door_mesh.size = Vector3(0.2, 2.5, 1.5)
-		DoorType.SLIDE_Y:
-			door_mesh.size = Vector3(1.5, 2.5, 0.2)
-		DoorType.ROTATE_Y:
-			door_mesh.size = Vector3(1.0, 2.5, 0.1)
-		DoorType.DOUBLE_SLIDE:
-			door_mesh.size = Vector3(0.1, 2.5, 0.75)
-
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.4, 0.3, 0.2)  # Wood color
-	door_mesh.material = material
-	door_mesh.use_collision = true
-
-	add_child(door_mesh)
-
-	# Store closed position
+	var leaf_size := door_size
+	if door_type == DoorType.DOUBLE_SLIDE:
+		leaf_size.x *= 0.5
+	door_mesh = _create_leaf(leaf_size)
+	door_mesh.name = "DoorLeaf"
+	if door_type == DoorType.DOUBLE_SLIDE:
+		door_mesh.position.x = -door_size.x * 0.25
+		_second_leaf = _create_leaf(leaf_size)
+		_second_leaf.name = "SecondDoorLeaf"
+		_second_leaf.position.x = door_size.x * 0.25
 	_closed_transform = door_mesh.transform
+
+
+func _create_leaf(size: Vector3) -> AnimatableBody3D:
+	var body := AnimatableBody3D.new()
+	body.sync_to_physics = false
+	var mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = size
+	mesh.mesh = box
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.11, 0.21, 0.24)
+	material.metallic = 0.7
+	material.roughness = 0.4
+	mesh.material_override = material
+	body.add_child(mesh)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	add_child(body)
+	return body
 
 
 func _calculate_transforms() -> void:
 	if not door_mesh:
 		return
 
-	_closed_transform = door_mesh.transform
+	# The closed pose is immutable while an animation is in flight.
 	_open_transform = _closed_transform
 
-	var direction: float = 1.0 if open_direction == OpenDirection.POSITIVE else -1.0
+	var direction: float = -1.0 if open_direction == OpenDirection.NEGATIVE else 1.0
 
 	match door_type:
 		DoorType.SLIDE_X:
 			_open_transform.origin.x += open_distance * direction
 		DoorType.SLIDE_Y:
-			_open_transform.origin.y += open_distance
+			_open_transform.origin.y += open_distance * direction
 		DoorType.SLIDE_Z:
 			_open_transform.origin.z += open_distance * direction
 		DoorType.ROTATE_Y:
 			var angle: float = deg_to_rad(open_angle * direction)
 			_open_transform = _open_transform.rotated(Vector3.UP, angle)
 		DoorType.DOUBLE_SLIDE:
-			# Will handle separately with two meshes
-			_open_transform.origin.z += open_distance * 0.5
+			_open_transform.origin.x -= open_distance * 0.5
+			_second_closed = _second_leaf.transform
+			_second_open = _second_closed
+			_second_open.origin.x += open_distance * 0.5
 
 
 func _process(delta: float) -> void:
@@ -92,54 +109,52 @@ func _process(delta: float) -> void:
 	if auto_close and is_active:
 		_auto_close_timer -= delta
 		if _auto_close_timer <= 0:
-			close_door()
+			deactivate()
 
 
 func _on_activated(data: Dictionary) -> void:
-	open_door(data.get("source"))
+	var source: Node = data.get("source")
+	locked = false
+	if open_direction == OpenDirection.AUTO and source is Node3D:
+		var direction := (
+			1.0 if (source.global_position - global_position).dot(-global_basis.z) >= 0.0 else -1.0
+		)
+		if door_type == DoorType.ROTATE_Y:
+			_open_transform = _closed_transform.rotated(
+				Vector3.UP, deg_to_rad(open_angle * direction)
+			)
+		elif door_type == DoorType.SLIDE_X:
+			_open_transform.origin.x = _closed_transform.origin.x + open_distance * direction
+		elif door_type == DoorType.SLIDE_Z:
+			_open_transform.origin.z = _closed_transform.origin.z + open_distance * direction
+	_animate_door(_open_transform, open_duration)
+	_auto_close_timer = auto_close_delay
 
 
 func _on_deactivated() -> void:
-	close_door()
+	_animate_door(_closed_transform, close_duration)
+
+
+func trigger(source: Node = null, data: Dictionary = {}) -> void:
+	if (
+		locked
+		and (
+			required_key.is_empty()
+			or not source
+			or not source.has_method("has_item")
+			or not source.has_item(required_key)
+		)
+	):
+		return
+	super.trigger(source, data)
 
 
 func open_door(source: Node = null) -> void:
-	if locked:
-		# Check for key
-		if source and source.has_method("has_key"):
-			if source.has_key(required_key):
-				locked = false
-			else:
-				return  # Can't open
-		else:
-			return
-
-	# Determine direction for AUTO
-	if open_direction == OpenDirection.AUTO and source and source is Node3D:
-		var to_source: Vector3 = source.global_position - global_position
-		var forward: Vector3 = -global_transform.basis.z
-		var dot: float = to_source.dot(forward)
-		# Adjust open transform based on player position
-		_calculate_transforms()
-		if dot < 0:
-			# Player is behind door, reverse direction
-			match door_type:
-				DoorType.SLIDE_X:
-					_open_transform.origin.x = _closed_transform.origin.x - open_distance
-				DoorType.SLIDE_Z:
-					_open_transform.origin.z = _closed_transform.origin.z - open_distance
-				DoorType.ROTATE_Y:
-					_open_transform = _closed_transform.rotated(Vector3.UP, deg_to_rad(-open_angle))
-
-	# Animate door
-	_animate_door(_open_transform, open_duration)
-
-	if auto_close:
-		_auto_close_timer = auto_close_delay
+	trigger(source)
 
 
 func close_door() -> void:
-	_animate_door(_closed_transform, close_duration)
+	deactivate()
 
 
 func _animate_door(target: Transform3D, duration: float) -> void:
@@ -154,19 +169,38 @@ func _animate_door(target: Transform3D, duration: float) -> void:
 	_current_tween.set_trans(Tween.TRANS_SINE)
 	_current_tween.set_ease(Tween.EASE_IN_OUT)
 	_current_tween.tween_property(door_mesh, "transform", target, duration)
+	if is_instance_valid(_second_leaf):
+		_current_tween.parallel().tween_property(
+			_second_leaf, "transform", _second_open if is_active else _second_closed, duration
+		)
 
 
 func interact(player: Node = null) -> bool:
-	if locked and not required_key.is_empty():
-		if player and player.has_method("has_key"):
-			if not player.has_key(required_key):
-				return false
-
+	if require_channel:
+		return false
 	if is_active:
-		deactivate()  # Close
+		deactivate()
 	else:
-		trigger(player, {"interacted": true})  # Open
+		trigger(player, {"interacted": true})
+	return is_active or not locked
 
+
+func capture_runtime_state() -> Dictionary:
+	var state := super.capture_runtime_state()
+	state["locked"] = locked
+	return state
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if not state.get("locked") is bool or not super.restore_runtime_state(state):
+		return false
+	locked = state["locked"]
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
+	door_mesh.transform = _open_transform if is_active else _closed_transform
+	if is_instance_valid(_second_leaf):
+		_second_leaf.transform = _second_open if is_active else _second_closed
+	_auto_close_timer = auto_close_delay if is_active else 0.0
 	return true
 
 
@@ -209,6 +243,8 @@ func get_inspector_properties() -> Array[Dictionary]:
 			},
 			{"name": "auto_close_delay", "type": TYPE_FLOAT, "label": "Auto Close Delay"},
 			{"name": "locked", "type": TYPE_BOOL, "label": "Locked"},
+			{"name": "door_size", "type": TYPE_VECTOR3, "label": "Door Size"},
+			{"name": "require_channel", "type": TYPE_BOOL, "label": "Channel Only"},
 			{"name": "required_key", "type": TYPE_STRING, "label": "Required Key"}
 		]
 	)

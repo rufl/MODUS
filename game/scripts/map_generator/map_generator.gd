@@ -73,6 +73,10 @@ var feature_availability: FeatureAvailability = null
 var is_generating: bool = false
 var current_phase: String = ""
 var generation_context: GenContext
+var _generation_viewport: SubViewport
+
+# Seed-to-layout output changed when global RNG and coordinate leaks were removed.
+const GENERATOR_REVISION := 2
 
 # Threading
 var _generation_thread: Thread = null
@@ -212,7 +216,7 @@ func generate_map(seed_str: String, gen_config: GenConfig) -> void:
 		rng = RandomNumberGenerator.new()
 
 	is_generating = true
-	config = gen_config
+	config = gen_config.duplicate(true)
 	_thread_should_cancel = false
 	error_contexts.clear()  # Clear previous error contexts
 
@@ -226,10 +230,13 @@ func generate_map(seed_str: String, gen_config: GenConfig) -> void:
 	var effective_seed := seed_str if seed_str != "" else str(Time.get_ticks_msec())
 	var seed_hash := hash_seed(effective_seed)
 	generation_context.seed_hash = seed_hash
+	config.map_seed = effective_seed
 
 	# Initialize RNG with hashed seed for deterministic generation
 	generation_context.rng.seed = seed_hash
 	rng.seed = seed_hash  # Also initialize MapGenerator's RNG for consistency
+	theme_manager.set_theme(config.theme, generation_context.create_cosmetic_rng())
+	generation_context.theme = theme_manager.get_current_theme()
 
 	# Initialize debug system if enabled
 	var debug_enabled: bool = config.has("debug_mode") and config.debug_mode
@@ -569,12 +576,8 @@ func _run_phase_threaded(phase_name: String) -> bool:
 	# Emit progress signal (thread-safe via call_deferred)
 	call_deferred("emit_signal", "generation_progress", phase_name, 0.0)
 
-	# Execute phase with retry logic
-	var phase_callable := func() -> bool: return _execute_phase(phase_name)
-
-	var success: bool = error_handler.run_phase_with_retry(
-		phase_name, phase_callable, generation_context, ErrorHandler.MAX_RETRY_ATTEMPTS
-	)
+	# Phases mutate the grid and RNG; replaying a partial phase is not a retry.
+	var success: bool = _execute_phase(phase_name)
 
 	# If phase succeeded, validate output
 	if success:
@@ -655,8 +658,6 @@ func _validate_phase_output(phase_name: String) -> bool:
 		"hallway_generation":
 			result = validation_system.validate_connectivity(generation_context)
 		"navigation_baking":
-			if not generation_context.csg_root.is_inside_tree():
-				return true
 			result = validation_system.validate_navigation_mesh(generation_context)
 		_:
 			return true  # No validation for this phase
@@ -749,7 +750,23 @@ func _execute_shape_grammar_phase() -> bool:
 		room.poly_points = room_shape
 
 		# Convert polygon to grid cells
-		room.cells = _polygon_to_grid_cells(room_shape, center)
+		room.cells = shape_grammar.polygon_to_grid_cells(room_shape, config.map_size)
+		if room.cells.is_empty():
+			continue
+		var overlaps := false
+		for cell_pos: Vector2i in room.cells:
+			if generation_context.grid[cell_pos.y][cell_pos.x].type != Cell.Type.EMPTY:
+				overlaps = true
+				break
+		if overlaps:
+			continue
+		# Concave polygons need a representative cell on the actual floor.
+		if room.center not in room.cells:
+			var closest := room.cells[0]
+			for cell_pos: Vector2i in room.cells:
+				if cell_pos.distance_squared_to(center) < closest.distance_squared_to(center):
+					closest = cell_pos
+			room.center = closest
 
 		# Mark cells on grid
 		for cell_pos: Vector2i in room.cells:
@@ -764,6 +781,9 @@ func _execute_shape_grammar_phase() -> bool:
 				cell.room_id = room.id
 
 		generation_context.rooms.append(room)
+
+	if not generation_context.rooms.is_empty():
+		generation_context.player_start_position = generation_context.rooms[0].center
 
 	return generation_context.rooms.size() > 0
 
@@ -851,6 +871,15 @@ func _execute_csg_geometry_phase() -> bool:
 	# Build CSG geometry
 	generation_context.csg_root = csg_builder.build_geometry()
 
+	if generation_context.csg_root:
+		# Updating CSG requires a SceneTree, not the player's world or navigation map.
+		_generation_viewport = SubViewport.new()
+		_generation_viewport.own_world_3d = true
+		_generation_viewport.size = Vector2i.ONE
+		_generation_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+		_generation_viewport.gui_disable_input = true
+		add_child(_generation_viewport)
+		_generation_viewport.add_child(generation_context.csg_root)
 	return generation_context.csg_root != null
 
 
@@ -890,19 +919,22 @@ func _execute_gameplay_placement_phase() -> bool:
 		push_error("Gameplay element placer or context not initialized")
 		return false
 
-	# Use the current specialized gameplay placement API.
+	# Secret cells and their entrances must exist before CSG and navigation baking.
+	if config.enable_secrets and secret_room_generator:
+		generation_context.secret_rooms = secret_room_generator.generate_secret_rooms(
+			generation_context
+		)
+		secret_room_generator.place_secret_items(generation_context)
+
+	if config.enable_key_locks and key_lock_system:
+		var locks: Dictionary = key_lock_system.generate_key_lock_system(generation_context)
+		generation_context.key_placements.assign(locks["keys"])
+		generation_context.metadata["locked_doors"] = locks["locked_doors"]
+
 	gameplay_element_placer.place_monster_spawns(generation_context)
 	gameplay_element_placer.place_boss_monsters(generation_context)
 	gameplay_element_placer.place_weapons_and_ammo(generation_context)
 	gameplay_element_placer.place_health_pickups(generation_context)
-
-	# Generate secret rooms if enabled
-	if config.enable_secrets and secret_room_generator:
-		secret_room_generator.generate_secret_rooms(generation_context)
-
-	# Place keys and locks if enabled
-	if config.enable_key_locks and key_lock_system:
-		key_lock_system.generate_key_lock_system(generation_context)
 
 	return true
 
@@ -913,11 +945,8 @@ func _execute_navigation_baking_phase() -> bool:
 		push_error("Navigation mesh baker or context not initialized")
 		return false
 	if not generation_context.csg_root or not generation_context.csg_root.is_inside_tree():
-		# Generated geometry is not attached to a live scene tree until the final
-		# PackedScene is built. Defer server baking to the consumer scene.
-		generation_context.navigation_region = NavigationRegion3D.new()
-		generation_context.navigation_region.navigation_mesh = NavigationMesh.new()
-		return true
+		push_error("Navigation baking requires the prepared generated geometry tree")
+		return false
 
 	# Initialize navigation mesh baker with context
 	navmesh_baker.initialize(generation_context)
@@ -938,17 +967,12 @@ func _execute_validation_phase() -> bool:
 		push_error("Validation system or context not initialized")
 		return false
 
-	# Validate data that is independent of scene-tree attachment now. Geometry,
-	# connectivity, and navigation-server checks are deferred until the generated
-	# scene is attached to a live tree.
 	var validations: Array[ValidationSystem.ValidationResult] = [
 		validation_system.validate_player_start(generation_context),
-		validation_system.validate_key_lock_progression(generation_context)
+		validation_system.validate_key_lock_progression(generation_context),
+		validation_system.validate_connectivity(generation_context),
+		validation_system.validate_monster_spawns(generation_context)
 	]
-	if generation_context.csg_root and generation_context.csg_root.is_inside_tree():
-		validations.append(validation_system.validate_connectivity(generation_context))
-		validations.append(validation_system.validate_navigation_mesh(generation_context))
-		validations.append(validation_system.validate_monster_spawns(generation_context))
 
 	# Check if all validations passed
 	for result: ValidationSystem.ValidationResult in validations:
@@ -996,12 +1020,13 @@ func _finalize_generation(result: Dictionary) -> void:
 		generation_failed.emit(result["error"])
 		return
 
+	var context := generation_context
 	# If we need to continue on main thread, run remaining phases
 	if result.get("continue_on_main_thread", false):
 		await _run_main_thread_phases()
 
 	# Check if generation was cancelled or failed during main thread phases
-	if not is_generating:
+	if not is_generating or generation_context != context:
 		return
 
 	# Calculate total generation time
@@ -1027,8 +1052,8 @@ func _finalize_generation(result: Dictionary) -> void:
 	_save_generation_summary()
 
 	# Build final map scene
-	var map_scene := _build_map_scene()
 	var metadata := _build_metadata(total_time)
+	var map_scene := _build_map_scene(metadata)
 	if not map_scene:
 		abort_generation("Generated scene could not be packed")
 		return
@@ -1039,41 +1064,34 @@ func _finalize_generation(result: Dictionary) -> void:
 
 ## Run phases that require main thread (CSG, scene tree operations)
 func _run_main_thread_phases() -> void:
-	# Phase 7: CSG geometry building
-	if not await _run_phase_main_thread("csg_geometry"):
-		abort_generation("CSG geometry phase failed")
-		return
-
-	# Phase 8: Prefab placement
-	if not await _run_phase_main_thread("prefab_placement"):
-		abort_generation("Prefab placement phase failed")
-		return
-
-	# Phase 9: Gameplay element placement
-	if not await _run_phase_main_thread("gameplay_placement"):
-		abort_generation("Gameplay element placement phase failed")
-		return
-
-	# Phase 10: Navigation mesh baking
-	if not await _run_phase_main_thread("navigation_baking"):
-		abort_generation("Navigation mesh baking phase failed")
-		return
-
-	# Phase 11: Validation
-	if not await _run_phase_main_thread("validation"):
-		abort_generation("Validation phase failed")
-		return
-
-	# Phase 12: Export preparation (optimization passes)
-	if not await _run_phase_main_thread("export"):
-		abort_generation("Export phase failed")
-		return
+	var context := generation_context
+	# Layout-changing gameplay precedes geometry; optimization precedes its bake.
+	for phase_name: String in [
+		"gameplay_placement",
+		"csg_geometry",
+		"prefab_placement",
+		"export",
+		"navigation_baking",
+		"validation"
+	]:
+		if not await _run_phase_main_thread(phase_name):
+			if is_generating and generation_context == context:
+				abort_generation("%s phase failed" % phase_name)
+			return
 
 
 ## Run a phase on the main thread with profiling
 func _run_phase_main_thread(phase_name: String) -> bool:
-	if _thread_should_cancel:
+	if _thread_should_cancel or not is_generating:
 		return false
+	var context := generation_context
+
+	if phase_name == "navigation_baking":
+		# Let deferred CSG/collision changes finish in the private world first.
+		await get_tree().physics_frame
+		await get_tree().process_frame
+		if not is_generating or generation_context != context:
+			return false
 
 	# Start phase profiling
 	var phase_start := Time.get_ticks_msec()
@@ -1082,12 +1100,7 @@ func _run_phase_main_thread(phase_name: String) -> bool:
 	# Emit progress signal
 	generation_progress.emit(phase_name, 0.0)
 
-	# Execute phase with retry logic
-	var phase_callable := func() -> bool: return _execute_phase(phase_name)
-
-	var success: bool = error_handler.run_phase_with_retry(
-		phase_name, phase_callable, generation_context, ErrorHandler.MAX_RETRY_ATTEMPTS
-	)
+	var success: bool = _execute_phase(phase_name)
 
 	# If phase succeeded, validate output
 	if success:
@@ -1122,7 +1135,7 @@ func _run_phase_main_thread(phase_name: String) -> bool:
 	# Yield to allow UI updates
 	await get_tree().process_frame
 
-	return success
+	return success and is_generating and generation_context == context
 
 
 ## Build metadata dictionary for export
@@ -1130,16 +1143,32 @@ func _build_metadata(total_time: int) -> Dictionary:
 	var metadata := {
 		"seed": config.map_seed if config else "",
 		"seed_hash": generation_context.seed_hash if generation_context else 0,
+		"generator_revision": GENERATOR_REVISION,
 		"generation_time": float(total_time) / 1000.0,  # Convert to seconds
 		"map_size": [config.map_size.x, config.map_size.y] if config else [0, 0],
 		"theme": _get_theme_name(config.theme) if config else "unknown",
 		"config": _build_config_metadata(),
 		"statistics": _build_statistics_metadata(),
 		"rule_modules_used": _get_rule_modules_used(),
+		"gameplay": _build_gameplay_metadata(),
 		"phase_times": _build_phase_times_metadata()
 	}
 
 	return metadata
+
+
+## Variant records are retained in the PackedScene, not only transient signals.
+func _build_gameplay_metadata() -> Dictionary:
+	if not generation_context:
+		return {}
+	return {
+		"player_start": generation_context.player_start_position,
+		"monsters": generation_context.monster_spawns.duplicate(true),
+		"items": generation_context.item_spawns.duplicate(true),
+		"keys": generation_context.key_placements.duplicate(true),
+		"locked_doors": generation_context.metadata.get("locked_doors", []).duplicate(true),
+		"secrets": generation_context.secret_rooms.duplicate(true)
+	}
 
 
 ## Build configuration metadata
@@ -1154,6 +1183,7 @@ func _build_config_metadata() -> Dictionary:
 		"prop_density": config.prop_density,
 		"decorative_density": config.decorative_density,
 		"monster_density": config.monster_density,
+		"minimum_monsters": config.minimum_monsters,
 		"difficulty_scaling": _get_difficulty_name(config.difficulty_scaling),
 		"item_density": config.item_density,
 		"secret_room_count": config.secret_room_count,
@@ -1174,17 +1204,12 @@ func _build_statistics_metadata() -> Dictionary:
 	var stats := {
 		"room_count": generation_context.rooms.size(),
 		"hallway_count": generation_context.hallways.size(),
-		"secret_count": 0,
+		"secret_count": generation_context.secret_rooms.size(),
 		"monster_spawn_count": generation_context.monster_spawns.size(),
 		"item_spawn_count": generation_context.item_spawns.size(),
 		"outdoor_area_count": generation_context.outdoor_areas.size(),
 		"cave_area_count": generation_context.cave_areas.size()
 	}
-
-	# Count secret rooms
-	for room: Room in generation_context.rooms:
-		if room.metadata.get("is_secret", false):
-			stats["secret_count"] += 1
 
 	return stats
 
@@ -1413,49 +1438,39 @@ func _get_room_target_size(room_type: Room.RoomType) -> int:
 			return 12
 
 
-## Convert polygon points to grid cells
-func _polygon_to_grid_cells(poly_points: PackedVector2Array, center: Vector2i) -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
-
-	if poly_points.size() == 0:
-		# Fallback to simple square
-		for dy in range(-2, 3):
-			for dx in range(-2, 3):
-				cells.append(center + Vector2i(dx, dy))
-		return cells
-
-	# Find bounding box of polygon
-	var min_x := INF
-	var max_x := -INF
-	var min_y := INF
-	var max_y := -INF
-
-	for point: Vector2 in poly_points:
-		min_x = min(min_x, point.x)
-		max_x = max(max_x, point.x)
-		min_y = min(min_y, point.y)
-		max_y = max(max_y, point.y)
-
-	# Check each cell in bounding box
-	for y in range(int(min_y), int(max_y) + 1):
-		for x in range(int(min_x), int(max_x) + 1):
-			var point := Vector2(x, y)
-			if Geometry2D.is_point_in_polygon(point, poly_points):
-				cells.append(center + Vector2i(int(x), int(y)))
-
-	return cells
-
-
 ## Build final map scene from generation context
-func _build_map_scene() -> PackedScene:
+func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	var scene := PackedScene.new()
 
 	# Create root node
 	var root := Node3D.new()
 	root.name = "GeneratedMap"
+	root.set_meta("generation", metadata)
+	theme_manager.apply_lighting_to_scene(root)
+
+	var player_spawn := Marker3D.new()
+	player_spawn.name = "PlayerSpawn"
+	player_spawn.add_to_group("spawn_player", true)
+	var start := generation_context.player_start_position
+	player_spawn.position = Vector3(
+		start.x * 2.0 + 1.0,
+		generation_context.grid[start.y][start.x].height + 1.0,
+		start.y * 2.0 + 1.0
+	)
+	root.add_child(player_spawn)
+
+	for index in range(generation_context.monster_spawns.size()):
+		var record: Dictionary = generation_context.monster_spawns[index]
+		var marker := Marker3D.new()
+		marker.name = "EnemySpawn_%d" % index
+		marker.position = record["world_position"] + Vector3.UP
+		marker.add_to_group("enemy_spawn", true)
+		marker.set_meta("generation", record)
+		root.add_child(marker)
 
 	# Add CSG geometry
 	if generation_context.csg_root:
+		generation_context.csg_root.get_parent().remove_child(generation_context.csg_root)
 		root.add_child(generation_context.csg_root)
 		generation_context.csg_root.owner = root
 
@@ -1478,6 +1493,9 @@ func _build_map_scene() -> PackedScene:
 	generation_context.navigation_region = null
 	generation_context.prefab_instances.clear()
 	root.free()
+	if is_instance_valid(_generation_viewport):
+		_generation_viewport.free()
+	_generation_viewport = null
 
 	if pack_error != OK:
 		push_error("MapGenerator: Failed to pack generated scene (error: %d)" % pack_error)
@@ -1493,24 +1511,18 @@ func _assign_scene_owner(node: Node, scene_root: Node) -> void:
 		_assign_scene_owner(child, scene_root)
 
 
-## Release detached nodes left by cancellation, failure, or owner teardown.
+## Release generated nodes on cancellation, failure, or owner teardown.
 func _release_generated_nodes() -> void:
-	if not generation_context:
-		return
-
-	var detached_roots: Array[Node] = []
-	if is_instance_valid(generation_context.csg_root):
-		detached_roots.append(generation_context.csg_root)
-	if (
-		is_instance_valid(generation_context.navigation_region)
-		and generation_context.navigation_region.get_parent() == null
-	):
-		detached_roots.append(generation_context.navigation_region)
-
-	generation_context.csg_root = null
-	generation_context.navigation_region = null
-	generation_context.prefab_instances.clear()
-
-	for detached_root: Node in detached_roots:
-		if is_instance_valid(detached_root) and detached_root.get_parent() == null:
-			detached_root.free()
+	if generation_context:
+		var geometry := generation_context.csg_root
+		var navigation := generation_context.navigation_region
+		generation_context.csg_root = null
+		generation_context.navigation_region = null
+		generation_context.prefab_instances.clear()
+		if is_instance_valid(geometry):
+			geometry.free()
+		if is_instance_valid(navigation):
+			navigation.free()
+	if is_instance_valid(_generation_viewport):
+		_generation_viewport.free()
+	_generation_viewport = null

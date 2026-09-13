@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This roadmap prioritizes proof and hardening. Current status is defined by `docs/DOCUMENTATION_TRUTH.md` and `docs/CURRENT_STATUS.md`.
 
-**Updated:** September 11, 2026
+**Updated:** September 13, 2026
 **Current version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Readiness:** NOT READY
@@ -20,6 +20,14 @@ Make MODUS a dependable Godot 4.7 FPS framework whose public claims are backed b
 The current baseline includes the eight-step golden-demo smoke, responsive manual recorder, focused editor history/productization proof, local ENet lifecycle proof, authenticated local GodotSteam initialization, refreshed package-notice/export checks, and a reproducible Linux desktop export smoke. These are bounded observations, not production or release approval.
 
 Historical August and July totals remain below only as dated context. They must not be reused as current-tree totals.
+
+## Release and World-Building Program
+
+The [implementation plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) separates the implemented Breakwater three-room gate from the full composed mission, procedural mission graphs, persistent hubs and release engineering. Installer, versioned-release, bundled-native-runtime, Steam/Workshop, WAN and target-Windows acceptance remain open.
+
+The owner selected a bundled full-feature runtime. Generator revision 2 has focused correctness proof; canonical module metadata, editor document ownership, channel execution and the three-room key/door/objective loop are now implemented. Package engineering can advance independently; Steam/Workshop publication requires the still-missing Steamworks app.
+
+The authoring smoke now assembles hub/airlock → pump hall → control room, connects the real switch and door, completes the mission, restores checkpoints and preserves geometry through save/reopen/resave and `.mdsl` extraction. Follow the exact exported-artifact and graphical boundary in [Editor Round-Trip Proof](docs/EDITOR_ROUNDTRIP_PROOF.md). Finished audiovisual review, the full mission and controlled regeneration are not closed by this gate.
 
 ## Next: Runtime and Manual Proof
 
@@ -55,8 +63,7 @@ ENet fallback, local filesystem simulation, and Steam-unavailable handling are s
 
 - Broader AI behavior validation and level-design tuning.
 - Matchmaking, public-service deployment, replay tooling beyond local match replay, and wider platform packaging.
-- Additional procedural-generation features after current thread/lifecycle cleanup.
-- Expanded mod/editor UX after core authoring and distribution flows are proven.
+- Procedural world-building and modular editor work now have an explicit proposal and prerequisite order above; broader expansion follows the first playable mission and verified module workflow.
 
 ## Gates
 

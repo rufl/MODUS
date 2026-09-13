@@ -51,18 +51,18 @@ func resume_session_time() -> void:
 ## Save game to slot (Server only)
 
 
-func save_game(slot: String = QUICKSAVE_SLOT) -> void:
+func save_game(slot: String = QUICKSAVE_SLOT) -> bool:
 	# In single-player (no peer), we ARE the server
 	var is_server_or_sp: bool = not multiplayer.has_multiplayer_peer() or multiplayer.is_server()
 	if not is_server_or_sp:
 		push_warning("Only server can save game")
-		return
+		return false
 
 	var save_svc: Node = GameManager.get_core_system("save")
 	if not save_svc:
 		push_error("[GameStateManager] SaveService not found!")
 		save_failed.emit("SaveService missing")
-		return
+		return false
 
 	var save_data: Dictionary = serialize_world()
 	save_data["version"] = SAVE_VERSION
@@ -80,47 +80,50 @@ func save_game(slot: String = QUICKSAVE_SLOT) -> void:
 			"[GameStateManager] Saved to slot: " + " " + str(slot), "Core"
 		)
 		save_completed.emit(slot)
-	else:
-		save_failed.emit("Write failed")
+		return true
+	save_failed.emit("Write failed")
+	return false
 
 
 ## Load game from slot (Server only, syncs to clients)
 
 
-func load_game(slot: String = QUICKSAVE_SLOT) -> void:
+func load_game(slot: String = QUICKSAVE_SLOT) -> bool:
 	# In single-player (no peer), we ARE the server
 	var is_server_or_sp: bool = not multiplayer.has_multiplayer_peer() or multiplayer.is_server()
 	if not is_server_or_sp:
 		push_warning("Only server can load game")
-		return
+		return false
 
 	var save_svc: Node = GameManager.get_core_system("save")
 	if not save_svc:
 		push_error("[GameStateManager] SaveService not found!")
 		load_failed.emit("SaveService missing")
-		return
+		return false
 
 	var save_data: Dictionary = save_svc.load_data(slot)
 	if save_data.is_empty():
 		load_failed.emit("Load failed or empty data")
-		return
+		return false
 
 	# Validate every destructive section before changing live nodes.
 	if not _validate_world_data(save_data):
 		load_failed.emit("Invalid save data")
-		return
+		return false
 
 	if not await deserialize_world(save_data):
 		load_failed.emit("World restoration failed")
-		return
+		return false
 
 	# Sync to all clients only after the authoritative world was restored.
-	_sync_load_to_clients.rpc(save_data)
+	if multiplayer.has_multiplayer_peer():
+		_sync_load_to_clients.rpc(save_data)
 
 	GameManager.get_core_system("logger").info(
 		"[GameStateManager] Loaded from slot: " + " " + str(slot), "Core"
 	)
 	load_completed.emit(slot)
+	return true
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -136,6 +139,19 @@ func _sync_load_to_clients(save_data: Dictionary) -> void:
 
 
 func _validate_world_data(data: Dictionary) -> bool:
+	var session := get_tree().get_first_node_in_group("level_play_session")
+	if session:
+		if not session.validate_runtime_state(data.get("level_runtime")):
+			return false
+		if not data.get("players") is Array or data.players.size() != 1:
+			return false
+		if (
+			not data.players[0] is Dictionary
+			or data.players[0].get("peer_id") != session.player.get_multiplayer_authority()
+		):
+			return false
+	elif data.has("level_runtime"):
+		return false
 	if data.has("enemies") and not _validate_enemy_records(data["enemies"]):
 		push_warning("[GameStateManager] Save validation failed: enemies")
 		return false
@@ -163,6 +179,14 @@ func _validate_player_records(data: Variant) -> bool:
 			return false
 		if record.has("rotation") and not _is_valid_vec3_array(record.rotation):
 			return false
+		if record.has("keys"):
+			if not record["keys"] is Array:
+				return false
+			var seen_keys: Dictionary = {}
+			for key: Variant in record["keys"]:
+				if not key is String or key.is_empty() or seen_keys.has(key):
+					return false
+				seen_keys[key] = true
 	return true
 
 
@@ -292,6 +316,12 @@ func _is_valid_vec3_array(value: Variant) -> bool:
 
 func serialize_world() -> Dictionary:
 	var data: Dictionary = {}
+	var session := get_tree().get_first_node_in_group("level_play_session")
+	if session:
+		return {
+			"players": _serialize_players(session.player),
+			"level_runtime": session.capture_runtime_state()
+		}
 
 	# Match state
 	data["match"] = _serialize_match()
@@ -336,6 +366,9 @@ func deserialize_world(data: Dictionary) -> bool:
 
 	if data.has("environment") and not _deserialize_environment(data["environment"]):
 		return false
+	if data.has("level_runtime"):
+		var session := get_tree().get_first_node_in_group("level_play_session")
+		return session != null and session.restore_runtime_state(data.level_runtime)
 	return true
 
 
@@ -381,10 +414,12 @@ func _normalize_player_scores(scores: Dictionary) -> Dictionary:
 	return normalized
 
 
-func _serialize_players() -> Array:
+func _serialize_players(scope: Node = null) -> Array:
 	var players_data: Array = []
 
 	for node in get_tree().get_nodes_in_group("player"):
+		if scope and node != scope:
+			continue
 		if node is CharacterBody3D:
 			# Access properties via components (Player uses health_component and weapon_manager)
 			var health_val: float = 100.0
@@ -409,6 +444,8 @@ func _serialize_players() -> Array:
 				"current_weapon_index": weapon_idx,
 				"weapon_ammo": ammo_data
 			}
+			if "interaction_component" in node and node.interaction_component:
+				player_data["keys"] = node.interaction_component.get_collected_keys()
 
 			players_data.append(player_data)
 
@@ -421,11 +458,16 @@ func _deserialize_players(data: Array) -> void:
 
 		# Find player node by authority
 		for node in get_tree().get_nodes_in_group("player"):
+			var session := get_tree().get_first_node_in_group("level_play_session")
+			if session and node != session.player:
+				continue
 			if node.get_multiplayer_authority() == peer_id:
 				node.global_position = _array_to_vec3(player_data.get("position", [0, 0, 0]))
 				node.global_rotation = _array_to_vec3(player_data.get("rotation", [0, 0, 0]))
 				if node is CharacterBody3D:
 					node.velocity = Vector3.ZERO
+				if "interaction_component" in node and node.interaction_component:
+					node.interaction_component.restore_collected_keys(player_data.get("keys", []))
 				# The server restores lifecycle and health once, then replicates both.
 				if not multiplayer.has_multiplayer_peer() or multiplayer.is_server():
 					var hp: float = player_data.get("health", 100)

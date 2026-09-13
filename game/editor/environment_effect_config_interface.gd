@@ -28,6 +28,7 @@ var _zones: Array[EnvironmentVolume] = []
 var _presets: Dictionary = {}
 var _preview_camera: Camera3D
 var _preview_entities: Array[Node3D] = []
+var _level_root: Node3D
 
 # Exported properties for UI configuration
 @export_group("UI Settings")
@@ -46,6 +47,14 @@ func _ready() -> void:
 	# Connect to scene tree for zone detection
 	if not Engine.is_editor_hint():
 		get_tree().node_added.connect(_on_node_added)
+
+
+func set_level_root(root: Node3D) -> void:
+	_level_root = root
+	_selected_zone = null
+	_zones.clear()
+	_clear_property_editor()
+	refresh_zone_list()
 
 
 func _setup_ui() -> void:
@@ -220,8 +229,8 @@ func _create_preview_entities() -> void:
 
 ## Create a new environment zone
 func _create_new_zone() -> void:
-	if not get_tree().current_scene:
-		push_warning("No current scene - cannot create zone")
+	if not is_instance_valid(_level_root):
+		push_warning("No editable document - cannot create zone")
 		return
 
 	# Create new environment volume
@@ -238,7 +247,13 @@ func _create_new_zone() -> void:
 
 	if new_zone:
 		new_zone.name = "EnvironmentZone_" + str(Time.get_ticks_msec())
-		get_tree().current_scene.add_child(new_zone)
+		var undo := EditorGlobals.get_undo_redo()
+		undo.create_action("Create Environment Zone")
+		undo.add_do_method(Callable(_level_root, "add_child").bind(new_zone))
+		undo.add_do_property(new_zone, "owner", _level_root)
+		undo.add_undo_method(Callable(_level_root, "remove_child").bind(new_zone))
+		undo.add_do_reference(new_zone)
+		undo.commit_action()
 
 		# Set as selected
 		_selected_zone = new_zone
@@ -258,14 +273,22 @@ func _delete_selected_zone() -> void:
 		return
 
 	if is_instance_valid(_selected_zone):
-		_zones.erase(_selected_zone)
-		_selected_zone.queue_free()
+		var zone := _selected_zone
+		var parent := zone.get_parent()
+		var undo := EditorGlobals.get_undo_redo()
+		undo.create_action("Delete Environment Zone")
+		undo.add_do_method(Callable(parent, "remove_child").bind(zone))
+		undo.add_undo_method(Callable(parent, "add_child").bind(zone))
+		undo.add_undo_property(zone, "owner", zone.owner)
+		undo.add_undo_reference(zone)
+		undo.commit_action()
+		_zones.erase(zone)
 		_selected_zone = null
 
 		refresh_zone_list()
 		_clear_property_editor()
 
-		zone_deleted.emit(_selected_zone)
+		zone_deleted.emit(zone)
 
 
 ## Refresh the zone list display
@@ -275,18 +298,8 @@ func refresh_zone_list() -> void:
 
 	_zone_list.clear()
 
-	# Add all environment volumes in the scene
-	var all_zones: Array[Node] = get_tree().get_nodes_in_group("environment_zone")
-	for node: Node in all_zones:
-		if node is EnvironmentVolume:
-			var item := _zone_list.create_item()
-			item.set_text(0, node.name)
-			item.set_text(1, "Environment")
-			item.set_metadata(0, node)
-
-	# Also search in the current scene directly
-	if get_tree().current_scene:
-		_find_zones_recursive(get_tree().current_scene)
+	if is_instance_valid(_level_root):
+		_find_zones_recursive(_level_root)
 
 
 func _find_zones_recursive(node: Node) -> void:
@@ -729,7 +742,11 @@ func _load_presets() -> void:
 
 ## Handle node added to scene (for detecting new environment volumes)
 func _on_node_added(node: Node) -> void:
-	if node is EnvironmentVolume:
+	if (
+		node is EnvironmentVolume
+		and is_instance_valid(_level_root)
+		and _level_root.is_ancestor_of(node)
+	):
 		_zones.append(node)
 		refresh_zone_list()
 

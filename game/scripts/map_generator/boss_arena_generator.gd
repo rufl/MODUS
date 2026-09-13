@@ -351,7 +351,7 @@ func _create_arena_connections(arena: Room, context: GenerationContext) -> void:
 		return
 
 	# Shuffle edge cells for random selection
-	edge_cells.shuffle()
+	context.shuffle(edge_cells)
 
 	# Create single entrance (required)
 	if edge_cells.size() > 0:

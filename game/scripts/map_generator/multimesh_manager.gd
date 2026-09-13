@@ -21,7 +21,9 @@ class PrefabInstanceData:
 
 ## Groups prefab instances by scene file path
 ## Returns: Dictionary[String, Array[PrefabInstanceData]]
-func group_prefab_instances(placement_results: Array) -> Dictionary:
+func group_prefab_instances(
+	placement_results: Array, cosmetic_rng: RandomNumberGenerator
+) -> Dictionary:
 	var groups: Dictionary = {}
 
 	for result in placement_results:
@@ -35,7 +37,7 @@ func group_prefab_instances(placement_results: Array) -> Dictionary:
 
 		# Create instance data with transform and random color variation
 		var instance_data := PrefabInstanceData.new(
-			result.node.global_transform, _generate_color_variation()
+			result.node.global_transform, _generate_color_variation(cosmetic_rng)
 		)
 
 		groups[scene_path].append(instance_data)
@@ -131,14 +133,17 @@ func create_multimesh_instance(
 ## Removes individual instances and replaces them with batched MultiMesh nodes
 ## Returns: Dictionary with statistics about the batching operation
 func batch_prefabs(
-	placement_results: Array, parent_node: Node3D, config: GenerationConfig
+	placement_results: Array,
+	parent_node: Node3D,
+	config: GenerationConfig,
+	cosmetic_rng: RandomNumberGenerator
 ) -> Dictionary:
 	# Check if multimesh is enabled
 	if not config.use_multimesh:
 		return {"enabled": false, "batched_count": 0, "multimesh_count": 0, "total_instances": 0}
 
 	# Group instances by prefab
-	var groups := group_prefab_instances(placement_results)
+	var groups := group_prefab_instances(placement_results, cosmetic_rng)
 
 	# Identify multimesh candidates
 	var candidates := identify_multimesh_candidates(groups)
@@ -198,12 +203,12 @@ func batch_prefabs(
 
 ## Generates a random color variation for visual diversity
 ## Returns a color with slight variation from white
-func _generate_color_variation() -> Color:
+func _generate_color_variation(cosmetic_rng: RandomNumberGenerator) -> Color:
 	# Generate subtle color variation (0.9 to 1.1 range for each channel)
 	var variation := 0.1
-	var r := randf_range(1.0 - variation, 1.0 + variation)
-	var g := randf_range(1.0 - variation, 1.0 + variation)
-	var b := randf_range(1.0 - variation, 1.0 + variation)
+	var r := cosmetic_rng.randf_range(1.0 - variation, 1.0 + variation)
+	var g := cosmetic_rng.randf_range(1.0 - variation, 1.0 + variation)
+	var b := cosmetic_rng.randf_range(1.0 - variation, 1.0 + variation)
 
 	return Color(clamp(r, 0.0, 1.0), clamp(g, 0.0, 1.0), clamp(b, 0.0, 1.0), 1.0)
 
@@ -224,4 +229,6 @@ func apply_multimesh_batching(
 			"error": "Invalid context"
 		}
 
-	return batch_prefabs(placement_results, parent_node, context.config)
+	return batch_prefabs(
+		placement_results, parent_node, context.config, context.create_cosmetic_rng()
+	)

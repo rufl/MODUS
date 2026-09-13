@@ -26,14 +26,20 @@ func generate_secret_rooms(context: GenerationContext) -> Array:
 		push_warning("No suitable locations found for secret rooms")
 		return secret_rooms
 
-	# Place secret rooms
-	for i in range(min(secret_count, candidate_locations.size())):
-		var location: Dictionary = candidate_locations[i]
-		var secret_room := _create_secret_room(context, location)
+	var next_id := 0
+	for existing: Dictionary in context.secret_rooms:
+		next_id = maxi(next_id, int(existing.id) + 1)
+
+	# Recheck candidates after every placement, since growth reserves nearby cells.
+	for location: Dictionary in candidate_locations:
+		if secret_rooms.size() >= secret_count:
+			break
+		var secret_room := _create_secret_room(context, location, next_id)
 
 		if secret_room:
 			secret_rooms.append(secret_room)
 			_mark_secret_cells(context, secret_room)
+			next_id += 1
 
 	return secret_rooms
 
@@ -80,7 +86,7 @@ func _find_secret_room_candidates(context: GenerationContext) -> Array:
 			)
 
 	# Shuffle candidates for variety
-	candidates.shuffle()
+	context.shuffle(candidates)
 
 	return candidates
 
@@ -147,19 +153,23 @@ func _is_in_bounds(context: GenerationContext, pos: Vector2i) -> bool:
 
 
 ## Create a secret room at the specified location
-func _create_secret_room(context: GenerationContext, location: Dictionary) -> Dictionary:
+func _create_secret_room(
+	context: GenerationContext, location: Dictionary, secret_id: int
+) -> Dictionary:
 	var secret_pos: Vector2i = location.secret_position
 	var wall_pos: Vector2i = location.wall_position
+	if not _is_valid_secret_location(context, wall_pos, secret_pos):
+		return {}
 
 	# Generate small room shape (3-5 cells)
-	var secret_cells := _generate_secret_room_cells(context, secret_pos)
+	var secret_cells := _generate_secret_room_cells(context, secret_pos, wall_pos)
 
-	if secret_cells.is_empty():
+	if secret_cells.size() < 3:
 		return {}
 
 	# Create secret room data
 	var secret_room := {
-		"id": context.secret_rooms.size(),
+		"id": secret_id,
 		"cells": secret_cells,
 		"fake_wall_position": wall_pos,
 		"entrance_position": secret_pos,
@@ -173,7 +183,7 @@ func _create_secret_room(context: GenerationContext, location: Dictionary) -> Di
 
 ## Generate cells for a secret room (small 3-5 cell room)
 func _generate_secret_room_cells(
-	context: GenerationContext, start_pos: Vector2i
+	context: GenerationContext, start_pos: Vector2i, wall_pos: Vector2i
 ) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	var target_size := context.rng.randi_range(3, 5)
@@ -183,7 +193,7 @@ func _generate_secret_room_cells(
 
 	# Grow the room using flood fill approach
 	var candidates: Array[Vector2i] = [start_pos]
-	var visited: Dictionary = {start_pos: true}
+	var visited: Dictionary = {start_pos: true, wall_pos: true}
 
 	while cells.size() < target_size and not candidates.is_empty():
 		# Pick a random candidate
@@ -193,7 +203,7 @@ func _generate_secret_room_cells(
 
 		# Try to expand in random directions
 		var directions := [Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0)]
-		directions.shuffle()
+		context.shuffle(directions)
 
 		for dir: Vector2i in directions:
 			if cells.size() >= target_size:
@@ -222,15 +232,20 @@ func _generate_secret_room_cells(
 
 ## Mark cells in the grid as secret room cells
 func _mark_secret_cells(context: GenerationContext, secret_room: Dictionary) -> void:
+	var wall_pos: Vector2i = secret_room.fake_wall_position
+	var source_pos: Vector2i = wall_pos - secret_room.direction
+	var floor_height: float = context.grid[source_pos.y][source_pos.x].height
 	for cell_pos: Vector2i in secret_room.cells:
 		var cell: Cell = context.grid[cell_pos.y][cell_pos.x]
 		cell.type = Cell.Type.SECRET
+		cell.height = floor_height
 		cell.metadata["secret_room_id"] = secret_room.id
 		cell.metadata["is_secret"] = true
 
 	# Mark fake wall position
-	var wall_pos: Vector2i = secret_room.fake_wall_position
 	var wall_cell: Cell = context.grid[wall_pos.y][wall_pos.x]
+	wall_cell.type = Cell.Type.SECRET
+	wall_cell.height = floor_height
 	wall_cell.metadata["is_fake_wall"] = true
 	wall_cell.metadata["secret_room_id"] = secret_room.id
 	wall_cell.metadata["passable"] = true
@@ -241,10 +256,11 @@ func place_secret_items(context: GenerationContext) -> void:
 	for secret_room: Dictionary in context.secret_rooms:
 		# Find center of secret room for item placement
 		var center_pos := _calculate_room_center(secret_room.cells)
+		var cell: Cell = context.grid[center_pos.y][center_pos.x]
 
 		# Place high-value item spawn point
 		var item_spawn := {
-			"position": Vector3(center_pos.x * 2.0, 0.0, center_pos.y * 2.0),
+			"position": Vector3(center_pos.x * 2.0 + 1.0, cell.height, center_pos.y * 2.0 + 1.0),
 			"type": "high_value",
 			"item_tier": "rare",
 			"secret_room_id": secret_room.id
@@ -262,4 +278,12 @@ func _calculate_room_center(cells: Array[Vector2i]) -> Vector2i:
 	for cell_pos: Vector2i in cells:
 		sum += cell_pos
 
-	return Vector2i(sum.x / cells.size(), sum.y / cells.size())
+	var center := Vector2(sum) / cells.size()
+	var nearest := cells[0]
+	for cell_pos: Vector2i in cells:
+		if (
+			Vector2(cell_pos).distance_squared_to(center)
+			< Vector2(nearest).distance_squared_to(center)
+		):
+			nearest = cell_pos
+	return nearest

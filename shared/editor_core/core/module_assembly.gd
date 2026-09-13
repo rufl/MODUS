@@ -1,0 +1,419 @@
+@tool
+class_name ModuleAssembly
+extends RefCounted
+
+const CATALOG := [
+	"res://game/levels/modules/breakwater/airlock.tres",
+	"res://game/levels/modules/breakwater/pump_hall.tres",
+	"res://game/levels/modules/breakwater/control_room.tres",
+]
+const EPSILON := 0.01
+const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
+const SUPPORTED_CAPABILITIES := ["walk"]
+
+
+static func get_catalog() -> Array[PrefabMetadata]:
+	var result: Array[PrefabMetadata] = []
+	for path: String in CATALOG:
+		var definition := load(path) as PrefabMetadata
+		if definition and definition.is_valid():
+			result.append(definition)
+	return result
+
+
+static func get_instances(root: Node) -> Array[ModuleInstance]:
+	var result: Array[ModuleInstance] = []
+	for child in root.get_children():
+		if child is ModuleInstance:
+			result.append(child)
+	return result
+
+
+static func place_module(
+	root: Node3D,
+	definition: PrefabMetadata,
+	target_instance_id: String = "",
+	target_socket_id: String = "",
+	source_socket_id: String = "",
+	quarter_turns: int = 0
+) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return _failure("Open a LevelRoot document before placing modules.")
+	if definition == null or definition.module_id.is_empty() or not definition.is_valid():
+		return _failure("The module definition is invalid.")
+	var previous := validate_level(root)
+	if not previous.valid:
+		return _failure("Repair the existing layout first: " + "; ".join(previous.errors))
+	var instances := get_instances(root)
+	var candidate := ModuleInstance.new()
+	candidate.definition = definition
+	candidate.instance_id = _next_id(definition.module_id, instances)
+	candidate.name = candidate.instance_id.to_pascal_case()
+	candidate.transform = Transform3D(
+		Basis(Vector3.UP, posmod(quarter_turns, 4) * PI / 2.0), Vector3.ZERO
+	)
+	var graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	if instances.is_empty():
+		if not target_instance_id.is_empty() or not target_socket_id.is_empty():
+			candidate.free()
+			return _failure("The first module is placed at the origin without a target.")
+	else:
+		var target: ModuleInstance = null
+		for instance in instances:
+			if instance.instance_id == target_instance_id:
+				target = instance
+		if target == null:
+			candidate.free()
+			return _failure("Select an existing target module and free socket.")
+		var target_socket := target.get_socket(target_socket_id)
+		var source_socket := candidate.get_socket(source_socket_id)
+		if target_socket.is_empty() or source_socket.is_empty():
+			candidate.free()
+			return _failure("Both selected sockets must exist.")
+		var target_pose: Transform3D = target.transform * target_socket.local_transform
+		var opposite := Transform3D(Basis(Vector3.UP, PI), Vector3.ZERO)
+		candidate.transform = (
+			target_pose * opposite * source_socket.local_transform.affine_inverse()
+		)
+		# Connected orientation is solved from sockets. A requested extra turn must still match.
+		candidate.basis = Basis(Vector3.UP, posmod(quarter_turns, 4) * PI / 2.0) * candidate.basis
+		candidate.position = (
+			target_pose.origin - candidate.basis * source_socket.local_transform.origin
+		)
+		graph.append(
+			{
+				"from_instance": target.instance_id,
+				"from_socket": target_socket_id,
+				"to_instance": candidate.instance_id,
+				"to_socket": source_socket_id
+			}
+		)
+	var scene := load(definition.scene_path) as PackedScene
+	if scene == null:
+		candidate.free()
+		return _failure("The module scene could not be loaded.")
+	var content_node := scene.instantiate()
+	var content := content_node as Node3D
+	if content == null:
+		content_node.free()
+		candidate.free()
+		return _failure("Module scenes must have a Node3D root.")
+	if not content.transform.is_equal_approx(Transform3D.IDENTITY):
+		content.free()
+		candidate.free()
+		return _failure("Module scene roots must have an identity transform.")
+	if content is ModuleInstance:
+		content.definition = definition
+		content.instance_id = candidate.instance_id
+		content.transform = candidate.transform
+		candidate.free()
+		candidate = content
+	else:
+		candidate.name = content.name
+		candidate.add_child(content)
+	instances.append(candidate)
+	var errors := _validate(instances, graph)
+	if not errors.is_empty():
+		candidate.free()
+		return _failure("; ".join(errors))
+	var undo := EditorGlobals.get_undo_redo()
+	undo.create_action("Place module: " + definition.module_id)
+	undo.add_do_method(_attach.bind(root, candidate, graph))
+	undo.add_undo_method(_detach.bind(root, candidate, root.module_connections.duplicate(true)))
+	undo.add_do_reference(candidate)
+	undo.commit_action()
+	return {"success": true, "error": "", "instance": candidate}
+
+
+static func validate_level(root: Node3D) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return {"valid": false, "errors": ["Document must be a LevelRoot."]}
+	var errors := _validate(get_instances(root), root.module_connections)
+	return {"valid": errors.is_empty(), "errors": errors}
+
+
+static func _validate(instances: Array[ModuleInstance], graph: Array[Dictionary]) -> Array[String]:
+	var errors: Array[String] = []
+	var ids := {}
+	for instance in instances:
+		if (
+			instance.instance_id.is_empty()
+			or "/" in instance.instance_id
+			or ids.has(instance.instance_id)
+		):
+			errors.append("Module instance IDs must be nonempty, unique and contain no slash.")
+		ids[instance.instance_id] = instance
+		if (
+			instance.definition == null
+			or instance.definition.module_id.is_empty()
+			or not instance.definition.is_valid()
+		):
+			errors.append("Invalid definition on " + instance.instance_id)
+			continue
+		for capability: String in instance.definition.required_capabilities:
+			if capability not in SUPPORTED_CAPABILITIES:
+				errors.append(
+					instance.instance_id + ": unsupported runtime capability " + capability
+				)
+		if not _orthogonal(instance.transform) or absf(instance.position.y) > EPSILON:
+			errors.append(
+				(
+					instance.instance_id
+					+ ": only floor-level orthogonal yaw and unit scale are supported."
+				)
+			)
+		for socket in instance.definition.sockets:
+			var pose: Transform3D = socket.local_transform
+			if not _orthogonal(pose) or absf(pose.origin.y) > EPSILON:
+				errors.append(
+					(
+						instance.instance_id
+						+ ": socket must be floor-level with orthogonal outward yaw."
+					)
+				)
+			var bounds := instance.get_local_bounds()
+			var outward: Vector3 = -pose.basis.z
+			var boundary := bounds.end.z if outward.z > 0.5 else bounds.position.z
+			var coordinate := pose.origin.z
+			if absf(outward.x) > 0.5:
+				boundary = bounds.end.x if outward.x > 0 else bounds.position.x
+				coordinate = pose.origin.x
+			if (
+				not bounds.grow(EPSILON).has_point(pose.origin)
+				or absf(coordinate - boundary) > EPSILON
+			):
+				errors.append(instance.instance_id + ": socket is not on its outward boundary.")
+			if not socket.clearance.grow(EPSILON).has_point(pose.origin + Vector3.UP * EPSILON):
+				errors.append(
+					instance.instance_id + ": socket clearance must reserve its floor approach."
+				)
+			var opening: Vector2 = socket.opening
+			var left: Vector3 = pose.origin - pose.basis.x * opening.x * 0.5
+			var right: Vector3 = (
+				pose.origin + pose.basis.x * opening.x * 0.5 + Vector3.UP * opening.y
+			)
+			if (
+				not socket.clearance.grow(EPSILON).has_point(left)
+				or not socket.clearance.grow(EPSILON).has_point(right)
+			):
+				errors.append(
+					instance.instance_id + ": clearance must contain the full socket opening."
+				)
+	if not errors.is_empty():
+		return errors
+	var used := {}
+	var neighbors := {}
+	for connection in graph:
+		var from_id: String = str(connection.get("from_instance", ""))
+		var to_id: String = str(connection.get("to_instance", ""))
+		if not ids.has(from_id) or not ids.has(to_id) or from_id == to_id:
+			errors.append("Connection refers to missing modules or connects a module to itself.")
+			continue
+		var source: ModuleInstance = ids[from_id]
+		var target: ModuleInstance = ids[to_id]
+		var source_socket := source.get_socket(str(connection.get("from_socket", "")))
+		var target_socket := target.get_socket(str(connection.get("to_socket", "")))
+		if source_socket.is_empty() or target_socket.is_empty():
+			errors.append("Connection refers to a missing socket.")
+			continue
+		var a := from_id + "/" + str(source_socket.id)
+		var b := to_id + "/" + str(target_socket.id)
+		if used.has(a) or used.has(b):
+			errors.append("A socket cannot be connected more than once.")
+		used[a] = true
+		used[b] = true
+		neighbors[a] = to_id
+		neighbors[b] = from_id
+		if (
+			source_socket.get("kind", "walk") != target_socket.get("kind", "walk")
+			or not source_socket.opening.is_equal_approx(target_socket.opening)
+		):
+			errors.append("Connected socket kinds and opening sizes must match.")
+		var source_pose: Transform3D = source.transform * source_socket.local_transform
+		var target_pose: Transform3D = target.transform * target_socket.local_transform
+		if (
+			source_pose.origin.distance_to(target_pose.origin) > EPSILON
+			or not source_pose.basis.is_equal_approx(target_pose.basis * Basis(Vector3.UP, PI))
+		):
+			errors.append("Connected sockets must coincide and face in opposite directions.")
+	for i in instances.size():
+		var instance := instances[i]
+		var bounds: AABB = instance.transform * instance.get_local_bounds()
+		_validate_geometry_bounds(instance, instance, Transform3D.IDENTITY, errors)
+		for j in range(i + 1, instances.size()):
+			var other := instances[j]
+			if _overlaps(bounds, other.transform * other.get_local_bounds()):
+				errors.append(
+					"Module occupancy overlaps: " + instance.instance_id + " / " + other.instance_id
+				)
+		for socket in instance.definition.sockets:
+			var reserved: AABB = instance.transform * socket.clearance
+			var key := instance.instance_id + "/" + str(socket.id)
+			for other in instances:
+				if other == instance or neighbors.get(key, "") == other.instance_id:
+					continue
+				if _overlaps(reserved, other.transform * other.get_local_bounds()):
+					errors.append("Reserved socket approach is blocked: " + key)
+			_validate_approach(instance, instance, Transform3D.IDENTITY, socket.clearance, errors)
+	if instances.size() > 1:
+		var reached := {instances[0].instance_id: true}
+		for _pass in instances.size():
+			for edge in graph:
+				if reached.has(edge.get("from_instance", "")):
+					reached[edge.get("to_instance", "")] = true
+				if reached.has(edge.get("to_instance", "")):
+					reached[edge.get("from_instance", "")] = true
+		if reached.size() != instances.size():
+			errors.append("Every module must belong to the connected layout.")
+	return errors
+
+
+static func _validate_approach(
+	instance: ModuleInstance, node: Node, pose: Transform3D, clearance: AABB, errors: Array[String]
+) -> void:
+	# Actors (including a moving door) intentionally occupy openings, unlike static room geometry.
+	if node is ActorBase:
+		return
+	if node != instance and node is Node3D:
+		pose = pose * node.transform
+	var solid := AABB()
+	if (
+		node is CSGBox3D
+		and node.use_collision
+		and not node.operation == CSGShape3D.OPERATION_SUBTRACTION
+	):
+		solid = AABB(-node.size * 0.5, node.size)
+	elif node is CollisionShape3D and not node.disabled and node.shape is BoxShape3D:
+		solid = AABB(-node.shape.size * 0.5, node.shape.size)
+	elif node is CollisionShape3D and not node.disabled and node.shape is ConcavePolygonShape3D:
+		var faces: PackedVector3Array = node.shape.get_faces()
+		var interior := clearance.grow(-EPSILON)
+		for index in range(0, faces.size(), 3):
+			var a: Vector3 = pose * faces[index]
+			var b: Vector3 = pose * faces[index + 1]
+			var c: Vector3 = pose * faces[index + 2]
+			var triangle_bounds := AABB(a, Vector3.ZERO).expand(b).expand(c)
+			if not triangle_bounds.intersects(interior):
+				continue
+			var polygon := PackedVector3Array([a, b, c])
+			for axis in 3:
+				var normal := Vector3.ZERO
+				normal[axis] = 1
+				polygon = Geometry3D.clip_polygon(polygon, Plane(normal, interior.end[axis]))
+				if polygon.is_empty():
+					break
+				polygon = Geometry3D.clip_polygon(polygon, Plane(-normal, -interior.position[axis]))
+				if polygon.is_empty():
+					break
+			if not polygon.is_empty():
+				errors.append(
+					(
+						instance.instance_id
+						+ ": static triangles block a reserved socket approach ("
+						+ str(node.name)
+						+ ")."
+					)
+				)
+				break
+	if solid.has_volume() and _overlaps(pose * solid, clearance):
+		errors.append(
+			(
+				instance.instance_id
+				+ ": static geometry blocks a reserved socket approach ("
+				+ str(node.name)
+				+ ")."
+			)
+		)
+	for child in node.get_children():
+		_validate_approach(instance, child, pose, clearance, errors)
+
+
+static func _validate_geometry_bounds(
+	instance: ModuleInstance, node: Node, pose: Transform3D, errors: Array[String]
+) -> void:
+	if node is ActorBase:
+		return
+	if node != instance and node is Node3D:
+		pose = pose * node.transform
+	# Dimensions measure the room above the walking plane; the kit's structural slab is 30cm below it.
+	var allowed := instance.get_local_bounds()
+	allowed.position.y -= 0.3
+	allowed.size.y += 0.3
+	allowed = allowed.grow(EPSILON)
+	var solid := AABB()
+	if node is CSGBox3D and node.use_collision:
+		solid = pose * AABB(-node.size * 0.5, node.size)
+	elif node is CollisionShape3D and not node.disabled:
+		if node.shape is BoxShape3D:
+			solid = pose * AABB(-node.shape.size * 0.5, node.shape.size)
+		elif node.shape is ConcavePolygonShape3D:
+			for vertex: Vector3 in node.shape.get_faces():
+				if not allowed.has_point(pose * vertex):
+					errors.append(
+						instance.instance_id + ": collision extends outside declared module bounds."
+					)
+					break
+		elif node.shape != null:
+			errors.append(
+				(
+					instance.instance_id
+					+ ": static module collision must use boxes or baked triangle meshes."
+				)
+			)
+	elif node is CSGShape3D and node.use_collision:
+		errors.append(
+			(
+				instance.instance_id
+				+ ": non-box CSG must be baked to triangle collision before placement."
+			)
+		)
+	if solid.has_volume() and not allowed.encloses(solid):
+		errors.append(instance.instance_id + ": collision extends outside declared module bounds.")
+	for child in node.get_children():
+		_validate_geometry_bounds(instance, child, pose, errors)
+
+
+static func _orthogonal(pose: Transform3D) -> bool:
+	if not pose.is_finite():
+		return false
+	for turn in 4:
+		if pose.basis.is_equal_approx(Basis(Vector3.UP, turn * PI / 2.0)):
+			return true
+	return false
+
+
+static func _overlaps(a: AABB, b: AABB) -> bool:
+	return a.grow(-EPSILON).intersects(b.grow(-EPSILON))
+
+
+static func _next_id(module_id: String, instances: Array[ModuleInstance]) -> String:
+	var base := module_id
+	var used := {}
+	for instance in instances:
+		used[instance.instance_id] = true
+	var candidate := base
+	var suffix := 2
+	while used.has(candidate):
+		candidate = base + "_" + str(suffix)
+		suffix += 1
+	return candidate
+
+
+static func _attach(root: Node3D, instance: ModuleInstance, graph: Array[Dictionary]) -> void:
+	root.add_child(instance)
+	instance.owner = root
+	LevelRootScript.prepare_ownership(instance, root)
+	root.module_connections = graph.duplicate(true)
+	if root.has_method("restore_runtime_bindings"):
+		root.restore_runtime_bindings()
+
+
+static func _detach(root: Node3D, instance: ModuleInstance, graph: Array[Dictionary]) -> void:
+	root.remove_child(instance)
+	root.module_connections = graph.duplicate(true)
+	if root.has_method("restore_runtime_bindings"):
+		root.restore_runtime_bindings()
+
+
+static func _failure(message: String) -> Dictionary:
+	return {"success": false, "error": message, "instance": null}

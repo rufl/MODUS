@@ -38,6 +38,17 @@ func _register_builtin_actors() -> void:
 
 	register_actor(
 		{
+			"id": "key_pickup",
+			"name": "Key Pickup",
+			"category": "activator",
+			"description": "Collectible key card for keyed switches and doors",
+			"script": "res://shared/editor_core/actors/key_pickup_actor.gd",
+			"icon": "K"
+		}
+	)
+
+	register_actor(
+		{
 			"id": "counter",
 			"name": "Counter",
 			"category": "activator",

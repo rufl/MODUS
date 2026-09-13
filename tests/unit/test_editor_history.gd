@@ -27,6 +27,9 @@ const GameplayElementPlacerScript := preload(
 	"res://game/scripts/map_generator/gameplay_element_placer.gd"
 )
 
+const ActorBaseScript := preload("res://shared/editor_core/actors/actor_base.gd")
+const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
+
 
 func before_each() -> void:
 	await modus_setup()
@@ -34,6 +37,8 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	if is_instance_valid(EditorGlobalsScript._runtime_undo_redo):
+		EditorGlobalsScript._runtime_undo_redo.clear_history()
 	EditorGlobalsScript._runtime_undo_redo = null
 	modus_teardown()
 
@@ -153,6 +158,7 @@ func test_standalone_selection_move_and_delete_support_history() -> void:
 
 	manager.delete_selected()
 	assert_eq(level_root.get_child_count(), 0, "Delete should remove the selected node")
+	await get_tree().process_frame
 	undo.undo()
 	assert_eq(level_root.get_child_count(), 1, "Undo should restore the deleted node")
 
@@ -183,6 +189,9 @@ func test_standalone_paste_uses_clipboard_centroid_and_history() -> void:
 	assert_eq(source_root.get_child_count(), 2, "Undo should remove all pasted nodes")
 	manager.clear_selection()
 	await get_tree().process_frame
+	undo.redo()
+	assert_true(pasted[0].global_position.is_equal_approx(Vector3(95, 0, 0)))
+	assert_true(pasted[1].global_position.is_equal_approx(Vector3(105, 0, 0)))
 
 
 func test_standalone_duplicate_uses_offset_and_history() -> void:
@@ -229,6 +238,9 @@ func test_editor_state_block_placement_uses_runtime_history() -> void:
 	var undo: UndoRedo = EditorGlobalsScript.get_undo_redo()
 	undo.undo()
 	assert_eq(scene_root.get_child_count(), 0, "Undo should remove the EditorState block")
+	await get_tree().process_frame
+	undo.redo()
+	assert_eq(scene_root.get_child_count(), 1, "Redo after a frame must restore a live block")
 	EditorGlobalsScript.set_runtime_root(null)
 
 
@@ -365,25 +377,99 @@ func test_editor_state_escape_clears_tool_and_emits_change() -> void:
 	assert_eq(emitted.back(), EditorStateScript.ToolType.NONE)
 
 
-func test_embedded_editor_save_load_round_trip() -> void:
-	var editor: Node = EmbeddedLevelEditorScript.new()
-	var level_root := Node3D.new()
-	editor.level_root = level_root
-	add_child_autofree(level_root)
-
-	var saved: Array[String] = []
-	var loaded: Array[String] = []
-	editor.level_saved.connect(func(path: String) -> void: saved.append(path))
-	editor.level_loaded.connect(func(path: String) -> void: loaded.append(path))
-
+func test_embedded_editor_two_roundtrips_preserve_document_and_nested_collision() -> void:
+	var editor: Control = EmbeddedLevelEditorScript.new()
+	add_child_autofree(editor)
+	var document: Node3D = editor.level_root
+	document.level_name = "Persistent Root"
+	document.name = "PersistentDocument"
+	document.level_author = "Test Author"
+	document.position = Vector3(3, 2, 1)
+	document.set_meta("custom_document", {"revision": 7})
+	var nested := Node3D.new()
+	nested.name = "Nested"
+	nested.transform = Transform3D(Basis(Vector3.UP, PI / 2), Vector3(2, 0, -5))
+	document.add_child(nested)
+	var body := StaticBody3D.new()
+	body.name = "Body"
+	body.position = Vector3(1, 2, 3)
+	nested.add_child(body)
+	var collision := CollisionShape3D.new()
+	collision.name = "Collision"
+	collision.shape = BoxShape3D.new()
+	collision.shape.size = Vector3(4, 1, 2)
+	body.add_child(collision)
+	var source := ActorBaseScript.new()
+	source.name = "Source"
+	source.actor_id = "switch"
+	document.add_child(source)
+	var target := ActorBaseScript.new()
+	target.name = "Target"
+	target.actor_id = "door"
+	nested.add_child(target)
+	var channel: ChannelSystem = document.get_channel_system()
+	channel.create_connection(source, target, "gate")
+	channel.set_channel_color("gate", Color.CORNFLOWER_BLUE)
+	channel.set_channel_delay("gate", 0.25)
+	channel.set_channel_inverted("gate", true)
+	channel.set_channel_enabled("gate", false)
 	var path := "user://embedded_editor_lifecycle_test.tscn"
-	editor.save_level(path)
-	assert_eq(saved, [path])
-	level_root.add_child(Node3D.new())
-	editor.load_level(path)
-	assert_eq(loaded, [path])
-	assert_eq(level_root.get_child_count(), 0)
-	editor.free()
+	var expected_transform := nested.transform
+	for _roundtrip: int in range(2):
+		assert_true(editor.save_level(path))
+		assert_true(editor.load_level(path))
+		document = editor.level_root
+		assert_eq(document.name, "PersistentDocument")
+		assert_eq(document.level_name, "Persistent Root")
+		assert_eq(document.level_author, "Test Author")
+		assert_eq(document.position, Vector3(3, 2, 1))
+		assert_eq(document.get_meta("custom_document"), {"revision": 7})
+		assert_true(document.get_node("Nested").transform.is_equal_approx(expected_transform))
+		assert_eq(document.get_node("Nested/Body").position, Vector3(1, 2, 3))
+		assert_eq(document.get_node("Nested/Body/Collision").shape.size, Vector3(4, 1, 2))
+		assert_eq(document.channel_data.gate.sources, ["switch"])
+		assert_eq(document.channel_data.gate.targets, ["door"])
+		assert_eq(document.channel_data.gate.delay, 0.25)
+		assert_true(document.channel_data.gate.inverted)
+		assert_false(document.channel_data.gate.enabled)
+		assert_eq(document.channel_data.gate.color, Color.CORNFLOWER_BLUE.to_html())
+		channel = document.get_channel_system()
+		channel.set_channel_enabled("gate", true)
+		channel.set_channel_delay("gate", 0.0)
+		channel.set_channel_inverted("gate", false)
+		document.authoring_mode = false
+		channel.emit("gate")
+		assert_eq(document.find_actor("door").activation_count, 1)
+		document.authoring_mode = true
+		channel.set_channel_enabled("gate", false)
+		channel.set_channel_delay("gate", 0.25)
+		channel.set_channel_inverted("gate", true)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func test_failed_open_preserves_document_selection_and_history() -> void:
+	var editor: Control = EmbeddedLevelEditorScript.new()
+	add_child_autofree(editor)
+	var document: Node3D = editor.level_root
+	var target := Node3D.new()
+	document.add_child(target)
+	editor.selection_manager.select(target)
+	editor.selection_manager.move_selection(Vector3.RIGHT)
+	var invalid_root := Control.new()
+	var invalid_scene := PackedScene.new()
+	assert_eq(invalid_scene.pack(invalid_root), OK)
+	invalid_root.free()
+	var path := "user://embedded_editor_invalid_root.tscn"
+	assert_eq(ResourceSaver.save(invalid_scene, path), OK)
+	assert_false(editor.load_level(path))
+	assert_same(editor.level_root, document)
+	assert_same(editor.selection_manager.selected_nodes[0], target)
+	EditorGlobalsScript.get_undo_redo().undo()
+	assert_eq(target.position, Vector3.ZERO)
+	assert_true(editor.new_level())
+	assert_false(EditorGlobalsScript.get_undo_redo().has_undo())
+	assert_false(EditorGlobalsScript.get_undo_redo().has_redo())
+	assert_true(editor.selection_manager.selected_nodes.is_empty())
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
@@ -483,8 +569,9 @@ func test_standalone_editor_uses_runtime_undo_and_redo_menu_actions() -> void:
 func test_standalone_editor_exports_current_level_package() -> void:
 	var main: Node = StandaloneEditorScript.new()
 	var embedded: Node = EmbeddedLevelEditorScript.new()
-	embedded.level_root = Node3D.new()
+	embedded.level_root = LevelRootScript.new()
 	embedded.level_root.name = "StandaloneExport"
+	embedded.level_root.level_name = "StandaloneExport"
 	main._editor = embedded
 	var output_dir := "user://standalone_editor_export/"
 	var package_path := output_dir + "standalone_export.mdsl"

@@ -61,12 +61,16 @@ See [Documentation Truth](DOCUMENTATION_TRUTH.md) and [Current Status](CURRENT_S
 
 | Area | Source status | Required proof/hardening |
 | --- | --- | --- |
-| Core unit directory | 79/79 focused tests pass | Aggregate suite and broader generated-map behavior |
-| Export | 10/10 focused tests pass with zero GUT orphans | Preserve focused lifecycle proof while repairing wider-suite failures |
-| Seed/RNG | 8/8 focused tests pass | Preserve determinism across full pipeline changes |
-| Threaded pipeline | 8/8 focused tests pass with 30 assertions and zero GUT orphans | Preserve serialization/lifecycle coverage in aggregate repairs |
+| Generator correctness | September 13: 55/55 focused tests, 1,319 assertions | Broader content/configuration and cross-runtime/platform proof; no refreshed aggregate claim |
+| Export | Generated 64×64 scene retains records/navigation/collision; authored three-room `.mdsl` survives exported Linux editor → game playback | Graphical/target-platform authoring acceptance and automatic realization of generated gameplay records |
+| Seed/RNG | Revision 2 isolates global/gameplay/cosmetic streams; repeated seed reproduces tested gameplay and navigation | Pin generator/runtime/content; old seed layouts change, cross-version identity is not promised |
+| Threaded pipeline | Cancellation after geometry preparation cannot abort a replacement generation | Broader UI, long-session and platform lifecycle proof |
 
 Historical “all tasks complete” map-generator notes are implementation snapshots, not current production proof.
+
+The [release and world-building plan](RELEASE_AND_WORLD_BUILDING_PLAN.md) records generator correctness and the implemented three-room module/editor gate. Canonical metadata and socket validation are shared by the generator schema and editor library; document-owned channels execute real key/switch/door/objective gameplay. Automatic generator realization, rule/voxel integration, the full composed mission, mission graphs, hubs and release integrations remain open.
+
+Source and exported Linux editor → package → game smokes preserve geometry, root metadata and channels through save/reopen/resave and `.mdsl` extraction; the ownership and cursor defects are repaired. [Editor Round-Trip Proof](EDITOR_ROUNDTRIP_PROOF.md) records native artifacts and pressure-blocked graphical acceptance. Pinning, controlled regeneration, finished audiovisual review and persistent travel remain separate.
 
 ## Performance and Release
 
