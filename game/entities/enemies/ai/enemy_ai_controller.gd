@@ -101,6 +101,11 @@ func change_state(new_state: EnemyState) -> void:
 
 
 func _on_target_spotted(new_target: Node3D) -> void:
+	if (
+		parent_body.has_method("allows_runtime_target")
+		and not parent_body.allows_runtime_target(new_target)
+	):
+		return
 	target = new_target
 	_target_threat[new_target] = maxf(float(_target_threat.get(new_target, 0.0)), 1.0)
 	var behavior := str(get_meta("configured_behavior", "aggressive"))
@@ -172,6 +177,11 @@ func interrupt_for_pain() -> void:
 
 func on_damage_received(attacker: Node3D, damage_amount: float) -> void:
 	if not attacker:
+		return
+	if (
+		parent_body.has_method("allows_runtime_target")
+		and not parent_body.allows_runtime_target(attacker)
+	):
 		return
 
 	_target_threat[attacker] = float(_target_threat.get(attacker, 0.0)) + maxf(damage_amount, 1.0)

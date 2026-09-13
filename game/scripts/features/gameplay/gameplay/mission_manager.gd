@@ -5,6 +5,7 @@ signal mission_started(mission_id: String)
 signal mission_completed(mission_id: String)
 signal mission_failed(mission_id: String)
 signal objective_updated(mission_id: String, objective_id: String, current: int, required: int)
+signal mission_context_changed
 
 const MISSIONS_PATH := "res://game/data/missions"
 const DEFAULT_MISSION_ID := "mission_kill_all"
@@ -16,6 +17,8 @@ var objective_totals: Dictionary = {}  # obj_id -> initial/total_count
 var available_missions: Dictionary = {}  # id -> data
 var mission_level: Node3D
 var completed_mission_id: String = ""
+var document_error: String = ""
+var _objectives_by_id: Dictionary = {}
 
 
 static func get_instance() -> MissionMgr:
@@ -180,8 +183,10 @@ func _begin_mission(mission_id: String, definition: Dictionary, level: Node3D) -
 	completed_mission_id = ""
 	active_mission_data = definition.duplicate(true)
 	mission_level = level
+	mission_context_changed.emit()
 	objective_state.clear()
 	objective_totals.clear()
+	_index_objectives()
 
 	# Initialize objectives
 	var objectives: Array = active_mission_data.get("objectives", [])
@@ -207,22 +212,32 @@ func _begin_mission(mission_id: String, definition: Dictionary, level: Node3D) -
 	mission_started.emit(mission_id)
 
 	# Start monitoring loop
-	set_process(true)
+	set_process(not objectives.is_empty())
 
 
 func start_document_mission(level: Node3D) -> bool:
+	document_error = ""
 	if not level or not level.has_method("get_actor_identity"):
-		return false
+		return _invalid_document("Mission requires an authored level document.")
 	var objectives: Array[Dictionary] = []
+	var declarations: Dictionary = {}
 	for node: Node in level.find_children("*", "", true, false):
 		if not node.has_meta("mission_objective"):
 			continue
 		var authored: Variant = node.get_meta("mission_objective")
 		if not authored is Dictionary or not "activation_count" in node:
-			return false
+			return _invalid_document("Objective must belong to a gameplay actor: " + str(node.name))
 		var identity: String = level.get_actor_identity(node)
-		if identity.is_empty():
-			return false
+		if identity.is_empty() or declarations.has(identity):
+			return _invalid_document("Objective actor identity is empty or duplicated: " + identity)
+		for flag: String in ["optional", "final"]:
+			if not authored.get(flag, false) is bool:
+				return _invalid_document(identity + ": " + flag + " must be boolean.")
+		if not authored.get("order", 0) is int:
+			return _invalid_document(identity + ": order must be an integer.")
+		if authored.has("requires") and not authored.requires is Array:
+			return _invalid_document(identity + ": requires must be an array of actor identities.")
+		declarations[identity] = authored
 		objectives.append(
 			{
 				"id": identity,
@@ -231,29 +246,97 @@ func start_document_mission(level: Node3D) -> bool:
 				"description": str(authored.get("description", node.name)),
 				"required_count": 1,
 				"requires": [],
-				"final": authored.get("final", false)
+				"optional": authored.get("optional", false),
+				"final": authored.get("final", false),
+				"order": authored.get("order", 0)
 			}
 		)
 	for objective: Dictionary in objectives:
-		if objective.final:
+		var authored: Dictionary = declarations[objective.id]
+		if authored.has("requires"):
+			for prerequisite: Variant in authored.requires:
+				if (
+					not prerequisite is String
+					or not declarations.has(prerequisite)
+					or prerequisite == objective.id
+					or objective.requires.has(prerequisite)
+				):
+					return _invalid_document(
+						objective.id + ": invalid prerequisite " + str(prerequisite)
+					)
+				if not objective.optional and declarations[prerequisite].get("optional", false):
+					return _invalid_document(
+						(
+							objective.id
+							+ ": a required objective cannot depend on an optional objective."
+						)
+					)
+				objective.requires.append(prerequisite)
+		elif objective.final:
 			for prerequisite: Dictionary in objectives:
-				if not prerequisite.final:
+				if not prerequisite.final and not prerequisite.optional:
 					objective.requires.append(prerequisite.id)
+	var ordered := _order_document_objectives(objectives)
+	if ordered.size() != objectives.size():
+		return _invalid_document("Objective prerequisites contain a cycle.")
 	_begin_mission(
 		str(level.get_meta("mission_id", "document_mission")),
-		{"name": str(level.get("level_name")), "objectives": objectives, "ends_match": false},
+		{"name": str(level.get("level_name")), "objectives": ordered, "ends_match": false},
 		level
 	)
 	return true
+
+
+func _invalid_document(message: String) -> bool:
+	document_error = message
+	return false
+
+
+func _order_document_objectives(objectives: Array[Dictionary]) -> Array[Dictionary]:
+	objectives.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			return a.id < b.id if a.order == b.order else a.order < b.order
+	)
+	var remaining: Dictionary = {}
+	var dependents: Dictionary = {}
+	var by_id: Dictionary = {}
+	var ready: Array[String] = []
+	for objective: Dictionary in objectives:
+		by_id[objective.id] = objective
+		remaining[objective.id] = objective.requires.size()
+		if objective.requires.is_empty():
+			ready.append(objective.id)
+		for prerequisite: String in objective.requires:
+			if not dependents.has(prerequisite):
+				dependents[prerequisite] = []
+			dependents[prerequisite].append(objective.id)
+	var ordered: Array[Dictionary] = []
+	var index := 0
+	while index < ready.size():
+		var identity: String = ready[index]
+		index += 1
+		ordered.append(by_id[identity])
+		if not dependents.has(identity):
+			continue
+		for dependent: String in dependents[identity]:
+			remaining[dependent] -= 1
+			if remaining[dependent] == 0:
+				ready.append(dependent)
+	return ordered
+
+
+func _index_objectives() -> void:
+	_objectives_by_id.clear()
+	for objective: Dictionary in active_mission_data.get("objectives", []):
+		_objectives_by_id[objective.id] = objective
 
 
 func can_activate_actor(actor: Node) -> bool:
 	if not is_instance_valid(mission_level) or not mission_level.is_ancestor_of(actor):
 		return true
 	var identity: String = mission_level.get_actor_identity(actor)
-	for objective: Dictionary in active_mission_data.get("objectives", []):
-		if objective.id != identity:
-			continue
+	var objective: Variant = _objectives_by_id.get(identity)
+	if objective is Dictionary:
 		for required: String in objective.get("requires", []):
 			if int(objective_state.get(required, 0)) < int(objective_totals.get(required, 1)):
 				return false
@@ -285,7 +368,14 @@ func restore_runtime_state(state: Dictionary, level: Node3D = null) -> bool:
 	objective_state = state.state.duplicate()
 	objective_totals = state.totals.duplicate()
 	mission_level = level
-	set_process(not active_mission_id.is_empty())
+	mission_context_changed.emit()
+	_index_objectives()
+	set_process(
+		(
+			(not active_mission_id.is_empty() and not _objectives_by_id.is_empty())
+			or (is_instance_valid(mission_level) and _has_pending_optional_objectives())
+		)
+	)
 	if not active_mission_id.is_empty():
 		mission_started.emit(active_mission_id)
 	return true
@@ -301,12 +391,20 @@ func _check_actor_objective(objective: Dictionary) -> bool:
 	var current: int = mini(int(actor.activation_count), required)
 	if int(objective_state.get(objective.id, 0)) != current:
 		objective_state[objective.id] = current
-		objective_updated.emit(active_mission_id, objective.id, current, required)
+		objective_updated.emit(
+			active_mission_id if not active_mission_id.is_empty() else completed_mission_id,
+			objective.id,
+			current,
+			required
+		)
 	return current >= required
 
 
 func _process(_delta: float) -> void:
-	if active_mission_id == "":
+	if (
+		active_mission_id.is_empty()
+		and (not is_instance_valid(mission_level) or not _has_pending_optional_objectives())
+	):
 		set_process(false)
 		return
 
@@ -315,6 +413,8 @@ func _process(_delta: float) -> void:
 	var objectives: Array = active_mission_data.get("objectives", [])
 
 	for obj: Dictionary in objectives:
+		if active_mission_id.is_empty() and not obj.get("optional", false):
+			continue
 		var type: String = obj.get("type", "")
 		var is_complete: bool = false
 
@@ -323,14 +423,27 @@ func _process(_delta: float) -> void:
 		elif type == "activate_actor":
 			is_complete = _check_actor_objective(obj)
 
-		if not is_complete:
+		if not is_complete and not obj.get("optional", false):
 			all_complete = false
 
 	# Update Compass periodically
 	_update_compass_markers()
 
-	if all_complete:
+	if all_complete and not active_mission_id.is_empty():
 		_complete_mission()
+
+
+func _has_pending_optional_objectives() -> bool:
+	for objective: Dictionary in active_mission_data.get("objectives", []):
+		if (
+			objective.get("optional", false)
+			and (
+				int(objective_state.get(objective.id, 0))
+				< int(objective_totals.get(objective.id, 1))
+			)
+		):
+			return true
+	return false
 
 
 func _update_compass_markers() -> void:
@@ -396,7 +509,7 @@ func _complete_mission() -> void:
 	completed_mission_id = active_mission_id
 	mission_completed.emit(active_mission_id)
 	active_mission_id = ""
-	set_process(false)
+	set_process(is_instance_valid(mission_level) and _has_pending_optional_objectives())
 	if not active_mission_data.get("ends_match", true):
 		return
 

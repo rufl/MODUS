@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PrefabMetadata" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/scripts/map_generator/prefab_metadata.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+resource_name = "Breakwater Mission / Cavern"
+module_id = "bw_mission_cavern"
+scene_path = "res://game/levels/modules/breakwater/mission/cavern.tscn"
+content_revision = 1
+dimensions = Vector3(20, 8, 40)
+sockets = Array[Dictionary]([{"id": "intake", "kind": "walk", "local_transform": Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10, 0, 16), "opening": Vector2(4, 3), "clearance": AABB(-11.5, 0, 14, 3, 3, 4)}, {"id": "turbine", "kind": "walk", "local_transform": Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -10, 0, -16), "opening": Vector2(4, 3), "clearance": AABB(-11.5, 0, -18, 3, 3, 4)}])
+required_capabilities = PackedStringArray("walk")
+tags = Array[String](["module", "breakwater", "mission", "industrial"])

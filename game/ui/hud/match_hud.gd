@@ -27,6 +27,8 @@ func _ready() -> void:
 	if gs and gs.mission:
 		gs.mission.mission_started.connect(_on_mission_started)
 		gs.mission.objective_updated.connect(_on_objective_updated)
+		gs.mission.mission_context_changed.connect(_on_mission_context_changed)
+		_on_mission_context_changed()
 
 
 func _exit_tree() -> void:
@@ -43,6 +45,14 @@ func _exit_tree() -> void:
 			gs.mission.mission_started.disconnect(_on_mission_started)
 		if gs.mission.objective_updated.is_connected(_on_objective_updated):
 			gs.mission.objective_updated.disconnect(_on_objective_updated)
+		if gs.mission.mission_context_changed.is_connected(_on_mission_context_changed):
+			gs.mission.mission_context_changed.disconnect(_on_mission_context_changed)
+
+
+func _on_mission_context_changed() -> void:
+	var mission := MissionMgr.get_instance()
+	# Authored sessions own their objective display and do not run a competitive match.
+	visible = mission == null or not is_instance_valid(mission.mission_level)
 
 
 func _on_timer_updated(time_left: float) -> void:
@@ -154,6 +164,8 @@ func _get_preset_enum(preset_name: String) -> Control.LayoutPreset:
 
 
 func _on_mission_started(_mission_id: String) -> void:
+	if not visible:
+		return
 	var logger: Node = GameManager.get_core_system("logger")
 	if logger and logger.has_method("info"):
 		logger.info("[MatchHUD] Mission started: " + " " + str(_mission_id), "UI")
@@ -168,6 +180,8 @@ func _on_mission_started(_mission_id: String) -> void:
 
 
 func _on_objective_updated(_mission_id: String, _obj_id: String, current: int, total: int) -> void:
+	if not visible:
+		return
 	var logger: Node = GameManager.get_core_system("logger")
 	if logger and logger.has_method("info"):
 		logger.info(

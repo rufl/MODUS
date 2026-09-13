@@ -14,9 +14,11 @@ var preview_mesh: Node3D = null
 var spawn_area: Area3D = null
 var hologram_material: StandardMaterial3D = null
 
-var _current_pickup: Node3D = null
+var _current_pickup: PickupBase = null
 var _respawn_timer: float = 0.0
-var _is_spawned: bool = false
+var _phase: String = "inactive"
+var _runtime_started: bool = false
+var _restoring: bool = false
 
 
 func _init() -> void:
@@ -26,10 +28,26 @@ func _init() -> void:
 
 
 func _on_actor_ready() -> void:
-	_create_visual()
+	if is_authoring():
+		_create_visual()
 
-	if auto_spawn:
-		call_deferred("_spawn_pickup")
+
+func start_runtime() -> void:
+	if _runtime_started or is_authoring():
+		return
+	_runtime_started = true
+	super.start_runtime()
+	if auto_spawn and _phase == "inactive":
+		trigger()
+
+
+func _has_authority() -> bool:
+	return not multiplayer.has_multiplayer_peer() or multiplayer.is_server()
+
+
+func _do_activate(_data: Dictionary) -> void:
+	if _runtime_started and not is_authoring() and _has_authority() and _phase == "inactive":
+		_spawn_pickup()
 
 
 func _create_visual() -> void:
@@ -81,55 +99,130 @@ func _get_category_color() -> Color:
 func _process(delta: float) -> void:
 	super._process(delta)
 
-	# Rotate preview
-	if preview_mesh:
-		preview_mesh.rotation.y += delta * 2.0
-
-	# Handle respawn
-	if not _is_spawned and _respawn_timer > 0:
-		_respawn_timer -= delta
+	if not _runtime_started or is_authoring() or not _has_authority() or _restoring:
+		return
+	if _phase == "waiting":
+		_respawn_timer = maxf(0.0, _respawn_timer - delta)
 		if _respawn_timer <= 0:
 			_spawn_pickup()
 
 
-func _spawn_pickup() -> void:
-	if _is_spawned:
-		return
-
-	var pickup_scene: PackedScene = _get_pickup_scene()
-	if not pickup_scene:
-		push_warning("[PickupSpawnerActor] No scene for category %d" % pickup_category)
-		return
-
-	_current_pickup = pickup_scene.instantiate()
-	_current_pickup.position = global_position + Vector3(0, 1, 0)
-
-	# Configure weapon pickup
-	if pickup_category == PickupCategory.WEAPON and "weapon_id" in _current_pickup:
-		_current_pickup.weapon_id = weapon_id
-
-	# Add to scene with unique name for multiplayer compatibility
+func _spawn_pickup(saved: Dictionary = {}, prepared: PickupBase = null) -> bool:
+	if is_authoring() or not _has_authority() or is_instance_valid(_current_pickup):
+		return false
+	var scene := _get_pickup_scene()
+	if not scene:
+		push_error("[PickupSpawnerActor] No pickup scene for authored reward")
+		return false
+	_current_pickup = prepared if prepared else scene.instantiate() as PickupBase
+	if not _current_pickup:
+		return false
+	if _current_pickup is HealthPickup and LootSvc.HEALTH_TIER_MAP.has(item_id):
+		_current_pickup.tier = LootSvc.HEALTH_TIER_MAP[item_id]
+	_current_pickup.set_meta("editor_runtime_only", true)
+	var system := _find_channel_system()
+	_current_pickup.set_meta(
+		"authored_actor_owner", system.get_binding_id(self) if system else actor_id
+	)
+	if system:
+		_current_pickup.authored_document = system.document_root
+	_current_pickup.transform = transform.translated_local(Vector3(0, 1, 0))
 	get_parent().add_child(_current_pickup, true)
+	if saved.is_empty():
+		_current_pickup.global_transform = Transform3D(
+			global_basis, global_position + Vector3(0, 1, 0)
+		)
+	else:
+		_current_pickup.restore_motion_state(saved)
+	_current_pickup.picked_up.connect(_on_pickup_collected)
+	_phase = "available"
+	_respawn_timer = 0.0
+	return true
 
-	# Connect pickup signal if available
-	if _current_pickup.has_signal("picked_up"):
-		_current_pickup.picked_up.connect(_on_pickup_collected)
 
-	_is_spawned = true
-
-	# Hide preview
-	if preview_mesh:
-		preview_mesh.visible = false
-
-
-func _on_pickup_collected(_collector: Node = null) -> void:
-	_is_spawned = false
+func _on_pickup_collected(collector: CharacterBody3D) -> void:
+	if _restoring or not is_instance_valid(_current_pickup):
+		return
 	_current_pickup = null
-	_respawn_timer = respawn_time
+	_phase = "waiting" if respawn_time > 0 and not one_shot else "collected"
+	_respawn_timer = respawn_time if _phase == "waiting" else 0.0
+	super._do_activate({"source": collector})
 
-	# Show preview again
-	if preview_mesh:
-		preview_mesh.visible = true
+
+func capture_runtime_state() -> Dictionary:
+	var state := super.capture_runtime_state()
+	var pickup_state: Dictionary = {}
+	if is_instance_valid(_current_pickup):
+		pickup_state = _current_pickup.capture_motion_state()
+	state.merge({"pickup_phase": _phase, "respawn_timer": _respawn_timer, "pickup": pickup_state})
+	return state
+
+
+func validate_runtime_state(state: Dictionary) -> bool:
+	if not super.validate_runtime_state(state):
+		return false
+	if (
+		not state.get("pickup_phase") is String
+		or state.pickup_phase not in ["inactive", "available", "waiting", "collected"]
+	):
+		return false
+	if not PickupBase._finite_number(state.get("respawn_timer")) or state.respawn_timer < 0:
+		return false
+	if not state.get("pickup") is Dictionary:
+		return false
+	if state.pickup_phase == "available":
+		if not PickupBase.validate_motion_state(state.pickup):
+			return false
+		if _get_pickup_scene() == null:
+			return false
+	elif not state.pickup.is_empty():
+		return false
+	if state.pickup_phase == "waiting":
+		if (
+			respawn_time <= 0
+			or one_shot
+			or state.respawn_timer > respawn_time
+			or state.activation_count < 1
+		):
+			return false
+	elif state.respawn_timer != 0:
+		return false
+	if state.pickup_phase == "inactive" and (state.activation_count != 0 or state.is_active):
+		return false
+	if (
+		state.pickup_phase == "available"
+		and state.activation_count > 0
+		and (one_shot or respawn_time <= 0)
+	):
+		return false
+	if state.pickup_phase == "collected" and respawn_time > 0 and not one_shot:
+		return false
+	if state.pickup_phase == "collected" and state.activation_count < 1:
+		return false
+	if one_shot and state.activation_count > 1:
+		return false
+	return true
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if not validate_runtime_state(state) or is_authoring() or not _has_authority():
+		return false
+	var prepared: PickupBase = null
+	if state.pickup_phase == "available":
+		prepared = _get_pickup_scene().instantiate() as PickupBase
+		if not prepared:
+			return false
+	_restoring = true
+	if is_instance_valid(_current_pickup):
+		_current_pickup.free()
+	_current_pickup = null
+	super.restore_runtime_state(state)
+	_phase = state.pickup_phase
+	_respawn_timer = float(state.respawn_timer)
+	if prepared:
+		_spawn_pickup(state.pickup, prepared)
+	_restoring = false
+	return true
 
 
 func _get_pickup_scene() -> PackedScene:

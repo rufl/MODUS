@@ -8,6 +8,9 @@ enum HazardType { LAVA, ACID, ELECTRIC, POISON }
 @export var damage_per_second: float = 20.0
 @export var damage_interval: float = 0.5
 @export var volume_size: Vector3 = Vector3(2.0, 1.0, 2.0)
+@export var active_duration: float = 0.0
+@export var inactive_duration: float = 0.0
+@export var recovery_anchor: NodePath = NodePath("")
 
 var hazard_mesh: Node3D = null
 var damage_area: Area3D = null
@@ -15,6 +18,8 @@ var particles: GPUParticles3D = null
 
 var _damage_timer: float = 0.0
 var _entities_in_zone: Array[Node] = []
+var _cycle_time: float = 0.0
+var _energized: bool = false
 
 
 func _init() -> void:
@@ -27,6 +32,8 @@ func _on_actor_ready() -> void:
 	_create_visual()
 	_create_damage_area()
 	_create_particles()
+	_damage_timer = maxf(damage_interval, 0.01)
+	_update_hazard_visual(false)
 
 
 func _create_visual() -> void:
@@ -77,7 +84,9 @@ func _get_hazard_emission() -> Color:
 func _create_damage_area() -> void:
 	damage_area = Area3D.new()
 	damage_area.name = "DamageArea"
-	damage_area.monitoring = true
+	damage_area.monitoring = not is_authoring()
+	damage_area.collision_layer = 0
+	damage_area.collision_mask = CollisionLayers.LAYER_PLAYERS | CollisionLayers.LAYER_ENEMIES
 	add_child(damage_area)
 
 	var shape := CollisionShape3D.new()
@@ -85,6 +94,7 @@ func _create_damage_area() -> void:
 	box.size = volume_size
 	shape.shape = box
 	shape.position.y = volume_size.y * 0.5
+	shape.set_meta("editor_runtime_only", true)
 	damage_area.add_child(shape)
 
 	damage_area.body_entered.connect(_on_body_entered_hazard)
@@ -96,7 +106,7 @@ func _create_particles() -> void:
 	particles.name = "HazardParticles"
 	particles.amount = 64
 	particles.lifetime = 2.0
-	particles.emitting = true
+	particles.emitting = false
 	particles.position.y = volume_size.y * 0.5
 	add_child(particles)
 
@@ -111,27 +121,75 @@ func _create_particles() -> void:
 	particles.process_material = process_mat
 
 
-func _process(delta: float) -> void:
-	super._process(delta)
+func _physics_process(delta: float) -> void:
+	if is_authoring() or not is_enabled or not is_active:
+		return
+	var interval := maxf(damage_interval, 0.01)
+	var remaining := delta
+	# Split at both pulse and damage boundaries, so a frame crossing the safe
+	# window cannot damage a player during the inactive part of the cycle.
+	while remaining > 0.0:
+		var pulsed := active_duration > 0.0 and inactive_duration > 0.0
+		var hot := not pulsed or _cycle_time < active_duration
+		var boundary := remaining
+		if pulsed:
+			boundary = (
+				(active_duration if hot else active_duration + inactive_duration) - _cycle_time
+			)
+		var step := minf(remaining, boundary)
+		if hot:
+			step = minf(step, _damage_timer)
+			_damage_timer -= step
+		_cycle_time += step
+		remaining -= step
+		if hot and _damage_timer <= 0.000001:
+			_deal_damage()
+			_damage_timer = interval
+		if pulsed and _cycle_time >= active_duration + inactive_duration:
+			_cycle_time = 0.0
+			_damage_timer = interval
+		elif not pulsed:
+			_cycle_time = 0.0
+	_update_hazard_visual(_is_hot())
 
-	# Apply damage to entities in zone
-	_damage_timer -= delta
-	if _damage_timer <= 0:
-		_deal_damage()
-		_damage_timer = damage_interval
+
+func _is_hot() -> bool:
+	return (
+		is_enabled
+		and is_active
+		and (active_duration <= 0.0 or inactive_duration <= 0.0 or _cycle_time < active_duration)
+	)
+
+
+func _update_hazard_visual(hot: bool) -> void:
+	_energized = hot
+	if hazard_mesh:
+		var material := hazard_mesh.get("material") as StandardMaterial3D
+		if material:
+			var color := _get_hazard_color()
+			color.a = 0.6 if hot else 0.12
+			material.albedo_color = color
+			material.emission_energy_multiplier = 2.0 if hot else 0.05
+	if particles:
+		particles.emitting = hot and not is_authoring()
+
+
+func _on_activated(_data: Dictionary) -> void:
+	_cycle_time = 0.0
+	_damage_timer = maxf(damage_interval, 0.01)
+	_update_hazard_visual(_is_hot())
+
+
+func _on_deactivated() -> void:
+	_update_hazard_visual(false)
 
 
 func _on_body_entered_hazard(body: Node3D) -> void:
-	if body.is_in_group("player") or body.is_in_group("enemies"):
-		_entities_in_zone.append(body)
-
-		# Play sound on entry
-		var audio_service = GameManager.get_core_system("audio") if GameManager else null
-		if audio_service and audio_service.has_method("play_sound_3d"):
-			var lava_sound: String = "res://game/art/audio/sfx/burn.wav"
-			var damage_sound: String = "res://game/art/audio/sfx/damage.wav"
-			var sound_path: String = lava_sound if hazard_type == HazardType.LAVA else damage_sound
-			audio_service.play_sound_3d(load(sound_path), body.global_position)
+	if is_authoring():
+		return
+	if body.is_in_group("player") or body.is_in_group("enemies") or body.is_in_group("enemy"):
+		if body not in _entities_in_zone:
+			_entities_in_zone.append(body)
 
 
 func _on_body_exited_hazard(body: Node3D) -> void:
@@ -139,19 +197,76 @@ func _on_body_exited_hazard(body: Node3D) -> void:
 
 
 func _deal_damage() -> void:
-	for entity: Node in _entities_in_zone:
-		if is_instance_valid(entity):
-			# Use CombatService if available via GameplayService
-			var gs_node: Node = get_node_or_null("/root/GameplayService")
-			if gs_node and gs_node.has_method("get_service"):
-				var gs: Node = gs_node.call("get_service")
-				if gs and gs.get("combat") and gs.get("combat").has_method("apply_damage"):
-					var damage_type: int = 4  # ENVIRONMENT (Assuming 4 based on typical enums)
-					gs.get("combat").apply_damage(
-						entity, damage_per_second * damage_interval, self, damage_type
-					)
-			elif entity.has_method("take_damage"):
-				entity.take_damage(damage_per_second * damage_interval, self)
+	if is_authoring() or not is_enabled or not is_active:
+		return
+	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
+		return
+	var combat := CombatSvc.get_instance()
+	var amount := maxf(damage_per_second, 0.0) * maxf(damage_interval, 0.01)
+	var damage_type := DamageInfo.DamageType.FIRE
+	if hazard_type == HazardType.POISON or hazard_type == HazardType.ACID:
+		damage_type = DamageInfo.DamageType.POISON
+	elif hazard_type == HazardType.ELECTRIC:
+		damage_type = DamageInfo.DamageType.ENERGY
+	for entity: Node in _entities_in_zone.duplicate():
+		if not is_instance_valid(entity):
+			_entities_in_zone.erase(entity)
+			continue
+		if combat:
+			combat.apply_damage(entity, amount, self, damage_type)
+		elif entity.has_method("take_damage"):
+			var info := DamageInfo.create(amount, damage_type, self)
+			info.final_damage = amount
+			entity.take_damage(info)
+		if (
+			not recovery_anchor.is_empty()
+			and entity is CharacterBody3D
+			and entity.is_in_group("player")
+		):
+			var anchor := get_node_or_null(recovery_anchor) as Node3D
+			if anchor:
+				entity.global_transform = anchor.global_transform
+				entity.velocity = Vector3.ZERO
+				entity.reset_physics_interpolation()
+				_entities_in_zone.erase(entity)
+
+
+func capture_runtime_state() -> Dictionary:
+	var state := super.capture_runtime_state()
+	state["hazard"] = {"cycle_time": _cycle_time, "damage_timer": _damage_timer}
+	return state
+
+
+func validate_runtime_state(state: Dictionary) -> bool:
+	if not super.validate_runtime_state(state) or not state.get("hazard") is Dictionary:
+		return false
+	var phase: Dictionary = state.hazard
+	for key: String in ["cycle_time", "damage_timer"]:
+		var value: Variant = phase.get(key)
+		if (
+			not (value is int or value is float)
+			or not is_finite(float(value))
+			or float(value) < 0.0
+		):
+			return false
+	if float(phase.damage_timer) > maxf(damage_interval, 0.01):
+		return false
+	if active_duration > 0.0 and inactive_duration > 0.0:
+		return float(phase.cycle_time) < active_duration + inactive_duration
+	return float(phase.cycle_time) == 0.0
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if not validate_runtime_state(state) or not super.restore_runtime_state(state):
+		return false
+	_cycle_time = float(state.hazard.cycle_time)
+	_damage_timer = float(state.hazard.damage_timer)
+	_entities_in_zone.clear()
+	if damage_area and not is_authoring():
+		for body: Node3D in damage_area.get_overlapping_bodies():
+			_on_body_entered_hazard(body)
+	_update_hazard_visual(_is_hot())
+	return true
 
 
 func get_inspector_properties() -> Array[Dictionary]:

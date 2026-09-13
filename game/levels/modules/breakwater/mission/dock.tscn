@@ -1,0 +1,257 @@
+[gd_scene load_steps=25 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
+
+[ext_resource type="Resource" path="res://game/levels/modules/breakwater/mission/dock.tres" id="definition"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/floor.tres" id="mat_floor"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/salt_concrete.tres" id="mat_salt_concrete"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/spawn_point.gd" id="spawn"]
+
+[sub_resource type="BoxMesh" id="box_0"]
+size = Vector3(20, 0.3, 16)
+
+[sub_resource type="BoxShape3D" id="shape_0"]
+size = Vector3(20, 0.3, 16)
+
+[sub_resource type="BoxMesh" id="box_1"]
+size = Vector3(8, 6, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_1"]
+size = Vector3(8, 6, 0.35)
+
+[sub_resource type="BoxMesh" id="box_2"]
+size = Vector3(4, 2.5, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_2"]
+size = Vector3(4, 2.5, 0.35)
+
+[sub_resource type="BoxMesh" id="box_3"]
+size = Vector3(20, 6, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_3"]
+size = Vector3(20, 6, 0.35)
+
+[sub_resource type="BoxMesh" id="box_4"]
+size = Vector3(0.35, 6, 16)
+
+[sub_resource type="BoxShape3D" id="shape_4"]
+size = Vector3(0.35, 6, 16)
+
+[sub_resource type="BoxMesh" id="box_5"]
+size = Vector3(0.35, 6, 0.5)
+
+[sub_resource type="BoxShape3D" id="shape_5"]
+size = Vector3(0.35, 6, 0.5)
+
+[sub_resource type="BoxMesh" id="box_6"]
+size = Vector3(12, 0.4, 8)
+
+[sub_resource type="BoxShape3D" id="shape_6"]
+size = Vector3(12, 0.4, 8)
+
+[sub_resource type="BoxMesh" id="box_7"]
+size = Vector3(1, 2, 1)
+
+[sub_resource type="BoxShape3D" id="shape_7"]
+size = Vector3(1, 2, 1)
+
+[node name="Dock" type="Node3D"]
+script = ExtResource("module")
+definition = ExtResource("definition")
+instance_id = "dock"
+
+[node name="Geometry" type="Node3D" parent="."]
+
+
+[node name="Lighting" type="Node3D" parent="."]
+
+
+[node name="Signage" type="Node3D" parent="."]
+
+
+[node name="Actors" type="Node3D" parent="."]
+
+
+[node name="Foundation" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, -0.15, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Foundation"]
+mesh = SubResource("box_0")
+material_override = ExtResource("mat_floor")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Foundation"]
+shape = SubResource("shape_0")
+
+[node name="WallN0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-6, 3, -7.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN0"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN0"]
+shape = SubResource("shape_1")
+
+[node name="LintelN0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 4.75, -7.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelN0"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelN0"]
+shape = SubResource("shape_2")
+
+[node name="WallN1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(6, 3, -7.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN1"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN1"]
+shape = SubResource("shape_1")
+
+[node name="WallS0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 3, 7.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallS0"]
+mesh = SubResource("box_3")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS0"]
+shape = SubResource("shape_3")
+
+[node name="WallW0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9.825, 3, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW0"]
+mesh = SubResource("box_4")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW0"]
+shape = SubResource("shape_4")
+
+[node name="WallE0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(9.825, 3, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallE0"]
+mesh = SubResource("box_4")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE0"]
+shape = SubResource("shape_4")
+
+[node name="Rib-9p7_-6p0" type="Node3D" parent="Geometry"]
+position = Vector3(-9.7, 3, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-9p7_-6p0"]
+mesh = SubResource("box_5")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib-9p7_6p0" type="Node3D" parent="Geometry"]
+position = Vector3(-9.7, 3, 6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-9p7_6p0"]
+mesh = SubResource("box_5")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib9p7_-6p0" type="Node3D" parent="Geometry"]
+position = Vector3(9.7, 3, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib9p7_-6p0"]
+mesh = SubResource("box_5")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib9p7_6p0" type="Node3D" parent="Geometry"]
+position = Vector3(9.7, 3, 6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib9p7_6p0"]
+mesh = SubResource("box_5")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Emergency-5p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 5, -5)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 5, 0)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency5p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 5, 5)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Shelter" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 5.8, 4)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Shelter"]
+mesh = SubResource("box_6")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Shelter"]
+shape = SubResource("shape_6")
+
+[node name="MooringW" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-7, 1, 3)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/MooringW"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_brass")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/MooringW"]
+shape = SubResource("shape_7")
+
+[node name="MooringE" type="StaticBody3D" parent="Geometry"]
+position = Vector3(7, 1, 3)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/MooringE"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_brass")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/MooringE"]
+shape = SubResource("shape_7")
+
+[node name="Destination" type="Label3D" parent="Signage"]
+position = Vector3(0, 3.3, -7.7)
+rotation = Vector3(0, 0, 0)
+text = "BREAKWATER STATION\n01 / ANCHORAGE HUB AHEAD"
+font_size = 46
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="Arrival" type="Label3D" parent="Signage"]
+position = Vector3(0, 3.3, 7.7)
+rotation = Vector3(0, 3.14159, 0)
+text = "BLACK START\nRestore power. Restore cooling. Transmit. Return."
+font_size = 30
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="PlayerSpawn" type="Marker3D" parent="."]
+position = Vector3(0, 1.1, 4)
+script = ExtResource("spawn")

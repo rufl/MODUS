@@ -37,6 +37,7 @@ func _create_menu_bar() -> void:
 	file_menu.name = "FileMenu"
 	file_menu.add_item("New Level", 0)
 	file_menu.add_item("Open Breakwater Station", 6)
+	file_menu.add_item("Open Three-Room Gate", 7)
 	file_menu.add_item("Open Level...", 1)
 	file_menu.add_separator()
 	file_menu.add_item("Save", 2)
@@ -109,6 +110,8 @@ func _on_file_menu_pressed(id: int) -> void:
 			get_tree().quit()
 		6:
 			open_breakwater_station()
+		7:
+			open_breakwater_station(true)
 
 
 func _on_edit_menu_pressed(id: int) -> void:
@@ -159,11 +162,13 @@ func _new_level() -> void:
 		get_window().title = "MODUS Level Editor — Untitled"
 
 
-func open_breakwater_station() -> bool:
-	if not _editor or not _editor.load_level("res://game/levels/breakwater_gate.tscn"):
+func open_breakwater_station(gate: bool = false) -> bool:
+	var path := LevelGame.GATE_LEVEL if gate else LevelGame.BUILTIN_LEVEL
+	if not _editor or not _editor.load_level(path):
 		return false
 	_current_save_path = ""
-	get_window().title = "MODUS Level Editor — Breakwater Station (Copy)"
+	var title := "Three-Room Gate" if gate else "Breakwater Station"
+	get_window().title = "MODUS Level Editor — " + title + " (Copy)"
 	return true
 
 

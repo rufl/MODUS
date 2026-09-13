@@ -312,7 +312,9 @@ func _build_menu_ui() -> void:
 
 	_connect_menu_hint(_play_btn, "Launch the current single-player build.")
 	_connect_menu_hint(_showcase_btn, "Tour the maintained gameplay showcase and capture route.")
-	_connect_menu_hint(_breakwater_btn, "Restore power across three connected authored rooms.")
+	_connect_menu_hint(
+		_breakwater_btn, "Restore coastal station power, reach the relay and return to the hub."
+	)
 	_connect_menu_hint(_package_btn, "Play a trusted .mdsl exported by the level editor.")
 	_connect_menu_hint(_multiplayer_btn, "Host or join through the maintained multiplayer menu.")
 	_connect_menu_hint(_options_btn, "Adjust controls, audio, graphics, and accessibility.")

@@ -121,11 +121,24 @@ func _scan_environment() -> void:
 	var registry_available: bool = is_instance_valid(registry)
 
 	var potential_targets: Array[Node] = []
-	if registry_available:
+	if (
+		_parent_enemy
+		and "authored_document" in _parent_enemy
+		and is_instance_valid(_parent_enemy.authored_document)
+	):
+		_append_unique_targets(potential_targets, _parent_enemy.get_authored_targets())
+	elif registry_available:
 		_append_unique_targets(potential_targets, registry.get_all_players())
 		if aggressive_against_all:
 			_append_unique_targets(potential_targets, registry.get_all_enemies())
-	if potential_targets.is_empty():
+	if (
+		potential_targets.is_empty()
+		and not (
+			_parent_enemy
+			and "authored_document" in _parent_enemy
+			and is_instance_valid(_parent_enemy.authored_document)
+		)
+	):
 		_append_unique_targets(potential_targets, get_tree().get_nodes_in_group("player"))
 		_append_unique_targets(potential_targets, get_tree().get_nodes_in_group("players"))
 		if aggressive_against_all:
@@ -172,6 +185,12 @@ func _scan_environment() -> void:
 
 
 func can_see(target: Node3D) -> bool:
+	if (
+		_parent_enemy
+		and _parent_enemy.has_method("allows_runtime_target")
+		and not _parent_enemy.allows_runtime_target(target)
+	):
+		return false
 	var dist_sq: float = global_position.distance_squared_to(target.global_position)
 	var max_range: float = max(vision_range, detection_radius)
 	if dist_sq > max_range * max_range:

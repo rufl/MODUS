@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PrefabMetadata" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/scripts/map_generator/prefab_metadata.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+resource_name = "Breakwater Mission / Turbine"
+module_id = "bw_mission_turbine"
+scene_path = "res://game/levels/modules/breakwater/mission/turbine.tscn"
+content_revision = 1
+dimensions = Vector3(28, 11, 28)
+sockets = Array[Dictionary]([{"id": "in", "kind": "walk", "local_transform": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 14), "opening": Vector2(4, 3), "clearance": AABB(-2, 0, 12.5, 4, 3, 3)}, {"id": "out", "kind": "walk", "local_transform": Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14), "opening": Vector2(4, 3), "clearance": AABB(-2, 0, -15.5, 4, 3, 3)}, {"id": "cavern", "kind": "walk", "local_transform": Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 14, 0, 0), "opening": Vector2(4, 3), "clearance": AABB(12.5, 0, -2, 3, 3, 4)}])
+required_capabilities = PackedStringArray("walk")
+tags = Array[String](["module", "breakwater", "mission", "industrial"])

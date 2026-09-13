@@ -12,14 +12,14 @@ enum PlatformMode { ONCE, LOOP, PING_PONG, WAIT_TRIGGER }  ## Moves to end and s
 @export var start_moving: bool = true
 @export var carry_passengers: bool = true
 
-var platform_mesh: CSGBox3D = null
-var platform_body: AnimatableBody3D = null
+var platform_mesh: MeshInstance3D = null
+var platform_body: StaticBody3D = null
 
 var _current_waypoint: int = 0
 var _direction: int = 1
 var _is_moving: bool = false
 var _wait_timer: float = 0.0
-var _passengers: Array[CharacterBody3D] = []
+var _finished: bool = false
 
 
 func _init() -> void:
@@ -29,120 +29,183 @@ func _init() -> void:
 
 
 func _on_actor_ready() -> void:
-	_create_platform()
-
 	if waypoints.is_empty():
 		waypoints.append(Vector3.ZERO)
-
-	if start_moving and starts_active:
-		_is_moving = true
+	_create_platform()
+	_current_waypoint = 1 if waypoints.size() > 1 else 0
 
 
 func _create_platform() -> void:
-	# Animatable body for proper physics interaction
-	platform_body = AnimatableBody3D.new()
+	platform_body = AnimatableBody3D.new() if carry_passengers else StaticBody3D.new()
 	platform_body.name = "PlatformBody"
+	if platform_body is AnimatableBody3D:
+		platform_body.sync_to_physics = true
+	platform_body.position = waypoints[0]
+	platform_body.set_meta("editor_runtime_only", true)
 	add_child(platform_body)
 
-	# Platform mesh
-	platform_mesh = CSGBox3D.new()
+	platform_mesh = MeshInstance3D.new()
 	platform_mesh.name = "PlatformMesh"
-	platform_mesh.size = platform_size
-	platform_mesh.use_collision = true
-
+	var box_mesh := BoxMesh.new()
+	box_mesh.size = platform_size
+	platform_mesh.mesh = box_mesh
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.4, 0.4, 0.5)
-	platform_mesh.material = material
-
+	platform_mesh.material_override = material
+	platform_mesh.set_meta("editor_runtime_only", true)
 	platform_body.add_child(platform_mesh)
 
-	# Detection area for passengers
-	if carry_passengers:
-		var area := Area3D.new()
-		area.name = "PassengerArea"
-		platform_body.add_child(area)
-
-		var shape := CollisionShape3D.new()
-		var box := BoxShape3D.new()
-		box.size = Vector3(platform_size.x * 0.9, 0.5, platform_size.z * 0.9)
-		shape.shape = box
-		shape.position.y = platform_size.y * 0.5 + 0.25
-		area.add_child(shape)
-
-		area.body_entered.connect(_on_passenger_entered)
-		area.body_exited.connect(_on_passenger_exited)
+	var collision := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = platform_size
+	collision.shape = box
+	collision.set_meta("editor_runtime_only", true)
+	platform_body.add_child(collision)
 
 
 func _physics_process(delta: float) -> void:
-	if not is_active or not _is_moving:
+	if is_authoring() or not is_enabled or not is_active or not _is_moving:
 		return
-
-	if _wait_timer > 0:
-		_wait_timer -= delta
+	if waypoints.size() < 2 or move_speed <= 0.0:
 		return
+	if _wait_timer > 0.0:
+		var waited := minf(_wait_timer, delta)
+		_wait_timer -= waited
+		delta -= waited
+		if delta <= 0.0:
+			return
 
-	# Move towards current waypoint
-	var target: Vector3 = waypoints[_current_waypoint]
-	var current_pos: Vector3 = platform_body.position
-	var direction: Vector3 = (target - current_pos).normalized()
-	var distance: float = current_pos.distance_to(target)
-	var step: float = move_speed * delta
-
-	if step >= distance:
-		# Reached waypoint
+	# AnimatableBody3D supplies floor velocity to move_and_slide(), including
+	# the arrival tick. Never add platform velocity to passenger.velocity.
+	var target := waypoints[_current_waypoint]
+	platform_body.position = platform_body.position.move_toward(target, move_speed * delta)
+	if platform_body.position.is_equal_approx(target):
 		platform_body.position = target
 		_on_waypoint_reached()
-	else:
-		var movement: Vector3 = direction * step
-		platform_body.position += movement
-
-		# Move passengers
-		if carry_passengers:
-			for passenger: CharacterBody3D in _passengers:
-				if is_instance_valid(passenger):
-					passenger.velocity += movement / delta
 
 
 func _on_waypoint_reached() -> void:
-	_wait_timer = wait_at_points
-
+	_wait_timer = maxf(wait_at_points, 0.0)
 	match platform_mode:
 		PlatformMode.ONCE:
-			if _current_waypoint >= waypoints.size() - 1:
+			if _current_waypoint == waypoints.size() - 1:
 				_is_moving = false
+				_finished = true
+				_wait_timer = 0.0
 			else:
 				_current_waypoint += 1
-
 		PlatformMode.LOOP:
 			_current_waypoint = (_current_waypoint + 1) % waypoints.size()
-
-		PlatformMode.PING_PONG:
-			if _direction > 0 and _current_waypoint >= waypoints.size() - 1:
+		PlatformMode.PING_PONG, PlatformMode.WAIT_TRIGGER:
+			if _current_waypoint == waypoints.size() - 1:
 				_direction = -1
-			elif _direction < 0 and _current_waypoint <= 0:
+			elif _current_waypoint == 0:
 				_direction = 1
 			_current_waypoint += _direction
-
-		PlatformMode.WAIT_TRIGGER:
-			_is_moving = false
+			if platform_mode == PlatformMode.WAIT_TRIGGER:
+				_is_moving = false
 
 
 func _on_activated(_data: Dictionary) -> void:
-	_is_moving = true
+	# The initial activation isn't an external request to start a parked lift.
+	_is_moving = not _finished and waypoints.size() > 1
+	if activation_count == 1 and starts_active and _data.is_empty():
+		_is_moving = _is_moving and start_moving
 
 
 func _on_deactivated() -> void:
 	_is_moving = false
 
 
-func _on_passenger_entered(body: Node3D) -> void:
-	if body is CharacterBody3D:
-		_passengers.append(body)
+func capture_runtime_state() -> Dictionary:
+	var state := super.capture_runtime_state()
+	var offset := platform_body.position if platform_body else waypoints[0]
+	state["platform"] = {
+		"position": [offset.x, offset.y, offset.z],
+		"target": _current_waypoint,
+		"direction": _direction,
+		"moving": _is_moving,
+		"wait": _wait_timer,
+		"finished": _finished
+	}
+	return state
 
 
-func _on_passenger_exited(body: Node3D) -> void:
-	if body is CharacterBody3D:
-		_passengers.erase(body)
+func validate_runtime_state(state: Dictionary) -> bool:
+	if not super.validate_runtime_state(state) or not state.get("platform") is Dictionary:
+		return false
+	var phase: Dictionary = state.platform
+	if not phase.get("position") is Array or phase.position.size() != 3:
+		return false
+	for coordinate: Variant in phase.position:
+		if not _finite_number(coordinate):
+			return false
+	if (
+		not _finite_number(phase.get("target"))
+		or float(phase.target) != floorf(float(phase.target))
+	):
+		return false
+	if int(phase.target) < 0 or int(phase.target) >= waypoints.size():
+		return false
+	if not _finite_number(phase.get("direction")) or float(phase.direction) not in [-1.0, 1.0]:
+		return false
+	if not phase.get("moving") is bool or not phase.get("finished") is bool:
+		return false
+	if (
+		not _finite_number(phase.get("wait"))
+		or float(phase.wait) < 0.0
+		or float(phase.wait) > maxf(wait_at_points, 0.0)
+	):
+		return false
+	if phase.finished and (phase.moving or platform_mode != PlatformMode.ONCE):
+		return false
+	if phase.moving and (not state.is_active or waypoints.size() < 2):
+		return false
+	var offset := Vector3(phase.position[0], phase.position[1], phase.position[2])
+	var target := int(phase.target)
+	if waypoints.size() == 1:
+		return target == 0 and offset.is_equal_approx(waypoints[0]) and not phase.moving
+	if phase.finished:
+		return target == waypoints.size() - 1 and offset.is_equal_approx(waypoints[-1])
+	var direction := int(phase.direction)
+	if platform_mode in [PlatformMode.ONCE, PlatformMode.LOOP] and direction != 1:
+		return false
+	var previous := target - direction
+	if platform_mode == PlatformMode.LOOP and target == 0:
+		previous = waypoints.size() - 1
+	if previous < 0 or previous >= waypoints.size():
+		return false
+	# Reject a valid route coordinate paired with an unrelated movement phase.
+	return (
+		offset.distance_to(
+			Geometry3D.get_closest_point_to_segment(offset, waypoints[previous], waypoints[target])
+		)
+		< 0.001
+	)
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if not validate_runtime_state(state) or not super.restore_runtime_state(state):
+		return false
+	var phase: Dictionary = state.platform
+	_current_waypoint = int(phase.target)
+	_direction = int(phase.direction)
+	_is_moving = phase.moving
+	_wait_timer = float(phase.wait)
+	_finished = phase.finished
+	if platform_body:
+		# Restoration is a teleport, not one tick of platform travel.
+		if platform_body is AnimatableBody3D:
+			platform_body.sync_to_physics = false
+		platform_body.position = Vector3(phase.position[0], phase.position[1], phase.position[2])
+		platform_body.reset_physics_interpolation()
+		if platform_body is AnimatableBody3D:
+			platform_body.sync_to_physics = true
+	return true
+
+
+func _finite_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value))
 
 
 func get_inspector_properties() -> Array[Dictionary]:

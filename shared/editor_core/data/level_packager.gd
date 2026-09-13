@@ -8,7 +8,7 @@ const LEVEL_FILE := "level.tscn"
 const ASSETS_DIR := "assets/"
 const THUMBNAIL_FILE := "thumbnail.png"
 const JSONHelperClass = preload("res://game/core/json_helper.gd")
-const RUNTIME_API_VERSION := 1
+const RUNTIME_API_VERSION := 2
 
 
 class LevelManifest:

@@ -34,7 +34,7 @@ If you want a polished game to play immediately, MODUS is the wrong download. If
 
 ### Release and World-Building Direction
 
-The [release and world-building plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) defines the path from this systems lab to an installable product. The **Breakwater Station three-room gate** now has shared socketed modules and actual key/switch/door/objective gameplay. Source and exported Linux editor → package → game workflows are exercised headlessly; graphical acceptance, the full composed mission, persistent hubs, installer and external-service gates remain separate. No superiority over other generators is claimed.
+The [release and world-building plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) defines the path from this systems lab to an installable product. **Breakwater Station: Black Start** now has an eleven-module authored mission with encounters, power/cooling objectives, optional caches and a powered hub-return route. Headless package playback exercises the real player, navigation, combat and checkpoints; the three-room editor gate remains available separately. Graphical acceptance, balance, persistent hubs, installer and external-service gates remain open. No superiority over other generators is claimed.
 
 
 ## Why MODUS
@@ -178,9 +178,9 @@ No display-synchronized solo, splitscreen, multiplayer, low-end hardware, or lon
 
 September 13 generator-correctness proof passes **55/55 focused tests with 1,319 assertions** on Godot 4.7.2. It covers seed isolation, connected layouts, retained keys/secrets, simultaneous-lock progression, collision-backed navigation, saved-scene routes and cancellation/restart. Separate 64×64 and default 128×128 source-generation smokes pass; the latter produces 1,405 navigation polygons. Historical unit/threading/export counts are not a current full-suite result.
 
-Generator revision **2** changes seed-to-content output. Saved scenes retain seed, configuration, revision and typed gameplay records; replay requires the same generator/runtime/content. The authored Breakwater gate uses real pickup/door/objective actors, but the generator's retained records are not yet automatically realized through that runtime. Rule/module/voxel generation integration, full mission production and persistent hubs remain open. See the [repair evidence and next deliveries](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#generator-correctness-delivery).
+Generator revision **2** changes seed-to-content output. Saved scenes retain seed, configuration, revision and typed gameplay records; replay requires the same generator/runtime/content. The authored Breakwater mission uses real encounter, pickup, traversal and objective actors, but the generator's retained records are not yet automatically realized through that runtime. Rule/module/voxel generation integration, mission presentation/balance review and persistent hubs remain open. See the [repair evidence and next deliveries](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#generator-correctness-delivery).
 
-Play the built-in gate from **Breakwater Station** in the main menu, or launch `godot --path . -- --breakwater`. Launch the authoring app with `godot --path . -- --editor`; its Modules tab places socketed rooms and wires gameplay actors. See the [standalone guide](standalone/editor/README.md). The [production brief](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#mission-direction-and-quality-reference) still governs the larger mission, audiovisual review, cyclic generation and hubs.
+Play the built-in mission from **Breakwater Station** in the main menu, or launch `godot --path . -- --breakwater`. Launch the authoring app with `godot --path . -- --editor`; **File → Open Breakwater Station** opens the mission, while **Open Three-Room Gate** retains the smaller authoring example. See the [standalone guide](standalone/editor/README.md). The [production brief](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#mission-direction-and-quality-reference) still governs audiovisual review, pacing, cyclic generation and hubs.
 
 ## Data and Configuration
 

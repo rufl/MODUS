@@ -1,6 +1,10 @@
 extends RigidBody3D
 class_name PickupBase
 
+signal picked_up(player: CharacterBody3D)
+
+var authored_document: Node3D
+
 const TOOLTIP_RANGE: float = 8.0
 const RAY_ALWAYS_VISIBLE: bool = true
 
@@ -29,6 +33,76 @@ var icon_node: Label3D = null
 var pickup_area: Area3D = null
 var rarity: ItemRarity
 var item_data: Dictionary = {}
+
+
+func capture_motion_state() -> Dictionary:
+	return {
+		"transform": _encode_transform(global_transform),
+		"linear_velocity": [linear_velocity.x, linear_velocity.y, linear_velocity.z],
+		"angular_velocity": [angular_velocity.x, angular_velocity.y, angular_velocity.z]
+	}
+
+
+static func validate_motion_state(state: Dictionary) -> bool:
+	for field: String in ["transform", "linear_velocity", "angular_velocity"]:
+		if not _number_array(state.get(field), 12 if field == "transform" else 3):
+			return false
+	var determinant := _decode_transform(state.transform).basis.determinant()
+	return is_finite(determinant) and absf(determinant) >= 0.000001
+
+
+func restore_motion_state(state: Dictionary) -> bool:
+	if not validate_motion_state(state):
+		return false
+	global_transform = _decode_transform(state.transform)
+	linear_velocity = Vector3(
+		state.linear_velocity[0], state.linear_velocity[1], state.linear_velocity[2]
+	)
+	angular_velocity = Vector3(
+		state.angular_velocity[0], state.angular_velocity[1], state.angular_velocity[2]
+	)
+	return true
+
+
+static func _encode_transform(value: Transform3D) -> Array:
+	return [
+		value.basis.x.x,
+		value.basis.x.y,
+		value.basis.x.z,
+		value.basis.y.x,
+		value.basis.y.y,
+		value.basis.y.z,
+		value.basis.z.x,
+		value.basis.z.y,
+		value.basis.z.z,
+		value.origin.x,
+		value.origin.y,
+		value.origin.z
+	]
+
+
+static func _decode_transform(value: Array) -> Transform3D:
+	return Transform3D(
+		Basis(
+			Vector3(value[0], value[1], value[2]),
+			Vector3(value[3], value[4], value[5]),
+			Vector3(value[6], value[7], value[8])
+		),
+		Vector3(value[9], value[10], value[11])
+	)
+
+
+static func _finite_number(value: Variant) -> bool:
+	return (value is float or value is int) and is_finite(float(value))
+
+
+static func _number_array(value: Variant, count: int) -> bool:
+	if not value is Array or value.size() != count:
+		return false
+	for number: Variant in value:
+		if not _finite_number(number):
+			return false
+	return true
 
 
 func _enter_tree() -> void:
@@ -387,7 +461,7 @@ func _add_to_inventory(player: CharacterBody3D) -> bool:
 	var item := InventoryItem.from_dict(item_data)
 	if not inventory.add_item(item):
 		return false
-	if manager:
+	if manager and not ("isolated_session" in player and player.isolated_session):
 		manager._sync_inventory_owner(peer_id, inventory)
 		manager._save_inventory(peer_id, inventory)
 	return true
@@ -395,6 +469,8 @@ func _add_to_inventory(player: CharacterBody3D) -> bool:
 
 func _on_body_entered(body: Node3D) -> void:
 	if collected:
+		return
+	if not _allows_collector(body):
 		return
 
 	if body is CharacterBody3D and not body is Enemy:
@@ -436,6 +512,8 @@ func _request_pickup(player_path: NodePath) -> void:
 func collect_for_player(player: CharacterBody3D, sender_id: int) -> bool:
 	if not multiplayer.is_server() or collected or not is_instance_valid(player):
 		return false
+	if not _allows_collector(player):
+		return false
 	if player.get_multiplayer_authority() != sender_id:
 		return false
 	if owner_peer_id > 0 and sender_id != owner_peer_id:
@@ -445,11 +523,18 @@ func collect_for_player(player: CharacterBody3D, sender_id: int) -> bool:
 	if not _apply_pickup(player):
 		return false
 	collected = true
+	picked_up.emit(player)
 	if multiplayer.has_multiplayer_peer():
 		_sync_collected.rpc(sender_id)
 	else:
 		_sync_collected(sender_id)
 	return true
+
+
+func _allows_collector(player: Node3D) -> bool:
+	if not is_instance_valid(player) or player.get_world_3d() != get_world_3d():
+		return false
+	return not is_instance_valid(authored_document) or player == authored_document.runtime_player
 
 
 ## Sync collection state to all clients

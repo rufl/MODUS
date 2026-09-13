@@ -1,6 +1,6 @@
 # MODUS Standalone Editor
 
-> **Documentation status: maintained reference.** Three-room authoring and gameplay are implemented; dated native-artifact and graphical proof is recorded in [Editor Round-Trip Proof](../../docs/EDITOR_ROUNDTRIP_PROOF.md). This is not a shipped standalone-editor release.
+> **Documentation status: maintained reference.** The eleven-module Black Start mission and three-room authoring example are implemented. Dated native-artifact and graphical proof for the original gate is recorded in [Editor Round-Trip Proof](../../docs/EDITOR_ROUNDTRIP_PROOF.md); current mission evidence is in [Current Status](../../docs/CURRENT_STATUS.md). This is not a shipped standalone-editor release.
 
 ## Current source
 
@@ -15,17 +15,21 @@
 
 The script instantiates the embedded editor and creates File, Edit, View, and Help menus. New/open/save/save-as actions use the embedded editor; Undo/Redo uses the shared runtime history manager; Cut/Copy/Paste/Select All route through the selection manager; view toggles are stateful; documentation and shortcut entries show maintained local guidance; and Export as Mod packages the current level through `LevelPackager` into a `.mdsl` archive.
 
+## Open the Black Start mission
+
+**File → Open Breakwater Station** loads an editable copy of the eleven-module mission. Its required route clears the pump patrol, acquires the maintenance key, restores auxiliary power, clears turbine security, starts cooling, clears/transmits the relay and rides the powered lift back to the hub. Shootable service caches remain optional. **F5** starts play; **E** interacts, **F5/F9** save/load runtime API 2 checkpoints and **Esc** returns to author data. Enemy deaths, finite rewards and moving platforms restore without replaying activation channels.
+
 ## Author and play the Breakwater gate
 
 Launch source with `godot --path . -- --editor`, or run an exported standalone-editor binary.
 
-1. Use **File → Open Breakwater Station** for a copy of the built-in gate, or **New Level** and the **Modules** tab to assemble the three rooms.
+1. Use **File → Open Three-Room Gate** for a copy of the smaller example, or **New Level** and the **Modules** tab to assemble its three rooms.
 2. For a new layout: place Airlock at the origin; attach Pump `in` to Airlock `out`; attach Control `in` to Pump `out`. The panel reports invalid sockets/clearance without committing a partial edit.
 3. In **Gameplay** mode, select source `pump/power_switch`, target `control/security_door` and a channel name, then **Connect gameplay actors**. Undo/redo restores the whole connection.
 4. **F5** starts an isolated playtest. Collect the maintenance key, energize the pump-hall switch, pass the raised door and activate the control terminal. During play, **E** interacts, **F5/F9** save/load a checkpoint and **Esc** returns to unchanged author data.
 5. Save As, reopen and resave the document. **File → Export as Mod** creates `.mdsl`. The game opens trusted packages through **Open level package**, or `modus.x86_64 -- --level /absolute/path/level.mdsl`.
 
-Packages declare the required host document runtime API and scripts; meshes are serialized into native resources, with package-relative asset paths. Only open trusted packages: Godot scene/script content is executable, not sandboxed.
+Packages declare the required host document runtime API and scripts; meshes are serialized into native resources, with package-relative asset paths. The current authored actor/checkpoint contract is runtime API **2**. Only open trusted packages: Godot scene/script content is executable, not sandboxed.
 
 ## Remaining proof boundaries
 

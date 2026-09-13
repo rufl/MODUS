@@ -98,6 +98,55 @@ var _target_rotation: Vector3 = Vector3.ZERO
 var _is_remote: bool = false
 var _synchronizer: MultiplayerSynchronizer
 var _tier_modifier_applied: bool = false
+var authored_document: Node3D
+
+
+func allows_runtime_target(candidate: Node3D) -> bool:
+	if not is_instance_valid(candidate) or candidate.get_world_3d() != get_world_3d():
+		return false
+	if not is_instance_valid(authored_document):
+		return true
+	return (
+		candidate == authored_document.runtime_player or authored_document.is_ancestor_of(candidate)
+	)
+
+
+func get_authored_targets() -> Array[Node]:
+	var targets: Array[Node] = []
+	if is_instance_valid(authored_document):
+		var player: Node3D = authored_document.runtime_player
+		if is_instance_valid(player):
+			targets.append(player)
+		if is_aggressive:
+			for enemy: Node in get_tree().get_nodes_in_group("enemies"):
+				if enemy is Node3D and allows_runtime_target(enemy):
+					targets.append(enemy)
+	return targets
+
+
+func configure_authored_spawn(initial_behavior: int, source: Node) -> void:
+	if movement_component and movement_component.nav_agent:
+		movement_component.nav_agent.set_navigation_map(
+			(
+				authored_document.get_world_3d().navigation_map
+				if is_instance_valid(authored_document)
+				else get_world_3d().navigation_map
+			)
+		)
+	if not ai_controller:
+		return
+	if initial_behavior == 1 and ai_controller.has_node("PatrolState"):
+		ai_controller.change_state(ai_controller.get_node("PatrolState"))
+	elif initial_behavior == 3:
+		var target := source as Node3D
+		if not is_instance_valid(target) or not allows_runtime_target(target):
+			target = (
+				authored_document.runtime_player if is_instance_valid(authored_document) else null
+			)
+		if is_instance_valid(target):
+			ai_controller._on_target_spotted(target)
+	elif ai_controller.has_node("IdleState"):
+		ai_controller.change_state(ai_controller.get_node("IdleState"))
 
 
 func _log(message: String, category: String = "Enemy") -> void:
@@ -318,7 +367,9 @@ func _ready() -> void:
 	add_child(spawn_coordinator)
 	spawn_coordinator.setup(self)
 
-	if not multiplayer.has_multiplayer_peer() or multiplayer.is_server():
+	if has_meta("authored_restored"):
+		spawn_coordinator.init_last_valid_position()
+	elif not multiplayer.has_multiplayer_peer() or multiplayer.is_server():
 		spawn_coordinator.call_deferred("validate_spawn_position")
 
 	# 10. Setup Debug Visuals (via Component)

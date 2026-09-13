@@ -158,8 +158,25 @@ func spawn_loot_from_table(
 
 	# Spawn each item
 	var spawned_items: Array = []
+	var source := get_node_or_null(source_path) if not source_path.is_empty() else null
+	var authored_actor: Node = null
+	if (
+		source
+		and source.has_meta("authored_actor_owner")
+		and "authored_document" in source
+		and is_instance_valid(source.authored_document)
+	):
+		authored_actor = source.authored_document.find_actor(
+			str(source.get_meta("authored_actor_owner"))
+		)
 	for item_data: ItemData in items:
-		var pickup: Node3D = _spawn_pickup(item_data, position, owner_peer)
+		var pickup: Node3D = _spawn_pickup(item_data, position, owner_peer, authored_actor)
+		if pickup and authored_actor:
+			pickup.set_meta(
+				"authored_loot_definition",
+				{"table_id": loot_table_id, "entry": loot_table.possible_items.find(item_data)}
+			)
+			authored_actor.track_authored_loot(pickup)
 		if pickup:
 			spawned_items.append(pickup.get_path())
 
@@ -252,7 +269,7 @@ func request_pickup(pickup_path: NodePath) -> void:
 # =============================================================================
 
 
-func _spawn_pickup(item_data: ItemData, position: Vector3, owner_peer: int) -> Node3D:
+func _make_pickup(item_data: ItemData, owner_peer: int) -> PickupBase:
 	var scene: PackedScene = item_data.world_scene
 	if not scene:
 		scene = load(PICKUP_SCENE_PATH)
@@ -272,15 +289,90 @@ func _spawn_pickup(item_data: ItemData, position: Vector3, owner_peer: int) -> N
 	pickup.set_rarity(item_data.rarity)
 	if pickup is HealthPickup and HEALTH_TIER_MAP.has(item_data.item_id):
 		pickup.tier = HEALTH_TIER_MAP[item_data.item_id]
+	return pickup
+
+
+func _spawn_pickup(
+	item_data: ItemData, position: Vector3, owner_peer: int, authored_actor: Node = null
+) -> Node3D:
+	var pickup := _make_pickup(item_data, owner_peer)
+	if not pickup:
+		return null
+	var document: Node3D = authored_actor.get_level_document() if authored_actor else null
+	if document:
+		pickup.authored_document = document
+		pickup.set_meta("editor_runtime_only", true)
+		pickup.set_meta("authored_actor_owner", document.get_actor_identity(authored_actor))
 	var spread := Vector3(randf_range(-0.5, 0.5), 0.3, randf_range(-0.5, 0.5))
-	if not _add_pickup_to_world(pickup, position + spread):
+	if not _add_pickup_to_world(pickup, position + spread, document):
 		return null
 
 	_track_pickup(pickup, owner_peer, item_data.rarity.tier if item_data.rarity else 0)
 
 	if spawn_beacons and item_data.rarity and item_data.rarity.tier >= beacon_min_rarity:
-		_spawn_loot_beacon(position + spread, item_data.rarity.tier)
+		_spawn_loot_beacon(position + spread, item_data.rarity.tier, document)
 	return pickup
+
+
+func capture_authored_drop(pickup: PickupBase) -> Dictionary:
+	var state := pickup.capture_motion_state()
+	var definition: Dictionary = pickup.get_meta("authored_loot_definition")
+	state.merge(
+		{
+			"table_id": definition.table_id,
+			"entry": definition.entry,
+			"item_id": pickup.item_data.get("id", ""),
+			"owner_peer": pickup.owner_peer_id
+		}
+	)
+	return state
+
+
+func validate_authored_drop(state: Dictionary, table_id: String) -> bool:
+	if (
+		state.get("table_id") != table_id
+		or table_id.is_empty()
+		or not PickupBase.validate_motion_state(state)
+	):
+		return false
+	for field: String in ["entry", "owner_peer"]:
+		if (
+			not PickupBase._finite_number(state.get(field))
+			or float(state[field]) != floorf(float(state[field]))
+		):
+			return false
+	if state.entry < 0 or state.owner_peer < -1 or state.owner_peer > 2147483647:
+		return false
+	var table := _get_loot_table(table_id)
+	if not table or state.entry >= table.possible_items.size():
+		return false
+	var item: ItemData = table.possible_items[int(state.entry)]
+	if not item or state.get("item_id") != item.item_id:
+		return false
+	return item.world_scene != null or ResourceLoader.exists(PICKUP_SCENE_PATH, "PackedScene")
+
+
+func prepare_authored_drop(state: Dictionary, table_id: String) -> PickupBase:
+	if not validate_authored_drop(state, table_id):
+		return null
+	var table := _get_loot_table(table_id)
+	return _make_pickup(table.possible_items[int(state.entry)], int(state.owner_peer))
+
+
+func attach_authored_drop(pickup: PickupBase, state: Dictionary, actor: Node) -> void:
+	var document: Node3D = actor.get_level_document()
+	pickup.authored_document = document
+	pickup.set_meta("editor_runtime_only", true)
+	pickup.set_meta(
+		"authored_actor_owner", document.get_actor_identity(actor) if document else actor.actor_id
+	)
+	pickup.set_meta(
+		"authored_loot_definition", {"table_id": state.table_id, "entry": int(state.entry)}
+	)
+	_add_pickup_to_world(pickup, PickupBase._decode_transform(state.transform).origin, document)
+	pickup.restore_motion_state(state)
+	_track_pickup(pickup, int(state.owner_peer), pickup.rarity_tier)
+	actor.track_authored_loot(pickup)
 
 
 func _track_pickup(pickup: PickupBase, owner_peer: int, rarity_tier: int) -> void:
@@ -298,9 +390,11 @@ func _untrack_pickup(pickup_path: NodePath) -> void:
 	_active_pickups.erase(pickup_path)
 
 
-func _add_pickup_to_world(pickup: Node3D, world_position: Vector3) -> bool:
+func _add_pickup_to_world(
+	pickup: Node3D, world_position: Vector3, world_parent: Node = null
+) -> bool:
 	var tree := get_tree()
-	var scene_root: Node = tree.current_scene if tree else null
+	var scene_root: Node = world_parent if world_parent else tree.current_scene if tree else null
 	if not scene_root and tree:
 		scene_root = tree.root
 	if not scene_root:
@@ -313,12 +407,12 @@ func _add_pickup_to_world(pickup: Node3D, world_position: Vector3) -> bool:
 	return true
 
 
-func _spawn_loot_beacon(position: Vector3, rarity_tier: int) -> void:
+func _spawn_loot_beacon(position: Vector3, rarity_tier: int, world_parent: Node = null) -> void:
 	## Spawn visual beacon for loot (client-side effect)
 	# Use GameManager.get_core_system("effects") for spawning if available
 	var gm: Node = get_node_or_null("/root/GameManager")
 	var gs: Node = gm.get_core_system("gameplay") if gm else null
-	if gs and gs.effects and gs.effects.has_method("spawn_loot_beacon"):
+	if not world_parent and gs and gs.effects and gs.effects.has_method("spawn_loot_beacon"):
 		gs.effects.spawn_loot_beacon(position, rarity_tier)
 		return
 
@@ -328,18 +422,19 @@ func _spawn_loot_beacon(position: Vector3, rarity_tier: int) -> void:
 
 	var beacon_scene: PackedScene = load(LOOT_BEACON_SCENE_PATH)
 	var beacon: Node3D = beacon_scene.instantiate()
-	beacon.global_position = position
+	beacon.set_meta("editor_runtime_only", true)
 
 	if beacon.has_method("set_rarity_tier"):
 		beacon.set_rarity_tier(rarity_tier)
 
 	var tree := get_tree()
-	var scene_root: Node = tree.current_scene if tree else null
+	var scene_root: Node = world_parent if world_parent else tree.current_scene if tree else null
 	if not scene_root and tree:
 		scene_root = tree.root
 
 	if scene_root:
 		scene_root.add_child(beacon)
+		beacon.global_position = position
 	else:
 		beacon.queue_free()
 		return

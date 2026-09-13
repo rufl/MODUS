@@ -31,6 +31,8 @@ func _ready() -> void:
 		_launch_editor()
 	elif "--breakwater" in OS.get_cmdline_user_args():
 		LevelGame.launch()
+	elif "--breakwater-gate" in OS.get_cmdline_user_args():
+		LevelGame.launch(LevelGame.GATE_LEVEL)
 	elif "--level" in OS.get_cmdline_user_args():
 		var arguments := OS.get_cmdline_user_args()
 		var index := arguments.find("--level")

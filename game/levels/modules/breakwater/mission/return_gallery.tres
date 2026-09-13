@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PrefabMetadata" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/scripts/map_generator/prefab_metadata.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+resource_name = "Breakwater Mission / Return_Gallery"
+module_id = "bw_mission_return_gallery"
+scene_path = "res://game/levels/modules/breakwater/mission/return_gallery.tscn"
+content_revision = 1
+dimensions = Vector3(8, 5, 86)
+sockets = Array[Dictionary]([{"id": "lift", "kind": "walk", "local_transform": Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -43), "opening": Vector2(4, 3), "clearance": AABB(-2, 0, -44.5, 4, 3, 3)}, {"id": "hub", "kind": "walk", "local_transform": Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 43), "opening": Vector2(4, 3), "clearance": AABB(-2, 0, 41.5, 4, 3, 3)}])
+required_capabilities = PackedStringArray("walk")
+tags = Array[String](["module", "breakwater", "mission", "industrial"])

@@ -52,6 +52,7 @@ func start_document(source: Node3D) -> bool:
 	if not document:
 		return _fail("Document has no spatial root.")
 	document.authoring_mode = false
+	document.set_meta("document_runtime_session", true)
 	document.process_mode = Node.PROCESS_MODE_INHERIT
 	add_child(document)
 	document.restore_runtime_bindings()
@@ -68,6 +69,7 @@ func start_document(source: Node3D) -> bool:
 	is_editor_preview = get_viewport() is SubViewport
 	_started = true
 	player = PLAYER_SCENE.instantiate() as Player
+	document.runtime_player = player
 	player.name = "1"
 	player.isolated_session = is_editor_preview
 	player.process_mode = Node.PROCESS_MODE_DISABLED
@@ -93,8 +95,11 @@ func start_document(source: Node3D) -> bool:
 	_mission.objective_updated.connect(_on_objective_updated)
 	_mission.mission_completed.connect(_on_mission_completed)
 	if not _mission.start_document_mission(document):
-		return _fail("The document contains an invalid objective declaration.")
+		return _fail(_mission.document_error)
 	add_to_group("level_play_session")
+	for actor: Node in document.find_children("*", "", true, false):
+		if actor is ActorBase:
+			actor.start_runtime()
 	await get_tree().physics_frame
 	player.process_mode = Node.PROCESS_MODE_INHERIT
 	GameManager.change_state(GameManager.State.RUNNING)
@@ -124,6 +129,8 @@ func stop() -> void:
 		GameManager.change_state(_previous_game_state)
 		Input.mouse_mode = _previous_mouse_mode
 	_started = false
+	if is_instance_valid(document):
+		document.runtime_player = null
 	remove_from_group("level_play_session")
 	for child: Node in get_children():
 		remove_child(child)
@@ -262,11 +269,18 @@ func validate_runtime_state(state: Variant) -> bool:
 			return false
 		var expected: Dictionary = current.actors[identity]
 		var saved: Dictionary = actors[identity]
+		var actor: ActorBase = document.find_actor(identity)
+		if not actor or not actor.validate_runtime_state(saved):
+			return false
 		if expected.size() != saved.size():
 			return false
 		for field: String in expected:
 			if expected[field] is int:
 				if not _is_integer(saved.get(field)):
+					return false
+			elif expected[field] is float:
+				var value: Variant = saved.get(field)
+				if not (value is int or value is float) or not is_finite(value):
 					return false
 			elif typeof(saved.get(field)) != typeof(expected[field]):
 				return false
@@ -346,6 +360,11 @@ func _create_status() -> void:
 	_status.add_theme_font_size_override("font_size", 21)
 	_status.add_theme_color_override("font_color", Color(0.85, 0.95, 0.93))
 	_status.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.03))
+	_status.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	_status.offset_left = 28
+	_status.offset_right = -28
+	_status.offset_top = 24
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.add_theme_constant_override("shadow_offset_x", 2)
 	_status.add_theme_constant_override("shadow_offset_y", 2)
 	layer.add_child(_status)
@@ -365,12 +384,34 @@ func _refresh_status() -> void:
 	if not is_instance_valid(_status):
 		return
 	var lines: PackedStringArray = [str(document.level_name)]
+	var required_total := 0
+	var required_complete := 0
+	var optional_total := 0
+	var optional_complete := 0
+	var next_objective := ""
+	var next_order := 0
 	for objective: Dictionary in _mission.active_mission_data.get("objectives", []):
 		var complete: bool = (
 			int(_mission.objective_state.get(objective.id, 0))
 			>= int(_mission.objective_totals.get(objective.id, 1))
 		)
-		lines.append(("[done] " if complete else "[  ] ") + str(objective.description))
+		if objective.get("optional", false):
+			optional_total += 1
+			optional_complete += int(complete)
+			continue
+		required_total += 1
+		required_complete += int(complete)
+		if not complete and (next_objective.is_empty() or objective.get("order", 0) < next_order):
+			var actor: Node = document.find_actor(objective.target_actor)
+			if actor and _mission.can_activate_actor(actor):
+				next_objective = str(objective.description)
+				next_order = int(objective.get("order", 0))
+	if not next_objective.is_empty():
+		lines.append("Next: " + next_objective)
+	var progress := "Objectives: %d/%d" % [required_complete, required_total]
+	if optional_total > 0:
+		progress += "   Secrets: %d/%d" % [optional_complete, optional_total]
+	lines.append(progress)
 	if not _mission.completed_mission_id.is_empty():
 		lines.append("MISSION COMPLETE")
 	lines.append("E: interact   F5: save checkpoint   F9: load checkpoint")

@@ -310,3 +310,79 @@ func test_rejected_module_placement_does_not_mutate_document() -> void:
 	EditorGlobals._runtime_undo_redo.clear_history()
 	EditorGlobals._runtime_undo_redo = saved_history
 	root.free()
+
+
+func test_elevated_mission_sockets_connect_and_reject_vertical_seam_gaps() -> void:
+	var document: Node3D = load("res://game/levels/breakwater_mission.tscn").instantiate()
+	document.authoring_mode = true
+	add_child_autofree(document)
+	assert_true(
+		ModuleAssembly.validate_level(document).valid,
+		"The mission's lateral and elevated walk sockets must share their actual landing geometry"
+	)
+	var gallery := document.get_node("Return_Gallery") as ModuleInstance
+	gallery.position.y += 0.5
+	assert_false(
+		ModuleAssembly.validate_level(document).valid,
+		"An elevated seam cannot accept a half-metre vertical gap"
+	)
+
+
+func test_elevated_socket_opening_cannot_extend_through_the_ceiling() -> void:
+	var document: Node3D = LevelRootScript.new()
+	var module := ModuleInstance.new()
+	module.instance_id = "landing"
+	module.definition = PrefabMetadata.new()
+	module.definition.scene_path = "res://game/levels/modules/breakwater/mission/return.tscn"
+	module.definition.module_id = "landing"
+	module.definition.dimensions = Vector3(10, 8, 10)
+	module.definition.sockets = [
+		{
+			"id": "upper",
+			"kind": "walk",
+			"local_transform": Transform3D(Basis.IDENTITY, Vector3(0, 4, -5)),
+			"opening": Vector2(4, 3),
+			"clearance": AABB(Vector3(-2, 4, -6), Vector3(4, 3, 2))
+		}
+	]
+	document.add_child(module)
+	add_child_autofree(document)
+	assert_true(ModuleAssembly.validate_level(document).valid)
+	module.definition.sockets[0].local_transform.origin.y = 6
+	module.definition.sockets[0].clearance.position.y = 6
+	assert_false(
+		ModuleAssembly.validate_level(document).valid,
+		"Valid floor position is insufficient when the full opening exceeds the module ceiling"
+	)
+
+
+func test_duplicated_mission_module_keeps_its_own_objective_prerequisites() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var document: Node3D = LevelRootScript.new()
+	document.authoring_mode = true
+	add_child(document)
+	var definition := (
+		load("res://game/levels/modules/breakwater/mission/pump.tres") as PrefabMetadata
+	)
+	var first := ModuleAssembly.place_module(document, definition)
+	var second := ModuleAssembly.place_module(document, definition, "pump", "out", "in")
+	assert_true(first.success)
+	assert_true(second.success)
+	var mission := MissionMgr.get_instance()
+	var previous := mission.capture_runtime_state()
+	var previous_level := mission.mission_level
+	assert_true(mission.start_document_mission(document))
+	var checkpoint := mission.capture_runtime_state()
+	checkpoint.state["pump/maintenance_key"] = 1
+	checkpoint.state["pump/encounter_clear"] = 1
+	assert_true(mission.restore_runtime_state(checkpoint, document))
+	assert_true(mission.can_activate_actor(document.find_actor("pump/power_switch")))
+	assert_false(
+		mission.can_activate_actor(document.find_actor("pump_2/power_switch")),
+		"Saved progress in the first room cannot unlock the duplicated room's objectives"
+	)
+	mission.restore_runtime_state(previous, previous_level)
+	EditorGlobals._runtime_undo_redo.clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	document.free()

@@ -6,6 +6,17 @@ const CATALOG := [
 	"res://game/levels/modules/breakwater/airlock.tres",
 	"res://game/levels/modules/breakwater/pump_hall.tres",
 	"res://game/levels/modules/breakwater/control_room.tres",
+	"res://game/levels/modules/breakwater/mission/dock.tres",
+	"res://game/levels/modules/breakwater/mission/hub.tres",
+	"res://game/levels/modules/breakwater/mission/pump.tres",
+	"res://game/levels/modules/breakwater/mission/intake.tres",
+	"res://game/levels/modules/breakwater/mission/cavern.tres",
+	"res://game/levels/modules/breakwater/mission/turbine.tres",
+	"res://game/levels/modules/breakwater/mission/relay.tres",
+	"res://game/levels/modules/breakwater/mission/return_landing.tres",
+	"res://game/levels/modules/breakwater/mission/return.tres",
+	"res://game/levels/modules/breakwater/mission/return_gallery.tres",
+	"res://game/levels/modules/breakwater/mission/return_elbow.tres",
 ]
 const EPSILON := 0.01
 const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
@@ -103,6 +114,12 @@ static func place_module(
 		candidate.free()
 		return _failure("Module scene roots must have an identity transform.")
 	if content is ModuleInstance:
+		var template_id: String = content.instance_id
+		if not template_id.is_empty():
+			candidate.instance_id = _next_id(template_id, instances)
+			if not instances.is_empty():
+				graph[-1].to_instance = candidate.instance_id
+			_remap_local_objectives(content, template_id, candidate.instance_id)
 		content.definition = definition
 		content.instance_id = candidate.instance_id
 		content.transform = candidate.transform
@@ -123,6 +140,26 @@ static func place_module(
 	undo.add_do_reference(candidate)
 	undo.commit_action()
 	return {"success": true, "error": "", "instance": candidate}
+
+
+static func _remap_local_objectives(
+	content: Node, previous_id: String, instance_id: String
+) -> void:
+	if previous_id == instance_id:
+		return
+	var prefix := previous_id + "/"
+	for actor: Node in content.find_children("*", "", true, false):
+		if not actor.has_meta("mission_objective"):
+			continue
+		var authored: Variant = actor.get_meta("mission_objective")
+		if not authored is Dictionary or not authored.get("requires") is Array:
+			continue
+		var updated: Dictionary = authored.duplicate(true)
+		for index: int in updated.requires.size():
+			var prerequisite: Variant = updated.requires[index]
+			if prerequisite is String and prerequisite.begins_with(prefix):
+				updated.requires[index] = instance_id + "/" + prerequisite.trim_prefix(prefix)
+		actor.set_meta("mission_objective", updated)
 
 
 static func validate_level(root: Node3D) -> Dictionary:
@@ -155,20 +192,17 @@ static func _validate(instances: Array[ModuleInstance], graph: Array[Dictionary]
 				errors.append(
 					instance.instance_id + ": unsupported runtime capability " + capability
 				)
-		if not _orthogonal(instance.transform) or absf(instance.position.y) > EPSILON:
+		if not _orthogonal(instance.transform):
 			errors.append(
-				(
-					instance.instance_id
-					+ ": only floor-level orthogonal yaw and unit scale are supported."
-				)
+				instance.instance_id + ": only orthogonal yaw and unit scale are supported."
 			)
 		for socket in instance.definition.sockets:
 			var pose: Transform3D = socket.local_transform
-			if not _orthogonal(pose) or absf(pose.origin.y) > EPSILON:
+			if not _orthogonal(pose):
 				errors.append(
 					(
 						instance.instance_id
-						+ ": socket must be floor-level with orthogonal outward yaw."
+						+ ": socket must have orthogonal outward yaw and unit scale."
 					)
 				)
 			var bounds := instance.get_local_bounds()
@@ -192,6 +226,13 @@ static func _validate(instances: Array[ModuleInstance], graph: Array[Dictionary]
 			var right: Vector3 = (
 				pose.origin + pose.basis.x * opening.x * 0.5 + Vector3.UP * opening.y
 			)
+			if (
+				not bounds.grow(EPSILON).has_point(left)
+				or not bounds.grow(EPSILON).has_point(right)
+			):
+				errors.append(
+					instance.instance_id + ": socket opening extends outside module bounds."
+				)
 			if (
 				not socket.clearance.grow(EPSILON).has_point(left)
 				or not socket.clearance.grow(EPSILON).has_point(right)

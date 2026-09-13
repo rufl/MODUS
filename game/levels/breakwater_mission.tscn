@@ -1,0 +1,90 @@
+[gd_scene load_steps=17 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/level_root.gd" id="level"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/dock.tscn" id="dock"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/hub.tscn" id="hub"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/pump.tscn" id="pump"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/intake.tscn" id="intake"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/cavern.tscn" id="cavern"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/turbine.tscn" id="turbine"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/relay.tscn" id="relay"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return_landing.tscn" id="return_landing"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return.tscn" id="return"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return_gallery.tscn" id="return_gallery"]
+[ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return_elbow.tscn" id="return_elbow"]
+
+[sub_resource type="ProceduralSkyMaterial" id="Sky_coastal"]
+sky_top_color = Color(0.19, 0.33, 0.43, 1)
+sky_horizon_color = Color(0.64, 0.72, 0.72, 1)
+ground_bottom_color = Color(0.12, 0.18, 0.21, 1)
+ground_horizon_color = Color(0.64, 0.72, 0.72, 1)
+sun_angle_max = 20.0
+
+[sub_resource type="Sky" id="Sky_station"]
+sky_material = SubResource("Sky_coastal")
+
+[sub_resource type="Environment" id="Environment_station"]
+background_mode = 2
+sky = SubResource("Sky_station")
+ambient_light_source = 3
+ambient_light_color = Color(0.6, 0.71, 0.74, 1)
+ambient_light_energy = 0.72
+reflected_light_source = 2
+tonemap_mode = 2
+
+[sub_resource type="CameraAttributesPractical" id="Camera_station"]
+auto_exposure_enabled = false
+
+[node name="BreakwaterMission" type="Node3D"]
+script = ExtResource("level")
+level_name = "Breakwater Station — Black Start"
+level_author = "MODUS"
+level_description = "Restart the coastal station through the pump hall, intake, turbine and relay, then ride the powered lift home."
+level_tags = Array[String](["breakwater", "mission", "industrial"])
+metadata/mission_id = "breakwater_station"
+module_connections = Array[Dictionary]([{"from_instance": "dock", "from_socket": "out", "to_instance": "hub", "to_socket": "in"}, {"from_instance": "hub", "from_socket": "pump", "to_instance": "pump", "to_socket": "in"}, {"from_instance": "pump", "from_socket": "out", "to_instance": "intake", "to_socket": "in"}, {"from_instance": "intake", "from_socket": "out", "to_instance": "turbine", "to_socket": "in"}, {"from_instance": "intake", "from_socket": "cavern", "to_instance": "cavern", "to_socket": "intake"}, {"from_instance": "cavern", "from_socket": "turbine", "to_instance": "turbine", "to_socket": "cavern"}, {"from_instance": "turbine", "from_socket": "out", "to_instance": "relay", "to_socket": "in"}, {"from_instance": "relay", "from_socket": "return", "to_instance": "return_landing", "to_socket": "relay"}, {"from_instance": "return_landing", "from_socket": "lift", "to_instance": "return", "to_socket": "in"}, {"from_instance": "return", "from_socket": "out", "to_instance": "return_gallery", "to_socket": "lift"}, {"from_instance": "return_gallery", "from_socket": "hub", "to_instance": "return_elbow", "to_socket": "gallery"}, {"from_instance": "return_elbow", "from_socket": "hub", "to_instance": "hub", "to_socket": "return"}])
+channel_data = {"pump_encounter": {"sources": ["pump/encounter_entry"], "targets": ["pump/encounter_clear"], "color": "e6953cff", "enabled": true, "delay": 0.0, "inverted": false}, "aux_power": {"sources": ["pump/power_switch"], "targets": ["pump/intake_gate", "pump/aux_lights"], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "turbine_encounter": {"sources": ["turbine/encounter_entry", "turbine/cavern_entry"], "targets": ["turbine/encounter_clear", "turbine/ranged_clear"], "color": "e6953cff", "enabled": true, "delay": 0.0, "inverted": false}, "coolant": {"sources": ["turbine/coolant_switch"], "targets": ["turbine/relay_gate", "turbine/cooling_gantry", "turbine/cooling_lights"], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "relay_encounter": {"sources": ["relay/encounter_entry"], "targets": ["relay/encounter_clear", "relay/ranged_clear"], "color": "e6953cff", "enabled": true, "delay": 0.0, "inverted": false}, "relay_power": {"sources": ["relay/transmit_switch"], "targets": ["relay/return_gate", "hub/return_gate", "hub/station_power", "return/return_lift"], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "return_arrived": {"sources": ["return/return_arrival"], "targets": [], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "mission_complete": {"sources": ["hub/return_complete"], "targets": [], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "hub_secret": {"sources": ["hub/service_secret"], "targets": [], "color": "e6cf69ff", "enabled": true, "delay": 0.0, "inverted": false}, "cavern_secret": {"sources": ["cavern/cavern_secret"], "targets": [], "color": "e6cf69ff", "enabled": true, "delay": 0.0, "inverted": false}}
+
+[node name="Dock" parent="." instance=ExtResource("dock")]
+position = Vector3(0, 0, 0)
+
+[node name="Hub" parent="." instance=ExtResource("hub")]
+position = Vector3(0, 0, -18)
+
+[node name="Pump" parent="." instance=ExtResource("pump")]
+position = Vector3(0, 0, -40)
+
+[node name="Intake" parent="." instance=ExtResource("intake")]
+position = Vector3(0, 0, -64)
+
+[node name="Cavern" parent="." instance=ExtResource("cavern")]
+position = Vector3(24, 0, -74)
+
+[node name="Turbine" parent="." instance=ExtResource("turbine")]
+position = Vector3(0, 0, -90)
+
+[node name="Relay" parent="." instance=ExtResource("relay")]
+position = Vector3(0, 0, -116)
+
+[node name="Return_Landing" parent="." instance=ExtResource("return_landing")]
+position = Vector3(26, 0, -116)
+
+[node name="Return" parent="." instance=ExtResource("return")]
+position = Vector3(42, 0, -114)
+
+[node name="Return_Gallery" parent="." instance=ExtResource("return_gallery")]
+position = Vector3(42, 4, -65)
+
+[node name="Return_Elbow" parent="." instance=ExtResource("return_elbow")]
+position = Vector3(30, 4, -18)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_station")
+camera_attributes = SubResource("Camera_station")
+
+[node name="CoastalSun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.65, -0.95, 0)
+light_color = Color(1, 0.89, 0.72, 1)
+light_energy = 0.85
+shadow_enabled = true
+directional_shadow_max_distance = 160.0

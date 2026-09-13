@@ -152,6 +152,16 @@ func _register_builtin_actors() -> void:
 	# Effects
 	register_actor(
 		{
+			"id": "station_power",
+			"name": "Station Power",
+			"category": "effect",
+			"description": "Powers a document-scoped group of lights",
+			"script": "res://shared/editor_core/actors/station_power_actor.gd",
+			"icon": "P"
+		}
+	)
+	register_actor(
+		{
 			"id": "fog_zone",
 			"name": "Fog Zone",
 			"category": "effect",

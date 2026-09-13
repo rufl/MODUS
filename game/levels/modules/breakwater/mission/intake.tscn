@@ -1,0 +1,370 @@
+[gd_scene load_steps=31 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
+
+[ext_resource type="Resource" path="res://game/levels/modules/breakwater/mission/intake.tres" id="definition"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/floor.tres" id="mat_floor"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/salt_concrete.tres" id="mat_salt_concrete"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/hazard_volume_actor.gd" id="hazard_volume_actor"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+
+[sub_resource type="BoxMesh" id="box_0"]
+size = Vector3(28, 0.3, 24)
+
+[sub_resource type="BoxShape3D" id="shape_0"]
+size = Vector3(28, 0.3, 24)
+
+[sub_resource type="BoxMesh" id="box_1"]
+size = Vector3(12, 7, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_1"]
+size = Vector3(12, 7, 0.35)
+
+[sub_resource type="BoxMesh" id="box_2"]
+size = Vector3(4, 3.5, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_2"]
+size = Vector3(4, 3.5, 0.35)
+
+[sub_resource type="BoxMesh" id="box_3"]
+size = Vector3(0.35, 7, 24)
+
+[sub_resource type="BoxShape3D" id="shape_3"]
+size = Vector3(0.35, 7, 24)
+
+[sub_resource type="BoxMesh" id="box_4"]
+size = Vector3(0.35, 7, 4)
+
+[sub_resource type="BoxShape3D" id="shape_4"]
+size = Vector3(0.35, 7, 4)
+
+[sub_resource type="BoxMesh" id="box_5"]
+size = Vector3(0.35, 3.5, 4)
+
+[sub_resource type="BoxShape3D" id="shape_5"]
+size = Vector3(0.35, 3.5, 4)
+
+[sub_resource type="BoxMesh" id="box_6"]
+size = Vector3(0.35, 7, 16)
+
+[sub_resource type="BoxShape3D" id="shape_6"]
+size = Vector3(0.35, 7, 16)
+
+[sub_resource type="BoxMesh" id="box_7"]
+size = Vector3(0.35, 7, 0.5)
+
+[sub_resource type="BoxShape3D" id="shape_7"]
+size = Vector3(0.35, 7, 0.5)
+
+[sub_resource type="BoxMesh" id="box_8"]
+size = Vector3(11, 3.6, 0.4)
+
+[sub_resource type="BoxShape3D" id="shape_8"]
+size = Vector3(11, 3.6, 0.4)
+
+[sub_resource type="BoxMesh" id="box_9"]
+size = Vector3(6, 0.024, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_9"]
+size = Vector3(6, 0.024, 0.35)
+
+[sub_resource type="BoxMesh" id="box_10"]
+size = Vector3(5, 0.1, 6)
+
+[sub_resource type="BoxShape3D" id="shape_10"]
+size = Vector3(5, 0.1, 6)
+
+[node name="Intake" type="Node3D"]
+script = ExtResource("module")
+definition = ExtResource("definition")
+instance_id = "intake"
+
+[node name="Geometry" type="Node3D" parent="."]
+
+
+[node name="Lighting" type="Node3D" parent="."]
+
+
+[node name="Signage" type="Node3D" parent="."]
+
+
+[node name="Actors" type="Node3D" parent="."]
+
+
+[node name="Foundation" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, -0.15, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Foundation"]
+mesh = SubResource("box_0")
+material_override = ExtResource("mat_floor")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Foundation"]
+shape = SubResource("shape_0")
+
+[node name="WallN0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-8, 3.5, -11.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN0"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN0"]
+shape = SubResource("shape_1")
+
+[node name="LintelN0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 5.25, -11.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelN0"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelN0"]
+shape = SubResource("shape_2")
+
+[node name="WallN1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8, 3.5, -11.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN1"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN1"]
+shape = SubResource("shape_1")
+
+[node name="WallS0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-8, 3.5, 11.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallS0"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS0"]
+shape = SubResource("shape_1")
+
+[node name="LintelS0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 5.25, 11.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelS0"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelS0"]
+shape = SubResource("shape_2")
+
+[node name="WallS1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8, 3.5, 11.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallS1"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS1"]
+shape = SubResource("shape_1")
+
+[node name="WallW0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-13.825, 3.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW0"]
+mesh = SubResource("box_3")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW0"]
+shape = SubResource("shape_3")
+
+[node name="Rib-13p7_-10p0" type="Node3D" parent="Geometry"]
+position = Vector3(-13.7, 3.5, -10)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-13p7_-10p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib-13p7_10p0" type="Node3D" parent="Geometry"]
+position = Vector3(-13.7, 3.5, 10)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-13p7_10p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib13p7_-10p0" type="Node3D" parent="Geometry"]
+position = Vector3(13.7, 3.5, -10)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib13p7_-10p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib13p7_10p0" type="Node3D" parent="Geometry"]
+position = Vector3(13.7, 3.5, 10)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib13p7_10p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Emergency-9p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 6, -9)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 6, 0)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency9p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 6, 9)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="IntakeSign" type="Label3D" parent="Signage"]
+position = Vector3(0, 4, -10)
+rotation = Vector3(0, 0, 0)
+text = "03 / INTAKE GALLERIES\nARC CYCLE: 2s LIVE / 3s SAFE"
+font_size = 38
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="ArcBarrier-8p5" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-8.5, 1.8, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ArcBarrier-8p5"]
+mesh = SubResource("box_8")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ArcBarrier-8p5"]
+shape = SubResource("shape_8")
+
+[node name="ArcBarrier8p5" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8.5, 1.8, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ArcBarrier8p5"]
+mesh = SubResource("box_8")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ArcBarrier8p5"]
+shape = SubResource("shape_8")
+
+[node name="timed_arc" type="Node3D" parent="Actors"]
+position = Vector3(0, 0, 1)
+script = ExtResource("hazard_volume_actor")
+actor_id = "timed_arc"
+hazard_type = 2
+volume_size = Vector3(6, 1, 3)
+damage_per_second = 12.0
+damage_interval = 0.5
+active_duration = 2.0
+inactive_duration = 3.0
+starts_active = true
+
+[node name="WarningStripeNear" type="Node3D" parent="Geometry"]
+position = Vector3(0, 0.012, 3)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WarningStripeNear"]
+mesh = SubResource("box_9")
+material_override = ExtResource("mat_brass")
+
+[node name="WarningStripeFar" type="Node3D" parent="Geometry"]
+position = Vector3(0, 0.012, -1)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WarningStripeFar"]
+mesh = SubResource("box_9")
+material_override = ExtResource("mat_brass")
+
+[node name="SafeStage" type="Label3D" parent="Signage"]
+position = Vector3(0, 2.8, 5)
+rotation = Vector3(0, 0, 0)
+text = "DRY REFUGE\nWAIT FOR ARC TO GO DARK"
+font_size = 25
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="CavernDirection" type="Label3D" parent="Signage"]
+position = Vector3(7, 2.8, 6)
+rotation = Vector3(0, 0, 0)
+text = "OPTIONAL / SERVICE CAVERN >\nDRY BYPASS TO TURBINE"
+font_size = 25
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="recovery_health" type="Node3D" parent="Actors"]
+position = Vector3(-5, 0, 7)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "recovery_health"
+pickup_category = 0
+item_id = "health_potion"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="gallery_ammo" type="Node3D" parent="Actors"]
+position = Vector3(5, 0, -7)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "gallery_ammo"
+pickup_category = 2
+item_id = "ammo_small"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="Aux-7" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
+position = Vector3(0, 5, -7)
+light_color = Color(0.55, 0.86, 0.9, 1)
+light_energy = 0.1
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Aux7" type="OmniLight3D" parent="Lighting" groups=["breakwater_aux_lights"]]
+position = Vector3(0, 5, 7)
+light_color = Color(0.55, 0.86, 0.9, 1)
+light_energy = 0.1
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="EastWallSouth" type="StaticBody3D" parent="Geometry"]
+position = Vector3(13.825, 3.5, 10)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/EastWallSouth"]
+mesh = SubResource("box_4")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/EastWallSouth"]
+shape = SubResource("shape_4")
+
+[node name="EastWallNorth" type="StaticBody3D" parent="Geometry"]
+position = Vector3(13.825, 3.5, -4)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/EastWallNorth"]
+mesh = SubResource("box_6")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/EastWallNorth"]
+shape = SubResource("shape_6")
+
+[node name="EastLintel" type="StaticBody3D" parent="Geometry"]
+position = Vector3(13.825, 5.25, 6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/EastLintel"]
+mesh = SubResource("box_5")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/EastLintel"]
+shape = SubResource("shape_5")

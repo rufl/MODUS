@@ -212,6 +212,8 @@ func set_invisible_visuals(enabled: bool) -> void:
 
 
 func _handle_death_penalty() -> void:
+	if _player.isolated_session:
+		return
 	# 1. XP Penalty
 	var xp_to_backpack: int = 0
 	if _player.progression:
@@ -300,13 +302,16 @@ func _respawn_player() -> void:
 		_player.weapon_manager.switch_to_weapon(0)
 
 	# Find spawn point (group prioritized)
-	var spawn_points := get_tree().get_nodes_in_group("spawn_player")
+	var spawn_points: Array[Node3D] = []
+	for spawn: Node in get_tree().get_nodes_in_group("spawn_player"):
+		if spawn is Node3D and spawn.get_world_3d() == _player.get_world_3d():
+			spawn_points.append(spawn)
 	if not spawn_points.is_empty():
 		var spawn: Node3D = spawn_points.pick_random()
 		_player.global_position = spawn.global_position
 		_player.global_rotation = spawn.global_rotation
 	elif not _player.spawns.is_empty():
-		_player.position = _player.spawns[randi() % _player.spawns.size()]
+		_player.global_position = _player.spawns[randi() % _player.spawns.size()]
 	else:
 		_player.position = Vector3(0, 2, 0)  # Fallback
 

@@ -18,6 +18,7 @@ const ChannelSystemScript = preload("res://shared/editor_core/scripting/channel_
 
 # Session state is deliberately not part of the saved document.
 var authoring_mode: bool = false
+var runtime_player: Node3D
 var _channel_system: ChannelSystem
 
 

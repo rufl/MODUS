@@ -101,6 +101,22 @@ func test_moving_door_does_not_permanently_disconnect_baked_floor() -> void:
 	assert_true(result.is_valid, result.error_message)
 
 
+func test_shootable_cache_does_not_permanently_disconnect_baked_floor() -> void:
+	_floor(context.csg_root, Vector3(18, -0.1, 4), Vector3(36, 0.2, 8))
+	var secret := SecretWallActor.new()
+	secret.position = Vector3(18, 1.5, 4)
+	secret.rotation.y = PI / 2.0
+	secret.scale = Vector3(4.0, 1.2, 1.0)
+	context.csg_root.add_child(secret)
+	await _prepare_geometry()
+	assert_true(baker.bake_navigation_mesh())
+	var result := validator.validate_navigation_mesh(context)
+	assert_true(
+		result.is_valid,
+		"A closed secret must retain a baked route that becomes traversable when opened"
+	)
+
+
 func test_disconnected_island_fails_even_with_unrelated_bridge_geometry() -> void:
 	_floor(context.csg_root, Vector3(6, -0.1, 4), Vector3(12, 0.2, 8))
 	_floor(context.csg_root, Vector3(30, -0.1, 4), Vector3(12, 0.2, 8))

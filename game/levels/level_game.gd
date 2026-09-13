@@ -1,7 +1,8 @@
 class_name LevelGame
 extends Node3D
 
-const BUILTIN_LEVEL := "res://game/levels/breakwater_gate.tscn"
+const BUILTIN_LEVEL := "res://game/levels/breakwater_mission.tscn"
+const GATE_LEVEL := "res://game/levels/breakwater_gate.tscn"
 const GAME_SCENE := "res://game/levels/level_game.tscn"
 const Packager := preload("res://shared/editor_core/data/level_packager.gd")
 

@@ -28,6 +28,7 @@ var _is_delaying: bool = false
 var _pending_action: String = ""  # "activate" or "deactivate"
 var _pending_data: Dictionary = {}
 var _initial_activation_pending: bool = false
+var _actor_runtime_started: bool = false
 
 
 func _ready() -> void:
@@ -49,9 +50,11 @@ func _ready() -> void:
 			system.connect_source(self, output_channel)
 		for channel: String in input_channels:
 			system.connect_target(self, channel)
-	if starts_active and not is_authoring():
-		_initial_activation_pending = true
-		call_deferred("_activate_initial_state")
+	if not is_authoring():
+		_initial_activation_pending = starts_active
+		var document := get_level_document()
+		if not document or not document.get_meta("document_runtime_session", false):
+			call_deferred("start_runtime")
 	if is_authoring():
 		set_process(false)
 		set_physics_process(false)
@@ -59,10 +62,18 @@ func _ready() -> void:
 		set_process_unhandled_input(false)
 
 
+## Documents start actors only after navigation, player and mission initialization.
+func start_runtime() -> void:
+	if _actor_runtime_started or is_authoring():
+		return
+	_actor_runtime_started = true
+	_activate_initial_state()
+
+
 func _activate_initial_state() -> void:
 	if _initial_activation_pending:
 		_initial_activation_pending = false
-		_do_activate({})
+		trigger()
 
 
 func _process(delta: float) -> void:
@@ -97,6 +108,9 @@ func _on_actor_ready() -> void:
 
 func trigger(source: Node = null, data: Dictionary = {}) -> void:
 	if not is_enabled or is_authoring():
+		return
+	var mission := MissionMgr.get_instance()
+	if mission and not mission.can_activate_actor(self):
 		return
 
 	if one_shot and activation_count > 0:
@@ -220,6 +234,15 @@ func _find_channel_system() -> Node:
 	return null
 
 
+func get_level_document() -> Node3D:
+	var current: Node = get_parent()
+	while current:
+		if current is Node3D and current.has_method("get_actor_identity"):
+			return current
+		current = current.get_parent()
+	return null
+
+
 func is_authoring() -> bool:
 	if Engine.is_editor_hint():
 		return true
@@ -262,17 +285,22 @@ func capture_runtime_state() -> Dictionary:
 	return {"enabled": is_enabled, "is_active": is_active, "activation_count": activation_count}
 
 
+func validate_runtime_state(state: Dictionary) -> bool:
+	if not state.get("enabled") is bool or not state.get("is_active") is bool:
+		return false
+	var count: Variant = state.get("activation_count")
+	return (
+		(count is int or (count is float and is_finite(count) and count == floor(count)))
+		and count >= 0
+	)
+
+
 func restore_runtime_state(state: Dictionary) -> bool:
-	if (
-		not state.get("enabled") is bool
-		or not state.get("is_active") is bool
-		or not state.get("activation_count") is int
-		or state.get("activation_count", -1) < 0
-	):
+	if not validate_runtime_state(state):
 		return false
 	is_enabled = state.enabled
 	is_active = state.is_active
-	activation_count = state.activation_count
+	activation_count = int(state.activation_count)
 	_cooldown_timer = 0.0
 	_delay_timer = 0.0
 	_is_delaying = false

@@ -19,14 +19,24 @@ enum MoveType { SLIDE_X, SLIDE_Y, SLIDE_Z, ROTATE_Y, LOWER, RAISE }  ## Slides a
 @export_group("Shootable Settings")
 @export var health: float = 10.0
 
-var wall_mesh: CSGBox3D = null
 
+class WallBody:
+	extends AnimatableBody3D
+
+	func take_damage(info: Variant, _type: Variant = null, source: Node = null) -> void:
+		get_parent().take_damage(info, source)
+
+
+var wall_mesh: MeshInstance3D = null
+var wall_body: StaticBody3D = null
+var _wall_collision: CollisionShape3D = null
 var _closed_transform: Transform3D
 var _open_transform: Transform3D
-var _current_tween: Tween = null
 var _is_open: bool = false
+var _open_progress: float = 0.0
 var _proximity_timer: float = 0.0
 var _current_health: float = 0.0
+var _runtime_started: bool = false
 
 
 func _init() -> void:
@@ -38,128 +48,142 @@ func _init() -> void:
 func _on_actor_ready() -> void:
 	_create_visual()
 	_calculate_transforms()
-	_current_health = health
+	_current_health = maxf(health, 0.0)
 
-	# Setup collision for shootable
-	if trigger_type == TriggerType.SHOOTABLE:
-		_setup_shootable()
+
+func start_runtime() -> void:
+	if is_authoring():
+		return
+	_runtime_started = true
+	super.start_runtime()
 
 
 func _create_visual() -> void:
-	# Create wall visual
-	wall_mesh = CSGBox3D.new()
+	wall_body = WallBody.new()
+	wall_body.name = "WallBody"
+	wall_body.collision_layer = CollisionLayers.LAYER_WORLD | CollisionLayers.LAYER_DEBRIS
+	wall_body.set_meta("editor_runtime_only", true)
+	add_child(wall_body)
+	wall_mesh = MeshInstance3D.new()
 	wall_mesh.name = "WallMesh"
-	wall_mesh.size = Vector3(2.0, 2.5, 0.2)
-
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(2.0, 2.5, 0.2)
+	wall_mesh.mesh = mesh
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.5, 0.5, 0.5)  # Gray stone
-	wall_mesh.material = material
-	wall_mesh.use_collision = true
-
-	add_child(wall_mesh)
-	_closed_transform = wall_mesh.transform
+	material.albedo_color = Color(0.5, 0.5, 0.5)
+	wall_mesh.material_override = material
+	wall_mesh.set_meta("editor_runtime_only", true)
+	wall_body.add_child(wall_mesh)
+	_wall_collision = CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = mesh.size
+	_wall_collision.shape = box
+	_wall_collision.set_meta("editor_runtime_only", true)
+	wall_body.add_child(_wall_collision)
 
 
 func _calculate_transforms() -> void:
-	if not wall_mesh:
-		return
-
-	_closed_transform = wall_mesh.transform
+	_closed_transform = Transform3D.IDENTITY
 	_open_transform = _closed_transform
-
 	match move_type:
 		MoveType.SLIDE_X:
 			_open_transform.origin.x += move_distance * move_direction.x
-		MoveType.SLIDE_Y:
+		MoveType.SLIDE_Y, MoveType.RAISE:
 			_open_transform.origin.y += move_distance
 		MoveType.SLIDE_Z:
 			_open_transform.origin.z += move_distance * move_direction.z
 		MoveType.ROTATE_Y:
-			_open_transform = _open_transform.rotated(Vector3.UP, deg_to_rad(90.0))
+			_open_transform = _open_transform.rotated(Vector3.UP, PI * 0.5)
 		MoveType.LOWER:
 			_open_transform.origin.y -= move_distance
-		MoveType.RAISE:
-			_open_transform.origin.y += move_distance
 
 
 func _process(delta: float) -> void:
+	if is_authoring() or not _runtime_started:
+		return
 	super._process(delta)
-
-	# Proximity check
+	if not is_enabled:
+		return
+	if _is_open and _open_progress < 1.0:
+		_open_progress = minf(
+			1.0, _open_progress + delta * maxf(move_speed, 0.01) / maxf(absf(move_distance), 0.01)
+		)
+		_update_wall()
 	if trigger_type == TriggerType.PROXIMITY and not _is_open:
 		_proximity_timer += delta
-		if _proximity_timer >= proximity_check_interval:
+		if _proximity_timer >= maxf(proximity_check_interval, 0.01):
 			_proximity_timer = 0.0
 			_check_proximity()
 
 
 func _check_proximity() -> void:
-	# Find player
-	var players: Array = get_tree().get_nodes_in_group("player")
-	for player: Node in players:
-		if player is Node3D:
-			var distance: float = global_position.distance_to(player.global_position)
-			if distance <= proximity_range:
-				open_wall()
-				break
+	for player: Node in get_tree().get_nodes_in_group("player"):
+		if (
+			player is Node3D
+			and global_position.distance_to(player.global_position) <= proximity_range
+		):
+			open_wall(player)
+			break
 
 
-func _setup_shootable() -> void:
-	# Add to hittable group
-	add_to_group("hittable")
+func take_damage(info: Variant, source: Node = null) -> void:
+	if info is DamageInfo:
+		receive_damage(
+			info.final_damage if info.final_damage > 0.0 else info.base_amount, info.source
+		)
+	elif info is int or info is float:
+		receive_damage(float(info), source)
 
 
-func receive_damage(amount: float, _source: Node = null) -> void:
-	if trigger_type != TriggerType.SHOOTABLE:
+func receive_damage(amount: float, source: Node = null) -> void:
+	if (
+		is_authoring()
+		or not _runtime_started
+		or not is_enabled
+		or _is_open
+		or trigger_type != TriggerType.SHOOTABLE
+	):
 		return
+	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
+		return
+	if not is_finite(amount) or amount <= 0.0:
+		return
+	_current_health = maxf(0.0, _current_health - amount)
+	if _current_health <= 0.0:
+		open_wall(source)
 
-	_current_health -= amount
-	if _current_health <= 0 and not _is_open:
-		open_wall()
+
+func _do_activate(data: Dictionary) -> void:
+	if (
+		is_authoring()
+		or not _runtime_started
+		or _is_open
+		or (one_time_use and activation_count > 0)
+	):
+		return
+	super._do_activate(data)
 
 
 func _on_activated(data: Dictionary) -> void:
-	open_wall(data.get("source"))
+	_is_open = true
+	_update_wall()
+	var source: Node = data.get("source")
+	if show_secret_message and is_instance_valid(source):
+		_show_secret_notification(source)
 
 
 func open_wall(source: Node = null) -> void:
-	if _is_open:
-		return
-
-	if one_time_use and activation_count > 0:
-		return
-
-	_is_open = true
-
-	# Show secret message
-	if show_secret_message and source:
-		_show_secret_notification(source)
-
-	# Animate wall
-	_animate_wall(_open_transform)
-
-	# Disable collision when open
-	if wall_mesh:
-		wall_mesh.use_collision = false
+	trigger(source, {"secret": true})
 
 
-func _animate_wall(target: Transform3D) -> void:
-	if not wall_mesh:
-		return
-
-	# Cancel existing tween
-	if _current_tween and _current_tween.is_valid():
-		_current_tween.kill()
-
-	var duration: float = move_distance / move_speed
-	_current_tween = create_tween()
-	_current_tween.set_trans(Tween.TRANS_SINE)
-	_current_tween.set_ease(Tween.EASE_IN_OUT)
-	_current_tween.tween_property(wall_mesh, "transform", target, duration)
+func _update_wall() -> void:
+	if wall_body:
+		wall_body.transform = _closed_transform.interpolate_with(_open_transform, _open_progress)
+	if _wall_collision:
+		_wall_collision.set_deferred("disabled", _is_open)
 
 
 func _show_secret_notification(player: Node) -> void:
-	# Try to show message to player
 	if player.has_method("show_notification"):
 		player.show_notification(secret_message)
 	elif GameManager and GameManager.has_method("show_message"):
@@ -167,10 +191,62 @@ func _show_secret_notification(player: Node) -> void:
 
 
 func interact(player: Node = null) -> bool:
-	if trigger_type != TriggerType.INTERACT:
+	if (
+		is_authoring()
+		or not _runtime_started
+		or not is_enabled
+		or _is_open
+		or trigger_type != TriggerType.INTERACT
+	):
 		return false
-
+	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
+		return false
 	open_wall(player)
+	return true
+
+
+func capture_runtime_state() -> Dictionary:
+	var state := super.capture_runtime_state()
+	state["secret"] = {
+		"open": _is_open,
+		"progress": _open_progress,
+		"health": _current_health,
+		"proximity_timer": _proximity_timer
+	}
+	return state
+
+
+func validate_runtime_state(state: Dictionary) -> bool:
+	if not super.validate_runtime_state(state) or not state.get("secret") is Dictionary:
+		return false
+	var saved: Dictionary = state.secret
+	if not saved.get("open") is bool:
+		return false
+	for key: String in ["progress", "health", "proximity_timer"]:
+		var value: Variant = saved.get(key)
+		if (
+			not (value is int or value is float)
+			or not is_finite(float(value))
+			or float(value) < 0.0
+		):
+			return false
+	if float(saved.progress) > 1.0 or float(saved.health) > maxf(health, 0.0):
+		return false
+	if not saved.open and float(saved.progress) != 0.0:
+		return false
+	if saved.open != (int(state.activation_count) > 0):
+		return false
+	return float(saved.proximity_timer) <= maxf(proximity_check_interval, 0.01)
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if not validate_runtime_state(state) or not super.restore_runtime_state(state):
+		return false
+	_is_open = state.secret.open
+	_open_progress = float(state.secret.progress)
+	_current_health = float(state.secret.health)
+	_proximity_timer = float(state.secret.proximity_timer)
+	_update_wall()
 	return true
 
 

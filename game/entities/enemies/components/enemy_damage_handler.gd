@@ -215,6 +215,9 @@ func _handle_death(
 	GameManager.emit_event(
 		"enemy_died",
 		{
+			"enemy": _enemy,
+			"tier": _enemy.tier,
+			"attack_type": _enemy.attack_type,
 			"enemy_id": String(_enemy.enemy_id) if _enemy.get("enemy_id") else String(_enemy.name),
 			"position": _enemy.global_position,
 			"killer_id": source_id,
@@ -223,10 +226,6 @@ func _handle_death(
 			"overkill_damage": abs(potential_health) if potential_health < 0 else 0.0
 		}
 	)
-
-	# Drop loot (server only)
-	if not _enemy.multiplayer.has_multiplayer_peer() or _enemy.multiplayer.is_server():
-		_drop_loot()
 
 	# Enhanced gibbing logic with better thresholds
 	var max_hp: float = _health_component.max_health if _health_component else 100.0
@@ -823,37 +822,3 @@ func _spawn_bullet_decal(hit_position: Vector3, hit_normal: Vector3) -> void:
 
 	_bullet_decals.spawn_bullet_decal(hit_position, hit_normal)
 	_log("[EnemyDamageHandler] Spawned bullet decal at " + " " + str(hit_position))
-
-
-func _drop_loot() -> void:
-	## Drop loot when enemy dies (server only)
-	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
-	if not gs or not gs.loot:
-		return
-
-	# Get loot table ID from enemy
-	var loot_table_id: String = ""
-	if "loot_table_id" in _enemy and _enemy.loot_table_id:
-		loot_table_id = _enemy.loot_table_id
-	elif "enemy_id" in _enemy and _enemy.enemy_id:
-		# Default: use enemy_id as loot table (e.g., "zombie" -> "zombie_loot")
-		loot_table_id = _enemy.enemy_id + "_loot"
-	else:
-		# Fallback: generic enemy loot
-		loot_table_id = "enemy_loot"
-
-	# Spawn loot at enemy position
-	var loot_pos: Vector3 = _enemy.global_position + Vector3(0, 0.5, 0)
-	gs.loot.spawn_loot_from_table(loot_pos, loot_table_id, _enemy.get_path())
-
-	_log(
-		(
-			"[EnemyDamageHandler] Dropped loot from table: "
-			+ " "
-			+ str(loot_table_id)
-			+ " "
-			+ " at "
-			+ " "
-			+ str(loot_pos)
-		)
-	)

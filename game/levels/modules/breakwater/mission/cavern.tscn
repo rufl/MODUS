@@ -1,0 +1,471 @@
+[gd_scene load_steps=38 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
+
+[ext_resource type="Resource" path="res://game/levels/modules/breakwater/mission/cavern.tres" id="definition"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/floor.tres" id="mat_floor"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/salt_concrete.tres" id="mat_salt_concrete"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_water.tres" id="mat_coast_water"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="mat_coast_rock"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/secret_wall_actor.gd" id="secret_wall_actor"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+
+[sub_resource type="BoxMesh" id="box_0"]
+size = Vector3(20, 0.3, 40)
+
+[sub_resource type="BoxShape3D" id="shape_0"]
+size = Vector3(20, 0.3, 40)
+
+[sub_resource type="BoxMesh" id="box_1"]
+size = Vector3(20, 7, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_1"]
+size = Vector3(20, 7, 0.35)
+
+[sub_resource type="BoxMesh" id="box_2"]
+size = Vector3(0.35, 7, 2)
+
+[sub_resource type="BoxShape3D" id="shape_2"]
+size = Vector3(0.35, 7, 2)
+
+[sub_resource type="BoxMesh" id="box_3"]
+size = Vector3(0.35, 3.5, 4)
+
+[sub_resource type="BoxShape3D" id="shape_3"]
+size = Vector3(0.35, 3.5, 4)
+
+[sub_resource type="BoxMesh" id="box_4"]
+size = Vector3(0.35, 7, 28)
+
+[sub_resource type="BoxShape3D" id="shape_4"]
+size = Vector3(0.35, 7, 28)
+
+[sub_resource type="BoxMesh" id="box_5"]
+size = Vector3(0.35, 7, 40)
+
+[sub_resource type="BoxShape3D" id="shape_5"]
+size = Vector3(0.35, 7, 40)
+
+[sub_resource type="BoxMesh" id="box_6"]
+size = Vector3(0.35, 7, 0.5)
+
+[sub_resource type="BoxShape3D" id="shape_6"]
+size = Vector3(0.35, 7, 0.5)
+
+[sub_resource type="BoxMesh" id="box_7"]
+size = Vector3(8, 0.06, 12)
+
+[sub_resource type="BoxShape3D" id="shape_7"]
+size = Vector3(8, 0.06, 12)
+
+[sub_resource type="BoxMesh" id="box_8"]
+size = Vector3(2.3, 2.4, 2)
+
+[sub_resource type="BoxShape3D" id="shape_8"]
+size = Vector3(2.3, 2.4, 2)
+
+[sub_resource type="BoxMesh" id="box_9"]
+size = Vector3(4, 3.6, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_9"]
+size = Vector3(4, 3.6, 0.35)
+
+[sub_resource type="BoxMesh" id="box_10"]
+size = Vector3(0.35, 3.6, 4)
+
+[sub_resource type="BoxShape3D" id="shape_10"]
+size = Vector3(0.35, 3.6, 4)
+
+[sub_resource type="BoxMesh" id="box_11"]
+size = Vector3(1, 3.6, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_11"]
+size = Vector3(1, 3.6, 0.35)
+
+[sub_resource type="BoxMesh" id="box_12"]
+size = Vector3(2, 1.1, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_12"]
+size = Vector3(2, 1.1, 0.35)
+
+[sub_resource type="BoxMesh" id="box_13"]
+size = Vector3(4.3, 0.4, 4.3)
+
+[sub_resource type="BoxShape3D" id="shape_13"]
+size = Vector3(4.3, 0.4, 4.3)
+
+[node name="Cavern" type="Node3D"]
+script = ExtResource("module")
+definition = ExtResource("definition")
+instance_id = "cavern"
+
+[node name="Geometry" type="Node3D" parent="."]
+
+
+[node name="Lighting" type="Node3D" parent="."]
+
+
+[node name="Signage" type="Node3D" parent="."]
+
+
+[node name="Actors" type="Node3D" parent="."]
+
+
+[node name="Foundation" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, -0.15, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Foundation"]
+mesh = SubResource("box_0")
+material_override = ExtResource("mat_floor")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Foundation"]
+shape = SubResource("shape_0")
+
+[node name="WallN0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 3.5, -19.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN0"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN0"]
+shape = SubResource("shape_1")
+
+[node name="WallS0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 3.5, 19.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallS0"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS0"]
+shape = SubResource("shape_1")
+
+[node name="WallW0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9.825, 3.5, -19)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW0"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW0"]
+shape = SubResource("shape_2")
+
+[node name="LintelW0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9.825, 5.25, -16)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelW0"]
+mesh = SubResource("box_3")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelW0"]
+shape = SubResource("shape_3")
+
+[node name="WallW1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9.825, 3.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW1"]
+mesh = SubResource("box_4")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW1"]
+shape = SubResource("shape_4")
+
+[node name="LintelW1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9.825, 5.25, 16)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelW1"]
+mesh = SubResource("box_3")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelW1"]
+shape = SubResource("shape_3")
+
+[node name="WallW2" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9.825, 3.5, 19)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW2"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW2"]
+shape = SubResource("shape_2")
+
+[node name="WallE0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(9.825, 3.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallE0"]
+mesh = SubResource("box_5")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE0"]
+shape = SubResource("shape_5")
+
+[node name="Rib-9p7_-18p0" type="Node3D" parent="Geometry"]
+position = Vector3(-9.7, 3.5, -18)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-9p7_-18p0"]
+mesh = SubResource("box_6")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib-9p7_18p0" type="Node3D" parent="Geometry"]
+position = Vector3(-9.7, 3.5, 18)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-9p7_18p0"]
+mesh = SubResource("box_6")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib9p7_-18p0" type="Node3D" parent="Geometry"]
+position = Vector3(9.7, 3.5, -18)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib9p7_-18p0"]
+mesh = SubResource("box_6")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib9p7_18p0" type="Node3D" parent="Geometry"]
+position = Vector3(9.7, 3.5, 18)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib9p7_18p0"]
+mesh = SubResource("box_6")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Emergency-17p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 6, -17)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 6, 0)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency17p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 6, 17)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="CaveSign" type="Label3D" parent="Signage"]
+position = Vector3(-5, 3, 15)
+rotation = Vector3(0, 0, 0)
+text = "OPTIONAL / SERVICE CAVERN\nDRY LEDGE TO TURBINE <"
+font_size = 26
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="FloodBasin" type="Node3D" parent="Geometry"]
+position = Vector3(4, 0.03, 9)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/FloodBasin"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_coast_water")
+
+[node name="RockButtress0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(5, 1.2, 17)
+rotation = Vector3(0, 0, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress0"]
+mesh = SubResource("box_8")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/RockButtress0"]
+shape = SubResource("shape_8")
+
+[node name="RockButtress1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8, 1.2, 3)
+rotation = Vector3(0, 0.3, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress1"]
+mesh = SubResource("box_8")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/RockButtress1"]
+shape = SubResource("shape_8")
+
+[node name="RockButtress2" type="StaticBody3D" parent="Geometry"]
+position = Vector3(2, 1.2, -1)
+rotation = Vector3(0, 0.6, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress2"]
+mesh = SubResource("box_8")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/RockButtress2"]
+shape = SubResource("shape_8")
+
+[node name="RockButtress3" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-3, 1.2, 0)
+rotation = Vector3(0, 0.9, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/RockButtress3"]
+mesh = SubResource("box_8")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/RockButtress3"]
+shape = SubResource("shape_8")
+
+[node name="cavern_secretBack" type="StaticBody3D" parent="Geometry"]
+position = Vector3(6, 1.8, -9)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/cavern_secretBack"]
+mesh = SubResource("box_9")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/cavern_secretBack"]
+shape = SubResource("shape_9")
+
+[node name="cavern_secretLeft" type="StaticBody3D" parent="Geometry"]
+position = Vector3(4, 1.8, -7)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/cavern_secretLeft"]
+mesh = SubResource("box_10")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/cavern_secretLeft"]
+shape = SubResource("shape_10")
+
+[node name="cavern_secretRight" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8, 1.8, -7)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/cavern_secretRight"]
+mesh = SubResource("box_10")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/cavern_secretRight"]
+shape = SubResource("shape_10")
+
+[node name="cavern_secretJambL" type="StaticBody3D" parent="Geometry"]
+position = Vector3(4.5, 1.8, -5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/cavern_secretJambL"]
+mesh = SubResource("box_11")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/cavern_secretJambL"]
+shape = SubResource("shape_11")
+
+[node name="cavern_secretJambR" type="StaticBody3D" parent="Geometry"]
+position = Vector3(7.5, 1.8, -5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/cavern_secretJambR"]
+mesh = SubResource("box_11")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/cavern_secretJambR"]
+shape = SubResource("shape_11")
+
+[node name="cavern_secretLintel" type="StaticBody3D" parent="Geometry"]
+position = Vector3(6, 3.05, -5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/cavern_secretLintel"]
+mesh = SubResource("box_12")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/cavern_secretLintel"]
+shape = SubResource("shape_12")
+
+[node name="cavern_secretRoof" type="StaticBody3D" parent="Geometry"]
+position = Vector3(6, 3.8, -7)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/cavern_secretRoof"]
+mesh = SubResource("box_13")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/cavern_secretRoof"]
+shape = SubResource("shape_13")
+
+[node name="cavern_secret" type="Node3D" parent="Actors"]
+position = Vector3(6, 1.25, -5)
+script = ExtResource("secret_wall_actor")
+actor_id = "cavern_secret"
+trigger_type = 2
+move_type = 5
+move_distance = 3.0
+health = 10.0
+one_shot = true
+secret_message = "Breakwater cache discovered"
+output_channel = "cavern_secret"
+metadata/mission_objective = {"description": "Discover cavern service cache", "optional": true, "requires": [], "order": 90}
+
+[node name="cavern_secretCue" type="Label3D" parent="Signage"]
+position = Vector3(6, 2.95, -4.75)
+rotation = Vector3(0, 0, 0)
+text = "CRACKED PANEL / SHOOT\nSERVICE CACHE"
+font_size = 23
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="cavern_secretGlow" type="OmniLight3D" parent="Lighting"]
+position = Vector3(6, 2, -7)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="cavern_secret_ammo" type="Node3D" parent="Actors"]
+position = Vector3(5.3, 0, -7.4)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "cavern_secret_ammo"
+pickup_category = 2
+item_id = "ammo_small"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="cavern_secret_health" type="Node3D" parent="Actors"]
+position = Vector3(6.7, 0, -7.4)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "cavern_secret_health"
+pickup_category = 0
+item_id = "health_potion"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="SecretHint" type="Label3D" parent="Signage"]
+position = Vector3(-3, 2.4, -4)
+rotation = Vector3(0, 0, 0)
+text = "CRACKED PANEL / SERVICE CACHE >"
+font_size = 24
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="CaveExit" type="Label3D" parent="Signage"]
+position = Vector3(-6, 3, -15)
+rotation = Vector3(0, 0, 0)
+text = "04 / TURBINE ATRIUM <"
+font_size = 28
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="ledge_health" type="Node3D" parent="Actors"]
+position = Vector3(-6, 0, 7)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "ledge_health"
+pickup_category = 0
+item_id = "health_potion"
+respawn_time = 0.0
+auto_spawn = true

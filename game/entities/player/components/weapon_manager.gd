@@ -558,7 +558,7 @@ func _process_hit(hit: Dictionary, weapon: WeaponData) -> void:
 		var effects: Dictionary = hit_detector.get_affix_effects(weapon)
 		_apply_affix_effects(enemy, hit_pos, final_damage, effects)
 
-	elif collider is CharacterBody3D:
+	elif collider is Node and collider.has_method("take_damage"):
 		var combat_service := CombatSvc.get_instance()
 		if combat_service:
 			combat_service.apply_damage(

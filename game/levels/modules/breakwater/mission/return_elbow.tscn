@@ -1,0 +1,108 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
+
+[ext_resource type="Resource" path="res://game/levels/modules/breakwater/mission/return_elbow.tres" id="definition"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+
+[sub_resource type="BoxMesh" id="box_0"]
+size = Vector3(32, 0.3, 8)
+
+[sub_resource type="BoxShape3D" id="shape_0"]
+size = Vector3(32, 0.3, 8)
+
+[sub_resource type="BoxMesh" id="box_1"]
+size = Vector3(32, 1.4, 0.2)
+
+[sub_resource type="BoxShape3D" id="shape_1"]
+size = Vector3(32, 1.4, 0.2)
+
+[sub_resource type="BoxMesh" id="box_2"]
+size = Vector3(26, 1.4, 0.2)
+
+[sub_resource type="BoxShape3D" id="shape_2"]
+size = Vector3(26, 1.4, 0.2)
+
+[sub_resource type="BoxMesh" id="box_3"]
+size = Vector3(0.2, 1.4, 8)
+
+[sub_resource type="BoxShape3D" id="shape_3"]
+size = Vector3(0.2, 1.4, 8)
+
+[node name="Return_Elbow" type="Node3D"]
+script = ExtResource("module")
+definition = ExtResource("definition")
+instance_id = "return_elbow"
+
+[node name="Geometry" type="Node3D" parent="."]
+
+
+[node name="Lighting" type="Node3D" parent="."]
+
+
+[node name="Signage" type="Node3D" parent="."]
+
+
+[node name="Actors" type="Node3D" parent="."]
+
+
+[node name="ElbowFloor" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, -0.15, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ElbowFloor"]
+mesh = SubResource("box_0")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ElbowFloor"]
+shape = SubResource("shape_0")
+
+[node name="SouthRail" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 0.7, 3.8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/SouthRail"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_brass")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/SouthRail"]
+shape = SubResource("shape_1")
+
+[node name="NorthRail" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-3, 0.7, -3.8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/NorthRail"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_brass")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/NorthRail"]
+shape = SubResource("shape_2")
+
+[node name="EastRail" type="StaticBody3D" parent="Geometry"]
+position = Vector3(15.8, 0.7, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/EastRail"]
+mesh = SubResource("box_3")
+material_override = ExtResource("mat_brass")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/EastRail"]
+shape = SubResource("shape_3")
+
+[node name="HomeReveal" type="Label3D" parent="Signage"]
+position = Vector3(-6, 2.8, 0)
+rotation = Vector3(0, 0, 0)
+text = "ANCHORAGE / WELCOME BACK <"
+font_size = 32
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="HubApproach" type="OmniLight3D" parent="Lighting" groups=["breakwater_relay_lights"]]
+position = Vector3(-10, 3, 0)
+light_color = Color(0.55, 0.86, 0.9, 1)
+light_energy = 0.1
+omni_range = 13.0
+shadow_enabled = false

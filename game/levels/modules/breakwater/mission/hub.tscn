@@ -1,0 +1,594 @@
+[gd_scene load_steps=54 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/module_instance.gd" id="module"]
+
+[ext_resource type="Resource" path="res://game/levels/modules/breakwater/mission/hub.tres" id="definition"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/floor.tres" id="mat_floor"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/salt_concrete.tres" id="mat_salt_concrete"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/teal_enamel.tres" id="mat_teal_enamel"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="pickup_spawner_actor"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/dark_metal.tres" id="mat_dark_metal"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/brass.tres" id="mat_brass"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/door_actor.gd" id="door_actor"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/trigger_zone_actor.gd" id="trigger_zone_actor"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/station_power_actor.gd" id="station_power_actor"]
+
+[ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="mat_coast_rock"]
+
+[ext_resource type="Script" path="res://shared/editor_core/actors/secret_wall_actor.gd" id="secret_wall_actor"]
+
+[sub_resource type="BoxMesh" id="box_0"]
+size = Vector3(28, 0.3, 20)
+
+[sub_resource type="BoxShape3D" id="shape_0"]
+size = Vector3(28, 0.3, 20)
+
+[sub_resource type="BoxMesh" id="box_1"]
+size = Vector3(12, 8, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_1"]
+size = Vector3(12, 8, 0.35)
+
+[sub_resource type="BoxMesh" id="box_2"]
+size = Vector3(4, 4.5, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_2"]
+size = Vector3(4, 4.5, 0.35)
+
+[sub_resource type="BoxMesh" id="box_3"]
+size = Vector3(0.35, 8, 20)
+
+[sub_resource type="BoxShape3D" id="shape_3"]
+size = Vector3(0.35, 8, 20)
+
+[sub_resource type="BoxMesh" id="box_4"]
+size = Vector3(0.35, 8, 8)
+
+[sub_resource type="BoxShape3D" id="shape_4"]
+size = Vector3(0.35, 8, 8)
+
+[sub_resource type="BoxMesh" id="box_5"]
+size = Vector3(0.35, 4, 4)
+
+[sub_resource type="BoxShape3D" id="shape_5"]
+size = Vector3(0.35, 4, 4)
+
+[sub_resource type="BoxMesh" id="box_6"]
+size = Vector3(0.35, 0.5, 4)
+
+[sub_resource type="BoxShape3D" id="shape_6"]
+size = Vector3(0.35, 0.5, 4)
+
+[sub_resource type="BoxMesh" id="box_7"]
+size = Vector3(0.35, 8, 0.5)
+
+[sub_resource type="BoxShape3D" id="shape_7"]
+size = Vector3(0.35, 8, 0.5)
+
+[sub_resource type="BoxMesh" id="box_8"]
+size = Vector3(5, 1.1, 1.3)
+
+[sub_resource type="BoxShape3D" id="shape_8"]
+size = Vector3(5, 1.1, 1.3)
+
+[sub_resource type="BoxMesh" id="box_9"]
+size = Vector3(5, 0.4, 6)
+
+[sub_resource type="BoxShape3D" id="shape_9"]
+size = Vector3(5, 0.4, 6)
+
+[sub_resource type="BoxMesh" id="box_10"]
+size = Vector3(3.5, 0.4, 10.7703)
+
+[sub_resource type="BoxShape3D" id="shape_10"]
+size = Vector3(3.5, 0.4, 10.7703)
+
+[sub_resource type="BoxMesh" id="box_11"]
+size = Vector3(0.2, 1.3, 4)
+
+[sub_resource type="BoxShape3D" id="shape_11"]
+size = Vector3(0.2, 1.3, 4)
+
+[sub_resource type="BoxMesh" id="box_12"]
+size = Vector3(4, 3.6, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_12"]
+size = Vector3(4, 3.6, 0.35)
+
+[sub_resource type="BoxMesh" id="box_13"]
+size = Vector3(0.35, 3.6, 4)
+
+[sub_resource type="BoxShape3D" id="shape_13"]
+size = Vector3(0.35, 3.6, 4)
+
+[sub_resource type="BoxMesh" id="box_14"]
+size = Vector3(1, 3.6, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_14"]
+size = Vector3(1, 3.6, 0.35)
+
+[sub_resource type="BoxMesh" id="box_15"]
+size = Vector3(2, 1.1, 0.35)
+
+[sub_resource type="BoxShape3D" id="shape_15"]
+size = Vector3(2, 1.1, 0.35)
+
+[sub_resource type="BoxMesh" id="box_16"]
+size = Vector3(4.3, 0.4, 4.3)
+
+[sub_resource type="BoxShape3D" id="shape_16"]
+size = Vector3(4.3, 0.4, 4.3)
+
+[sub_resource type="BoxMesh" id="box_17"]
+size = Vector3(3.5, 0.2, 10.5849)
+
+[sub_resource type="BoxShape3D" id="shape_17"]
+size = Vector3(3.5, 0.2, 10.5849)
+
+[sub_resource type="BoxMesh" id="box_18"]
+size = Vector3(5, 0.4, 4)
+
+[sub_resource type="BoxShape3D" id="shape_18"]
+size = Vector3(5, 0.4, 4)
+
+[sub_resource type="BoxMesh" id="box_19"]
+size = Vector3(3.5, 0.2, 8.76584)
+
+[sub_resource type="BoxShape3D" id="shape_19"]
+size = Vector3(3.5, 0.2, 8.76584)
+
+[node name="Hub" type="Node3D"]
+script = ExtResource("module")
+definition = ExtResource("definition")
+instance_id = "hub"
+
+[node name="Geometry" type="Node3D" parent="."]
+
+
+[node name="Lighting" type="Node3D" parent="."]
+
+
+[node name="Signage" type="Node3D" parent="."]
+
+
+[node name="Actors" type="Node3D" parent="."]
+
+
+[node name="Foundation" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, -0.15, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Foundation"]
+mesh = SubResource("box_0")
+material_override = ExtResource("mat_floor")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/Foundation"]
+shape = SubResource("shape_0")
+
+[node name="WallN0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-8, 4, -9.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN0"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN0"]
+shape = SubResource("shape_1")
+
+[node name="LintelN0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 5.75, -9.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelN0"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelN0"]
+shape = SubResource("shape_2")
+
+[node name="WallN1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8, 4, -9.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallN1"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallN1"]
+shape = SubResource("shape_1")
+
+[node name="WallS0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-8, 4, 9.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallS0"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS0"]
+shape = SubResource("shape_1")
+
+[node name="LintelS0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(0, 5.75, 9.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelS0"]
+mesh = SubResource("box_2")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelS0"]
+shape = SubResource("shape_2")
+
+[node name="WallS1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8, 4, 9.825)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallS1"]
+mesh = SubResource("box_1")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallS1"]
+shape = SubResource("shape_1")
+
+[node name="WallW0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-13.825, 4, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallW0"]
+mesh = SubResource("box_3")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallW0"]
+shape = SubResource("shape_3")
+
+[node name="WallE0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(13.825, 4, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallE0"]
+mesh = SubResource("box_4")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE0"]
+shape = SubResource("shape_4")
+
+[node name="SillE0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(13.825, 2, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/SillE0"]
+mesh = SubResource("box_5")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/SillE0"]
+shape = SubResource("shape_5")
+
+[node name="LintelE0" type="StaticBody3D" parent="Geometry"]
+position = Vector3(13.825, 7.75, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/LintelE0"]
+mesh = SubResource("box_6")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/LintelE0"]
+shape = SubResource("shape_6")
+
+[node name="WallE1" type="StaticBody3D" parent="Geometry"]
+position = Vector3(13.825, 4, 6)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/WallE1"]
+mesh = SubResource("box_4")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/WallE1"]
+shape = SubResource("shape_4")
+
+[node name="Rib-13p7_-8p0" type="Node3D" parent="Geometry"]
+position = Vector3(-13.7, 4, -8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-13p7_-8p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib-13p7_8p0" type="Node3D" parent="Geometry"]
+position = Vector3(-13.7, 4, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib-13p7_8p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib13p7_-8p0" type="Node3D" parent="Geometry"]
+position = Vector3(13.7, 4, -8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib13p7_-8p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Rib13p7_8p0" type="Node3D" parent="Geometry"]
+position = Vector3(13.7, 4, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/Rib13p7_8p0"]
+mesh = SubResource("box_7")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Emergency-7p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 7, -7)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 7, 0)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="Emergency7p0" type="OmniLight3D" parent="Lighting"]
+position = Vector3(0, 7, 7)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="PumpDirection" type="Label3D" parent="Signage"]
+position = Vector3(0, 4.5, -9.7)
+rotation = Vector3(0, 0, 0)
+text = "02 / PUMP HALL\nMAINTENANCE KEY / AUXILIARY POWER"
+font_size = 40
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="Equipment" type="Label3D" parent="Signage"]
+position = Vector3(-6, 3, 6)
+rotation = Vector3(0, 0, 0)
+text = "ANCHORAGE / FIELD SUPPLIES"
+font_size = 30
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="EquipmentBench" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-7, 0.55, 7)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/EquipmentBench"]
+mesh = SubResource("box_8")
+material_override = ExtResource("mat_teal_enamel")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/EquipmentBench"]
+shape = SubResource("shape_8")
+
+[node name="bench_health" type="Node3D" parent="Actors"]
+position = Vector3(-5, 0, 5)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "bench_health"
+pickup_category = 0
+item_id = "health_potion"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="bench_ammo" type="Node3D" parent="Actors"]
+position = Vector3(-8, 0, 5)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "bench_ammo"
+pickup_category = 2
+item_id = "ammo_small"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="ArrivalRail" type="StaticBody3D" parent="Geometry"]
+position = Vector3(8.9, 4.65, -2)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ArrivalRail"]
+mesh = SubResource("box_11")
+material_override = ExtResource("mat_brass")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ArrivalRail"]
+shape = SubResource("shape_11")
+
+[node name="ReturnSign" type="Label3D" parent="Signage"]
+position = Vector3(11.5, 6, -3.8)
+rotation = Vector3(0, 0, 0)
+text = "RELAY RETURN / +4m\nLIFT OFFLINE UNTIL TRANSMISSION"
+font_size = 23
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="return_gate" type="Node3D" parent="Actors"]
+position = Vector3(13.8, 5.7, 0)
+script = ExtResource("door_actor")
+actor_id = "return_gate"
+rotation = Vector3(0, 1.5708, 0)
+door_size = Vector3(4, 3.4, 0.3)
+open_distance = 3.6
+require_channel = true
+input_channels = PackedStringArray("relay_power")
+one_shot = true
+
+[node name="return_complete" type="Node3D" parent="Actors"]
+position = Vector3(11.6, 5, 0)
+script = ExtResource("trigger_zone_actor")
+actor_id = "return_complete"
+zone_size = Vector3(3.2, 2, 3)
+show_in_editor = false
+one_shot = true
+output_channel = "mission_complete"
+metadata/mission_objective = {"description": "Return to the powered Anchorage hub", "requires": ["relay/transmit_switch", "return/return_arrival"], "final": true, "order": 80}
+
+[node name="station_power" type="Node3D" parent="Actors"]
+position = Vector3(0, 0, 0)
+script = ExtResource("station_power_actor")
+actor_id = "station_power"
+target_group = "breakwater_relay_lights"
+input_channels = PackedStringArray("relay_power")
+one_shot = true
+
+[node name="RestoredHub-8" type="OmniLight3D" parent="Lighting" groups=["breakwater_relay_lights"]]
+position = Vector3(-8, 6.5, 0)
+light_color = Color(0.55, 0.86, 0.9, 1)
+light_energy = 0.1
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="RestoredHub0" type="OmniLight3D" parent="Lighting" groups=["breakwater_relay_lights"]]
+position = Vector3(0, 6.5, 0)
+light_color = Color(0.55, 0.86, 0.9, 1)
+light_energy = 0.1
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="RestoredHub8" type="OmniLight3D" parent="Lighting" groups=["breakwater_relay_lights"]]
+position = Vector3(8, 6.5, 0)
+light_color = Color(0.55, 0.86, 0.9, 1)
+light_energy = 0.1
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="service_secretBack" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9, 1.8, -7)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/service_secretBack"]
+mesh = SubResource("box_12")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/service_secretBack"]
+shape = SubResource("shape_12")
+
+[node name="service_secretLeft" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-11, 1.8, -5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/service_secretLeft"]
+mesh = SubResource("box_13")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/service_secretLeft"]
+shape = SubResource("shape_13")
+
+[node name="service_secretRight" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-7, 1.8, -5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/service_secretRight"]
+mesh = SubResource("box_13")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/service_secretRight"]
+shape = SubResource("shape_13")
+
+[node name="service_secretJambL" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-10.5, 1.8, -3)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/service_secretJambL"]
+mesh = SubResource("box_14")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/service_secretJambL"]
+shape = SubResource("shape_14")
+
+[node name="service_secretJambR" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-7.5, 1.8, -3)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/service_secretJambR"]
+mesh = SubResource("box_14")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/service_secretJambR"]
+shape = SubResource("shape_14")
+
+[node name="service_secretLintel" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9, 3.05, -3)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/service_secretLintel"]
+mesh = SubResource("box_15")
+material_override = ExtResource("mat_salt_concrete")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/service_secretLintel"]
+shape = SubResource("shape_15")
+
+[node name="service_secretRoof" type="StaticBody3D" parent="Geometry"]
+position = Vector3(-9, 3.8, -5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/service_secretRoof"]
+mesh = SubResource("box_16")
+material_override = ExtResource("mat_coast_rock")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/service_secretRoof"]
+shape = SubResource("shape_16")
+
+[node name="service_secret" type="Node3D" parent="Actors"]
+position = Vector3(-9, 1.25, -3)
+script = ExtResource("secret_wall_actor")
+actor_id = "service_secret"
+trigger_type = 2
+move_type = 5
+move_distance = 3.0
+health = 10.0
+one_shot = true
+secret_message = "Breakwater cache discovered"
+output_channel = "hub_secret"
+metadata/mission_objective = {"description": "Discover hub service cache", "optional": true, "requires": [], "order": 90}
+
+[node name="service_secretCue" type="Label3D" parent="Signage"]
+position = Vector3(-9, 2.95, -2.75)
+rotation = Vector3(0, 0, 0)
+text = "CRACKED PANEL / SHOOT\nSERVICE CACHE"
+font_size = 23
+pixel_size = 0.01
+modulate = Color(0.95, 0.88, 0.7, 1)
+outline_size = 8
+outline_modulate = Color(0.03, 0.055, 0.06, 1)
+double_sided = true
+
+[node name="service_secretGlow" type="OmniLight3D" parent="Lighting"]
+position = Vector3(-9, 2, -5)
+light_color = Color(1, 0.67, 0.34, 1)
+light_energy = 1.2
+omni_range = 13.0
+shadow_enabled = false
+
+[node name="service_secret_ammo" type="Node3D" parent="Actors"]
+position = Vector3(-9.7, 0, -5.4)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "service_secret_ammo"
+pickup_category = 2
+item_id = "ammo_small"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="service_secret_health" type="Node3D" parent="Actors"]
+position = Vector3(-8.3, 0, -5.4)
+script = ExtResource("pickup_spawner_actor")
+actor_id = "service_secret_health"
+pickup_category = 0
+item_id = "health_potion"
+respawn_time = 0.0
+auto_spawn = true
+
+[node name="ReturnRamp" type="StaticBody3D" parent="Geometry"]
+position = Vector3(10, 1.91102, 5.9)
+rotation = Vector3(0.473851, 0, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/ReturnRamp"]
+mesh = SubResource("box_19")
+material_override = ExtResource("mat_floor")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/ReturnRamp"]
+shape = SubResource("shape_19")
+
+[node name="UpperArrival" type="StaticBody3D" parent="Geometry"]
+position = Vector3(11.5, 3.8, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Geometry/UpperArrival"]
+mesh = SubResource("box_18")
+material_override = ExtResource("mat_dark_metal")
+
+[node name="Collision" type="CollisionShape3D" parent="Geometry/UpperArrival"]
+shape = SubResource("shape_18")
