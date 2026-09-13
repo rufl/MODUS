@@ -242,12 +242,16 @@ func _load_random_blood_texture() -> Texture2D:
 
 	var texture: Texture2D = load(texture_path)
 
-	if not texture:
-		push_warning("[DecalSpawner] Failed to load blood texture: %s" % texture_path)
-	else:
-		GameManager.get_core_system("logger").info(
-			"[DecalSpawner] Successfully loaded texture: " + " " + str(texture), "Core"
-		)
+	if not bullet_hole.get_parent():
+		get_tree().root.add_child(bullet_hole)
+
+	var surface := _resolve_surface(pos, normal)
+	if surface and surface.is_inside_tree():
+		bullet_hole.reparent(surface, true)
+	elif bullet_hole.get_parent() != get_tree().root:
+		bullet_hole.reparent(get_tree().root, true)
+
+	bullet_hole.global_position = pos + normal.normalized() * 0.01
 
 	return texture
 
