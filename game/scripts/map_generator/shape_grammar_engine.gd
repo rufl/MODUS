@@ -487,13 +487,16 @@ func generate_room(
 	room.cells = cells
 
 	# Find connection points (cells on the edge of the room)
-	room.entrance_points = _find_entrance_points(cells)
-
-	# A fully clipped shape cannot provide a usable entrance.
-	if room.entrance_points.is_empty() and not cells.is_empty():
-		room.entrance_points.append(actual_center)
+	room.entrance_points = find_entrance_points(cells)
 
 	return room
+
+
+## Find potential entrance points for hallway connections.
+## @param cells: Room cells
+## @return: Array of edge cells suitable for connections
+func find_entrance_points(cells: Array[Vector2i]) -> Array[Vector2i]:
+	return _find_entrance_points(cells)
 
 
 ## Get target cell count for a room type

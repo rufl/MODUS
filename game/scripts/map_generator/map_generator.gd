@@ -760,6 +760,9 @@ func _execute_shape_grammar_phase() -> bool:
 		room.cells = shape_grammar.polygon_to_grid_cells(room_shape, config.map_size)
 		if room.cells.is_empty():
 			continue
+		room.entrance_points = shape_grammar.find_entrance_points(room.cells)
+		if room.entrance_points.is_empty():
+			continue
 		var overlaps := false
 		for cell_pos: Vector2i in room.cells:
 			if generation_context.grid[cell_pos.y][cell_pos.x].type != Cell.Type.EMPTY:
@@ -1475,6 +1478,60 @@ func _generated_enemy_id(record: Dictionary) -> String:
 	return "warlord" if record.get("type", "") == "boss" else "grunt_basic"
 
 
+func _generated_enemy_supported(record: Dictionary) -> bool:
+	# Generated records may be retained even when their runtime realization is
+	# disabled or unsupported. Only runtime-supported monster/boss records get
+	# mission linkage; their records remain available in the generation manifest.
+	var supported: Variant = record.get("supported", true)
+	if supported is bool and not supported:
+		return false
+	var record_type := str(record.get("type", ""))
+	return record_type in ["monster", "boss"] and not _generated_enemy_id(record).is_empty()
+
+
+func _generated_enemy_enabled(record: Dictionary) -> bool:
+	var disabled: Variant = record.get("disabled", false)
+	if disabled is bool and disabled:
+		return false
+	var enabled: Variant = record.get("enabled", true)
+	if enabled is bool and not enabled:
+		return false
+	return true
+
+
+func _generated_enemy_objective(record: Dictionary, index: int) -> Dictionary:
+	if record.get("type", "") == "boss":
+		return {
+			"description": "Defeat generated boss",
+			"final": true,
+			"order": 1000 + index
+		}
+	if record.get("type", "") != "monster" or not _generated_enemy_supported(record):
+		return {}
+	if not _generated_enemy_enabled(record):
+		return {}
+	var objective := {
+		"description": "Defeat generated enemy",
+		"order": 100 + index
+	}
+	if record.get("optional", false) is bool and record.get("optional", false):
+		objective["optional"] = true
+	return objective
+
+
+func _apply_generated_enemy_objective(
+	enemy_actor: EnemySpawnerActor, record: Dictionary, index: int
+) -> void:
+	# One actor identity maps to one objective. Do not replace an objective
+	# supplied by a future generator record or authoring pass.
+	if enemy_actor.has_meta("mission_objective"):
+		return
+	var objective := _generated_enemy_objective(record, index)
+	if not objective.is_empty():
+		enemy_actor.set_meta("mission_objective", objective)
+
+
+
 func _generated_item_config(record: Dictionary) -> Dictionary:
 	var item_type := str(record.get("type", ""))
 	var item_id := str(record.get("item_id", ""))
@@ -1595,17 +1652,10 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		enemy_actor.enemy_id = _generated_enemy_id(record)
 		enemy_actor.tier = int(record.get("tier", 1))
 		enemy_actor.auto_spawn = true
+		enemy_actor.is_enabled = _generated_enemy_enabled(record)
 		enemy_actor.position = world_position
 		enemy_actor.set_meta("generation", record.duplicate(true))
-		if record.get("type", "") == "boss":
-			enemy_actor.set_meta(
-				"mission_objective",
-				{
-					"description": "Defeat generated boss",
-					"final": true,
-					"order": 1000 + index
-				}
-			)
+		_apply_generated_enemy_objective(enemy_actor, record, index)
 		root.add_child(enemy_actor)
 
 	for index in range(generation_context.item_spawns.size()):

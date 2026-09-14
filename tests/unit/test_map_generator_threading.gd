@@ -89,6 +89,27 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 			"Extraction actor must expose a final mission objective"
 		)
 
+func test_generated_enemy_objectives_preserve_regular_and_boss_semantics() -> void:
+	var regular: Dictionary = map_generator._generated_enemy_objective(
+		{"type": "monster", "supported": true, "optional": true},
+		2
+	)
+	assert_eq(regular.get("description"), "Defeat generated enemy")
+	assert_eq(regular.get("order"), 102)
+	assert_true(regular.get("optional", false))
+	assert_false(regular.get("final", false), "Regular enemies must not be final objectives")
+
+	var boss: Dictionary = map_generator._generated_enemy_objective({"type": "boss"}, 3)
+	assert_eq(boss.get("description"), "Defeat generated boss")
+	assert_eq(boss.get("order"), 1003)
+	assert_true(boss.get("final", false), "Boss objectives remain final")
+
+	var disabled: Dictionary = map_generator._generated_enemy_objective(
+		{"type": "monster", "supported": true, "disabled": true},
+		4
+	)
+	assert_true(disabled.is_empty(), "Disabled generated enemies must not create objectives")
+
 
 func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	var config := GenerationConfig.new()
