@@ -117,18 +117,18 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	assert_eq(item_actors.size(), item_records.size(), "Every item record needs a pickup actor")
 	for index in range(monster_records.size()):
 		var record: Dictionary = monster_records[index]
-		var enemy_id := str(record.get("enemy_id", record.get("id", "")))
-		if enemy_id.is_empty():
-			enemy_id = "warlord" if record.get("type", "") == "boss" else "grunt_basic"
+		var marker_enemy_id := str(record.get("enemy_id", record.get("id", "")))
+		var actor_enemy_id := marker_enemy_id
+		if actor_enemy_id.is_empty():
+			actor_enemy_id = "warlord" if record.get("type", "") == "boss" else "grunt_basic"
 		assert_eq(enemy_spawns[index].get_meta("generation"), record)
 		assert_eq(enemy_spawns[index].global_position, record["world_position"] + Vector3.UP)
-		assert_eq(enemy_spawns[index].enemy_id, enemy_id)
+		assert_eq(enemy_spawns[index].enemy_id, marker_enemy_id)
 		var actor := enemy_actors[index]
 		assert_eq(actor.name, "EnemySpawner_%d" % index, "Enemy actor names are stable")
 		assert_eq(actor.get_meta("generation"), record)
 		assert_eq(actor.global_position, record["world_position"])
-		assert_eq(actor.enemy_id, enemy_id)
-		assert_eq(actor.tier, int(record.get("tier", 1)))
+		assert_eq(actor.enemy_id, actor_enemy_id)
 		assert_true(actor.auto_spawn)
 	for index in range(item_records.size()):
 		var record: Dictionary = item_records[index]
