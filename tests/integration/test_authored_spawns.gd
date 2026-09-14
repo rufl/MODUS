@@ -38,11 +38,6 @@ class PickupRecipient:
 class GeneratedPlayer:
 	extends CharacterBody3D
 
-	var health: int = 25
-	var max_health: int = 100
-	var armor: int = 0
-	var max_armor: int = 100
-	var blood_overlay: Control = null
 	var collected_keys: Dictionary = {}
 
 	func collect_key(key_id: String) -> void:

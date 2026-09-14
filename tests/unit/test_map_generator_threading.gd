@@ -21,6 +21,74 @@ func after_each() -> void:
 	DirAccess.remove_absolute("user://generated_roundtrip.tscn")
 	DirAccess.remove_absolute("user://generated_roundtrip.json")
 
+func test_small_seeded_generation_emits_level_root_and_objective_records() -> void:
+	var config := GenerationConfig.new()
+	config.map_size = Vector2i(32, 32)
+	config.outdoor_bias = 0.0
+	config.cave_bias = 0.0
+	config.prefab_detail_level = 0.0
+	config.prop_density = 0.0
+	config.decorative_density = 0.0
+	config.enable_lod = false
+	config.enable_occlusion_culling = false
+	config.use_multimesh = false
+	config.monster_density = 0.0
+	config.minimum_monsters = 0
+	config.item_density = 0.0
+	config.enable_secrets = false
+	config.enable_key_locks = true
+	config.enable_boss_arena = true
+
+	var result := await _generate("focused-procedural-session", config)
+	assert_true(result.has("scene"), "Production generation must emit a PackedScene")
+	if not result.has("scene"):
+		return
+	var metadata: Dictionary = result["metadata"]
+	var gameplay: Dictionary = metadata.get("gameplay", {})
+	assert_eq(metadata.get("seed"), "focused-procedural-session")
+	assert_eq(metadata.get("map_size"), [32, 32])
+	assert_false(gameplay.get("keys", []).is_empty(), "Generation must emit key records")
+	assert_false(
+		gameplay.get("locked_doors", []).is_empty(),
+		"Generation must emit locked-door records"
+	)
+	assert_false(gameplay.get("extraction", {}).is_empty(), "Generation must emit extraction data")
+
+	var generated := result["scene"].instantiate() as Node3D
+	assert_not_null(generated, "Generated output must instantiate")
+	if not generated:
+		return
+	add_child_autofree(generated)
+	assert_eq(
+		generated.get_script().resource_path,
+		LevelRootScript.resource_path,
+		"Generated output must be a LevelRoot"
+	)
+	var key := generated.get_node_or_null("KeyPickup_0")
+	assert_not_null(key, "Generated LevelRoot must contain the production key actor")
+	if key:
+		assert_eq(
+			key.get_meta("mission_objective", {}).get("order", -1),
+			0,
+			"Generated key must expose an ordered mission objective"
+		)
+	var door := generated.get_node_or_null("LockedDoor_0")
+	assert_not_null(door, "Generated LevelRoot must contain the production door actor")
+	if door:
+		assert_eq(
+			door.get_meta("mission_objective", {}).get("requires", []),
+			["KeyPickup_0"],
+			"Generated door objective must require the generated key"
+		)
+	var extraction := generated.get_node_or_null("GeneratedExtraction")
+	assert_not_null(extraction, "Generated LevelRoot must contain extraction actor")
+	if extraction:
+		assert_eq(
+			extraction.get_meta("mission_objective", {}).get("final", false),
+			true,
+			"Extraction actor must expose a final mission objective"
+		)
+
 
 func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	var config := GenerationConfig.new()
