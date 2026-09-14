@@ -7,6 +7,7 @@ const EnemySpawnerScript: GDScript = preload("res://shared/editor_core/actors/en
 const PickupSpawnerScript: GDScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
 const KeyPickupActorScript: GDScript = preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript: GDScript = preload("res://shared/editor_core/actors/door_actor.gd")
+const SwitchActorScript: GDScript = preload("res://shared/editor_core/actors/switch_actor.gd")
 var map_generator: Node
 
 
@@ -240,6 +241,23 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 				"description": "Open generated %s door" % color.to_lower(),
 				"requires": ["KeyPickup_%d" % index],
 				"order": index * 2 + 1
+			}
+		)
+	var extraction_record: Dictionary = metadata["gameplay"].get("extraction", {})
+	assert_false(extraction_record.is_empty(), "Generated maps expose a valid extraction record")
+	var extraction := instance.get_node_or_null("GeneratedExtraction") as SwitchActor
+	assert_not_null(extraction, "Generated extraction uses the canonical switch actor")
+	if extraction:
+		assert_eq(extraction.actor_id, "generated_extraction")
+		assert_eq(extraction.global_position, extraction_record["position"])
+		assert_eq(extraction.get_meta("generation"), extraction_record)
+		assert_eq(
+			extraction.get_meta("mission_objective"),
+			{
+				"description": "Reach the generated extraction",
+				"final": true,
+				"requires": extraction_record["prerequisites"],
+				"order": 2000
 			}
 		)
 	var saved_text_file := FileAccess.open("user://generated_roundtrip.tscn", FileAccess.READ)

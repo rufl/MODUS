@@ -26,6 +26,7 @@ var secret_rooms: Array = []  # Array of secret room dictionaries
 var skipped_prefabs: Array = []  # Invalid prefab diagnostics
 var metadata: Dictionary = {}  # Optional phase and feature metadata
 var player_start_position: Vector2i = Vector2i(-1, -1)
+var exit_position: Vector2i = Vector2i(-1, -1)
 
 # Geometry
 var csg_root: CSGCombiner3D

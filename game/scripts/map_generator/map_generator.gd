@@ -26,6 +26,7 @@ const EnemySpawnerActorScript = preload("res://shared/editor_core/actors/enemy_s
 const PickupSpawnerActorScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
 const KeyPickupActorScript = preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript = preload("res://shared/editor_core/actors/door_actor.gd")
+const SwitchActorScript = preload("res://shared/editor_core/actors/switch_actor.gd")
 
 # Signals
 signal generation_started
@@ -787,11 +788,35 @@ func _execute_shape_grammar_phase() -> bool:
 				cell.room_id = room.id
 
 		generation_context.rooms.append(room)
-
 	if not generation_context.rooms.is_empty():
 		generation_context.player_start_position = generation_context.rooms[0].center
+		generation_context.exit_position = _find_exit_position()
 
 	return generation_context.rooms.size() > 0
+
+
+func _find_exit_position() -> Vector2i:
+	if not generation_context or generation_context.rooms.is_empty():
+		return Vector2i(-1, -1)
+	var start := generation_context.player_start_position
+	var selected := Vector2i(-1, -1)
+	var selected_distance := -1
+	var found_boss := false
+	for room: Room in generation_context.rooms:
+		if room.cells.is_empty():
+			continue
+		var is_boss := room.type == Room.RoomType.BOSS_ARENA
+		if found_boss and not is_boss:
+			continue
+		var distance := room.center.distance_squared_to(start)
+		if is_boss and not found_boss:
+			selected = Vector2i(-1, -1)
+			selected_distance = -1
+			found_boss = true
+		if distance > selected_distance:
+			selected = room.center
+			selected_distance = distance
+	return selected
 
 
 ## Execute hallway generation phase
@@ -1137,12 +1162,7 @@ func _run_phase_main_thread(phase_name: String) -> bool:
 
 	# Emit completion progress
 	generation_progress.emit(phase_name, 1.0)
-
-	# Yield to allow UI updates
-	await get_tree().process_frame
-
 	return success and is_generating and generation_context == context
-
 
 ## Build metadata dictionary for export
 func _build_metadata(total_time: int) -> Dictionary:
@@ -1150,7 +1170,7 @@ func _build_metadata(total_time: int) -> Dictionary:
 		"seed": config.map_seed if config else "",
 		"seed_hash": generation_context.seed_hash if generation_context else 0,
 		"generator_revision": GENERATOR_REVISION,
-		"generation_time": float(total_time) / 1000.0,  # Convert to seconds
+		"generation_time": float(total_time) / 1000.0,
 		"map_size": [config.map_size.x, config.map_size.y] if config else [0, 0],
 		"theme": _get_theme_name(config.theme) if config else "unknown",
 		"config": _build_config_metadata(),
@@ -1159,7 +1179,6 @@ func _build_metadata(total_time: int) -> Dictionary:
 		"gameplay": _build_gameplay_metadata(),
 		"phase_times": _build_phase_times_metadata()
 	}
-
 	return metadata
 
 
@@ -1167,7 +1186,7 @@ func _build_metadata(total_time: int) -> Dictionary:
 func _build_gameplay_metadata() -> Dictionary:
 	if not generation_context:
 		return {}
-	return {
+	var gameplay := {
 		"player_start": generation_context.player_start_position,
 		"monsters": generation_context.monster_spawns.duplicate(true),
 		"items": generation_context.item_spawns.duplicate(true),
@@ -1175,6 +1194,10 @@ func _build_gameplay_metadata() -> Dictionary:
 		"locked_doors": generation_context.metadata.get("locked_doors", []).duplicate(true),
 		"secrets": generation_context.secret_rooms.duplicate(true)
 	}
+	var extraction := _generated_extraction_record()
+	if not extraction.is_empty():
+		gameplay["extraction"] = extraction
+	return gameplay
 
 
 ## Build configuration metadata
@@ -1494,6 +1517,41 @@ func _generated_item_config(record: Dictionary) -> Dictionary:
 	}
 
 
+func _generated_extraction_record() -> Dictionary:
+	if not generation_context:
+		return {}
+	var position := generation_context.exit_position
+	if (
+		position.x < 0
+		or position.y < 0
+		or position.y >= generation_context.grid.size()
+		or position.x >= generation_context.grid[position.y].size()
+	):
+		return {}
+	var cell: Cell = generation_context.grid[position.y][position.x]
+	if not cell or cell.type == Cell.Type.EMPTY:
+		return {}
+	var prerequisites: Array[String] = []
+	for index in range(generation_context.key_placements.size()):
+		prerequisites.append("KeyPickup_%d" % index)
+	for index in range(generation_context.metadata.get("locked_doors", []).size()):
+		prerequisites.append("LockedDoor_%d" % index)
+	for record: Dictionary in generation_context.monster_spawns:
+		if record.get("type", "") != "boss":
+			continue
+		var boss_id := str(record.get("id", ""))
+		if not boss_id.is_empty():
+			prerequisites.append(boss_id)
+
+	return {
+		"id": "generated_extraction",
+		"actor_id": "generated_extraction",
+		"grid_position": position,
+		"room_id": cell.room_id,
+		"position": Vector3(position.x * 2.0 + 1.0, cell.height + 0.5, position.y * 2.0 + 1.0),
+		"prerequisites": prerequisites
+	}
+
 ## Build final map scene from generation context
 func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	var scene := PackedScene.new()
@@ -1614,6 +1672,22 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 			"order": index * 2 + 1
 		})
 		root.add_child(door_actor)
+
+	var extraction_record := _generated_extraction_record()
+	if not extraction_record.is_empty():
+		var extraction_actor: SwitchActor = SwitchActorScript.new()
+		extraction_actor.name = "GeneratedExtraction"
+		extraction_actor.actor_id = extraction_record.id
+		extraction_actor.one_shot = true
+		extraction_actor.position = extraction_record.position
+		extraction_actor.set_meta("generation", extraction_record.duplicate(true))
+		extraction_actor.set_meta("mission_objective", {
+			"description": "Reach the generated extraction",
+			"final": true,
+			"requires": extraction_record.prerequisites,
+			"order": 2000
+		})
+		root.add_child(extraction_actor)
 
 	# Add CSG geometry
 

@@ -4,7 +4,7 @@ const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
 const ActorScript := preload("res://shared/editor_core/actors/actor_base.gd")
 const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
-
+const SwitchActorScript := preload("res://shared/editor_core/actors/switch_actor.gd")
 var _mission: MissionMgr
 var _previous: Dictionary
 var _previous_level: Node3D
@@ -69,9 +69,24 @@ func test_generated_key_completion_unlocks_its_dependent_door() -> void:
 	)
 	document.add_child(door)
 
+	var extraction: SwitchActor = SwitchActorScript.new()
+	extraction.name = "GeneratedExtraction"
+	extraction.actor_id = extraction.name
+	extraction.one_shot = true
+	extraction.set_meta(
+		"mission_objective",
+		{
+			"description": "Reach the generated extraction",
+			"final": true,
+			"requires": ["LockedDoor_0"],
+			"order": 2
+		}
+	)
+	document.add_child(extraction)
+
 	assert_true(_mission.start_document_mission(document))
 	var objectives: Array = _mission.active_mission_data.get("objectives", [])
-	assert_eq(objectives.size(), 2)
+	assert_eq(objectives.size(), 3)
 	assert_eq(
 		objectives[0].get("id"),
 		"KeyPickup_0",
@@ -79,6 +94,8 @@ func test_generated_key_completion_unlocks_its_dependent_door() -> void:
 	)
 	assert_eq(objectives[1].get("id"), "LockedDoor_0")
 	assert_eq(objectives[1].get("requires"), ["KeyPickup_0"])
+	assert_eq(objectives[2].get("id"), "GeneratedExtraction")
+	assert_eq(objectives[2].get("requires"), ["LockedDoor_0"])
 
 	var player := Node.new()
 	var player_script := GDScript.new()
@@ -89,6 +106,8 @@ func test_generated_key_completion_unlocks_its_dependent_door() -> void:
 	player.set_script(player_script)
 	add_child_autofree(player)
 
+	extraction.interact(player)
+	assert_eq(extraction.activation_count, 0, "Extraction cannot activate before generated progression")
 	door.trigger(player)
 	assert_eq(door.activation_count, 0, "Door cannot activate before its generated key")
 	key.trigger(player)
@@ -99,6 +118,10 @@ func test_generated_key_completion_unlocks_its_dependent_door() -> void:
 	assert_false(door.locked)
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["LockedDoor_0"], 1)
+	assert_true(extraction.interact(player), "Extraction uses the public actor interaction contract")
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["GeneratedExtraction"], 1)
+	assert_eq(_mission.completed_mission_id, "generated_dependency_regression")
 
 
 func test_document_without_objectives_preserves_the_normal_mission() -> void:
