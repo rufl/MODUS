@@ -434,23 +434,53 @@ func _find_opposite_edge_cell(
 	return best_exit
 
 
-## Place boss spawn marker at arena center
+## Place boss spawn marker at a valid arena cell
 ## @param arena: Arena room
 ## @param context: Generation context
 func place_boss_spawn_marker(arena: Room, context: GenerationContext) -> void:
-	# Place boss spawn at arena center
+	var spawn_position := _find_boss_spawn_position(arena, context)
+	if spawn_position == Vector2i(-1, -1):
+		push_warning("Cannot place boss spawn: arena has no valid walkable cell")
+		return
+	var cell: Cell = context.grid[spawn_position.y][spawn_position.x]
 	var spawn_point := {
 		"id": "boss_%d" % context.monster_spawns.size(),
-		"position": arena.center,
+		"position": spawn_position,
 		"type": "boss",
 		"enemy_id": "warlord",
 		"tier": 4,
 		"arena_id": arena.id,
-		"world_position": Vector3(arena.center.x * 2.0, 0.0, arena.center.y * 2.0)
+		"world_position":
+		Vector3(spawn_position.x * 2.0 + 1.0, cell.height, spawn_position.y * 2.0 + 1.0)
 	}
 
 	context.monster_spawns.append(spawn_point)
 	arena.metadata["boss_spawn"] = spawn_point
+
+
+func _find_boss_spawn_position(arena: Room, context: GenerationContext) -> Vector2i:
+	var candidates: Array[Vector2i] = []
+	for position: Vector2i in arena.cells:
+		if (
+			position.y >= 0
+			and position.y < context.grid.size()
+			and position.x >= 0
+			and position.x < context.grid[position.y].size()
+			and context.grid[position.y][position.x].type != Cell.Type.EMPTY
+		):
+			candidates.append(position)
+	if candidates.is_empty():
+		return Vector2i(-1, -1)
+	if arena.center in candidates:
+		return arena.center
+	var nearest := candidates[0]
+	var nearest_distance := nearest.distance_squared_to(arena.center)
+	for position: Vector2i in candidates:
+		var distance := position.distance_squared_to(arena.center)
+		if distance < nearest_distance:
+			nearest = position
+			nearest_distance = distance
+	return nearest
 
 
 ## Add elevated platforms or cover elements based on theme

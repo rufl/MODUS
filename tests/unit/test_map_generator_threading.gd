@@ -2,6 +2,8 @@ extends ModusGutTestBase
 
 const MapGeneratorScript: GDScript = preload("res://game/scripts/map_generator/map_generator.gd")
 const LevelRootScript: GDScript = preload("res://shared/editor_core/nodes/level_root.gd")
+const GenerationContextScript: GDScript = preload("res://game/scripts/map_generator/generation_context.gd")
+const CellScript: GDScript = preload("res://game/scripts/map_generator/cell.gd")
 const SpawnPointScript: GDScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 const EnemySpawnerScript: GDScript = preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
 const PickupSpawnerScript: GDScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
@@ -122,6 +124,67 @@ func test_generated_high_value_reward_resolves_catalog_and_rarity() -> void:
 	var unknown: Dictionary = map_generator._generated_item_config({"type": "unknown"})
 	assert_false(unknown.get("supported", true), "Unknown records remain unsupported")
 
+
+func test_generated_high_value_reward_spawns_runtime_damage_powerup() -> void:
+	var record := {
+		"id": "secret_reward_4",
+		"position": Vector3(9.0, 0.0, 11.0),
+		"world_position": Vector3(9.0, 0.0, 11.0),
+		"type": "high_value",
+		"item_tier": "rare",
+		"secret_room_id": 4
+	}
+	var item_config: Dictionary = map_generator._generated_item_config(record)
+	assert_true(item_config.get("supported", false))
+
+	# Build through MapGenerator's production scene path so item configuration
+	# and secret objective metadata come from the generated actor construction.
+	map_generator.theme_manager.set_theme(GenerationConfig.ThemeType.TECH)
+	var context: GenerationContext = GenerationContextScript.new()
+	var cell: Cell = CellScript.new(Cell.Type.ROOM)
+	context.grid = [[cell]]
+	context.grid_size = Vector2i.ONE
+	context.player_start_position = Vector2i.ZERO
+	context.item_spawns = [record]
+	map_generator.generation_context = context
+	var generated_scene: PackedScene = map_generator._build_map_scene(
+		{"seed": "high-value-runtime", "gameplay": {"items": [record]}}
+	)
+	assert_not_null(generated_scene, "Generated high-value scene must pack successfully")
+	if not generated_scene:
+		return
+
+	var generated := generated_scene.instantiate() as Node3D
+	assert_not_null(generated, "Generated high-value scene must instantiate")
+	if not generated:
+		return
+	add_child_autofree(generated)
+	await get_tree().process_frame
+
+	var pickup_actor := generated.get_node_or_null("PickupSpawner_0") as PickupSpawnerActor
+	assert_not_null(pickup_actor, "Generated scene must contain a production pickup spawner")
+	if not pickup_actor:
+		return
+	assert_eq(pickup_actor.pickup_category, PickupSpawnerActor.PickupCategory.POWERUP)
+	assert_eq(pickup_actor.item_id, "damage_powerup")
+	assert_eq(pickup_actor.rarity_tier, 2)
+	assert_eq(pickup_actor.get_meta("rarity_tier"), 2)
+	var spawned := pickup_actor.get("_current_pickup") as PickupBase
+	assert_not_null(spawned, "Generated high-value actor must spawn a real PickupBase")
+	if not spawned:
+		return
+	assert_true(spawned is DamagePowerup, "High-value rewards resolve to damage_powerup")
+	assert_eq(spawned.rarity_tier, 2, "Spawned reward must retain rare tier 2")
+	assert_eq(
+		pickup_actor.get_meta("mission_objective"),
+		{
+			"description": "Discover generated secret reward",
+			"secret_room_id": 4,
+			"optional": true,
+			"order": 9000
+		},
+		"Generated secret reward must expose optional objective metadata"
+	)
 
 func test_bounded_seeded_monster_generation_exposes_regular_objectives() -> void:
 	var config := GenerationConfig.new()

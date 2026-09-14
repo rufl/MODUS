@@ -883,16 +883,19 @@ func _execute_boss_arena_phase() -> bool:
 		push_error("Boss arena generator or context not initialized")
 		return false
 
-	# Populate existing boss arena rooms.  The generator's public contract is
-	# add_arena_elements(); the old enhance_boss_arena name belonged to a
-	# retired implementation.
+	# Populate existing boss arena rooms and materialize their gameplay records.
+	# The generator exposes both the spawn-marker and arena-element operations;
+	# the shape phase may legitimately produce no boss room.
 	var boss_rooms := generation_context.rooms.filter(
 		func(r: Room) -> bool: return r.type == Room.RoomType.BOSS_ARENA
 	)
 
 	for boss_room: Room in boss_rooms:
+		# The shape phase creates the room; this phase owns its gameplay record.
+		# Keep the operation idempotent so a retried phase cannot duplicate a boss.
+		if not boss_room.metadata.has("boss_spawn"):
+			boss_arena_generator.place_boss_spawn_marker(boss_room, generation_context)
 		boss_arena_generator.add_arena_elements(boss_room, generation_context)
-
 	return true
 
 
