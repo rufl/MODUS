@@ -34,6 +34,102 @@ class PickupRecipient:
 	func add_ammo_for_weapon(weapon_type: int, amount: int) -> void:
 		ammo_by_weapon[weapon_type] = ammo_by_weapon.get(weapon_type, 0) + amount
 
+class GeneratedPlayer:
+	extends CharacterBody3D
+
+	var collected_keys: Dictionary = {}
+
+	func collect_key(key_id: String) -> void:
+		collected_keys[key_id] = true
+
+	func has_item(item_id: String) -> bool:
+		return collected_keys.has(item_id)
+
+
+func test_generated_key_collection_unlocks_dependent_door() -> void:
+	var document: Node3D = LevelRootScript.new()
+	document.name = "GeneratedCompletionLevel"
+	document.level_name = "Generated Completion"
+	document.set_meta("mission_id", "generated_completion")
+	document.set_meta("document_runtime_session", true)
+	_world.add_child(document)
+
+	var key: KeyPickupActor = KeyPickupActorScript.new()
+	key.name = "KeyPickup_0"
+	key.actor_id = key.name
+	key.key_id = "key_red"
+	key.set_meta("mission_objective", {"description": "Collect generated red key", "order": 0})
+	document.add_child(key)
+
+	var door: DoorActor = DoorActorScript.new()
+	door.name = "LockedDoor_0"
+	door.actor_id = door.name
+	door.locked = true
+	door.required_key = "key_red"
+	door.set_meta(
+		"mission_objective",
+		{
+			"description": "Open generated red door",
+			"requires": ["KeyPickup_0"],
+			"order": 1
+		}
+	)
+	document.add_child(door)
+
+	var player := GeneratedPlayer.new()
+	_world.add_child(player)
+	await get_tree().process_frame
+	assert_true(_mission.start_document_mission(document))
+	key.start_runtime()
+	door.start_runtime()
+	await get_tree().process_frame
+
+	assert_true(key.interact(player), "Generated key must collect through its interaction API")
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state.get("KeyPickup_0", -1), 1)
+	assert_false(door.interact(player), "Door must remain locked until its prerequisite is observed")
+	assert_eq(door.activation_count, 0)
+
+	assert_true(door.interact(player), "Generated door must unlock with the collected key")
+	_mission._process(0.0)
+	assert_eq(door.activation_count, 1)
+	assert_false(door.locked)
+	assert_eq(_mission.objective_state.get("LockedDoor_0", -1), 1)
+
+
+func test_generated_health_pickup_collection_completes_spawner() -> void:
+	var document: Node3D = LevelRootScript.new()
+	document.name = "GeneratedPickupLevel"
+	document.set_meta("document_runtime_session", true)
+	_world.add_child(document)
+
+	var spawner: PickupSpawnerActor = PickupSpawnerActorScript.new()
+	spawner.name = "PickupSpawner_0"
+	spawner.actor_id = spawner.name
+	spawner.pickup_category = PickupSpawnerActor.PickupCategory.HEALTH
+	spawner.item_id = "health_potion"
+	spawner.auto_spawn = true
+	spawner.one_shot = true
+	document.add_child(spawner)
+
+	var recipient := PickupRecipient.new()
+	_world.add_child(recipient)
+	await get_tree().process_frame
+	spawner.start_runtime()
+	await get_tree().process_frame
+
+	var spawned: PickupBase = spawner.get("_current_pickup") as PickupBase
+	assert_not_null(spawned, "Generated pickup spawner must create its runtime pickup")
+	if not spawned:
+		return
+	recipient.global_position = spawned.global_position
+	spawned._request_pickup(recipient.get_path())
+	assert_eq(recipient.health, 75, "Generated health pickup must apply its catalog effect")
+	assert_true(spawned.collected)
+	assert_eq(spawner.activation_count, 1)
+	assert_eq(spawner.get("_phase"), "collected")
+
+
 
 var _mission: MissionMgr
 var _previous_mission: Dictionary
