@@ -22,6 +22,8 @@ const MapExporter = preload("res://game/scripts/map_generator/map_exporter.gd")
 const BatchGenerator = preload("res://game/scripts/map_generator/batch_generator.gd")
 const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const LevelSpawnPointScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
+const EnemySpawnerActorScript = preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
+const PickupSpawnerActorScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
 
 # Signals
 signal generation_started
@@ -1440,6 +1442,51 @@ func _get_room_target_size(room_type: Room.RoomType) -> int:
 			return 12
 
 
+func _generated_enemy_id(record: Dictionary) -> String:
+	var enemy_id := str(record.get("enemy_id", record.get("id", "")))
+	if not enemy_id.is_empty():
+		return enemy_id
+	return "warlord" if record.get("type", "") == "boss" else "grunt_basic"
+
+
+func _generated_item_config(record: Dictionary) -> Dictionary:
+	var item_type := str(record.get("type", ""))
+	var item_id := str(record.get("item_id", record.get("id", "")))
+	var weapon_id := str(record.get("weapon_id", ""))
+	var category := PickupSpawnerActor.PickupCategory.HEALTH
+
+	match item_type:
+		"weapon":
+			category = PickupSpawnerActor.PickupCategory.WEAPON
+			if weapon_id.is_empty():
+				weapon_id = "shotgun"
+			if item_id.is_empty():
+				item_id = "weapon_" + weapon_id
+		"ammo":
+			category = PickupSpawnerActor.PickupCategory.AMMO
+			if item_id.is_empty():
+				item_id = "ammo_clip"
+		"health":
+			category = PickupSpawnerActor.PickupCategory.HEALTH
+			if item_id.is_empty():
+				item_id = "health_potion"
+		"armor":
+			category = PickupSpawnerActor.PickupCategory.ARMOR
+			if item_id.is_empty():
+				item_id = "armor_pickup"
+		"powerup":
+			category = PickupSpawnerActor.PickupCategory.POWERUP
+			if item_id.is_empty():
+				item_id = "speed_powerup"
+		_:
+			# Secret/high-value records do not yet carry a concrete catalog ID.
+			# Keep them as a valid health pickup until that generator supplies one.
+			if item_id.is_empty():
+				item_id = "health_potion"
+
+	return {"category": category, "item_id": item_id, "weapon_id": weapon_id}
+
+
 ## Build final map scene from generation context
 func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	var scene := PackedScene.new()
@@ -1461,17 +1508,47 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		start.y * 2.0 + 1.0
 	)
 	root.add_child(player_spawn)
-
 	for index in range(generation_context.monster_spawns.size()):
 		var record: Dictionary = generation_context.monster_spawns[index]
+		var world_position: Vector3 = record.get("world_position", Vector3.ZERO)
+
+		# Keep the typed marker for authoring/validation compatibility. The
+		# spawner actor is the canonical runtime source for generated encounters.
 		var enemy_spawn: LevelSpawnPoint = LevelSpawnPointScript.new()
 		enemy_spawn.name = "EnemySpawn_%d" % index
 		enemy_spawn.spawn_type = LevelSpawnPoint.SpawnType.ENEMY
 		enemy_spawn.enemy_id = str(record.get("enemy_id", record.get("id", "")))
-		enemy_spawn.position = record["world_position"] + Vector3.UP
+		enemy_spawn.position = world_position + Vector3.UP
 		enemy_spawn.add_to_group("spawn_enemy", true)
 		enemy_spawn.set_meta("generation", record.duplicate(true))
 		root.add_child(enemy_spawn)
+
+		var enemy_actor: EnemySpawnerActor = EnemySpawnerActorScript.new()
+		enemy_actor.name = "EnemySpawner_%d" % index
+		enemy_actor.actor_id = enemy_actor.name
+		enemy_actor.enemy_id = _generated_enemy_id(record)
+		enemy_actor.tier = int(record.get("tier", 1))
+		enemy_actor.auto_spawn = true
+		enemy_actor.position = world_position
+		enemy_actor.set_meta("generation", record.duplicate(true))
+		root.add_child(enemy_actor)
+
+	for index in range(generation_context.item_spawns.size()):
+		var record: Dictionary = generation_context.item_spawns[index]
+		var world_position: Vector3 = record.get(
+			"world_position", record.get("position", Vector3.ZERO)
+		)
+		var item_config := _generated_item_config(record)
+		var item_actor: PickupSpawnerActor = PickupSpawnerActorScript.new()
+		item_actor.name = "PickupSpawner_%d" % index
+		item_actor.actor_id = item_actor.name
+		item_actor.pickup_category = item_config["category"]
+		item_actor.item_id = item_config["item_id"]
+		item_actor.weapon_id = item_config["weapon_id"]
+		item_actor.auto_spawn = true
+		item_actor.position = world_position
+		item_actor.set_meta("generation", record.duplicate(true))
+		root.add_child(item_actor)
 
 	# Add CSG geometry
 	if generation_context.csg_root:

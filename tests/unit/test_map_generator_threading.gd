@@ -3,6 +3,8 @@ extends ModusGutTestBase
 const MapGeneratorScript: GDScript = preload("res://game/scripts/map_generator/map_generator.gd")
 const LevelRootScript: GDScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const SpawnPointScript: GDScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
+const EnemySpawnerScript: GDScript = preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
+const PickupSpawnerScript: GDScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
 var map_generator: Node
 
 
@@ -99,21 +101,61 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 		if not path.is_empty():
 			assert_lt(path[-1].distance_to(target), 1.0, "Route reaches the required room or spawn")
 	var enemy_spawns: Array[LevelSpawnPoint] = []
+	var enemy_actors: Array[EnemySpawnerActor] = []
+	var item_actors: Array[PickupSpawnerActor] = []
 	for child: Node in instance.get_children():
 		if child is LevelSpawnPoint and child.spawn_type == SpawnPointScript.SpawnType.ENEMY:
 			enemy_spawns.append(child)
+		elif child is EnemySpawnerActor:
+			enemy_actors.append(child)
+		elif child is PickupSpawnerActor:
+			item_actors.append(child)
 	var monster_records: Array = metadata["gameplay"]["monsters"]
-	assert_eq(enemy_spawns.size(), monster_records.size(), "Every generated record needs a typed enemy spawn")
-	for index in range(enemy_spawns.size()):
-		var enemy_spawn := enemy_spawns[index]
+	var item_records: Array = metadata["gameplay"]["items"]
+	assert_eq(enemy_spawns.size(), monster_records.size(), "Typed enemy markers remain available")
+	assert_eq(enemy_actors.size(), monster_records.size(), "Every monster record needs an enemy actor")
+	assert_eq(item_actors.size(), item_records.size(), "Every item record needs a pickup actor")
+	for index in range(monster_records.size()):
 		var record: Dictionary = monster_records[index]
-		assert_eq(enemy_spawn.get_meta("generation"), record, "Spawn retains its generation record")
-		assert_eq(enemy_spawn.global_position, record["world_position"] + Vector3.UP)
-		assert_eq(
-			enemy_spawn.enemy_id,
-			str(record.get("enemy_id", record.get("id", ""))),
-			"Spawn retains its generated ID"
-		)
+		var enemy_id := str(record.get("enemy_id", record.get("id", "")))
+		if enemy_id.is_empty():
+			enemy_id = "warlord" if record.get("type", "") == "boss" else "grunt_basic"
+		assert_eq(enemy_spawns[index].get_meta("generation"), record)
+		assert_eq(enemy_spawns[index].global_position, record["world_position"] + Vector3.UP)
+		assert_eq(enemy_spawns[index].enemy_id, enemy_id)
+		var actor := enemy_actors[index]
+		assert_eq(actor.name, "EnemySpawner_%d" % index, "Enemy actor names are stable")
+		assert_eq(actor.get_meta("generation"), record)
+		assert_eq(actor.global_position, record["world_position"])
+		assert_eq(actor.enemy_id, enemy_id)
+		assert_eq(actor.tier, int(record.get("tier", 1)))
+		assert_true(actor.auto_spawn)
+	for index in range(item_records.size()):
+		var record: Dictionary = item_records[index]
+		var item_type := str(record.get("type", ""))
+		var item_id := str(record.get("item_id", record.get("id", "")))
+		var category := PickupSpawnerActor.PickupCategory.HEALTH
+		var weapon_id := str(record.get("weapon_id", ""))
+		match item_type:
+			"weapon":
+				category = PickupSpawnerActor.PickupCategory.WEAPON
+				weapon_id = weapon_id if not weapon_id.is_empty() else "shotgun"
+				item_id = item_id if not item_id.is_empty() else "weapon_" + weapon_id
+			"ammo":
+				category = PickupSpawnerActor.PickupCategory.AMMO
+				item_id = item_id if not item_id.is_empty() else "ammo_clip"
+			"health":
+				item_id = item_id if not item_id.is_empty() else "health_potion"
+			_:
+				item_id = item_id if not item_id.is_empty() else "health_potion"
+		var actor := item_actors[index]
+		assert_eq(actor.name, "PickupSpawner_%d" % index, "Pickup actor names are stable")
+		assert_eq(actor.get_meta("generation"), record)
+		assert_eq(actor.global_position, record.get("world_position", record.get("position")))
+		assert_eq(actor.item_id, item_id)
+		assert_eq(actor.pickup_category, category)
+		assert_eq(actor.weapon_id, weapon_id)
+		assert_true(actor.auto_spawn)
 	var saved_text_file := FileAccess.open("user://generated_roundtrip.tscn", FileAccess.READ)
 	assert_not_null(saved_text_file)
 	if saved_text_file:
