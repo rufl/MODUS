@@ -5,6 +5,8 @@ const LevelRootScript: GDScript = preload("res://shared/editor_core/nodes/level_
 const SpawnPointScript: GDScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 const EnemySpawnerScript: GDScript = preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
 const PickupSpawnerScript: GDScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
+const KeyPickupActorScript: GDScript = preload("res://shared/editor_core/actors/key_pickup_actor.gd")
+const DoorActorScript: GDScript = preload("res://shared/editor_core/actors/door_actor.gd")
 var map_generator: Node
 
 
@@ -156,6 +158,53 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 		assert_eq(actor.pickup_category, category)
 		assert_eq(actor.weapon_id, weapon_id)
 		assert_true(actor.auto_spawn)
+	var key_actors: Array[KeyPickupActor] = []
+	var door_actors: Array[DoorActor] = []
+	for child: Node in instance.get_children():
+		if child is KeyPickupActor:
+			key_actors.append(child)
+		elif child is DoorActor:
+			door_actors.append(child)
+	var key_records: Array = metadata["gameplay"]["keys"]
+	var door_records: Array = metadata["gameplay"]["locked_doors"]
+	assert_eq(key_actors.size(), key_records.size(), "Every key record needs a key actor")
+	assert_eq(door_actors.size(), door_records.size(), "Every locked door needs a door actor")
+	for index in range(key_records.size()):
+		var record: Dictionary = key_records[index]
+		var color := str(record.get("color", "UNKNOWN"))
+		var actor := key_actors[index]
+		assert_eq(actor.name, "KeyPickup_%d" % index, "Key actor names are stable")
+		assert_eq(actor.actor_id, actor.name)
+		assert_eq(actor.key_id, "key_" + color.to_lower())
+		assert_eq(actor.global_position, record["position"])
+		assert_eq(actor.get_meta("generation"), record)
+		assert_eq(actor.get_meta("key_color"), color)
+		assert_eq(
+			actor.get_meta("mission_objective"),
+			{
+				"description": "Collect generated %s key" % color.to_lower(),
+				"order": index * 2
+			}
+		)
+	for index in range(door_records.size()):
+		var record: Dictionary = door_records[index]
+		var color := str(record.get("color", "UNKNOWN"))
+		var actor := door_actors[index]
+		assert_eq(actor.name, "LockedDoor_%d" % index, "Locked door names are stable")
+		assert_eq(actor.actor_id, actor.name)
+		assert_true(actor.locked)
+		assert_eq(actor.required_key, "key_" + color.to_lower())
+		assert_eq(actor.global_position, record["position"])
+		assert_eq(actor.get_meta("generation"), record)
+		assert_eq(actor.get_meta("key_color"), color)
+		assert_eq(
+			actor.get_meta("mission_objective"),
+			{
+				"description": "Open generated %s door" % color.to_lower(),
+				"requires": ["KeyPickup_%d" % index],
+				"order": index * 2 + 1
+			}
+		)
 	var saved_text_file := FileAccess.open("user://generated_roundtrip.tscn", FileAccess.READ)
 	assert_not_null(saved_text_file)
 	if saved_text_file:

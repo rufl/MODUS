@@ -24,6 +24,8 @@ const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const LevelSpawnPointScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 const EnemySpawnerActorScript = preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
 const PickupSpawnerActorScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
+const KeyPickupActorScript = preload("res://shared/editor_core/actors/key_pickup_actor.gd")
+const DoorActorScript = preload("res://shared/editor_core/actors/door_actor.gd")
 
 # Signals
 signal generation_started
@@ -1549,8 +1551,47 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		item_actor.position = world_position
 		item_actor.set_meta("generation", record.duplicate(true))
 		root.add_child(item_actor)
+	for index in range(generation_context.key_placements.size()):
+		var record: Dictionary = generation_context.key_placements[index]
+		var color := str(record.get("color", "UNKNOWN"))
+		var key_id := "key_" + color.to_lower()
+		var key_actor: KeyPickupActor = KeyPickupActorScript.new()
+		key_actor.name = "KeyPickup_%d" % index
+		key_actor.actor_id = key_actor.name
+		key_actor.key_id = key_id
+		key_actor.position = record.get("position", Vector3.ZERO)
+		key_actor.set_meta("generation", record.duplicate(true))
+		key_actor.set_meta("color", color)
+		key_actor.set_meta("key_color", color)
+		key_actor.set_meta("mission_objective", {
+			"description": "Collect generated %s key" % color.to_lower(),
+			"order": index * 2
+		})
+		root.add_child(key_actor)
+
+	var locked_doors: Array = generation_context.metadata.get("locked_doors", [])
+	for index in range(locked_doors.size()):
+		var record: Dictionary = locked_doors[index]
+		var color := str(record.get("color", "UNKNOWN"))
+		var key_id := "key_" + color.to_lower()
+		var door_actor: DoorActor = DoorActorScript.new()
+		door_actor.name = "LockedDoor_%d" % index
+		door_actor.actor_id = door_actor.name
+		door_actor.locked = true
+		door_actor.required_key = key_id
+		door_actor.position = record.get("position", Vector3.ZERO)
+		door_actor.set_meta("generation", record.duplicate(true))
+		door_actor.set_meta("color", color)
+		door_actor.set_meta("key_color", color)
+		door_actor.set_meta("mission_objective", {
+			"description": "Open generated %s door" % color.to_lower(),
+			"requires": ["KeyPickup_%d" % index],
+			"order": index * 2 + 1
+		})
+		root.add_child(door_actor)
 
 	# Add CSG geometry
+
 	if generation_context.csg_root:
 		generation_context.csg_root.get_parent().remove_child(generation_context.csg_root)
 		root.add_child(generation_context.csg_root)
