@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://oomq1cvxff7c"
-path="res://.godot/imported/coastal_cavern_floor.obj-a3e0f4400004f5bfd730918a3d9d498a.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/coastal_cavern_floor.obj-a3e0f4400004f5bfd730918a3d9d498a.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/coastal_cavern_floor.obj"
-dest_files=["res://.godot/imported/coastal_cavern_floor.obj-a3e0f4400004f5bfd730918a3d9d498a.mesh", "res://.godot/imported/coastal_cavern_floor.obj-a3e0f4400004f5bfd730918a3d9d498a.mesh"]
 
 [params]
 

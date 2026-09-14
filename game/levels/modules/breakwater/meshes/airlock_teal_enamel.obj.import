@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://cuy7ke0lxs7x0"
-path="res://.godot/imported/airlock_teal_enamel.obj-3dc38a54b490a4cf22bc300cdf94cc38.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/airlock_teal_enamel.obj-3dc38a54b490a4cf22bc300cdf94cc38.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/airlock_teal_enamel.obj"
-dest_files=["res://.godot/imported/airlock_teal_enamel.obj-3dc38a54b490a4cf22bc300cdf94cc38.mesh", "res://.godot/imported/airlock_teal_enamel.obj-3dc38a54b490a4cf22bc300cdf94cc38.mesh"]
 
 [params]
 

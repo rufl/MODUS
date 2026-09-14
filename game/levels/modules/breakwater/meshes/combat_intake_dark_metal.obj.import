@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://dy6dvr7ydskyd"
-path="res://.godot/imported/combat_intake_dark_metal.obj-6093f99399eeda0653cb034fa12c9667.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/combat_intake_dark_metal.obj-6093f99399eeda0653cb034fa12c9667.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/combat_intake_dark_metal.obj"
-dest_files=["res://.godot/imported/combat_intake_dark_metal.obj-6093f99399eeda0653cb034fa12c9667.mesh", "res://.godot/imported/combat_intake_dark_metal.obj-6093f99399eeda0653cb034fa12c9667.mesh"]
 
 [params]
 

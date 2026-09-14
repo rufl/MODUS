@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://byy4n7mohs0my"
-path="res://.godot/imported/combat_turbine_dark_metal.obj-4c609c4790d0aa0c3894aed209b2ffce.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/combat_turbine_dark_metal.obj-4c609c4790d0aa0c3894aed209b2ffce.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/combat_turbine_dark_metal.obj"
-dest_files=["res://.godot/imported/combat_turbine_dark_metal.obj-4c609c4790d0aa0c3894aed209b2ffce.mesh", "res://.godot/imported/combat_turbine_dark_metal.obj-4c609c4790d0aa0c3894aed209b2ffce.mesh"]
 
 [params]
 

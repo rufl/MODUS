@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://cx6ganffsyaii"
-path="res://.godot/imported/control_room_amber_light.obj-83a740aaac71aad8a5424adbe852052d.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/control_room_amber_light.obj-83a740aaac71aad8a5424adbe852052d.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/control_room_amber_light.obj"
-dest_files=["res://.godot/imported/control_room_amber_light.obj-83a740aaac71aad8a5424adbe852052d.mesh", "res://.godot/imported/control_room_amber_light.obj-83a740aaac71aad8a5424adbe852052d.mesh"]
 
 [params]
 

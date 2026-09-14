@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://ckm1xdy0dr41j"
-path="res://.godot/imported/pump_hall_amber_light.obj-010d25f6badcb1212d5b5bc0358a2946.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/pump_hall_amber_light.obj-010d25f6badcb1212d5b5bc0358a2946.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/pump_hall_amber_light.obj"
-dest_files=["res://.godot/imported/pump_hall_amber_light.obj-010d25f6badcb1212d5b5bc0358a2946.mesh", "res://.godot/imported/pump_hall_amber_light.obj-010d25f6badcb1212d5b5bc0358a2946.mesh"]
 
 [params]
 

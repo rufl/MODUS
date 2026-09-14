@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://o8d7dn1y2cbo"
-path="res://.godot/imported/control_room_brass.obj-870f169cfd4fa7f2c00c788e93298764.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/control_room_brass.obj-870f169cfd4fa7f2c00c788e93298764.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/control_room_brass.obj"
-dest_files=["res://.godot/imported/control_room_brass.obj-870f169cfd4fa7f2c00c788e93298764.mesh", "res://.godot/imported/control_room_brass.obj-870f169cfd4fa7f2c00c788e93298764.mesh"]
 
 [params]
 

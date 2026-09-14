@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://csia2c7q6kjak"
-path="res://.godot/imported/combat_intake_teal_enamel.obj-6e60d2e64a4f6add8db44e1a5e2b6a71.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/combat_intake_teal_enamel.obj-6e60d2e64a4f6add8db44e1a5e2b6a71.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/combat_intake_teal_enamel.obj"
-dest_files=["res://.godot/imported/combat_intake_teal_enamel.obj-6e60d2e64a4f6add8db44e1a5e2b6a71.mesh", "res://.godot/imported/combat_intake_teal_enamel.obj-6e60d2e64a4f6add8db44e1a5e2b6a71.mesh"]
 
 [params]
 

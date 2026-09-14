@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://dqhxpjry68if2"
-path="res://.godot/imported/airlock_brass.obj-84bab7cfeb4e6bdee61d810b9f8dc272.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/airlock_brass.obj-84bab7cfeb4e6bdee61d810b9f8dc272.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/airlock_brass.obj"
-dest_files=["res://.godot/imported/airlock_brass.obj-84bab7cfeb4e6bdee61d810b9f8dc272.mesh", "res://.godot/imported/airlock_brass.obj-84bab7cfeb4e6bdee61d810b9f8dc272.mesh"]
 
 [params]
 

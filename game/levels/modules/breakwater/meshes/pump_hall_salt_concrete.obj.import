@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://dyabv1y2r7bl7"
-path="res://.godot/imported/pump_hall_salt_concrete.obj-757ff5de4e063f1dc45f18eef352cd66.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/pump_hall_salt_concrete.obj-757ff5de4e063f1dc45f18eef352cd66.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/pump_hall_salt_concrete.obj"
-dest_files=["res://.godot/imported/pump_hall_salt_concrete.obj-757ff5de4e063f1dc45f18eef352cd66.mesh", "res://.godot/imported/pump_hall_salt_concrete.obj-757ff5de4e063f1dc45f18eef352cd66.mesh"]
 
 [params]
 

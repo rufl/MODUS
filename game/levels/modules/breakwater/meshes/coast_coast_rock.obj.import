@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://l1ielhffyd2f"
-path="res://.godot/imported/coast_coast_rock.obj-6364f4b90bd852797ae88f0e0982febf.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/coast_coast_rock.obj-6364f4b90bd852797ae88f0e0982febf.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/coast_coast_rock.obj"
-dest_files=["res://.godot/imported/coast_coast_rock.obj-6364f4b90bd852797ae88f0e0982febf.mesh", "res://.godot/imported/coast_coast_rock.obj-6364f4b90bd852797ae88f0e0982febf.mesh"]
 
 [params]
 

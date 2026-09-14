@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://dsr0oe0tly83h"
-path="res://.godot/imported/coastal_return_gallery_dark_metal.obj-7e2fedf5af818622c31793ae64458e88.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/coastal_return_gallery_dark_metal.obj-7e2fedf5af818622c31793ae64458e88.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/coastal_return_gallery_dark_metal.obj"
-dest_files=["res://.godot/imported/coastal_return_gallery_dark_metal.obj-7e2fedf5af818622c31793ae64458e88.mesh", "res://.godot/imported/coastal_return_gallery_dark_metal.obj-7e2fedf5af818622c31793ae64458e88.mesh"]
 
 [params]
 

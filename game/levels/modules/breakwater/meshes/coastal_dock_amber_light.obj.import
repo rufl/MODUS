@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://dpq4bi2o604d7"
-path="res://.godot/imported/coastal_dock_amber_light.obj-2c645112b0593dbab33a2a93cf5955ca.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/coastal_dock_amber_light.obj-2c645112b0593dbab33a2a93cf5955ca.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/coastal_dock_amber_light.obj"
-dest_files=["res://.godot/imported/coastal_dock_amber_light.obj-2c645112b0593dbab33a2a93cf5955ca.mesh", "res://.godot/imported/coastal_dock_amber_light.obj-2c645112b0593dbab33a2a93cf5955ca.mesh"]
 
 [params]
 

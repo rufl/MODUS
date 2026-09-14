@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://ybpt3l6uil0d"
-path="res://.godot/imported/coastal_dock_salt_concrete.obj-5665b9057a661cd8508b11d890f0edae.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/coastal_dock_salt_concrete.obj-5665b9057a661cd8508b11d890f0edae.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/coastal_dock_salt_concrete.obj"
-dest_files=["res://.godot/imported/coastal_dock_salt_concrete.obj-5665b9057a661cd8508b11d890f0edae.mesh", "res://.godot/imported/coastal_dock_salt_concrete.obj-5665b9057a661cd8508b11d890f0edae.mesh"]
 
 [params]
 

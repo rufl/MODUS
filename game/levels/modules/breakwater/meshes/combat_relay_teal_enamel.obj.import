@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://cjbwgyejbaeta"
-path="res://.godot/imported/combat_relay_teal_enamel.obj-a8faf41cf52615a43aa1061dcf67114b.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/combat_relay_teal_enamel.obj-a8faf41cf52615a43aa1061dcf67114b.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/combat_relay_teal_enamel.obj"
-dest_files=["res://.godot/imported/combat_relay_teal_enamel.obj-a8faf41cf52615a43aa1061dcf67114b.mesh", "res://.godot/imported/combat_relay_teal_enamel.obj-a8faf41cf52615a43aa1061dcf67114b.mesh"]
 
 [params]
 

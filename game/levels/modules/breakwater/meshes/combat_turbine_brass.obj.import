@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://lut5yaehfhxp"
-path="res://.godot/imported/combat_turbine_brass.obj-9929cfa2fdd9b8da8b10311c41ddd02a.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/combat_turbine_brass.obj-9929cfa2fdd9b8da8b10311c41ddd02a.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/combat_turbine_brass.obj"
-dest_files=["res://.godot/imported/combat_turbine_brass.obj-9929cfa2fdd9b8da8b10311c41ddd02a.mesh", "res://.godot/imported/combat_turbine_brass.obj-9929cfa2fdd9b8da8b10311c41ddd02a.mesh"]
 
 [params]
 

@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://bm53cnwbtb2vi"
-path="res://.godot/imported/coastal_return_gallery_brass.obj-e446b055c032b28af11f13934aa9526f.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/coastal_return_gallery_brass.obj-e446b055c032b28af11f13934aa9526f.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/coastal_return_gallery_brass.obj"
-dest_files=["res://.godot/imported/coastal_return_gallery_brass.obj-e446b055c032b28af11f13934aa9526f.mesh", "res://.godot/imported/coastal_return_gallery_brass.obj-e446b055c032b28af11f13934aa9526f.mesh"]
 
 [params]
 

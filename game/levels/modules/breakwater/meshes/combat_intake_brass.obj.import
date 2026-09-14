@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://cmr50ghaq6hkb"
-path="res://.godot/imported/combat_intake_brass.obj-699ff8f0234194b76c13fa54b60c343c.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/combat_intake_brass.obj-699ff8f0234194b76c13fa54b60c343c.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/combat_intake_brass.obj"
-dest_files=["res://.godot/imported/combat_intake_brass.obj-699ff8f0234194b76c13fa54b60c343c.mesh", "res://.godot/imported/combat_intake_brass.obj-699ff8f0234194b76c13fa54b60c343c.mesh"]
 
 [params]
 

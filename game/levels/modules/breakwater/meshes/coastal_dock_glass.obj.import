@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://cls67xk1fflhi"
-path="res://.godot/imported/coastal_dock_glass.obj-07d04a7979184f2c139d1d0fcdaac1e0.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/coastal_dock_glass.obj-07d04a7979184f2c139d1d0fcdaac1e0.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/coastal_dock_glass.obj"
-dest_files=["res://.godot/imported/coastal_dock_glass.obj-07d04a7979184f2c139d1d0fcdaac1e0.mesh", "res://.godot/imported/coastal_dock_glass.obj-07d04a7979184f2c139d1d0fcdaac1e0.mesh"]
 
 [params]
 

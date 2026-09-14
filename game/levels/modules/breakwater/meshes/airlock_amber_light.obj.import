@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://b47i6m38qo2v6"
-path="res://.godot/imported/airlock_amber_light.obj-e2d100bca6d3c9a0dc78031247f1e4da.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/airlock_amber_light.obj-e2d100bca6d3c9a0dc78031247f1e4da.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/airlock_amber_light.obj"
-dest_files=["res://.godot/imported/airlock_amber_light.obj-e2d100bca6d3c9a0dc78031247f1e4da.mesh", "res://.godot/imported/airlock_amber_light.obj-e2d100bca6d3c9a0dc78031247f1e4da.mesh"]
 
 [params]
 

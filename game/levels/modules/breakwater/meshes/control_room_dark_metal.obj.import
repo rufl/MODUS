@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://bjjjq3oa1evbp"
-path="res://.godot/imported/control_room_dark_metal.obj-cea81d64605f421f6cef474ebea7d803.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/control_room_dark_metal.obj-cea81d64605f421f6cef474ebea7d803.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/control_room_dark_metal.obj"
-dest_files=["res://.godot/imported/control_room_dark_metal.obj-cea81d64605f421f6cef474ebea7d803.mesh", "res://.godot/imported/control_room_dark_metal.obj-cea81d64605f421f6cef474ebea7d803.mesh"]
 
 [params]
 

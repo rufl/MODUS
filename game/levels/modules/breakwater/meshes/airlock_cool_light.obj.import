@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://dt7h4fiu8f0ga"
-path="res://.godot/imported/airlock_cool_light.obj-4d0aabf02401d48501aec2644d15b52c.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/airlock_cool_light.obj-4d0aabf02401d48501aec2644d15b52c.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/airlock_cool_light.obj"
-dest_files=["res://.godot/imported/airlock_cool_light.obj-4d0aabf02401d48501aec2644d15b52c.mesh", "res://.godot/imported/airlock_cool_light.obj-4d0aabf02401d48501aec2644d15b52c.mesh"]
 
 [params]
 

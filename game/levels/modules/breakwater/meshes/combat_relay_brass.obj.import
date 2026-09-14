@@ -4,14 +4,11 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://cljpesv6bnpxa"
-path="res://.godot/imported/combat_relay_brass.obj-483e3556da37d22d5c819649061c868a.mesh"
+valid=false
 
 [deps]
 
-files=["res://.godot/imported/combat_relay_brass.obj-483e3556da37d22d5c819649061c868a.mesh"]
-
 source_file="res://game/levels/modules/breakwater/meshes/combat_relay_brass.obj"
-dest_files=["res://.godot/imported/combat_relay_brass.obj-483e3556da37d22d5c819649061c868a.mesh", "res://.godot/imported/combat_relay_brass.obj-483e3556da37d22d5c819649061c868a.mesh"]
 
 [params]
 
