@@ -2,6 +2,10 @@ extends ModusGutTestBase
 
 const SpawnPointScript := preload("res://shared/editor_core/nodes/spawn_point.gd")
 const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
+const EnemySpawnerActorScript := preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
+const PickupSpawnerActorScript := preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
+const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
+const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
 const SpawnManagerScript := preload("res://game/world/enemy_spawn_manager.gd")
 
 
@@ -31,6 +35,11 @@ class PickupRecipient:
 		ammo_by_weapon[weapon_type] = ammo_by_weapon.get(weapon_type, 0) + amount
 
 
+var _mission: MissionMgr
+var _previous_mission: Dictionary
+var _previous_mission_level: Node3D
+
+
 var _world: Node
 var _level: Node3D
 var _markers: Node3D
@@ -40,6 +49,9 @@ var _stats: Dictionary
 
 func before_each() -> void:
 	await modus_setup()
+	_mission = MissionMgr.get_instance()
+	_previous_mission = _mission.capture_runtime_state()
+	_previous_mission_level = _mission.mission_level
 	_world = Node.new()
 	add_child_autofree(_world)
 	_level = LevelRootScript.new()
@@ -56,8 +68,9 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	if is_instance_valid(_mission):
+		_mission.restore_runtime_state(_previous_mission, _previous_mission_level)
 	modus_teardown()
-
 
 func _item_marker(item_id: String, pos: Vector3, delay: float = 0.0) -> LevelSpawnPoint:
 	var marker: LevelSpawnPoint = SpawnPointScript.new()
@@ -76,6 +89,137 @@ func _pickups() -> Array[Node3D]:
 		if child is PickupBase and not child.is_queued_for_deletion():
 			pickups.append(child)
 	return pickups
+
+
+func test_generated_actor_runtime_startup_preserves_metadata_and_save_boundary() -> void:
+	var runtime_view := SubViewport.new()
+	runtime_view.own_world_3d = true
+	runtime_view.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	add_child_autofree(runtime_view)
+
+	var document: Node3D = LevelRootScript.new()
+	document.name = "GeneratedRuntimeLevel"
+	document.level_name = "Generated Runtime Smoke"
+	document.set_meta("mission_id", "generated_runtime_smoke")
+	document.set_meta("document_runtime_session", true)
+	runtime_view.add_child(document)
+
+	var player_spawn: LevelSpawnPoint = SpawnPointScript.new()
+	player_spawn.name = "PlayerSpawn"
+	player_spawn.spawn_type = LevelSpawnPoint.SpawnType.PLAYER
+	document.add_child(player_spawn)
+	player_spawn.owner = document
+
+	var enemy_record := {"id": "enemy_0", "enemy_id": "grunt_basic", "tier": 1}
+	var enemy: EnemySpawnerActor = EnemySpawnerActorScript.new()
+	enemy.name = "EnemySpawner_0"
+	enemy.actor_id = "enemy_0"
+	enemy.enemy_id = "grunt_basic"
+	enemy.auto_spawn = true
+	enemy.set_meta("generation", enemy_record.duplicate(true))
+	document.add_child(enemy)
+	enemy.owner = document
+
+	var pickup_record := {"id": "item_0", "type": "health", "item_id": "health_potion"}
+	var pickup: PickupSpawnerActor = PickupSpawnerActorScript.new()
+	pickup.name = "PickupSpawner_0"
+	pickup.actor_id = "item_0"
+	pickup.pickup_category = PickupSpawnerActor.PickupCategory.HEALTH
+	pickup.item_id = "health_potion"
+	pickup.auto_spawn = true
+	pickup.set_meta("generation", pickup_record.duplicate(true))
+	document.add_child(pickup)
+	pickup.owner = document
+
+	var key_record := {"color": "RED", "position": Vector3(2, 0, 0)}
+	var key: KeyPickupActor = KeyPickupActorScript.new()
+	key.name = "KeyPickup_0"
+	key.actor_id = key.name
+	key.key_id = "key_red"
+	key.set_meta("generation", key_record.duplicate(true))
+	key.set_meta(
+		"mission_objective",
+		{"description": "Collect generated red key", "order": 0}
+	)
+	document.add_child(key)
+	key.owner = document
+
+	var door_record := {"color": "RED", "position": Vector3(4, 0, 0)}
+	var door: DoorActor = DoorActorScript.new()
+	door.name = "LockedDoor_0"
+	door.actor_id = door.name
+	door.locked = true
+	door.required_key = "key_red"
+	door.set_meta("generation", door_record.duplicate(true))
+	door.set_meta(
+		"mission_objective",
+		{
+			"description": "Open generated red door",
+			"requires": ["KeyPickup_0"],
+			"order": 1
+		}
+	)
+	document.add_child(door)
+	door.owner = document
+
+	await get_tree().process_frame
+	assert_true(_mission.start_document_mission(document))
+	var key_identity: String = document.get_actor_identity(key)
+	var door_identity: String = document.get_actor_identity(door)
+	assert_eq(_mission.active_mission_data.objectives.size(), 2)
+	assert_eq(_mission.active_mission_data.objectives[0].id, key_identity)
+	assert_eq(_mission.active_mission_data.objectives[1].id, door_identity)
+	assert_eq(_mission.active_mission_data.objectives[1].requires, [key_identity])
+	assert_eq(_mission.objective_state.get(key_identity, -1), 0)
+	assert_eq(_mission.objective_state.get(door_identity, -1), 0)
+
+	enemy.start_runtime()
+	pickup.start_runtime()
+	key.start_runtime()
+	door.start_runtime()
+	await get_tree().process_frame
+
+	assert_true(enemy.get("_runtime_started"), "Enemy spawner must enter runtime")
+	assert_true(pickup.get("_runtime_started"), "Pickup spawner must enter runtime")
+	assert_true(key.get("_actor_runtime_started"), "Key actor must enter runtime")
+	assert_true(door.get("_actor_runtime_started"), "Door actor must enter runtime")
+	assert_eq(enemy.get_meta("generation"), enemy_record)
+	assert_eq(pickup.get_meta("generation"), pickup_record)
+	assert_eq(key.get_meta("generation"), key_record)
+	assert_eq(door.get_meta("generation"), door_record)
+	assert_eq(key.activation_count, 0, "Smoke must not collect the generated key")
+	assert_eq(door.activation_count, 0, "Smoke must not open the generated door")
+
+	var spawned_enemy: Node = document.get_node_or_null("EncounterEnemy_0")
+	var spawned_pickup: Node = pickup.get("_current_pickup") as Node
+	assert_not_null(spawned_enemy, "Enemy runtime startup should create its encounter child")
+	assert_not_null(spawned_pickup, "Pickup runtime startup should create its pickup child")
+	if spawned_enemy:
+		assert_true(spawned_enemy.get_meta("editor_runtime_only", false))
+	if spawned_pickup:
+		assert_true(spawned_pickup.get_meta("editor_runtime_only", false))
+
+	document.prepare_for_save()
+	if spawned_enemy:
+		assert_eq(spawned_enemy.owner, null, "Runtime enemy must not be scene-owned")
+	if spawned_pickup:
+		assert_eq(spawned_pickup.owner, null, "Runtime pickup must not be scene-owned")
+	var packed := PackedScene.new()
+	assert_eq(packed.pack(document), OK)
+	var saved_document: Node3D = packed.instantiate() as Node3D
+	assert_not_null(saved_document)
+	if saved_document:
+		saved_document.authoring_mode = true
+		runtime_view.add_child(saved_document)
+		assert_null(
+			saved_document.get_node_or_null("EncounterEnemy_0"),
+			"Runtime enemy must be excluded from the authored scene"
+		)
+		if spawned_pickup:
+			assert_null(
+				saved_document.get_node_or_null(NodePath(spawned_pickup.name)),
+				"Runtime pickup must be excluded from the authored scene"
+			)
 
 
 func test_nested_authored_enemy_spawns_without_legacy_arena_enemies() -> void:
