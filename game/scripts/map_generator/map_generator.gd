@@ -1699,6 +1699,10 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		)
 		var item_config := _generated_item_config(record)
 		if not item_config["supported"]:
+			push_warning(
+				"[MapGenerator] Unsupported generated item type: %s"
+				% str(record.get("type", ""))
+			)
 			continue
 		var item_actor: PickupSpawnerActor = PickupSpawnerActorScript.new()
 		item_actor.name = "PickupSpawner_%d" % index
@@ -1706,14 +1710,18 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		item_actor.pickup_category = item_config["category"]
 		item_actor.item_id = item_config["item_id"]
 		item_actor.weapon_id = item_config["weapon_id"]
+		item_actor.rarity_tier = int(item_config["rarity_tier"])
 		item_actor.auto_spawn = true
 		item_actor.position = world_position
 		item_actor.set_meta("generation", record.duplicate(true))
+		if item_config["rarity_tier"] >= 0:
+			item_actor.set_meta("rarity_tier", item_config["rarity_tier"])
 		if record.has("secret_room_id"):
 			item_actor.set_meta(
 				"mission_objective",
 				{
 					"description": "Discover generated secret reward",
+					"secret_room_id": int(record.get("secret_room_id", -1)),
 					"optional": true,
 					"order": 9000 + index
 				}

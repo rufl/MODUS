@@ -7,6 +7,7 @@ enum PickupCategory { HEALTH, ARMOR, AMMO, WEAPON, POWERUP }
 @export var pickup_category: PickupCategory = PickupCategory.HEALTH
 @export var weapon_id: String = ""  # For weapon pickups
 @export var item_id: String = "health_potion"  # For other pickups
+@export_range(-1, 5) var rarity_tier: int = -1  # Optional ItemRarity tier
 @export var respawn_time: float = 30.0
 @export var auto_spawn: bool = true
 
@@ -119,6 +120,8 @@ func _spawn_pickup(saved: Dictionary = {}, prepared: PickupBase = null) -> bool:
 		return false
 	if _current_pickup is HealthPickup and LootSvc.HEALTH_TIER_MAP.has(item_id):
 		_current_pickup.tier = LootSvc.HEALTH_TIER_MAP[item_id]
+	if rarity_tier >= 0:
+		_current_pickup.rarity_tier = clampi(rarity_tier, 0, 5)
 	_current_pickup.set_meta("editor_runtime_only", true)
 	var system := _find_channel_system()
 	_current_pickup.set_meta(
@@ -279,6 +282,13 @@ func get_inspector_properties() -> Array[Dictionary]:
 				"type": TYPE_STRING,
 				"label": "Weapon ID",
 				"description": "For weapon pickups (shotgun, rocket_launcher, etc.)"
+			},
+			{
+				"name": "rarity_tier",
+				"type": TYPE_INT,
+				"label": "Rarity Tier",
+				"hint": PROPERTY_HINT_RANGE,
+				"hint_string": "-1,5"
 			},
 			{
 				"name": "respawn_time",

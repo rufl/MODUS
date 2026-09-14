@@ -110,6 +110,18 @@ func test_generated_enemy_objectives_preserve_regular_and_boss_semantics() -> vo
 	)
 	assert_true(disabled.is_empty(), "Disabled generated enemies must not create objectives")
 
+func test_generated_high_value_reward_resolves_catalog_and_rarity() -> void:
+	var item_config: Dictionary = map_generator._generated_item_config(
+		{"type": "high_value", "item_tier": "rare", "secret_room_id": 4}
+	)
+	assert_true(item_config.get("supported", false))
+	assert_eq(item_config.get("category"), PickupSpawnerActor.PickupCategory.POWERUP)
+	assert_eq(item_config.get("item_id"), "damage_powerup")
+	assert_eq(item_config.get("rarity_tier"), 2)
+
+	var unknown: Dictionary = map_generator._generated_item_config({"type": "unknown"})
+	assert_false(unknown.get("supported", true), "Unknown records remain unsupported")
+
 
 func test_bounded_seeded_monster_generation_exposes_regular_objectives() -> void:
 	var config := GenerationConfig.new()
@@ -271,7 +283,7 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	assert_eq(enemy_actors.size(), monster_records.size(), "Every monster record needs an enemy actor")
 	var supported_item_records: Array = []
 	for record: Dictionary in item_records:
-		if str(record.get("type", "")) in ["weapon", "ammo", "health", "armor", "powerup"]:
+		if str(record.get("type", "")) in ["weapon", "ammo", "health", "armor", "powerup", "high_value"]:
 			supported_item_records.append(record)
 	assert_eq(
 		item_actors.size(),
@@ -308,7 +320,7 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	for item_record_index in range(item_records.size()):
 		var record: Dictionary = item_records[item_record_index]
 		var item_type := str(record.get("type", ""))
-		if item_type not in ["weapon", "ammo", "health", "armor", "powerup"]:
+		if item_type not in ["weapon", "ammo", "health", "armor", "powerup", "high_value"]:
 			assert_eq(
 				record.get("id", ""),
 				"secret_reward_%d" % int(record.get("secret_room_id", -1)),
@@ -318,6 +330,9 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 		var item_id := str(record.get("item_id", ""))
 		var category := PickupSpawnerActor.PickupCategory.HEALTH
 		var weapon_id := str(record.get("weapon_id", ""))
+		var expected_rarity_tier := int(
+			map_generator._generated_item_config(record).get("rarity_tier", -1)
+		)
 		match item_type:
 			"weapon":
 				category = PickupSpawnerActor.PickupCategory.WEAPON
@@ -334,6 +349,10 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 			"powerup":
 				category = PickupSpawnerActor.PickupCategory.POWERUP
 				item_id = item_id if not item_id.is_empty() else "speed_powerup"
+			"high_value":
+				category = PickupSpawnerActor.PickupCategory.POWERUP
+				item_id = "damage_powerup"
+				expected_rarity_tier = 2
 		var actor := item_actors[item_index]
 		item_index += 1
 		assert_eq(
@@ -347,6 +366,7 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 		assert_eq(actor.item_id, item_id)
 		assert_eq(actor.pickup_category, category)
 		assert_eq(actor.weapon_id, weapon_id)
+		assert_eq(actor.rarity_tier, expected_rarity_tier)
 		assert_true(actor.auto_spawn)
 	var key_actors: Array[KeyPickupActor] = []
 	var door_actors: Array[DoorActor] = []
