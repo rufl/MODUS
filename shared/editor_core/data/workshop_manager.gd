@@ -182,7 +182,7 @@ func upload_level(
 
 	if steam_available:
 		# Real Steam upload
-		_steam_upload(mdsl_path, title, description, tags, visibility)
+		_steam_upload(mdsl_path, title, description, tags, visibility, item_id)
 	else:
 		# Simulate local upload
 		_local_upload(mdsl_path, manifest, title, description, tags)
@@ -191,10 +191,29 @@ func upload_level(
 
 
 func _steam_upload(
-	mdsl_path: String, title: String, description: String, tags: PackedStringArray, visibility: int
+	mdsl_path: String,
+	title: String,
+	description: String,
+	tags: PackedStringArray,
+	visibility: int,
+	local_item_id: String = ""
 ) -> void:
 	# Note: Actual implementation requires GodotSteam
 	# This is the structure for when it's available
+
+	# Store pending upload data before creating the item so the callback can
+	# report the original manifest ID even when item creation fails.
+	set_meta(
+		"pending_upload",
+		{
+			"path": mdsl_path,
+			"title": title,
+			"description": description,
+			"tags": tags,
+			"visibility": visibility,
+			"local_item_id": local_item_id
+		}
+	)
 
 	# Get app ID
 	var app_id: int = steam.get_app_id() if steam else 0
@@ -203,18 +222,6 @@ func _steam_upload(
 	steam.create_item(app_id, 0)  # 0 = k_EWorkshopFileTypeCommunity
 
 	# The rest happens in callbacks
-	# Store pending upload data
-	set_meta(
-		"pending_upload",
-		{
-			"path": mdsl_path,
-			"title": title,
-			"description": description,
-			"tags": tags,
-			"visibility": visibility
-		}
-	)
-
 
 func _local_upload(
 	mdsl_path: String,
@@ -564,25 +571,32 @@ func _convert_steam_ugc_metadata(raw_item: Dictionary) -> Dictionary:
 
 
 func _on_ugc_item_created(result: int, file_id: int, needs_accept: bool) -> void:
-	if result != 1:  # k_EResultOK
-		upload_completed.emit(str(file_id), false)
-		return
-
-	# Item created, now update it with content
 	var pending: Dictionary = get_meta("pending_upload", {})
 	if pending.is_empty():
+		remove_meta("pending_upload")
 		return
 
-	# Set item content
+	var local_item_id: String = str(pending.get("local_item_id", ""))
+	if result != 1:  # k_EResultOK
+		remove_meta("pending_upload")
+		if not local_item_id.is_empty():
+			upload_completed.emit(local_item_id, false)
+		return
+
+	# Persist the Steam PublishedFileId before submitting the item update.
+	pending["item_id"] = str(file_id)
+	set_meta("pending_upload", pending)
+
+	# Item created, now update it with content
 	var update_handle: int = steam.start_item_update(steam.get_app_id(), file_id)
-	steam.set_item_title(update_handle, pending.title)
-	steam.set_item_description(update_handle, pending.description)
-	steam.set_item_visibility(update_handle, pending.visibility)
-	steam.set_item_tags(update_handle, pending.tags)
-	steam.set_item_content(update_handle, pending.path.get_base_dir())
+	steam.set_item_title(update_handle, pending.get("title", ""))
+	steam.set_item_description(update_handle, pending.get("description", ""))
+	steam.set_item_visibility(update_handle, pending.get("visibility", 0))
+	steam.set_item_tags(update_handle, pending.get("tags", PackedStringArray()))
+	steam.set_item_content(update_handle, str(pending.get("path", "")).get_base_dir())
 
 	# Extract and set preview
-	var thumbnail: Image = LevelPackager.read_thumbnail(pending.path)
+	var thumbnail: Image = LevelPackager.read_thumbnail(str(pending.get("path", "")))
 	if thumbnail:
 		var preview_path: String = WORKSHOP_CACHE + "preview_temp.png"
 		thumbnail.save_png(preview_path)
@@ -597,17 +611,24 @@ func _on_ugc_item_created(result: int, file_id: int, needs_accept: bool) -> void
 
 func _on_ugc_item_updated(result: int, needs_accept: bool) -> void:
 	var pending: Dictionary = get_meta("pending_upload", {})
-	var item_id: String = pending.get("item_id", "")
+	if pending.is_empty():
+		remove_meta("pending_upload")
+		return
+
+	var steam_item_id: String = str(pending.get("item_id", ""))
+	var local_item_id: String = str(pending.get("local_item_id", ""))
+	remove_meta("pending_upload")
 
 	if result == 1:  # k_EResultOK
-		upload_completed.emit(item_id, true)
+		if not steam_item_id.is_empty():
+			upload_completed.emit(steam_item_id, true)
 	else:
-		upload_completed.emit(item_id, false)
+		var failure_item_id := local_item_id if not local_item_id.is_empty() else steam_item_id
+		if not failure_item_id.is_empty():
+			upload_completed.emit(failure_item_id, false)
 
 	if needs_accept:
 		_log("[WorkshopManager] Update needs legal agreement acceptance", "Log")
-
-	remove_meta("pending_upload")
 
 
 ## Persistence
