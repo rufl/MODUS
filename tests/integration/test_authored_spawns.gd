@@ -117,6 +117,9 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	player_spawn.spawn_type = LevelSpawnPoint.SpawnType.PLAYER
 	source.add_child(player_spawn)
 
+	# A catalog-backed reward keeps the generated pickup runtime path real.
+	# Current high_value secret records are intentionally omitted by the
+	# generator, so this compact fixture covers the supported pickup boundary.
 	var pickup: PickupSpawnerActor = PickupSpawnerActorScript.new()
 	pickup.name = "PickupSpawner_0"
 	pickup.actor_id = "secret_reward_0"
@@ -244,10 +247,9 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	player.health = 25.0
 	document.runtime_player = player
 	await get_tree().process_frame
-
 	assert_true(_mission.start_document_mission(document))
 	var objectives: Array = _mission.active_mission_data.get("objectives", [])
-	assert_eq(objectives.size(), 5, "Generated key, door, boss, extraction and pickup objectives are discovered")
+	assert_eq(objectives.size(), 5, "Generated pickup, key, door, boss-defeat and extraction objectives are discovered")
 	assert_eq(objectives[0].id, "KeyPickup_0")
 	assert_eq(objectives[1].id, "secret_reward_0")
 	assert_eq(objectives[2].id, "LockedDoor_0")
@@ -281,18 +283,19 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	assert_true(runtime_key.interact(player), "Generated key must collect through KeyPickupActor")
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["KeyPickup_0"], 1)
+	runtime_boss.trigger(player)
+	assert_false(
+		runtime_boss.get("_encounter_started"),
+		"Generated boss must remain gated until its door objective"
+	)
+	assert_eq((runtime_boss.get("_enemies") as Dictionary).size(), 0)
+
 
 	assert_true(runtime_door.interact(player), "Generated key must unlock the generated door")
 	assert_eq(runtime_door.activation_count, 1)
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["LockedDoor_0"], 1)
 
-	runtime_boss.trigger(player)
-	assert_eq(
-		runtime_boss.activation_count,
-		0,
-		"Generated boss must remain gated until its door objective"
-	)
 	runtime_boss.trigger(player)
 	await get_tree().process_frame
 	var spawned_bosses: Dictionary = runtime_boss.get("_enemies")
