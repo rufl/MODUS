@@ -2,6 +2,8 @@ extends ModusGutTestBase
 
 const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
 const ActorScript := preload("res://shared/editor_core/actors/actor_base.gd")
+const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
+const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
 
 var _mission: MissionMgr
 var _previous: Dictionary
@@ -34,6 +36,89 @@ func _document(names: Array[String]) -> Node3D:
 		actor.set_meta("mission_objective", {"description": actor_name})
 		document.add_child(actor)
 	return document
+
+
+func test_generated_key_completion_unlocks_its_dependent_door() -> void:
+	var document: Node3D = LevelRootScript.new()
+	document.level_name = "Generated mission graph"
+	document.set_meta("mission_id", "generated_dependency_regression")
+	add_child_autofree(document)
+
+	var key: KeyPickupActor = KeyPickupActorScript.new()
+	key.name = "KeyPickup_0"
+	key.actor_id = key.name
+	key.key_id = "key_red"
+	key.set_meta(
+		"mission_objective",
+		{"description": "Collect generated red key", "order": 0}
+	)
+	document.add_child(key)
+
+	var door: DoorActor = DoorActorScript.new()
+	door.name = "LockedDoor_0"
+	door.actor_id = door.name
+	door.locked = true
+	door.required_key = "key_red"
+	door.set_meta(
+		"mission_objective",
+		{
+			"description": "Open generated red door",
+			"requires": ["KeyPickup_0"],
+			"order": 1
+		}
+	)
+	document.add_child(door)
+
+	assert_true(_mission.start_document_mission(document))
+	var objectives: Array = _mission.active_mission_data.get("objectives", [])
+	assert_eq(objectives.size(), 2)
+	assert_eq(
+		objectives[0].get("id"),
+		"KeyPickup_0",
+		"Generated objectives retain key-before-door ordering"
+	)
+	assert_eq(objectives[1].get("id"), "LockedDoor_0")
+	assert_eq(objectives[1].get("requires"), ["KeyPickup_0"])
+
+	var player := Node.new()
+	var player_script := GDScript.new()
+	player_script.source_code = (
+		"extends Node\nfunc has_item(_item_id: String) -> bool:\n\treturn true\n"
+	)
+	assert_eq(player_script.reload(), OK)
+	player.set_script(player_script)
+	add_child_autofree(player)
+
+	door.trigger(player)
+	assert_eq(door.activation_count, 0, "Door cannot activate before its generated key")
+	key.trigger(player)
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["KeyPickup_0"], 1)
+	door.trigger(player)
+	assert_eq(door.activation_count, 1, "Key completion unlocks the generated door")
+	assert_false(door.locked)
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["LockedDoor_0"], 1)
+
+
+func test_document_without_objectives_preserves_the_normal_mission() -> void:
+	_mission._begin_mission(
+		"ordinary_authored",
+		{"name": "Ordinary authored mission", "objectives": [], "ends_match": false},
+		null
+	)
+	_mission.set_process(false)
+	var expected := _mission.capture_runtime_state()
+	var document: Node3D = LevelRootScript.new()
+	document.level_name = "Ordinary authored level"
+	add_child_autofree(document)
+
+	assert_true(_mission.start_document_mission(document))
+	assert_eq(
+		_mission.capture_runtime_state(),
+		expected,
+		"Ordinary authored documents do not replace the normal mission"
+	)
 
 
 func test_invalid_dependency_graph_never_replaces_the_current_mission() -> void:

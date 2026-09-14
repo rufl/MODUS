@@ -251,6 +251,10 @@ func start_document_mission(level: Node3D) -> bool:
 				"order": authored.get("order", 0)
 			}
 		)
+	if objectives.is_empty():
+		# A document without objective metadata is an ordinary authored level.
+		# Leave any mission selected by the normal match flow untouched.
+		return true
 	for objective: Dictionary in objectives:
 		var authored: Dictionary = declarations[objective.id]
 		if authored.has("requires"):
