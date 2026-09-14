@@ -17,6 +17,7 @@ signal upload_progress(item_id: String, progress: float)
 signal upload_completed(item_id: String, success: bool)
 signal download_started(item_id: String)
 signal download_completed(item_id: String, success: bool, local_path: String)
+signal download_state_changed(item_id: String, state: String)
 signal items_loaded(items: Array[Dictionary])
 signal subscription_changed(item_id: String, subscribed: bool)
 signal browse_failed(query: String, reason: String)
@@ -24,6 +25,12 @@ signal browse_failed(query: String, reason: String)
 const WORKSHOP_CACHE := "user://workshop/"
 const WORKSHOP_DOWNLOADS := "user://workshop/downloads/"
 const WORKSHOP_UPLOADS := "user://workshop/uploads/"
+const DOWNLOAD_STATES_PATH := WORKSHOP_CACHE + "download_states.json"
+
+const DOWNLOAD_STATE_IDLE := "idle"
+const DOWNLOAD_STATE_DOWNLOADING := "downloading"
+const DOWNLOAD_STATE_INSTALLED := "installed"
+const DOWNLOAD_STATE_FAILED := "failed"
 const JSONHelperClass = preload("res://game/core/json_helper.gd")
 
 var steam_available: bool = false
@@ -31,6 +38,8 @@ var steam: Object = null  # GodotSteam singleton
 var steam_ugc_available: bool = false
 var cached_items: Dictionary = {}  # item_id -> metadata
 var subscribed_items: Array[String] = []
+var download_states: Dictionary = {}  # item_id -> idle/downloading/installed/failed
+var download_paths: Dictionary = {}  # item_id -> authoritative installed path
 var _active_browse_query_handle: int = 0
 var _active_browse_query_text: String = ""
 var _steam_ugc_unavailable_reason: String = ""
@@ -59,6 +68,10 @@ func _exit_tree() -> void:
 		var query_callback := Callable(self, "_on_ugc_query_completed")
 		if steam.is_connected("ugc_query_completed", query_callback):
 			steam.disconnect("ugc_query_completed", query_callback)
+	if steam and steam.has_signal("item_downloaded"):
+		var download_callback := Callable(self, "_on_item_downloaded")
+		if steam.is_connected("item_downloaded", download_callback):
+			steam.disconnect("item_downloaded", download_callback)
 	if steam and steam.has_signal("steam_shutdown"):
 		var shutdown_callback := Callable(self, "_on_steam_shutdown")
 		if steam.is_connected("steam_shutdown", shutdown_callback):
@@ -74,15 +87,15 @@ func _init_directories() -> void:
 func _init_steam() -> void:
 	# Check for GodotSteam singleton
 	if Engine.has_singleton("Steam"):
-		steam = Engine.get_singleton("Steam")
-		steam_available = true
-		_log("[WorkshopManager] Steam available", "Log")
-
 		# Connect Steam signals
 		if steam.has_signal("ugc_item_created"):
 			steam.ugc_item_created.connect(_on_ugc_item_created)
 		if steam.has_signal("ugc_item_updated"):
 			steam.ugc_item_updated.connect(_on_ugc_item_updated)
+		if steam.has_signal("item_downloaded"):
+			var download_callback := Callable(self, "_on_item_downloaded")
+			if not steam.is_connected("item_downloaded", download_callback):
+				steam.connect("item_downloaded", download_callback)
 		if steam.has_signal("steam_shutdown"):
 			var shutdown_callback := Callable(self, "_on_steam_shutdown")
 			if not steam.is_connected("steam_shutdown", shutdown_callback):
@@ -230,11 +243,14 @@ func _local_upload(
 	description: String,
 	tags: PackedStringArray
 ) -> void:
-	# Simulate upload by copying to local "workshop"
+	# Simulate upload by copying to local "workshop".
 	var dest_path: String = WORKSHOP_UPLOADS.path_join(manifest.id + ".mdsl")
-	DirAccess.copy_absolute(mdsl_path, dest_path)
+	var copy_error := DirAccess.copy_absolute(mdsl_path, dest_path)
+	if copy_error != OK or not FileAccess.file_exists(dest_path):
+		upload_completed.emit(manifest.id, false)
+		return
 
-	# Create metadata entry
+	# Create metadata entry only after the upload copy is authoritative.
 	var metadata := {
 		"item_id": manifest.id,
 		"title": title,
@@ -251,7 +267,7 @@ func _local_upload(
 	cached_items[manifest.id] = metadata
 	_save_cached_items()
 
-	# Simulate upload delay
+	# Simulate upload delay.
 	await get_tree().create_timer(0.5).timeout
 
 	upload_progress.emit(manifest.id, 1.0)
@@ -262,6 +278,7 @@ func _local_upload(
 
 
 func download_item(item_id: String) -> void:
+	_set_download_state(item_id, DOWNLOAD_STATE_DOWNLOADING)
 	download_started.emit(item_id)
 
 	if steam_available:
@@ -271,27 +288,65 @@ func download_item(item_id: String) -> void:
 
 
 func _steam_download(item_id: String) -> void:
-	# Note: Requires GodotSteam
+	# Note: Requires GodotSteam.
+	if not steam or not steam.has_method("download_item"):
+		_complete_download(item_id, false, "")
+		return
 	var workshop_id: int = int(item_id)
-	steam.download_item(workshop_id, true)
+	var result: Variant = steam.call("download_item", workshop_id, true)
+	if result is bool and not result:
+		_complete_download(item_id, false, "")
 
 
 func _local_download(item_id: String) -> void:
-	# Check if item exists in uploads (simulated workshop)
+	# Check if item exists in uploads (simulated workshop).
 	var source_path: String = WORKSHOP_UPLOADS.path_join(item_id + ".mdsl")
 	var dest_path: String = WORKSHOP_DOWNLOADS.path_join(item_id + ".mdsl")
+	var copy_error: int = ERR_FILE_NOT_FOUND
 
 	if FileAccess.file_exists(source_path):
-		DirAccess.copy_absolute(source_path, dest_path)
+		copy_error = DirAccess.copy_absolute(source_path, dest_path)
 
-		# Add to subscribed
-		if item_id not in subscribed_items:
-			subscribed_items.append(item_id)
-			_save_subscriptions()
+	var success := copy_error == OK and FileAccess.file_exists(dest_path)
+	if not success and FileAccess.file_exists(dest_path):
+		DirAccess.remove_absolute(dest_path)
+	if success and item_id not in subscribed_items:
+		subscribed_items.append(item_id)
+		_save_subscriptions()
+	_complete_download(item_id, success, dest_path if success else "")
 
-		download_completed.emit(item_id, true, dest_path)
+
+func _complete_download(item_id: String, success: bool, local_path: String) -> void:
+	var state := DOWNLOAD_STATE_INSTALLED if success else DOWNLOAD_STATE_FAILED
+	if success:
+		download_paths[item_id] = local_path
 	else:
-		download_completed.emit(item_id, false, "")
+		download_paths.erase(item_id)
+	_set_download_state(item_id, state)
+	download_completed.emit(item_id, success, local_path if success else "")
+
+
+func _on_item_downloaded(result: int, file_id: int) -> void:
+	var item_id := str(file_id)
+	if get_download_state(item_id) != DOWNLOAD_STATE_DOWNLOADING:
+		return
+	var success := result == _steam_constant("RESULT_OK", 1)
+	var local_path := _steam_get_item_install_path(file_id) if success else ""
+	_complete_download(item_id, success and not local_path.is_empty(), local_path)
+
+
+func _steam_get_item_install_path(file_id: int) -> String:
+	if not steam:
+		return ""
+	for method_name: String in ["getItemInstallInfo", "get_item_install_info"]:
+		if not steam.has_method(method_name):
+			continue
+		var info: Variant = steam.call(method_name, file_id)
+		if info is Dictionary:
+			return str(info.get("folder", info.get("path", "")))
+		if info is Array and not info.is_empty():
+			return str(info[0])
+	return ""
 
 
 ## Subscribe to a workshop item
@@ -315,16 +370,18 @@ func subscribe(item_id: String) -> void:
 
 
 func unsubscribe(item_id: String) -> void:
-	if steam_available:
+	if steam_available and steam and steam.has_method("unsubscribe_item"):
 		steam.unsubscribe_item(int(item_id))
 
 	subscribed_items.erase(item_id)
 	_save_subscriptions()
 
-	# Remove downloaded file
+	# Unsubscription removes local availability, independently of membership.
 	var local_path: String = WORKSHOP_DOWNLOADS.path_join(item_id + ".mdsl")
 	if FileAccess.file_exists(local_path):
 		DirAccess.remove_absolute(local_path)
+	download_paths.erase(item_id)
+	_set_download_state(item_id, DOWNLOAD_STATE_IDLE)
 
 	subscription_changed.emit(item_id, false)
 
@@ -343,14 +400,47 @@ func get_item_metadata(item_id: String) -> Dictionary:
 	return cached_items.get(item_id, {})
 
 
-## Get local path for downloaded item
+## Get local path for an installed item.
 
 
 func get_item_local_path(item_id: String) -> String:
+	if not is_installed(item_id):
+		return ""
+	var installed_path := str(download_paths.get(item_id, ""))
+	if not installed_path.is_empty():
+		return installed_path
 	var path: String = WORKSHOP_DOWNLOADS.path_join(item_id + ".mdsl")
 	if FileAccess.file_exists(path):
 		return path
 	return ""
+
+
+## Get the authoritative download/install state for an item.
+
+
+func get_download_state(item_id: String) -> String:
+	return str(download_states.get(item_id, DOWNLOAD_STATE_IDLE))
+
+
+func is_installed(item_id: String) -> bool:
+	if get_download_state(item_id) != DOWNLOAD_STATE_INSTALLED:
+		return false
+	if steam_available and not download_paths.get(item_id, "").is_empty():
+		return true
+	return FileAccess.file_exists(WORKSHOP_DOWNLOADS.path_join(item_id + ".mdsl"))
+
+
+func _set_download_state(item_id: String, state: String) -> void:
+	if state not in [
+		DOWNLOAD_STATE_IDLE,
+		DOWNLOAD_STATE_DOWNLOADING,
+		DOWNLOAD_STATE_INSTALLED,
+		DOWNLOAD_STATE_FAILED,
+	]:
+		state = DOWNLOAD_STATE_FAILED
+	download_states[item_id] = state
+	_save_download_states()
+	download_state_changed.emit(item_id, state)
 
 
 ## Search/browse workshop items
@@ -487,7 +577,10 @@ func _local_browse(query: String, tags: PackedStringArray, _sort_by: String) -> 
 			if not has_tag:
 				continue
 
-		results.append(item)
+		var browse_item := item.duplicate(true)
+		browse_item["download_state"] = get_download_state(item_id)
+		browse_item["subscribed"] = is_subscribed(item_id)
+		results.append(browse_item)
 
 	items_loaded.emit(results)
 
@@ -636,22 +729,17 @@ func _on_ugc_item_updated(result: int, needs_accept: bool) -> void:
 
 func _load_cached_items() -> void:
 	var path: String = WORKSHOP_CACHE + "items_cache.json"
-	if not FileAccess.file_exists(path):
-		return
-
-	var file := FileAccess.open(path, FileAccess.READ)
-	if not file:
-		return
-
-	var json: String = file.get_as_text()
-	file.close()
-
-	var parsed: Variant = JSON.parse_string(json)
-	if parsed is Dictionary:
-		cached_items = parsed
+	if FileAccess.file_exists(path):
+		var file := FileAccess.open(path, FileAccess.READ)
+		if file:
+			var json: String = file.get_as_text()
+			file.close()
+			var parsed: Variant = JSON.parse_string(json)
+			if parsed is Dictionary:
+				cached_items = parsed
 
 	_load_subscriptions()
-
+	_load_download_states()
 
 func _save_cached_items() -> void:
 	var path: String = WORKSHOP_CACHE + "items_cache.json"
@@ -690,6 +778,33 @@ func _save_subscriptions() -> void:
 
 ## Check if item is subscribed
 
+func _load_download_states() -> void:
+	if not FileAccess.file_exists(DOWNLOAD_STATES_PATH):
+		return
+	var file := FileAccess.open(DOWNLOAD_STATES_PATH, FileAccess.READ)
+	if not file:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if not parsed is Dictionary:
+		return
+	download_states.clear()
+	for item_id: String in parsed:
+		var state := str(parsed[item_id])
+		if state in [
+			DOWNLOAD_STATE_IDLE,
+			DOWNLOAD_STATE_DOWNLOADING,
+			DOWNLOAD_STATE_INSTALLED,
+			DOWNLOAD_STATE_FAILED,
+		]:
+			download_states[item_id] = state
+
+
+func _save_download_states() -> void:
+	var file := FileAccess.open(DOWNLOAD_STATES_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSONHelperClass.safe_stringify(download_states, "\t"))
+		file.close()
 
 func is_subscribed(item_id: String) -> bool:
 	return item_id in subscribed_items

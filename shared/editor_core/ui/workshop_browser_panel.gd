@@ -352,7 +352,10 @@ func _update_details_panel() -> void:
 		subscribe_btn.text = "Unsubscribe" if is_subscribed else "Subscribe"
 
 	if play_btn:
-		play_btn.visible = is_subscribed
+		var is_installed := false
+		if workshop_manager and workshop_manager.has_method("is_installed"):
+			is_installed = workshop_manager.is_installed(selected_item_id)
+		play_btn.visible = is_installed
 
 
 func _on_subscribe_pressed() -> void:
