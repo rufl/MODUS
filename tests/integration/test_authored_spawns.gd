@@ -6,6 +6,7 @@ const EnemySpawnerActorScript := preload("res://shared/editor_core/actors/enemy_
 const PickupSpawnerActorScript := preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
 const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
+const SwitchActorScript := preload("res://shared/editor_core/actors/switch_actor.gd")
 const SpawnManagerScript := preload("res://game/world/enemy_spawn_manager.gd")
 const PlayerScene := preload("res://game/entities/player/player.tscn")
 
@@ -37,6 +38,11 @@ class PickupRecipient:
 class GeneratedPlayer:
 	extends CharacterBody3D
 
+	var health: int = 25
+	var max_health: int = 100
+	var armor: int = 0
+	var max_armor: int = 100
+	var blood_overlay: Control = null
 	var collected_keys: Dictionary = {}
 
 	func collect_key(key_id: String) -> void:
@@ -44,7 +50,6 @@ class GeneratedPlayer:
 
 	func has_item(item_id: String) -> bool:
 		return collected_keys.has(item_id)
-
 
 func test_generated_key_collection_unlocks_dependent_door() -> void:
 	var document: Node3D = LevelRootScript.new()
@@ -94,6 +99,222 @@ func test_generated_key_collection_unlocks_dependent_door() -> void:
 	assert_eq(door.activation_count, 1)
 	assert_false(door.locked)
 	assert_eq(_mission.objective_state.get("LockedDoor_0", -1), 1)
+
+## This keeps generation deterministic and cheap by packing a minimal LevelRoot
+## that mirrors MapGenerator._build_map_scene's serialized actor records. The
+## full procedural layout/navigation phases are intentionally out of scope;
+## every discovered objective and completion below uses production actors.
+func test_generated_serialized_session_progression_completes_extraction() -> void:
+	var source: Node3D = LevelRootScript.new()
+	source.name = "GeneratedSessionLevel"
+	source.level_name = "Generated Session Progression"
+	source.set_meta("mission_id", "generated_session_progression")
+	source.set_meta("document_runtime_session", true)
+	_world.add_child(source)
+
+	var player_spawn: LevelSpawnPoint = SpawnPointScript.new()
+	player_spawn.name = "PlayerSpawn"
+	player_spawn.spawn_type = LevelSpawnPoint.SpawnType.PLAYER
+	source.add_child(player_spawn)
+
+	var pickup: PickupSpawnerActor = PickupSpawnerActorScript.new()
+	pickup.name = "PickupSpawner_0"
+	pickup.actor_id = "secret_reward_0"
+	pickup.pickup_category = PickupSpawnerActor.PickupCategory.HEALTH
+	pickup.item_id = "health_potion"
+	pickup.auto_spawn = true
+	pickup.one_shot = true
+	pickup.set_meta(
+		"generation",
+		{"id": "secret_reward_0", "type": "health", "item_id": "health_potion", "secret_room_id": 0}
+	)
+	pickup.set_meta(
+		"mission_objective",
+		{"description": "Discover generated secret reward", "optional": true, "order": 9000}
+	)
+	source.add_child(pickup)
+
+	var key: KeyPickupActor = KeyPickupActorScript.new()
+	key.name = "KeyPickup_0"
+	key.actor_id = key.name
+	key.key_id = "key_red"
+	key.set_meta("generation", {"color": "RED", "position": Vector3(2, 0, 0)})
+	key.set_meta(
+		"mission_objective",
+		{"description": "Collect generated red key", "order": 0}
+	)
+	source.add_child(key)
+
+	var door: DoorActor = DoorActorScript.new()
+	door.name = "LockedDoor_0"
+	door.actor_id = door.name
+	door.locked = true
+	door.required_key = "key_red"
+	door.set_meta("generation", {"color": "RED", "position": Vector3(4, 0, 0)})
+	door.set_meta(
+		"mission_objective",
+		{
+			"description": "Open generated red door",
+			"requires": ["KeyPickup_0"],
+			"order": 1
+		}
+	)
+	source.add_child(door)
+
+	var boss: EnemySpawnerActor = EnemySpawnerActorScript.new()
+	boss.name = "EnemySpawner_0"
+	boss.actor_id = "boss_0"
+	boss.enemy_id = "warlord"
+	boss.tier = 4
+	boss.auto_spawn = true
+	boss.spawn_count = 1
+	boss.spawn_interval = 0.0
+	boss.set_meta(
+		"generation",
+		{
+			"id": "boss_0",
+			"type": "boss",
+			"enemy_id": "warlord",
+			"tier": 4,
+			"arena_id": 0,
+			"world_position": Vector3(6, 0, 0)
+		}
+	)
+	boss.set_meta(
+		"mission_objective",
+		{"description": "Defeat generated boss", "final": true, "order": 1000}
+	)
+	source.add_child(boss)
+
+	var extraction: SwitchActor = SwitchActorScript.new()
+	extraction.name = "GeneratedExtraction"
+	extraction.actor_id = "generated_extraction"
+	extraction.one_shot = true
+	extraction.set_meta(
+		"generation",
+		{
+			"id": "generated_extraction",
+			"actor_id": "generated_extraction",
+			"position": Vector3(8, 0, 0),
+			"prerequisites": ["KeyPickup_0", "LockedDoor_0", "boss_0"]
+		}
+	)
+	extraction.set_meta(
+		"mission_objective",
+		{
+			"description": "Reach the generated extraction",
+			"final": true,
+			"requires": ["KeyPickup_0", "LockedDoor_0", "boss_0"],
+			"order": 2000
+		}
+	)
+	source.add_child(extraction)
+
+	# Pack and instantiate exactly as a generated level is handed to runtime.
+	source.prepare_for_save()
+	var packed := PackedScene.new()
+	assert_eq(packed.pack(source), OK, "Generated-style LevelRoot must serialize")
+	var document: Node3D = packed.instantiate() as Node3D
+	assert_not_null(document, "Serialized generated LevelRoot must instantiate")
+	if not document:
+		return
+	document.set_meta("document_runtime_session", true)
+	_world.add_child(document)
+	var runtime_pickup := document.get_node("PickupSpawner_0") as PickupSpawnerActor
+	var runtime_key := document.get_node("KeyPickup_0") as KeyPickupActor
+	var runtime_door := document.get_node("LockedDoor_0") as DoorActor
+	var runtime_boss := document.get_node("EnemySpawner_0") as EnemySpawnerActor
+	var runtime_extraction := document.get_node("GeneratedExtraction") as SwitchActor
+	assert_not_null(runtime_pickup)
+	assert_not_null(runtime_key)
+	assert_not_null(runtime_door)
+	assert_not_null(runtime_boss)
+	assert_not_null(runtime_extraction)
+	var player := PlayerScene.instantiate() as Player
+	assert_not_null(player, "Generated session must use the production player contract")
+	if not player:
+		return
+	player.name = "GeneratedSessionPlayer"
+	player.isolated_session = true
+	_world.add_child(player)
+	await get_tree().process_frame
+	assert_not_null(player.health_component, "Production player must expose HealthComponent")
+	if not player.health_component:
+		return
+	player.health = 25.0
+	document.runtime_player = player
+	await get_tree().process_frame
+
+	assert_true(_mission.start_document_mission(document))
+	var objectives: Array = _mission.active_mission_data.get("objectives", [])
+	assert_eq(objectives.size(), 5, "Generated key, door, boss, extraction and pickup objectives are discovered")
+	assert_eq(objectives[0].id, "KeyPickup_0")
+	assert_eq(objectives[1].id, "secret_reward_0")
+	assert_eq(objectives[2].id, "LockedDoor_0")
+	assert_eq(objectives[3].id, "boss_0")
+	assert_eq(objectives[4].id, "generated_extraction")
+	assert_eq(objectives[2].requires, ["KeyPickup_0"])
+	assert_eq(objectives[3].requires, ["KeyPickup_0", "LockedDoor_0"])
+	assert_eq(objectives[4].requires, ["KeyPickup_0", "LockedDoor_0", "boss_0"])
+
+	for actor: Node in document.find_children("*", "", true, false):
+		if actor is ActorBase:
+			actor.start_runtime()
+	await get_tree().process_frame
+
+	var spawned_pickup := runtime_pickup.get("_current_pickup") as PickupBase
+	# The production spawner created the real catalog pickup; collection drives
+	# the objective through PickupBase -> PickupSpawnerActor, not test state.
+	assert_not_null(spawned_pickup, "Generated pickup actor must spawn a real pickup")
+	if spawned_pickup:
+		player.global_position = spawned_pickup.global_position
+		assert_true(
+			spawned_pickup.collect_for_player(player, player.get_multiplayer_authority()),
+			"Generated pickup must complete through PickupBase's public API"
+		)
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["secret_reward_0"], 1)
+
+	assert_false(runtime_door.interact(player), "Generated door must remain locked before its key")
+	assert_eq(runtime_door.activation_count, 0)
+	assert_true(runtime_key.interact(player), "Generated key must collect through KeyPickupActor")
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["KeyPickup_0"], 1)
+
+	assert_true(runtime_door.interact(player), "Generated key must unlock the generated door")
+	assert_eq(runtime_door.activation_count, 1)
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["LockedDoor_0"], 1)
+
+	runtime_boss.trigger(player)
+	assert_eq(
+		runtime_boss.activation_count,
+		0,
+		"Generated boss must remain gated until its door objective"
+	)
+	runtime_boss.trigger(player)
+	await get_tree().process_frame
+	var spawned_bosses: Dictionary = runtime_boss.get("_enemies")
+	assert_eq(spawned_bosses.size(), 1, "Generated boss encounter must spawn one production enemy")
+	var spawned_boss: Enemy = spawned_bosses.get(0) as Enemy
+	assert_not_null(spawned_boss, "Generated boss encounter must expose its production enemy")
+	if spawned_boss:
+		var health := spawned_boss.get_node_or_null("HealthComponent") as HealthComponent
+		assert_not_null(health, "Generated boss must use the production health lifecycle")
+		if health:
+			spawned_boss.take_damage(DamageInfo.create(health.current_health, DamageInfo.DamageType.BULLET))
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["boss_0"], 1, "Lethal damage must complete the boss objective")
+
+	assert_true(
+		runtime_extraction.interact(player),
+		"Generated extraction must activate after all prerequisites"
+	)
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state["generated_extraction"], 1)
+	assert_eq(_mission.completed_mission_id, "generated_session_progression")
 
 
 
