@@ -50,10 +50,15 @@ func place_monster_spawns(context: GenerationContext) -> void:
 		var progression := _calculate_room_progression(room, player_start, context)
 		var tier := _calculate_monster_tier(progression, context)
 
-		# Create spawn point
+		# IDs are part of the generated record contract. They remain stable for a
+		# seeded layout and let the packed actor retain identity after reordering
+		# unrelated scene children.
+		var spawn_id := "monster_%d" % context.monster_spawns.size()
 		var spawn_point := {
+			"id": spawn_id,
 			"position": spawn_pos,
 			"type": "monster",
+			"enemy_id": "grunt_basic",
 			"tier": tier,
 			"room_id": room.id,
 			"world_position":
@@ -70,6 +75,9 @@ func place_monster_spawns(context: GenerationContext) -> void:
 
 	if monsters_placed < total_monsters:
 		push_warning("Only placed %d/%d monsters" % [monsters_placed, total_monsters])
+
+
+
 
 
 ## Calculate total monster count based on density and map size
@@ -406,10 +414,12 @@ func _place_weapons(context: GenerationContext, player_start: Vector2i) -> void:
 		var progression := _calculate_room_progression(room, player_start, context)
 		var quality := _calculate_item_quality(progression)
 
-		# Create weapon spawn
 		var spawn_point := {
+			"id": "weapon_%d" % context.item_spawns.size(),
 			"position": spawn_pos,
 			"type": "weapon",
+			"item_id": "weapon_shotgun",
+			"weapon_id": "shotgun",
 			"quality": quality,
 			"room_id": room.id,
 			"world_position":
@@ -455,10 +465,11 @@ func _place_ammo(context: GenerationContext, player_start: Vector2i) -> void:
 		var progression := _calculate_room_progression(room, player_start, context)
 		var quality := _calculate_item_quality(progression)
 
-		# Create ammo spawn
 		var spawn_point := {
+			"id": "ammo_%d" % context.item_spawns.size(),
 			"position": spawn_pos,
 			"type": "ammo",
+			"item_id": "ammo_clip",
 			"quality": quality,
 			"room_id": room.id,
 			"world_position":
@@ -592,10 +603,11 @@ func place_health_pickups(context: GenerationContext) -> void:
 		var progression := _calculate_room_progression(room, player_start, context)
 		var amount := _calculate_health_amount(progression)
 
-		# Create health pickup spawn
 		var spawn_point := {
+			"id": "health_%d" % context.item_spawns.size(),
 			"position": spawn_pos,
 			"type": "health",
+			"item_id": "health_potion",
 			"amount": amount,
 			"room_id": room.id,
 			"world_position":

@@ -116,10 +116,18 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	var item_records: Array = metadata["gameplay"]["items"]
 	assert_eq(enemy_spawns.size(), monster_records.size(), "Typed enemy markers remain available")
 	assert_eq(enemy_actors.size(), monster_records.size(), "Every monster record needs an enemy actor")
-	assert_eq(item_actors.size(), item_records.size(), "Every item record needs a pickup actor")
+	var supported_item_records: Array = []
+	for record: Dictionary in item_records:
+		if str(record.get("type", "")) in ["weapon", "ammo", "health", "armor", "powerup"]:
+			supported_item_records.append(record)
+	assert_eq(
+		item_actors.size(),
+		supported_item_records.size(),
+		"Only catalog-backed item records need pickup actors"
+	)
 	for index in range(monster_records.size()):
 		var record: Dictionary = monster_records[index]
-		var marker_enemy_id := str(record.get("enemy_id", record.get("id", "")))
+		var marker_enemy_id := str(record.get("enemy_id", ""))
 		var actor_enemy_id := marker_enemy_id
 		if actor_enemy_id.is_empty():
 			actor_enemy_id = "warlord" if record.get("type", "") == "boss" else "grunt_basic"
@@ -128,14 +136,33 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 		assert_eq(enemy_spawns[index].enemy_id, marker_enemy_id)
 		var actor := enemy_actors[index]
 		assert_eq(actor.name, "EnemySpawner_%d" % index, "Enemy actor names are stable")
+		assert_eq(actor.actor_id, record.get("id"))
 		assert_eq(actor.get_meta("generation"), record)
 		assert_eq(actor.global_position, record["world_position"])
 		assert_eq(actor.enemy_id, actor_enemy_id)
 		assert_true(actor.auto_spawn)
-	for index in range(item_records.size()):
-		var record: Dictionary = item_records[index]
+		if record.get("type", "") == "boss":
+			assert_eq(
+				actor.get_meta("mission_objective"),
+				{
+					"description": "Defeat generated boss",
+					"final": true,
+					"order": 1000 + index
+				},
+				"Generated bosses link to the supported mission objective runtime"
+			)
+	var item_index := 0
+	for item_record_index in range(item_records.size()):
+		var record: Dictionary = item_records[item_record_index]
 		var item_type := str(record.get("type", ""))
-		var item_id := str(record.get("item_id", record.get("id", "")))
+		if item_type not in ["weapon", "ammo", "health", "armor", "powerup"]:
+			assert_eq(
+				record.get("id", ""),
+				"secret_reward_%d" % int(record.get("secret_room_id", -1)),
+				"Unsupported secret rewards retain a stable generated record"
+			)
+			continue
+		var item_id := str(record.get("item_id", ""))
 		var category := PickupSpawnerActor.PickupCategory.HEALTH
 		var weapon_id := str(record.get("weapon_id", ""))
 		match item_type:
@@ -148,10 +175,20 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 				item_id = item_id if not item_id.is_empty() else "ammo_clip"
 			"health":
 				item_id = item_id if not item_id.is_empty() else "health_potion"
-			_:
-				item_id = item_id if not item_id.is_empty() else "health_potion"
-		var actor := item_actors[index]
-		assert_eq(actor.name, "PickupSpawner_%d" % index, "Pickup actor names are stable")
+			"armor":
+				category = PickupSpawnerActor.PickupCategory.ARMOR
+				item_id = item_id if not item_id.is_empty() else "armor_pickup"
+			"powerup":
+				category = PickupSpawnerActor.PickupCategory.POWERUP
+				item_id = item_id if not item_id.is_empty() else "speed_powerup"
+		var actor := item_actors[item_index]
+		item_index += 1
+		assert_eq(
+			actor.name,
+			"PickupSpawner_%d" % item_record_index,
+			"Item actor names are stable"
+		)
+		assert_eq(actor.actor_id, record.get("id"))
 		assert_eq(actor.get_meta("generation"), record)
 		assert_eq(actor.global_position, record.get("world_position", record.get("position")))
 		assert_eq(actor.item_id, item_id)

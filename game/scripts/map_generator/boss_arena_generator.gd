@@ -440,8 +440,11 @@ func _find_opposite_edge_cell(
 func place_boss_spawn_marker(arena: Room, context: GenerationContext) -> void:
 	# Place boss spawn at arena center
 	var spawn_point := {
+		"id": "boss_%d" % context.monster_spawns.size(),
 		"position": arena.center,
 		"type": "boss",
+		"enemy_id": "warlord",
+		"tier": 4,
 		"arena_id": arena.id,
 		"world_position": Vector3(arena.center.x * 2.0, 0.0, arena.center.y * 2.0)
 	}

@@ -258,9 +258,15 @@ func place_secret_items(context: GenerationContext) -> void:
 		var center_pos := _calculate_room_center(secret_room.cells)
 		var cell: Cell = context.grid[center_pos.y][center_pos.x]
 
-		# Place high-value item spawn point
+		# Place high-value item spawn point. The source format supplies rarity but
+		# no catalog item ID, so preserve that semantic without inventing a pickup.
+		var reward_position := Vector3(
+			center_pos.x * 2.0 + 1.0, cell.height, center_pos.y * 2.0 + 1.0
+		)
 		var item_spawn := {
-			"position": Vector3(center_pos.x * 2.0 + 1.0, cell.height, center_pos.y * 2.0 + 1.0),
+			"id": "secret_reward_%d" % secret_room.id,
+			"position": reward_position,
+			"world_position": reward_position,
 			"type": "high_value",
 			"item_tier": "rare",
 			"secret_room_id": secret_room.id

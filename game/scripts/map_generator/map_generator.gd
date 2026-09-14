@@ -1453,9 +1453,10 @@ func _generated_enemy_id(record: Dictionary) -> String:
 
 func _generated_item_config(record: Dictionary) -> Dictionary:
 	var item_type := str(record.get("type", ""))
-	var item_id := str(record.get("item_id", record.get("id", "")))
+	var item_id := str(record.get("item_id", ""))
 	var weapon_id := str(record.get("weapon_id", ""))
 	var category := PickupSpawnerActor.PickupCategory.HEALTH
+	var supported := true
 
 	match item_type:
 		"weapon":
@@ -1481,12 +1482,16 @@ func _generated_item_config(record: Dictionary) -> Dictionary:
 			if item_id.is_empty():
 				item_id = "speed_powerup"
 		_:
-			# Secret/high-value records do not yet carry a concrete catalog ID.
-			# Keep them as a valid health pickup until that generator supplies one.
-			if item_id.is_empty():
-				item_id = "health_potion"
+			# Secret/high-value records currently provide rarity only. Do not
+			# silently turn an unspecified reward into an unrelated health item.
+			supported = false
 
-	return {"category": category, "item_id": item_id, "weapon_id": weapon_id}
+	return {
+		"supported": supported,
+		"category": category,
+		"item_id": item_id,
+		"weapon_id": weapon_id
+	}
 
 
 ## Build final map scene from generation context
@@ -1527,12 +1532,21 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 
 		var enemy_actor: EnemySpawnerActor = EnemySpawnerActorScript.new()
 		enemy_actor.name = "EnemySpawner_%d" % index
-		enemy_actor.actor_id = enemy_actor.name
+		enemy_actor.actor_id = str(record.get("id", enemy_actor.name))
 		enemy_actor.enemy_id = _generated_enemy_id(record)
 		enemy_actor.tier = int(record.get("tier", 1))
 		enemy_actor.auto_spawn = true
 		enemy_actor.position = world_position
 		enemy_actor.set_meta("generation", record.duplicate(true))
+		if record.get("type", "") == "boss":
+			enemy_actor.set_meta(
+				"mission_objective",
+				{
+					"description": "Defeat generated boss",
+					"final": true,
+					"order": 1000 + index
+				}
+			)
 		root.add_child(enemy_actor)
 
 	for index in range(generation_context.item_spawns.size()):
@@ -1541,15 +1555,26 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 			"world_position", record.get("position", Vector3.ZERO)
 		)
 		var item_config := _generated_item_config(record)
+		if not item_config["supported"]:
+			continue
 		var item_actor: PickupSpawnerActor = PickupSpawnerActorScript.new()
 		item_actor.name = "PickupSpawner_%d" % index
-		item_actor.actor_id = item_actor.name
+		item_actor.actor_id = str(record.get("id", item_actor.name))
 		item_actor.pickup_category = item_config["category"]
 		item_actor.item_id = item_config["item_id"]
 		item_actor.weapon_id = item_config["weapon_id"]
 		item_actor.auto_spawn = true
 		item_actor.position = world_position
 		item_actor.set_meta("generation", record.duplicate(true))
+		if record.has("secret_room_id"):
+			item_actor.set_meta(
+				"mission_objective",
+				{
+					"description": "Discover generated secret reward",
+					"optional": true,
+					"order": 9000 + index
+				}
+			)
 		root.add_child(item_actor)
 	for index in range(generation_context.key_placements.size()):
 		var record: Dictionary = generation_context.key_placements[index]
