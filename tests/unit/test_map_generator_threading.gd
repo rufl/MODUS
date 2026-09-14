@@ -10,18 +10,141 @@ const PickupSpawnerScript: GDScript = preload("res://shared/editor_core/actors/p
 const KeyPickupActorScript: GDScript = preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript: GDScript = preload("res://shared/editor_core/actors/door_actor.gd")
 const SwitchActorScript: GDScript = preload("res://shared/editor_core/actors/switch_actor.gd")
+const PlayerScene: PackedScene = preload("res://game/entities/player/player.tscn")
+var _mission: MissionMgr
+var _previous_mission: Dictionary
+var _previous_mission_level: Node3D
 var map_generator: Node
 
 
 func before_each() -> void:
 	map_generator = MapGeneratorScript.new()
 	add_child_autofree(map_generator)
+	_mission = MissionMgr.get_instance()
+	if _mission:
+		_previous_mission = _mission.capture_runtime_state()
+		_previous_mission_level = _mission.mission_level
 
 
 func after_each() -> void:
+	if _mission and not _previous_mission.is_empty():
+		_mission.restore_runtime_state(_previous_mission, _previous_mission_level)
 	map_generator.cancel_generation()
 	DirAccess.remove_absolute("user://generated_roundtrip.tscn")
 	DirAccess.remove_absolute("user://generated_roundtrip.json")
+
+
+func test_generated_boss_session_completes_after_lethal_defeat_and_extraction() -> void:
+	assert_not_null(_mission, "Generated session requires the production MissionManager")
+	if not _mission:
+		return
+
+	var context: GenerationContext = GenerationContextScript.new()
+	var cell: Cell = CellScript.new(Cell.Type.ROOM)
+	cell.room_id = 0
+	context.grid = [[cell]]
+	context.grid_size = Vector2i.ONE
+	context.player_start_position = Vector2i.ZERO
+	context.exit_position = Vector2i.ZERO
+	context.monster_spawns = [
+		{
+			"id": "boss_0",
+			"type": "boss",
+			"enemy_id": "warlord",
+			"tier": 4,
+			"world_position": Vector3(4.0, 0.0, 4.0)
+		}
+	]
+	map_generator.theme_manager.set_theme(GenerationConfig.ThemeType.TECH)
+	map_generator.generation_context = context
+
+	var gameplay_metadata: Dictionary = map_generator._build_gameplay_metadata()
+	assert_eq(gameplay_metadata["monsters"], context.monster_spawns)
+	assert_eq(
+		gameplay_metadata["extraction"]["prerequisites"],
+		["boss_0"],
+		"Generated extraction metadata must require the generated boss"
+	)
+	var generated_scene: PackedScene = map_generator._build_map_scene(
+		{"seed": "generated-boss-session", "gameplay": gameplay_metadata}
+	)
+	assert_not_null(generated_scene, "Generated boss session must pack")
+	if not generated_scene:
+		return
+
+	var document := generated_scene.instantiate() as Node3D
+	assert_not_null(document, "Generated boss session must instantiate")
+	if not document:
+		return
+	document.set_meta("mission_id", "generated_boss_session")
+	document.set_meta("document_runtime_session", true)
+	add_child_autofree(document)
+
+	var runtime_boss := document.get_node("EnemySpawner_0") as EnemySpawnerActor
+	var runtime_extraction := document.get_node("GeneratedExtraction") as SwitchActor
+	assert_not_null(runtime_boss, "Generated scene must contain its production boss spawner")
+	assert_not_null(runtime_extraction, "Generated scene must contain its production extraction")
+	if not runtime_boss or not runtime_extraction:
+		return
+	assert_eq(
+		runtime_boss.get_meta("mission_objective"),
+		{"description": "Defeat generated boss", "final": true, "order": 1000},
+		"Boss objective must come from generated metadata"
+	)
+	assert_eq(
+		runtime_extraction.get_meta("mission_objective"),
+		{
+			"description": "Reach the generated extraction",
+			"final": true,
+			"requires": ["boss_0"],
+			"order": 2000
+		}
+	)
+
+	var player := PlayerScene.instantiate() as Player
+	assert_not_null(player, "Generated session must use the production player")
+	if not player:
+		return
+	player.name = "GeneratedBossSessionPlayer"
+	player.isolated_session = true
+	add_child_autofree(player)
+	await get_tree().process_frame
+	document.runtime_player = player
+
+	assert_true(_mission.start_document_mission(document))
+	assert_eq(_mission.objective_state.get("boss_0", -1), 0)
+	assert_eq(_mission.objective_state.get("generated_extraction", -1), 0)
+	runtime_boss.start_runtime()
+	runtime_extraction.start_runtime()
+	await get_tree().process_frame
+
+	var spawned_bosses: Dictionary = runtime_boss.get("_enemies")
+	assert_eq(spawned_bosses.size(), 1, "Generated boss objective must spawn one boss")
+	var spawned_boss := spawned_bosses.get(0) as Enemy
+	assert_not_null(spawned_boss, "Generated boss objective must expose its production enemy")
+	if not spawned_boss:
+		return
+	assert_false(
+		runtime_extraction.interact(player),
+		"Generated extraction must remain gated before lethal boss defeat"
+	)
+	assert_eq(_mission.objective_state.get("generated_extraction", -1), 0)
+
+	var health := spawned_boss.get_node_or_null("HealthComponent") as HealthComponent
+	assert_not_null(health, "Generated boss must expose production health")
+	if not health:
+		return
+	spawned_boss.take_damage(DamageInfo.create(health.current_health, DamageInfo.DamageType.BULLET))
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state.get("boss_0", -1), 1)
+	assert_eq(_mission.objective_state.get("generated_extraction", -1), 0)
+	assert_true(runtime_extraction.interact(player), "Extraction must activate after boss defeat")
+	_mission._process(0.0)
+	assert_eq(_mission.objective_state.get("generated_extraction", -1), 1)
+	assert_eq(_mission.completed_mission_id, "generated_boss_session")
+
 
 func test_small_seeded_generation_emits_level_root_and_objective_records() -> void:
 	var config := GenerationConfig.new()
