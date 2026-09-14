@@ -7,7 +7,7 @@ const PickupSpawnerActorScript := preload("res://shared/editor_core/actors/picku
 const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
 const SpawnManagerScript := preload("res://game/world/enemy_spawn_manager.gd")
-
+const PlayerScene := preload("res://game/entities/player/player.tscn")
 
 class SpawnWorld:
 	extends "res://game/world/world.gd"
@@ -284,6 +284,95 @@ func test_generated_actor_runtime_startup_preserves_metadata_and_save_boundary()
 				saved_document.get_node_or_null(NodePath(spawned_pickup.name)),
 				"Runtime pickup must be excluded from the authored scene"
 			)
+
+func test_generated_health_spawner_collects_catalog_effect_and_completes() -> void:
+	var player := PlayerScene.instantiate() as Player
+	assert_not_null(player, "Generated pickup completion needs the production player contract")
+	if not player:
+		return
+	player.name = "GeneratedHealthCollector"
+	player.isolated_session = true
+	_world.add_child(player)
+	await get_tree().process_frame
+	var health := player.get_node_or_null("HealthComponent") as HealthComponent
+	assert_not_null(health, "Production player must expose HealthComponent")
+	if not health:
+		return
+	health.set_health(25.0)
+
+	_level.set_meta("document_runtime_session", true)
+	_level.runtime_player = player
+	var spawner: PickupSpawnerActor = PickupSpawnerActorScript.new()
+	spawner.name = "GeneratedHealthSpawner"
+	spawner.actor_id = "generated_health"
+	spawner.pickup_category = PickupSpawnerActor.PickupCategory.HEALTH
+	spawner.item_id = "health_potion"
+	spawner.auto_spawn = true
+	spawner.one_shot = true
+	spawner.position = Vector3(1, 0, 0)
+	_level.add_child(spawner)
+	await get_tree().process_frame
+	spawner.start_runtime()
+	await get_tree().process_frame
+
+	var pickup := spawner.get("_current_pickup") as PickupBase
+	assert_not_null(pickup, "Generated health spawner must create a real PickupBase")
+	if not pickup:
+		return
+	assert_true(pickup is HealthPickup)
+	assert_eq((pickup as HealthPickup).tier, HealthPickup.HealthTier.LARGE)
+	player.global_position = pickup.global_position
+	assert_true(health.current_health < health.max_health)
+	assert_true(
+		pickup.collect_for_player(player, player.get_multiplayer_authority()),
+		"Collection must use PickupBase's authoritative public API"
+	)
+	assert_eq(health.current_health, 75.0, "Catalog health potion must restore its advertised 50 HP")
+	assert_true(pickup.collected)
+	assert_false(
+		pickup.collect_for_player(player, player.get_multiplayer_authority()),
+		"Collected pickup must reject duplicate application"
+	)
+	assert_eq(spawner.capture_runtime_state().pickup_phase, "collected")
+	assert_eq(spawner.activation_count, 1)
+
+
+func test_generated_enemy_damage_marks_health_dead_and_clears_encounter() -> void:
+	_level.set_meta("document_runtime_session", true)
+	var encounter: EnemySpawnerActor = EnemySpawnerActorScript.new()
+	encounter.name = "GeneratedEnemySpawner"
+	encounter.actor_id = "generated_enemy"
+	encounter.enemy_id = "grunt_basic"
+	encounter.auto_spawn = true
+	encounter.spawn_count = 1
+	encounter.spawn_interval = 0.0
+	_level.add_child(encounter)
+	await get_tree().process_frame
+	encounter.start_runtime()
+	await get_tree().process_frame
+
+	var enemy := _level.get_node_or_null("EncounterEnemy_0") as Enemy
+	assert_not_null(enemy, "Generated enemy spawner must create its encounter child")
+	if not enemy:
+		return
+	var health := enemy.get_node_or_null("HealthComponent") as HealthComponent
+	assert_not_null(health, "EnemyBuilder output must include HealthComponent")
+	if not health:
+		return
+	var damage := DamageInfo.create(
+		health.current_health, DamageInfo.DamageType.BULLET
+	)
+	enemy.take_damage(damage)
+	assert_true(health.is_dead, "Lethal DamageInfo must close the enemy health lifecycle")
+	assert_true(enemy.is_dead)
+	await get_tree().process_frame
+
+	var state := encounter.capture_runtime_state()
+	assert_true(state.encounter_cleared, "Enemy spawner must complete after its generated enemy dies")
+	assert_eq(state.enemies.size(), 1)
+	assert_false(state.enemies[0].alive)
+	assert_eq(encounter.activation_count, 1)
+
 
 
 func test_nested_authored_enemy_spawns_without_legacy_arena_enemies() -> void:
