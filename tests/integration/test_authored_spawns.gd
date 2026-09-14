@@ -272,6 +272,7 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 			spawned_pickup.collect_for_player(player, player.get_multiplayer_authority()),
 			"Generated pickup must complete through PickupBase's public API"
 		)
+		assert_eq(player.health, 75.0, "Generated health pickup must apply its catalog effect")
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["secret_reward_0"], 1)
 
