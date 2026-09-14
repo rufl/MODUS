@@ -1188,6 +1188,7 @@ func _build_gameplay_metadata() -> Dictionary:
 		return {}
 	var gameplay := {
 		"player_start": generation_context.player_start_position,
+		"exit_position": generation_context.exit_position,
 		"monsters": generation_context.monster_spawns.duplicate(true),
 		"items": generation_context.item_spawns.duplicate(true),
 		"keys": generation_context.key_placements.duplicate(true),

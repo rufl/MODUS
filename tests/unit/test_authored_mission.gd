@@ -38,7 +38,7 @@ func _document(names: Array[String]) -> Node3D:
 	return document
 
 
-func test_generated_key_completion_unlocks_its_dependent_door() -> void:
+func test_generated_progression_reaches_extraction_and_completes_mission() -> void:
 	var document: Node3D = LevelRootScript.new()
 	document.level_name = "Generated mission graph"
 	document.set_meta("mission_id", "generated_dependency_regression")
