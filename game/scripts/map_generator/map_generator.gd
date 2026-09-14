@@ -20,6 +20,8 @@ const DebugSystem = preload("res://game/scripts/map_generator/debug_system.gd")
 const FeatureAvailability = preload("res://game/scripts/map_generator/feature_availability.gd")
 const MapExporter = preload("res://game/scripts/map_generator/map_exporter.gd")
 const BatchGenerator = preload("res://game/scripts/map_generator/batch_generator.gd")
+const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
+const LevelSpawnPointScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 
 # Signals
 signal generation_started
@@ -1442,14 +1444,15 @@ func _get_room_target_size(room_type: Room.RoomType) -> int:
 func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	var scene := PackedScene.new()
 
-	# Create root node
-	var root := Node3D.new()
+	# Generated maps are editable level documents, not anonymous world roots.
+	var root := LevelRootScript.new()
 	root.name = "GeneratedMap"
-	root.set_meta("generation", metadata)
+	root.set_meta("generation", metadata.duplicate(true))
 	theme_manager.apply_lighting_to_scene(root)
 
-	var player_spawn := Marker3D.new()
+	var player_spawn: LevelSpawnPoint = LevelSpawnPointScript.new()
 	player_spawn.name = "PlayerSpawn"
+	player_spawn.spawn_type = LevelSpawnPoint.SpawnType.PLAYER
 	player_spawn.add_to_group("spawn_player", true)
 	var start := generation_context.player_start_position
 	player_spawn.position = Vector3(
@@ -1461,12 +1464,14 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 
 	for index in range(generation_context.monster_spawns.size()):
 		var record: Dictionary = generation_context.monster_spawns[index]
-		var marker := Marker3D.new()
-		marker.name = "EnemySpawn_%d" % index
-		marker.position = record["world_position"] + Vector3.UP
-		marker.add_to_group("enemy_spawn", true)
-		marker.set_meta("generation", record)
-		root.add_child(marker)
+		var enemy_spawn: LevelSpawnPoint = LevelSpawnPointScript.new()
+		enemy_spawn.name = "EnemySpawn_%d" % index
+		enemy_spawn.spawn_type = LevelSpawnPoint.SpawnType.ENEMY
+		enemy_spawn.enemy_id = str(record.get("enemy_id", record.get("id", "")))
+		enemy_spawn.position = record["world_position"] + Vector3.UP
+		enemy_spawn.add_to_group("spawn_enemy", true)
+		enemy_spawn.set_meta("generation", record.duplicate(true))
+		root.add_child(enemy_spawn)
 
 	# Add CSG geometry
 	if generation_context.csg_root:
@@ -1479,11 +1484,10 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		root.add_child(generation_context.navigation_region)
 		generation_context.navigation_region.owner = root
 
-	# PackedScene only serializes descendants owned by the scene root. Generated
-	# geometry is assembled while detached, so assign ownership recursively before
-	# packing instead of returning a scene that contains only the two top-level
-	# containers.
-	_assign_scene_owner(root, root)
+	# LevelRoot owns the document's runtime-only ChannelSystem and canonical
+	# ownership preparation. Its save preparation excludes that service from the
+	# PackedScene while assigning the document root to generated descendants.
+	root.prepare_for_save()
 	var pack_error := scene.pack(root)
 
 	# Packing copies the node state; it does not free the live source tree. Clear
@@ -1504,11 +1508,6 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	return scene
 
 
-## Assign the generated root as owner for every descendant that must be packed.
-func _assign_scene_owner(node: Node, scene_root: Node) -> void:
-	for child: Node in node.get_children():
-		child.owner = scene_root
-		_assign_scene_owner(child, scene_root)
 
 
 ## Release generated nodes on cancellation, failure, or owner teardown.

@@ -1,6 +1,8 @@
 extends ModusGutTestBase
 
 const MapGeneratorScript: GDScript = preload("res://game/scripts/map_generator/map_generator.gd")
+const LevelRootScript: GDScript = preload("res://shared/editor_core/nodes/level_root.gd")
+const SpawnPointScript: GDScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 var map_generator: Node
 
 
@@ -60,10 +62,6 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	add_child_autofree(world)
 	var instance := reloaded.instantiate() as Node3D
 	world.add_child(instance)
-	var retained: Dictionary = instance.get_meta("generation")
-	assert_eq(
-		retained["gameplay"], metadata["gameplay"], "Saved scene retains typed gameplay records"
-	)
 	var region := instance.get_node("NavigationRegion") as NavigationRegion3D
 	var vertices := region.navigation_mesh.get_vertices()
 	var nav_map := world.find_world_3d().navigation_map
@@ -74,12 +72,56 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	await get_tree().physics_frame
 	await get_tree().process_frame
 	NavigationServer3D.map_force_update(nav_map)
-	var start := (instance.get_node("PlayerSpawn") as Marker3D).global_position - Vector3.UP
+	assert_eq(
+		instance.get_script().resource_path,
+		LevelRootScript.resource_path,
+		"Generated scene must use the canonical LevelRoot document script"
+	)
+	assert_eq(instance.name, "GeneratedMap")
+	assert_true(instance.has_method("get_channel_system"))
+	assert_true(instance.has_method("prepare_for_save"))
+	var runtime_channel := instance.get_node_or_null("ChannelSystem")
+	assert_not_null(runtime_channel, "LevelRoot must construct its runtime ChannelSystem")
+	if runtime_channel:
+		assert_true(runtime_channel.get_meta("editor_runtime_only", false))
+		assert_eq(runtime_channel.owner, null, "Runtime-only channels must not be scene-owned")
+
+	var player_spawn := instance.get_node("PlayerSpawn") as LevelSpawnPoint
+	assert_not_null(player_spawn, "Generated player spawn must be a typed LevelSpawnPoint")
+	if player_spawn == null:
+		instance.free()
+		return
+	assert_eq(player_spawn.spawn_type, SpawnPointScript.SpawnType.PLAYER)
+	var start := (player_spawn.global_position - Vector3.UP)
 	for target in destinations:
 		var path := NavigationServer3D.map_get_path(nav_map, start, target, true)
 		assert_false(path.is_empty(), "Saved navigation supplies a route")
 		if not path.is_empty():
 			assert_lt(path[-1].distance_to(target), 1.0, "Route reaches the required room or spawn")
+	var enemy_spawns: Array[LevelSpawnPoint] = []
+	for child: Node in instance.get_children():
+		if child is LevelSpawnPoint and child.spawn_type == SpawnPointScript.SpawnType.ENEMY:
+			enemy_spawns.append(child)
+	var monster_records: Array = metadata["gameplay"]["monsters"]
+	assert_eq(enemy_spawns.size(), monster_records.size(), "Every generated record needs a typed enemy spawn")
+	for index in range(enemy_spawns.size()):
+		var enemy_spawn := enemy_spawns[index]
+		var record: Dictionary = monster_records[index]
+		assert_eq(enemy_spawn.get_meta("generation"), record, "Spawn retains its generation record")
+		assert_eq(enemy_spawn.global_position, record["world_position"] + Vector3.UP)
+		assert_eq(
+			enemy_spawn.enemy_id,
+			str(record.get("enemy_id", record.get("id", ""))),
+			"Spawn retains its generated ID"
+		)
+	var saved_text_file := FileAccess.open("user://generated_roundtrip.tscn", FileAccess.READ)
+	assert_not_null(saved_text_file)
+	if saved_text_file:
+		assert_false(
+			saved_text_file.get_as_text().contains("ChannelSystem"),
+			"Runtime-only ChannelSystem must not be serialized"
+		)
+		saved_text_file.close()
 	var ray := PhysicsRayQueryParameters3D.create(start + Vector3.UP, start - Vector3.UP)
 	var floor_hit := world.find_world_3d().direct_space_state.intersect_ray(ray)
 	assert_false(floor_hit.is_empty(), "Packed collision supports the player spawn")
