@@ -27,6 +27,9 @@ const PickupSpawnerActorScript = preload("res://shared/editor_core/actors/pickup
 const KeyPickupActorScript = preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript = preload("res://shared/editor_core/actors/door_actor.gd")
 const SwitchActorScript = preload("res://shared/editor_core/actors/switch_actor.gd")
+const GENERATED_SECRET_REWARD_CATEGORY := PickupSpawnerActor.PickupCategory.POWERUP
+const GENERATED_SECRET_REWARD_ITEM_ID := "damage_powerup"
+const GENERATED_SECRET_REWARD_RARITY_TIER := 2  # ItemRarity.Tier.RARE
 
 # Signals
 signal generation_started
@@ -1532,11 +1535,33 @@ func _apply_generated_enemy_objective(
 
 
 
+func _generated_item_rarity_tier(record: Dictionary, fallback: int = -1) -> int:
+	var raw_tier: Variant = record.get("rarity_tier", record.get("item_tier", fallback))
+	if raw_tier is int:
+		return clampi(int(raw_tier), 0, 5)
+	match str(raw_tier).strip_edges().to_lower():
+		"common":
+			return 0
+		"uncommon":
+			return 1
+		"rare":
+			return 2
+		"epic":
+			return 3
+		"legendary":
+			return 4
+		"unique":
+			return 5
+		_:
+			return fallback
+
+
 func _generated_item_config(record: Dictionary) -> Dictionary:
 	var item_type := str(record.get("type", ""))
 	var item_id := str(record.get("item_id", ""))
 	var weapon_id := str(record.get("weapon_id", ""))
 	var category := PickupSpawnerActor.PickupCategory.HEALTH
+	var rarity_tier := _generated_item_rarity_tier(record)
 	var supported := true
 
 	match item_type:
@@ -1562,16 +1587,25 @@ func _generated_item_config(record: Dictionary) -> Dictionary:
 			category = PickupSpawnerActor.PickupCategory.POWERUP
 			if item_id.is_empty():
 				item_id = "speed_powerup"
+		"high_value":
+			# Secret rewards have no source catalog ID. Resolve them to the
+			# deterministic, catalog-backed damage powerup instead of dropping
+			# the reward or inventing a new pickup category.
+			category = GENERATED_SECRET_REWARD_CATEGORY
+			item_id = GENERATED_SECRET_REWARD_ITEM_ID
+			rarity_tier = _generated_item_rarity_tier(
+				record, GENERATED_SECRET_REWARD_RARITY_TIER
+			)
 		_:
-			# Secret/high-value records currently provide rarity only. Do not
-			# silently turn an unspecified reward into an unrelated health item.
+			# Unknown records remain outside the PickupSpawnerActor catalog.
 			supported = false
 
 	return {
 		"supported": supported,
 		"category": category,
 		"item_id": item_id,
-		"weapon_id": weapon_id
+		"weapon_id": weapon_id,
+		"rarity_tier": rarity_tier
 	}
 
 
