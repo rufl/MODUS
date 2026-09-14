@@ -140,6 +140,10 @@ func test_high_value_items_placed_in_secret_rooms() -> void:
 	assert_eq(
 		secret_items.size(), secret_rooms.size(), "Should place one high-value item per secret room"
 	)
+	for reward: Dictionary in secret_items:
+		var secret_id := int(reward.get("secret_room_id", -1))
+		assert_eq(reward.get("id"), "secret_reward_%d" % secret_id)
+		assert_eq(reward.get("world_position"), reward.get("position"))
 
 
 ## Test that secret rooms are marked in metadata for achievement tracking
