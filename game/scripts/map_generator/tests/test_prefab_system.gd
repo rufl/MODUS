@@ -421,6 +421,18 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	var generated_catalog := ModuleAssembly.catalog_from_prefab_entries([generated_entry])
 	assert_eq(generated_catalog.size(), 1)
 	assert_eq(generated_catalog[0].module_id, catalog[1].module_id)
+	var metadata_catalog := ModuleAssembly.catalog_from_metadata_dicts([catalog[1].to_dict()])
+	assert_eq(metadata_catalog.size(), 1)
+	assert_eq(metadata_catalog[0].module_id, catalog[1].module_id)
+	var metadata_diagnostics := ModuleAssembly.get_replacement_diagnostics_from_metadata(
+		root, [catalog[1].to_dict()]
+	)
+	assert_true(
+		metadata_diagnostics.compatible.any(
+			func(definition: PrefabMetadata) -> bool:
+				return definition.module_id == catalog[1].module_id
+		)
+	)
 	assert_true(preview.success, "Regeneration preview must stage valid plans")
 	assert_eq(preview.transforms.size(), 1)
 	assert_eq(ModuleAssembly.get_instances(root).size(), 2)

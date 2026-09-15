@@ -47,6 +47,21 @@ static func get_replacement_diagnostics_from_entries(root: Node3D, entries: Arra
 	return get_replacement_diagnostics(root, catalog_from_prefab_entries(entries))
 
 
+static func catalog_from_metadata_dicts(entries: Array) -> Array[PrefabMetadata]:
+	var catalog: Array[PrefabMetadata] = []
+	for entry: Variant in entries:
+		if not entry is Dictionary:
+			continue
+		var definition := PrefabMetadata.from_dict(entry)
+		if definition and definition.is_valid():
+			catalog.append(definition)
+	return catalog
+
+
+static func get_replacement_diagnostics_from_metadata(root: Node3D, entries: Array) -> Dictionary:
+	return get_replacement_diagnostics(root, catalog_from_metadata_dicts(entries))
+
+
 static func get_compatible_replacement_catalog(
 	root: Node3D, catalog: Array[PrefabMetadata] = []
 ) -> Array[PrefabMetadata]:
