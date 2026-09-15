@@ -402,6 +402,20 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	assert_eq(preview.transforms.size(), 1)
 	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
 	assert_eq(ModuleAssembly.get_instances(root)[1], original_unpinned)
+	var invalid_preview := ModuleAssembly.preview_regeneration(
+		root,
+		[
+			{
+				"definition": catalog[1],
+				"target_instance_id": "missing",
+				"target_socket_id": "out",
+				"source_socket_id": "in"
+			}
+		]
+	)
+	assert_false(invalid_preview.success)
+	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
+	assert_eq(ModuleAssembly.get_instances(root)[1], original_unpinned)
 	var regenerated := ModuleAssembly.regenerate_unpinned(root, captured.plans)
 	assert_true(regenerated.success, "A valid replacement plan must commit")
 	assert_true(pinned.pinned, "Pinned modules must survive regeneration")
