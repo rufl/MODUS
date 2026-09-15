@@ -243,26 +243,23 @@ func _check_placement_valid() -> bool:
 func _get_preview_aabb() -> AABB:
 	if not preview_node:
 		return AABB()
+	return _collect_aabb_recursive(preview_node)
 
+
+func _collect_aabb_recursive(node: Node) -> AABB:
 	var combined := AABB()
-	var first := true
-
-	_collect_aabb_recursive(preview_node, combined, first)
-
-	return combined
-
-
-func _collect_aabb_recursive(node: Node, aabb: AABB, first: bool) -> void:
+	var has_bounds := false
 	if node is VisualInstance3D:
-		var vis: VisualInstance3D = node
-		var node_aabb: AABB = vis.get_aabb()
-		if first:
-			aabb = node_aabb
-		else:
-			aabb = aabb.merge(node_aabb)
-
+		combined = (node as VisualInstance3D).get_aabb()
+		has_bounds = combined.size != Vector3.ZERO
 	for child: Node in node.get_children():
-		_collect_aabb_recursive(child, aabb, first)
+		var child_bounds := _collect_aabb_recursive(child)
+		if child_bounds.size == Vector3.ZERO:
+			continue
+		child_bounds = child.transform * child_bounds
+		combined = child_bounds if not has_bounds else combined.merge(child_bounds)
+		has_bounds = true
+	return combined
 
 
 ## Rotate preview
