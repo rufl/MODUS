@@ -23,6 +23,7 @@ var _inverted: CheckBox
 var _delay: SpinBox
 var _color: ColorPickerButton
 var _actors: Dictionary = {}
+var _preview_active := false
 var _built := false
 
 
@@ -189,6 +190,7 @@ func _place() -> void:
 		_rotation.selected
 	)
 	if result.success:
+		_preview_active = false
 		if _editor and _editor.has_method("clear_module_preview"):
 			_editor.clear_module_preview()
 		refresh_document()
@@ -213,6 +215,7 @@ func _preview() -> void:
 		_rotation.selected
 	)
 	if result.success:
+		_preview_active = true
 		if _editor and _editor.has_method("show_module_preview"):
 			_editor.show_module_preview(definition, result.transform, true)
 		_status.text = (
@@ -221,9 +224,28 @@ func _preview() -> void:
 			+ ". Place module to commit it."
 		)
 	else:
+		_preview_active = false
 		if _editor and _editor.has_method("clear_module_preview"):
 			_editor.clear_module_preview()
 		_status.text = "Invalid socket placement: " + str(result.error)
+
+
+func is_module_preview_active() -> bool:
+	return _preview_active
+
+
+func confirm_module_preview() -> void:
+	if _preview_active:
+		_place()
+
+
+func cancel_module_preview() -> void:
+	if not _preview_active:
+		return
+	_preview_active = false
+	if _editor and _editor.has_method("clear_module_preview"):
+		_editor.clear_module_preview()
+	_status.text = "Module placement preview cancelled."
 
 
 func _toggle_pin() -> void:

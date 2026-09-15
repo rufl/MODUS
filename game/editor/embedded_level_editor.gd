@@ -283,7 +283,14 @@ func _handle_editor_input(event: InputEvent) -> void:
 		return
 	if not _is_active:
 		return
-
+	if event is InputEventKey and event.pressed and module_panel:
+		if module_panel.is_module_preview_active():
+			if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
+				module_panel.confirm_module_preview()
+				return
+			if event.keycode == KEY_ESCAPE:
+				module_panel.cancel_module_preview()
+				return
 	# Forward to editor features first (for custom tools like Visual Connection)
 	if editor_features and editor_features.has_method("handle_3d_input"):
 		if editor_features.handle_3d_input(editor_camera, event):
