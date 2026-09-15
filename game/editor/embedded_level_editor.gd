@@ -283,6 +283,11 @@ func _handle_editor_input(event: InputEvent) -> void:
 		return
 	if not _is_active:
 		return
+	if event is InputEventMouseMotion and module_panel and module_panel.is_module_preview_active():
+		var ray_origin := editor_camera.global_position
+		var ray_direction := editor_camera.project_ray_normal(event.position)
+		module_panel.update_preview_target_from_ray(ray_origin, ray_direction)
+		return
 	if event is InputEventKey and event.pressed and module_panel:
 		if module_panel.is_module_preview_active():
 			if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:

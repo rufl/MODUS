@@ -352,6 +352,24 @@ func test_module_ghost_preview_tracks_external_transform_and_clears() -> void:
 	preview.free()
 
 
+func test_free_socket_ray_query_selects_nearest_open_socket() -> void:
+	var root: Node3D = LevelRootScript.new()
+	root.authoring_mode = true
+	add_child(root)
+	var catalog := ModuleAssembly.get_catalog()
+	assert_true(ModuleAssembly.place_module(root, catalog[0]).success)
+	var instance := ModuleAssembly.get_instances(root)[0]
+	var socket := instance.get_socket("out")
+	var socket_position: Vector3 = (instance.global_transform * socket.local_transform).origin
+	var origin := socket_position + Vector3(0, 0, 5)
+	var result := ModuleAssembly.find_free_socket_on_ray(
+		root, origin, (socket_position - origin).normalized(), 0.01
+	)
+	assert_eq(result.target_instance_id, instance.instance_id)
+	assert_eq(result.target_socket_id, "out")
+	root.free()
+
+
 func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	var saved_history := EditorGlobals._runtime_undo_redo
 	EditorGlobals._runtime_undo_redo = UndoRedo.new()

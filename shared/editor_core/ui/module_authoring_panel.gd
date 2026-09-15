@@ -23,6 +23,7 @@ var _inverted: CheckBox
 var _delay: SpinBox
 var _color: ColorPickerButton
 var _actors: Dictionary = {}
+var _preview_target_key := ""
 var _preview_active := false
 var _built := false
 
@@ -191,6 +192,7 @@ func _place() -> void:
 	)
 	if result.success:
 		_preview_active = false
+		_preview_target_key = ""
 		if _editor and _editor.has_method("clear_module_preview"):
 			_editor.clear_module_preview()
 		refresh_document()
@@ -243,9 +245,33 @@ func cancel_module_preview() -> void:
 	if not _preview_active:
 		return
 	_preview_active = false
+	_preview_target_key = ""
 	if _editor and _editor.has_method("clear_module_preview"):
-		_editor.clear_module_preview()
 	_status.text = "Module placement preview cancelled."
+
+
+func update_preview_target_from_ray(ray_origin: Vector3, ray_direction: Vector3) -> void:
+	if not _preview_active:
+		return
+	var match := ModuleAssembly.find_free_socket_on_ray(_root(), ray_origin, ray_direction)
+	if match.is_empty():
+		return
+	var target_id := str(match.target_instance_id)
+	var socket_id := str(match.target_socket_id)
+	var key := target_id + ":" + socket_id
+	if key == _preview_target_key:
+		return
+	for index in _target.item_count:
+		if _target.get_item_metadata(index) == target_id:
+			_target.select(index)
+			break
+	_refresh_target_sockets()
+	for index in _target_socket.item_count:
+		if _target_socket.get_item_metadata(index) == socket_id:
+			_target_socket.select(index)
+			break
+	_preview_target_key = key
+	_preview()
 
 
 func _toggle_pin() -> void:

@@ -264,6 +264,52 @@ static func _remap_local_objectives(
 		actor.set_meta("mission_objective", updated)
 
 
+static func find_free_socket_on_ray(
+	root: Node3D, ray_origin: Vector3, ray_direction: Vector3, max_distance: float = 1.5
+) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return {}
+	var direction := ray_direction.normalized()
+	if direction.is_zero_approx():
+		return {}
+	var best_distance := max_distance
+	var best := {}
+	for instance: ModuleInstance in get_instances(root):
+		for socket: Dictionary in instance.definition.sockets:
+			var socket_id := str(socket.get("id", ""))
+			var used := false
+			for edge: Dictionary in root.module_connections:
+				if (
+					(
+						edge.get("from_instance") == instance.instance_id
+						and edge.get("from_socket") == socket_id
+					)
+					or (
+						edge.get("to_instance") == instance.instance_id
+						and edge.get("to_socket") == socket_id
+					)
+				):
+					used = true
+					break
+			if used:
+				continue
+			var socket_position: Vector3 = (
+				(instance.global_transform * socket.local_transform).origin
+			)
+			var distance_along_ray := maxf(0.0, direction.dot(socket_position - ray_origin))
+			var ray_point := ray_origin + direction * distance_along_ray
+			var distance_from_ray := ray_point.distance_to(socket_position)
+			if distance_from_ray <= best_distance:
+				best_distance = distance_from_ray
+				best = {
+					"target_instance_id": instance.instance_id,
+					"target_socket_id": socket_id,
+					"position": socket_position,
+					"distance": distance_from_ray
+				}
+	return best
+
+
 static func preview_module(
 	root: Node3D,
 	definition: PrefabMetadata,
