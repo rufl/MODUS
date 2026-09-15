@@ -474,9 +474,17 @@ func _sync_transform_node(data: Dictionary) -> void:
 
 
 func _get_level_root() -> Node:
-	# Assume standard scene structure
+	# Prefer the active scene, then support embedded/editor fixtures that are
+	# attached to the tree without being assigned as current_scene.
 	var current_scene: Node = get_tree().current_scene
-	return current_scene.get_node_or_null("LevelRoot") if current_scene else null
+	if current_scene:
+		var level_root := current_scene.get_node_or_null("LevelRoot")
+		if level_root:
+			return level_root
+	var grouped_root := get_tree().get_first_node_in_group("level_root")
+	if grouped_root:
+		return grouped_root
+	return get_tree().root.find_child("LevelRoot", true, false)
 
 
 func _get_relative_path(full_path: String) -> String:

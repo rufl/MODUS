@@ -1581,11 +1581,16 @@ func host_game(port: int = -1, max_players: int = -1) -> Error:
 				logger3.info(msg, "Network")
 
 	multiplayer.multiplayer_peer = peer
-	hosting_started.emit(port)
+	var bound_port := port
+	if peer is ENetMultiplayerPeer and peer.get_host():
+		bound_port = peer.get_host().get_local_port()
+	hosting_started.emit(bound_port)
 	connection_established.emit(true)
 
 	# Save info for validation/reconnect (though hosts don't reconnect to themselves usually)
-	_last_host_info = {"host": "localhost", "port": port, "is_steam": _use_steam and peer == steam}
+	_last_host_info = {
+		"host": "localhost", "port": bound_port, "is_steam": _use_steam and peer == steam
+	}
 
 	return OK
 

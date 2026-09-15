@@ -77,7 +77,6 @@ func test_hollow_preserves_primitive_transform_and_material() -> void:
 	var inner := hollow.get_child(1) as CSGBox3D
 	assert_eq(inner.transform, outer.transform)
 	assert_eq(inner.material, material)
-	assert_eq(hollow.material, material)
 	hollow.free()
 
 
@@ -95,9 +94,11 @@ func test_hollow_polygon_and_custom_mesh_fail_without_orphan_nodes() -> void:
 		AdvancedBrushTool.BrushType.CAPSULE
 	]:
 		brush.brush_type = type
-		assert_false(
-			brush._place_brush_object(Vector3.ZERO), "Unsupported hollow type %s should fail" % type
+		var placed := brush._place_brush_object(Vector3.ZERO)
+		assert_push_error(
+			"Brush type %s does not support hollowing" % AdvancedBrushTool.BrushType.keys()[type]
 		)
+		assert_false(placed, "Unsupported hollow type %s should fail" % type)
 		assert_eq(
 			brush.get_child_count(),
 			initial_child_count,

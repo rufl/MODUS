@@ -138,6 +138,7 @@ func test_invalid_enet_port_fails_without_connected_peer() -> void:
 	var peer := ENetMultiplayerPeer.new()
 	_peers.append(peer)
 	var error: Error = peer.create_server(-1, 8)
+	assert_engine_error_count(1)
 
 	assert_ne(error, OK)
 	assert_ne(peer.get_connection_status(), MultiplayerPeer.CONNECTION_CONNECTED)
@@ -155,7 +156,9 @@ func test_port_conflict_rejects_second_listener_and_allows_new_ephemeral_listene
 
 	var conflicting := ENetMultiplayerPeer.new()
 	_peers.append(conflicting)
-	assert_ne(conflicting.create_server(port, 2), OK)
+	var conflicting_error := conflicting.create_server(port, 2)
+	assert_engine_error_count(1)
+	assert_ne(conflicting_error, OK)
 	assert_ne(conflicting.get_connection_status(), MultiplayerPeer.CONNECTION_CONNECTED)
 
 	var replacement := ENetMultiplayerPeer.new()

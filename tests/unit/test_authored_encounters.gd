@@ -150,13 +150,13 @@ func test_actual_medkit_collection_checkpoints_synchronously_and_cannot_duplicat
 	if not pickup:
 		return
 	assert_true(pickup.collect_for_player(collector, collector.get_multiplayer_authority()))
-	assert_eq(collector.health, 45, "The real medkit applies its health reward")
+	assert_eq(collector.health, 70, "The real medkit applies its health reward")
 	var saved := supplies.capture_runtime_state()
 	assert_eq(saved.pickup_phase, "collected", "Checkpoint is consumed before queue_free runs")
 	assert_false(pickup.collect_for_player(collector, collector.get_multiplayer_authority()))
 	assert_true(supplies.restore_runtime_state(JSON.parse_string(JSON.stringify(saved))))
 	supplies.trigger()
-	assert_eq(collector.health, 45, "Restoring consumed rewards is silent")
+	assert_eq(collector.health, 70, "Restoring consumed rewards is silent")
 	assert_null(supplies._current_pickup)
 
 

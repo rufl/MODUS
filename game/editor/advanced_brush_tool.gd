@@ -373,7 +373,7 @@ func _place_brush_object(position: Vector3) -> bool:
 func _apply_brush_material(node: Node) -> void:
 	if node is MeshInstance3D:
 		(node as MeshInstance3D).material_override = brush_material
-	elif node is CSGShape3D:
+	elif node is CSGShape3D and not node is CSGCombiner3D:
 		(node as CSGShape3D).material = brush_material
 	for child in node.get_children():
 		_apply_brush_material(child)
@@ -391,7 +391,6 @@ func _create_brush_shape(brush_type: BrushType) -> Node3D:
 		BrushType.SPHERE:
 			var sphere = CSGSphere3D.new()
 			sphere.radius = min(brush_size.x, min(brush_size.y, brush_size.z)) * 0.5
-			sphere.height = brush_size.y
 			shape = sphere
 		BrushType.CYLINDER:
 			var cylinder = CSGCylinder3D.new()
@@ -477,13 +476,12 @@ func _create_hollow_shape(outer_shape: Node3D) -> Node3D:
 		inner_shape = inner_box
 	elif csg_shape is CSGSphere3D:
 		var sphere := csg_shape as CSGSphere3D
-		if sphere.radius <= wall or sphere.height <= wall * 2.0:
+		if sphere.radius <= wall:
 			return _hollow_shape_failure(
 				outer_shape, "Hollow thickness %.3f is too large for sphere size" % wall
 			)
 		var inner_sphere := CSGSphere3D.new()
 		inner_sphere.radius = sphere.radius - wall
-		inner_sphere.height = sphere.height - wall * 2.0
 		inner_shape = inner_sphere
 	elif csg_shape is CSGCylinder3D:
 		var cylinder := csg_shape as CSGCylinder3D
@@ -510,6 +508,10 @@ func _create_hollow_shape(outer_shape: Node3D) -> Node3D:
 		inner_shape = inner_torus
 	# Keep both operands in the same local frame so a transformed primitive
 	# still subtracts its matching volume.
+	if inner_shape == null:
+		return _hollow_shape_failure(
+			outer_shape, "Brush type %s does not support hollowing" % BrushType.keys()[brush_type]
+		)
 	inner_shape.transform = csg_shape.transform
 	inner_shape.material = csg_shape.material
 
@@ -517,7 +519,6 @@ func _create_hollow_shape(outer_shape: Node3D) -> Node3D:
 	combiner.name = "HollowBrush"
 	combiner.use_collision = true
 	combiner.operation = CSGShape3D.OPERATION_UNION
-	combiner.material = csg_shape.material
 	csg_shape.operation = CSGShape3D.OPERATION_UNION
 	inner_shape.operation = CSGShape3D.OPERATION_SUBTRACTION
 	combiner.add_child(csg_shape)

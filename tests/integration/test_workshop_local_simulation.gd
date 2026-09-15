@@ -122,6 +122,7 @@ func test_steam_browse_reports_unsupported_capability() -> void:
 	manager.steam_ugc_available = false
 	manager.browse_failed.connect(_capture_browse_failure)
 	manager.browse_items("missing-api")
+	assert_push_error("GodotSteam UGC capability was not detected")
 
 	assert_eq(workshop_browse_failures.size(), 1)
 	if workshop_browse_failures.size() == 1:
@@ -173,6 +174,7 @@ func test_steam_numeric_send_failure_releases_query_once() -> void:
 	manager.browse_failed.connect(_capture_browse_failure)
 
 	manager.browse_items("numeric-send-failure")
+	assert_push_error("Steam could not start the Workshop UGC query")
 
 	assert_eq(workshop_browse_failures.size(), 1)
 	assert_eq(steam_double.released_handles, [101])
@@ -192,6 +194,7 @@ func test_steam_shutdown_fails_active_query_once() -> void:
 	manager.browse_failed.connect(_capture_browse_failure)
 
 	manager._on_steam_shutdown()
+	assert_push_error("Steam shut down while the Workshop request was active")
 	manager._on_steam_shutdown()
 
 	assert_eq(workshop_browse_failures.size(), 1)
