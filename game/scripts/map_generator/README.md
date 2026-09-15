@@ -22,16 +22,21 @@ Component existence does not prove that every optional phase contributes valid r
 
 ## Threading boundary
 
-The generator owns a worker `Thread`, cancellation flag, and explicit join on exit. Scene-tree work is deferred to the main thread. Recent focused threading tests pass individually, but the latest aggregate threaded-directory rerun did not produce a complete GUT summary and remains open.
+The generator owns a worker `Thread`, cancellation flag, and explicit join on
+exit. Scene-tree work is deferred to the main thread. The threaded directory
+proof currently passes as a complete aggregate.
 
 ## Current focused evidence
 
-- `tests/unit/map_generator/`: 79/79 tests and 5,439 assertions in the latest focused run.
-- Export focus: 10/10 with 34 assertions, with renderer/object teardown leaks still reported.
-- Seed/RNG focus: 8/8 with 29 assertions.
-- Threaded completion/cancellation/metadata tests: individually green; no complete aggregate summary.
+- Generated boss runtime proof: 1/1 passed.
+- Threaded generator aggregate: 8/8 passed.
+- Aggregate coverage includes generation, cancellation/replacement, CSG
+  fallback, navigation baking, gameplay placement, navigation reachability,
+  generated boss defeat, extraction, and export/reload.
+- Current focused and aggregate runs reported no ObjectDB teardown leak.
 
-These results do not support the old “all 40 tasks complete” or “production ready” conclusions.
+These results support the implemented generator contracts, but do not support
+the old “all 40 tasks complete” or “production ready” conclusions.
 
 ## Minimal source usage
 
@@ -48,11 +53,14 @@ Use the actual `GenerationConfig` properties in source; do not copy old sample m
 
 ## Required closure work
 
-- Obtain a complete green threaded-directory result.
-- Eliminate or bound export teardown leaks.
 - Exercise generated scenes in a normal graphical runtime.
-- Verify navigation, spawn reachability, secrets/locks, and cancellation across a representative seed/config matrix.
 - Capture generation time/memory on declared hardware; code targets are not measured guarantees.
-- Run save/export/reload compatibility for generated artifacts.
+- Run save/export/reload compatibility for generated artifacts across release targets.
+- Verify multiplayer authority, hub/travel lifecycle, Steam lifecycle, and
+  platform exports.
+- Replace remaining placeholder weapon assets with production assets where
+  available.
 
-Until then, the truthful status is **broad implementation with strong focused model tests and unresolved aggregate/runtime evidence**.
+Until then, the truthful status is **broad implementation with green focused
+generator evidence and unresolved graphical, performance, release, and
+multiplayer evidence**.

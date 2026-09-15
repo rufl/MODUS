@@ -421,8 +421,19 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 		)
 	for key: Dictionary in metadata["gameplay"]["keys"]:
 		destinations.append(key["position"])
+	for door: Dictionary in metadata["gameplay"]["locked_doors"]:
+		destinations.append(door["position"])
+	for secret: Dictionary in metadata["gameplay"]["secrets"]:
+		var entrance: Vector2i = secret["entrance_position"]
+		var secret_cell: Cell = map_generator.generation_context.grid[entrance.y][entrance.x]
+		destinations.append(
+			Vector3(entrance.x * 2.0 + 1.0, secret_cell.height, entrance.y * 2.0 + 1.0)
+		)
 	for spawn: Dictionary in metadata["gameplay"]["monsters"]:
 		destinations.append(spawn["world_position"])
+	var route_extraction_record: Dictionary = metadata["gameplay"].get("extraction", {})
+	if not route_extraction_record.is_empty():
+		destinations.append(route_extraction_record["position"])
 
 	assert_true(
 		map_generator.export_map(
