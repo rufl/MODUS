@@ -162,6 +162,28 @@ static func _remap_local_objectives(
 		actor.set_meta("mission_objective", updated)
 
 
+static func set_pinned(root: Node3D, instance_id: String, pinned: bool) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return _failure("Open a LevelRoot document before changing module pins.")
+	var instance: ModuleInstance = null
+	for candidate in get_instances(root):
+		if candidate.instance_id == instance_id:
+			instance = candidate
+			break
+	if instance == null:
+		return _failure("Select an existing module before changing its pin.")
+	if instance.pinned == pinned:
+		return {"success": true, "error": "", "pinned": pinned}
+
+	var undo := EditorGlobals.get_undo_redo()
+	undo.create_action(("Pin" if pinned else "Unpin") + " module: " + instance_id)
+	undo.add_do_property(instance, "pinned", pinned)
+	undo.add_undo_property(instance, "pinned", instance.pinned)
+	undo.add_do_reference(instance)
+	undo.commit_action()
+	return {"success": true, "error": "", "pinned": pinned}
+
+
 static func validate_level(root: Node3D) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return {"valid": false, "errors": ["Document must be a LevelRoot."]}

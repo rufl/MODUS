@@ -55,6 +55,7 @@ func _build() -> void:
 	for turn in 4:
 		_rotation.add_item(str(turn * 90) + " degrees")
 	_button(_rooms, "Place module", _place)
+	_button(_rooms, "Toggle pin on selected module", _toggle_pin)
 	_button(_rooms, "Validate layout", _validate_document)
 	_module.item_selected.connect(func(_index: int) -> void: _refresh_source_sockets())
 	_target.item_selected.connect(func(_index: int) -> void: _refresh_target_sockets())
@@ -117,7 +118,8 @@ func refresh_document() -> void:
 			_target.add_item("Origin — first module")
 			_target.set_item_metadata(0, "")
 		for instance in instances:
-			_target.add_item(instance.instance_id)
+			var label := instance.instance_id + (" [pinned]" if instance.pinned else "")
+			_target.add_item(label)
 			_target.set_item_metadata(_target.item_count - 1, instance.instance_id)
 		_collect_actors(root, "")
 		for actor_id: String in _actors:
@@ -192,6 +194,32 @@ func _place() -> void:
 		)
 	else:
 		_status.text = "Not placed: " + str(result.error)
+
+
+func _toggle_pin() -> void:
+	var root := _root()
+	var instance_id := _selected(_target)
+	if root == null or instance_id.is_empty():
+		_status.text = "Select an existing module before changing its pin."
+		return
+	var selected: ModuleInstance = null
+	for instance in ModuleAssembly.get_instances(root):
+		if instance.instance_id == instance_id:
+			selected = instance
+			break
+	if selected == null:
+		_status.text = "Selected module is no longer in the document."
+		return
+	var result := ModuleAssembly.set_pinned(root, instance_id, not selected.pinned)
+	if result.success:
+		refresh_document()
+		_status.text = (
+			("Pinned " if result.pinned else "Unpinned ")
+			+ instance_id
+			+ ". Regeneration will preserve this module."
+		)
+	else:
+		_status.text = "Pin change failed: " + str(result.error)
 
 
 func _validate_document() -> void:

@@ -4,6 +4,7 @@ extends Node3D
 
 @export var definition: PrefabMetadata
 @export var instance_id: String = ""
+@export var pinned: bool = false
 
 
 func get_local_bounds() -> AABB:

@@ -281,6 +281,38 @@ func test_module_rotation_undo_and_pack_preserve_geometry_and_graph() -> void:
 	root.free()
 
 
+func test_module_pin_is_transactional_and_survives_pack_roundtrip() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root: Node3D = LevelRootScript.new()
+	root.authoring_mode = true
+	add_child(root)
+	var catalog := ModuleAssembly.get_catalog()
+	var placed := ModuleAssembly.place_module(root, catalog[0])
+	assert_true(placed.success)
+	if placed.success:
+		var instance: ModuleInstance = placed.instance
+		var result := ModuleAssembly.set_pinned(root, instance.instance_id, true)
+		assert_true(result.success)
+		assert_true(instance.pinned, "Pinning must update the selected module")
+		EditorGlobals.get_undo_redo().undo()
+		assert_false(instance.pinned, "Undo must restore the prior pin state")
+		EditorGlobals.get_undo_redo().redo()
+		assert_true(instance.pinned, "Redo must restore the pin state")
+		root.prepare_for_save()
+		var packed := PackedScene.new()
+		assert_eq(packed.pack(root), OK)
+		var reopened := packed.instantiate() as Node3D
+		assert_true(
+			(reopened.get_node("Airlock") as ModuleInstance).pinned,
+			"Packed documents must preserve module pins"
+		)
+		reopened.free()
+	EditorGlobals._runtime_undo_redo.clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
 func test_rejected_module_placement_does_not_mutate_document() -> void:
 	var saved_history := EditorGlobals._runtime_undo_redo
 	EditorGlobals._runtime_undo_redo = UndoRedo.new()
