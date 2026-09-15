@@ -95,6 +95,11 @@ func test_generated_boss_session_completes_after_lethal_defeat_and_extraction() 
 	if not runtime_boss or not runtime_extraction:
 		return
 	assert_eq(
+		runtime_boss.position,
+		Vector3(4.0, 1.0, 4.0),
+		"Generated enemy actor must place its body origin one unit above ground metadata"
+	)
+	assert_eq(
 		runtime_boss.get_meta("mission_objective"),
 		{"description": "Defeat generated boss", "final": true, "order": 1000},
 		"Boss objective must come from generated metadata"
@@ -506,7 +511,7 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 		assert_eq(actor.name, "EnemySpawner_%d" % index, "Enemy actor names are stable")
 		assert_eq(actor.actor_id, record.get("id"))
 		assert_eq(actor.get_meta("generation"), record)
-		assert_eq(actor.global_position, record["world_position"])
+		assert_eq(actor.global_position, record["world_position"] + Vector3.UP)
 		assert_eq(actor.enemy_id, actor_enemy_id)
 		assert_true(actor.auto_spawn)
 		if record.get("type", "") == "boss":

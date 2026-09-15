@@ -1682,7 +1682,7 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		enemy_actor.tier = int(record.get("tier", 1))
 		enemy_actor.auto_spawn = true
 		enemy_actor.is_enabled = _generated_enemy_enabled(record)
-		enemy_actor.position = world_position
+		enemy_actor.position = world_position + Vector3.UP
 		enemy_actor.set_meta("generation", record.duplicate(true))
 		_apply_generated_enemy_objective(enemy_actor, record, index)
 		root.add_child(enemy_actor)
