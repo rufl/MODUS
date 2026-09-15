@@ -409,6 +409,13 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	assert_eq(selected.plans[0].definition.module_id, catalog[1].module_id)
 	assert_eq(selected.plans[0].target_instance_id, "airlock")
 	assert_eq(selected.plans[0].target_socket_id, "out")
+	var zeta := catalog[1].duplicate(true) as PrefabMetadata
+	zeta.module_id = "zeta_replacement"
+	var alpha := catalog[1].duplicate(true) as PrefabMetadata
+	alpha.module_id = "alpha_replacement"
+	var ranked := ModuleAssembly.build_regeneration_plans(root, [zeta, alpha])
+	assert_true(ranked.success)
+	assert_eq(ranked.plans[0].definition.module_id, "alpha_replacement")
 	var compatible := ModuleAssembly.get_compatible_replacement_catalog(root)
 	assert_true(
 		compatible.any(

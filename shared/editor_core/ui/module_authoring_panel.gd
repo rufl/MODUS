@@ -285,7 +285,9 @@ func _check_selected_replacement() -> void:
 				+ str(rejection.module_id)
 				+ " for "
 				+ str(rejection.target_instance_ids)
-				+ " — "
+				+ " (requires "
+				+ str(rejection.required_capabilities)
+				+ ") — "
 				+ str(rejection.error)
 				+ "."
 			)

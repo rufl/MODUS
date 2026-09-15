@@ -87,6 +87,7 @@ static func get_replacement_diagnostics(
 				{
 					"module_id": definition.module_id,
 					"error": result.error,
+					"required_capabilities": Array(definition.required_capabilities),
 					"target_instance_ids": target_instance_ids.duplicate()
 				}
 			)
@@ -258,23 +259,42 @@ static func _replace_plan_definition(
 	plan: Dictionary, replacement_catalog: Array[PrefabMetadata]
 ) -> Dictionary:
 	var source_socket: Dictionary = plan.get("source_socket", {})
+	var best_definition: PrefabMetadata
+	var best_socket_id := ""
+	var best_score := -1
 	for definition: PrefabMetadata in replacement_catalog:
 		if definition == null or not definition.is_valid():
 			continue
 		if source_socket.is_empty():
-			var root_plan := plan.duplicate(true)
-			root_plan["definition"] = definition
-			return root_plan
+			if best_definition == null or definition.module_id < best_definition.module_id:
+				best_definition = definition
+			continue
 		for socket: Dictionary in definition.sockets:
 			if (
 				socket.get("kind", "walk") == source_socket.get("kind", "walk")
 				and socket.opening.is_equal_approx(source_socket.opening)
 			):
-				var replacement := plan.duplicate(true)
-				replacement["definition"] = definition
-				replacement["source_socket_id"] = str(socket.id)
-				return replacement
-	return {}
+				var score := definition.sockets.size()
+				if (
+					score > best_score
+					or (
+						score == best_score
+						and (
+							best_definition == null
+							or definition.module_id < best_definition.module_id
+						)
+					)
+				):
+					best_definition = definition
+					best_socket_id = str(socket.id)
+					best_score = score
+	if best_definition == null:
+		return {}
+	var replacement := plan.duplicate(true)
+	replacement["definition"] = best_definition
+	if not source_socket.is_empty():
+		replacement["source_socket_id"] = best_socket_id
+	return replacement
 
 
 static func _build_plan_for_instance(
