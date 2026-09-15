@@ -1200,11 +1200,17 @@ func _build_metadata(total_time: int) -> Dictionary:
 		"config": _build_config_metadata(),
 		"statistics": _build_statistics_metadata(),
 		"rule_modules_used": _get_rule_modules_used(),
-		"replacement_catalog": prefab_system.get_replacement_metadata() if prefab_system else [],
+		"replacement_catalog": get_replacement_catalog_metadata(),
 		"gameplay": _build_gameplay_metadata(),
 		"phase_times": _build_phase_times_metadata()
 	}
 	return metadata
+
+
+func get_replacement_catalog_metadata() -> Array:
+	if prefab_system == null:
+		return []
+	return prefab_system.get_replacement_metadata()
 
 
 ## Variant records are retained in the PackedScene, not only transient signals.

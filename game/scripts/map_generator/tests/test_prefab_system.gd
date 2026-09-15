@@ -176,6 +176,19 @@ func test_prefab_system_replacement_metadata_is_empty_before_loading() -> void:
 	assert_eq(prefab_system.get_replacement_metadata().size(), 0)
 
 
+func test_prefab_system_replacement_metadata_deduplicates_entries() -> void:
+	var definition := PrefabMetadata.new()
+	definition.module_id = "generated_room"
+	definition.scene_path = "res://generated_room.tscn"
+	definition.dimensions = Vector3(4, 4, 4)
+	definition.sockets = []
+	var entry := MapPrefabSystem.PrefabEntry.new(null, definition, definition.scene_path)
+	prefab_system._prefab_cache[GenerationConfig.ThemeType.TECH]["generated"] = [entry, entry]
+	var metadata := prefab_system.get_replacement_metadata()
+	assert_eq(metadata.size(), 1)
+	assert_eq(metadata[0].module_id, "generated_room")
+
+
 func test_module_json_roundtrip_retains_attachable_socket_geometry() -> void:
 	var original := PrefabMetadata.new()
 	original.module_id = "rotated_room"
