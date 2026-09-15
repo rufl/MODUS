@@ -32,6 +32,15 @@ static func get_catalog() -> Array[PrefabMetadata]:
 	return result
 
 
+static func get_compatible_replacement_catalog(root: Node3D) -> Array[PrefabMetadata]:
+	var compatible: Array[PrefabMetadata] = []
+	for definition in get_catalog():
+		var result := build_regeneration_plans(root, [definition])
+		if result.success:
+			compatible.append(definition)
+	return compatible
+
+
 static func get_instances(root: Node) -> Array[ModuleInstance]:
 	var result: Array[ModuleInstance] = []
 	for child in root.get_children():

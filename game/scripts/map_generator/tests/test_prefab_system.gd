@@ -392,6 +392,13 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	assert_eq(selected.plans[0].definition.module_id, catalog[1].module_id)
 	assert_eq(selected.plans[0].target_instance_id, "airlock")
 	assert_eq(selected.plans[0].target_socket_id, "out")
+	var compatible := ModuleAssembly.get_compatible_replacement_catalog(root)
+	assert_true(
+		compatible.any(
+			func(definition: PrefabMetadata) -> bool:
+				return definition.module_id == catalog[1].module_id
+		)
+	)
 	var incompatible := catalog[1].duplicate(true) as PrefabMetadata
 	for socket in incompatible.sockets:
 		socket.kind = "vent"
