@@ -56,6 +56,7 @@ func _build() -> void:
 	_rotation = _option(_rooms, "Quarter turn (first room; attached sockets must align)")
 	for turn in 4:
 		_rotation.add_item(str(turn * 90) + " degrees")
+	_button(_rooms, "Regenerate unpinned modules", _regenerate_unpinned)
 	_button(_rooms, "Place module", _place)
 	_button(_rooms, "Preview socket placement", _preview)
 	_button(_rooms, "Toggle pin on selected module", _toggle_pin)
@@ -176,6 +177,24 @@ func _refresh_target_sockets() -> void:
 			if not used:
 				_target_socket.add_item(str(socket.id) + " — " + str(socket.get("kind", "walk")))
 				_target_socket.set_item_metadata(_target_socket.item_count - 1, str(socket.id))
+
+
+func _regenerate_unpinned() -> void:
+	var root := _root()
+	var captured := ModuleAssembly.build_regeneration_plans(root)
+	if not captured.success:
+		_status.text = "Regeneration plan failed: " + str(captured.error)
+		return
+	var result := ModuleAssembly.regenerate_unpinned(root, captured.plans)
+	if result.success:
+		refresh_document()
+		_status.text = (
+			"Regenerated "
+			+ str(captured.plans.size())
+			+ " unpinned module(s). Undo restores the prior layout."
+		)
+	else:
+		_status.text = "Regeneration failed: " + str(result.error)
 
 
 func _place() -> void:

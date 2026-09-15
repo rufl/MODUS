@@ -148,6 +148,61 @@ static func place_module(
 	return {"success": true, "error": "", "instance": candidate}
 
 
+static func build_regeneration_plans(root: Node3D) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return _failure("Open a LevelRoot document before capturing regeneration plans.")
+	var pending: Array[ModuleInstance] = []
+	var placed_ids: Dictionary = {}
+	for instance: ModuleInstance in get_instances(root):
+		if instance.pinned:
+			placed_ids[instance.instance_id] = true
+		else:
+			pending.append(instance)
+	var plans: Array[Dictionary] = []
+	var seeded := false
+	while not pending.is_empty():
+		var progressed := false
+		for index in range(pending.size() - 1, -1, -1):
+			var instance := pending[index]
+			var plan := _build_plan_for_instance(root, instance, placed_ids)
+			if plan.is_empty():
+				if not seeded and placed_ids.is_empty():
+					plan = {"definition": instance.definition}
+					seeded = true
+				else:
+					continue
+			plans.append(plan)
+			placed_ids[instance.instance_id] = true
+			pending.remove_at(index)
+			progressed = true
+		if not progressed:
+			return _failure("Unable to derive a connected regeneration order.")
+	return {"success": true, "error": "", "plans": plans}
+
+
+static func _build_plan_for_instance(
+	root: Node3D, instance: ModuleInstance, placed_ids: Dictionary
+) -> Dictionary:
+	for edge: Dictionary in root.module_connections:
+		var from_id := str(edge.get("from_instance", ""))
+		var to_id := str(edge.get("to_instance", ""))
+		if to_id == instance.instance_id and placed_ids.has(from_id):
+			return {
+				"definition": instance.definition,
+				"target_instance_id": from_id,
+				"target_socket_id": str(edge.get("from_socket", "")),
+				"source_socket_id": str(edge.get("to_socket", ""))
+			}
+		if from_id == instance.instance_id and placed_ids.has(to_id):
+			return {
+				"definition": instance.definition,
+				"target_instance_id": to_id,
+				"target_socket_id": str(edge.get("to_socket", "")),
+				"source_socket_id": str(edge.get("from_socket", ""))
+			}
+	return {}
+
+
 static func regenerate_unpinned(root: Node3D, plans: Array[Dictionary]) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return _failure("Open a LevelRoot document before regenerating modules.")

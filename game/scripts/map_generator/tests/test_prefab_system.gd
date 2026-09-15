@@ -384,17 +384,10 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	var initial := ModuleAssembly.place_module(root, catalog[1], "airlock", "out", "in")
 	assert_true(initial.success)
 	var original_unpinned: ModuleInstance = initial.instance
-	var regenerated := ModuleAssembly.regenerate_unpinned(
-		root,
-		[
-			{
-				"definition": catalog[1],
-				"target_instance_id": "airlock",
-				"target_socket_id": "out",
-				"source_socket_id": "in"
-			}
-		]
-	)
+	var captured := ModuleAssembly.build_regeneration_plans(root)
+	assert_true(captured.success, "Connected layouts must produce regeneration plans")
+	assert_eq(captured.plans.size(), 1)
+	var regenerated := ModuleAssembly.regenerate_unpinned(root, captured.plans)
 	assert_true(regenerated.success, "A valid replacement plan must commit")
 	assert_true(pinned.pinned, "Pinned modules must survive regeneration")
 	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
