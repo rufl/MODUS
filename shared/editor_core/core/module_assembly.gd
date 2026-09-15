@@ -162,6 +162,74 @@ static func _remap_local_objectives(
 		actor.set_meta("mission_objective", updated)
 
 
+static func preview_module(
+	root: Node3D,
+	definition: PrefabMetadata,
+	target_instance_id: String = "",
+	target_socket_id: String = "",
+	source_socket_id: String = "",
+	quarter_turns: int = 0
+) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return _failure("Open a LevelRoot document before previewing modules.")
+	if definition == null or definition.module_id.is_empty() or not definition.is_valid():
+		return _failure("The module definition is invalid.")
+	var previous := validate_level(root)
+	if not previous.valid:
+		return _failure("Repair the existing layout first: " + "; ".join(previous.errors))
+
+	var instances := get_instances(root)
+	var candidate := ModuleInstance.new()
+	candidate.definition = definition
+	candidate.instance_id = _next_id(definition.module_id, instances)
+	if instances.is_empty():
+		if not target_instance_id.is_empty() or not target_socket_id.is_empty():
+			candidate.free()
+			return _failure("The first module is placed at the origin without a target.")
+		candidate.transform = Transform3D(
+			Basis(Vector3.UP, posmod(quarter_turns, 4) * PI / 2.0), Vector3.ZERO
+		)
+	else:
+		var target: ModuleInstance = null
+		for instance in instances:
+			if instance.instance_id == target_instance_id:
+				target = instance
+		if target == null:
+			candidate.free()
+			return _failure("Select an existing target module and free socket.")
+		var target_socket := target.get_socket(target_socket_id)
+		var source_socket := candidate.get_socket(source_socket_id)
+		if target_socket.is_empty() or source_socket.is_empty():
+			candidate.free()
+			return _failure("Both selected sockets must exist.")
+		var target_pose: Transform3D = target.transform * target_socket.local_transform
+		var opposite := Transform3D(Basis(Vector3.UP, PI), Vector3.ZERO)
+		candidate.transform = (
+			target_pose * opposite * source_socket.local_transform.affine_inverse()
+		)
+		candidate.basis = Basis(Vector3.UP, posmod(quarter_turns, 4) * PI / 2.0) * candidate.basis
+		candidate.position = (
+			target_pose.origin - candidate.basis * source_socket.local_transform.origin
+		)
+	var candidate_transform := candidate.transform
+	instances.append(candidate)
+	var graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	if instances.size() > 1:
+		graph.append(
+			{
+				"from_instance": target_instance_id,
+				"from_socket": target_socket_id,
+				"to_instance": candidate.instance_id,
+				"to_socket": source_socket_id
+			}
+		)
+	var errors := _validate(instances, graph)
+	candidate.free()
+	if not errors.is_empty():
+		return {"success": false, "error": "; ".join(errors), "errors": errors}
+	return {"success": true, "error": "", "transform": candidate_transform}
+
+
 static func set_pinned(root: Node3D, instance_id: String, pinned: bool) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return _failure("Open a LevelRoot document before changing module pins.")

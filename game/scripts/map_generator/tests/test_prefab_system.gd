@@ -313,6 +313,30 @@ func test_module_pin_is_transactional_and_survives_pack_roundtrip() -> void:
 	root.free()
 
 
+func test_socket_preview_is_non_mutating_and_matches_committed_pose() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root: Node3D = LevelRootScript.new()
+	root.authoring_mode = true
+	add_child(root)
+	var catalog := ModuleAssembly.get_catalog()
+	assert_true(ModuleAssembly.place_module(root, catalog[0]).success)
+	var preview := ModuleAssembly.preview_module(root, catalog[1], "airlock", "out", "in")
+	assert_true(preview.success, "Compatible sockets must produce a valid preview")
+	assert_eq(ModuleAssembly.get_instances(root).size(), 1)
+	assert_true(root.module_connections.is_empty(), "Preview must not mutate the document graph")
+	var placed := ModuleAssembly.place_module(root, catalog[1], "airlock", "out", "in")
+	assert_true(placed.success)
+	if placed.success and preview.success:
+		assert_true(
+			(placed.instance as ModuleInstance).transform.is_equal_approx(preview.transform),
+			"Commit must use the previewed socket pose"
+		)
+	EditorGlobals._runtime_undo_redo.clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
 func test_rejected_module_placement_does_not_mutate_document() -> void:
 	var saved_history := EditorGlobals._runtime_undo_redo
 	EditorGlobals._runtime_undo_redo = UndoRedo.new()

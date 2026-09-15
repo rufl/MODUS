@@ -55,6 +55,7 @@ func _build() -> void:
 	for turn in 4:
 		_rotation.add_item(str(turn * 90) + " degrees")
 	_button(_rooms, "Place module", _place)
+	_button(_rooms, "Preview socket placement", _preview)
 	_button(_rooms, "Toggle pin on selected module", _toggle_pin)
 	_button(_rooms, "Validate layout", _validate_document)
 	_module.item_selected.connect(func(_index: int) -> void: _refresh_source_sockets())
@@ -194,6 +195,28 @@ func _place() -> void:
 		)
 	else:
 		_status.text = "Not placed: " + str(result.error)
+
+
+func _preview() -> void:
+	if _module.selected < 0 or _module.selected >= _catalog.size():
+		_status.text = "No valid module definition is available."
+		return
+	var result := ModuleAssembly.preview_module(
+		_root(),
+		_catalog[_module.selected],
+		_selected(_target),
+		_selected(_target_socket),
+		_selected(_source_socket),
+		_rotation.selected
+	)
+	if result.success:
+		_status.text = (
+			"Valid socket placement at "
+			+ str((result.transform as Transform3D).origin)
+			+ ". Place module to commit it."
+		)
+	else:
+		_status.text = "Invalid socket placement: " + str(result.error)
 
 
 func _toggle_pin() -> void:
