@@ -37,6 +37,7 @@ var _play_overlay: Control
 var _play_session: Node3D
 var _play_starting: bool = false
 var _document_error: String = ""
+var _replacement_previews: Array[PlacementPreview] = []
 var _socket_highlight: CSGSphere3D
 
 var _is_active: bool = false
@@ -256,7 +257,22 @@ func show_module_preview(
 		preview.set_preview_transform(transform, valid)
 
 
+func show_module_previews(
+	definitions: Array[PrefabMetadata], transforms: Array[Transform3D]
+) -> void:
+	clear_module_preview()
+	for index in range(mini(definitions.size(), transforms.size())):
+		var preview := PlacementPreview.new()
+		sub_viewport.add_child(preview)
+		preview.start_preview(load(definitions[index].scene_path) as PackedScene)
+		preview.set_preview_transform(transforms[index], true)
+		_replacement_previews.append(preview)
+
+
 func clear_module_preview() -> void:
+	for preview: PlacementPreview in _replacement_previews:
+		preview.queue_free()
+	_replacement_previews.clear()
 	if editor_features:
 		editor_features.clear_placement()
 

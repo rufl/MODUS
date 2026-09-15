@@ -236,6 +236,47 @@ static func _build_plan_for_instance(
 	return {}
 
 
+static func preview_regeneration(root: Node3D, plans: Array[Dictionary]) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return _failure("Open a LevelRoot document before previewing regeneration.")
+	var old_graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	var old_nodes: Array[ModuleInstance] = []
+	var pinned_ids: Dictionary = {}
+	for instance: ModuleInstance in get_instances(root):
+		if instance.pinned:
+			pinned_ids[instance.instance_id] = true
+		else:
+			old_nodes.append(instance)
+	for instance: ModuleInstance in old_nodes:
+		root.remove_child(instance)
+	root.module_connections = _filter_graph(old_graph, pinned_ids)
+	var staged: Array[ModuleInstance] = []
+	var transforms: Array[Transform3D] = []
+	for plan: Dictionary in plans:
+		var definition := plan.get("definition") as PrefabMetadata
+		if definition == null:
+			_rollback_regeneration(root, old_nodes, staged, old_graph)
+			return _failure("Every regeneration preview plan needs a valid definition.")
+		var result := place_module(
+			root,
+			definition,
+			str(plan.get("target_instance_id", "")),
+			str(plan.get("target_socket_id", "")),
+			str(plan.get("source_socket_id", "")),
+			int(plan.get("quarter_turns", 0)),
+			false,
+			false
+		)
+		if not result.success:
+			_rollback_regeneration(root, old_nodes, staged, old_graph)
+			return result
+		var instance := result.instance as ModuleInstance
+		staged.append(instance)
+		transforms.append(instance.transform)
+	_rollback_regeneration(root, old_nodes, staged, old_graph)
+	return {"success": true, "error": "", "transforms": transforms}
+
+
 static func regenerate_unpinned(root: Node3D, plans: Array[Dictionary]) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return _failure("Open a LevelRoot document before regenerating modules.")

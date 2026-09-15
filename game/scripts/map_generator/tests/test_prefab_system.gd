@@ -397,6 +397,11 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 		socket.kind = "vent"
 	var rejected := ModuleAssembly.build_regeneration_plans(root, [incompatible])
 	assert_false(rejected.success, "Incompatible replacement definitions must be rejected")
+	var preview := ModuleAssembly.preview_regeneration(root, captured.plans)
+	assert_true(preview.success, "Regeneration preview must stage valid plans")
+	assert_eq(preview.transforms.size(), 1)
+	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
+	assert_eq(ModuleAssembly.get_instances(root)[1], original_unpinned)
 	var regenerated := ModuleAssembly.regenerate_unpinned(root, captured.plans)
 	assert_true(regenerated.success, "A valid replacement plan must commit")
 	assert_true(pinned.pinned, "Pinned modules must survive regeneration")
