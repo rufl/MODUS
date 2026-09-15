@@ -195,6 +195,11 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 	var gameplay: Dictionary = metadata.get("gameplay", {})
 	assert_eq(metadata.get("seed"), "focused-procedural-session")
 	assert_eq(metadata.get("map_size"), [32, 32])
+	assert_has(
+		metadata.get("rule_modules_used", []),
+		"ExampleGridInitRule",
+		"Live generation must record applied rule modules"
+	)
 	assert_false(gameplay.get("keys", []).is_empty(), "Generation must emit key records")
 	assert_false(
 		gameplay.get("locked_doors", []).is_empty(), "Generation must emit locked-door records"

@@ -167,27 +167,18 @@ func get_execution_stats() -> Dictionary:
 
 ## Logging helpers
 func _log_info(message: String) -> void:
-	if _logger and _logger.has_method("info"):
-		_logger.info("RuleExecutionPipeline", message)
-	else:
-		print("[RuleExecutionPipeline] INFO: ", message)
+	# Rules execute on the generation worker; never call Node-backed log services.
+	print("[RuleExecutionPipeline] INFO: ", message)
 
 
-func _log_debug(message: String) -> void:
-	if _logger and _logger.has_method("debug"):
-		_logger.debug("RuleExecutionPipeline", message)
-	# Don't print debug messages to console by default
+func _log_debug(_message: String) -> void:
+	# Don't print debug messages to console by default.
+	pass
 
 
 func _log_warning(message: String) -> void:
-	if _logger and _logger.has_method("warning"):
-		_logger.warning("RuleExecutionPipeline", message)
-	else:
-		push_warning("[RuleExecutionPipeline] WARNING: " + message)
+	push_warning("[RuleExecutionPipeline] WARNING: " + message)
 
 
 func _log_error(message: String) -> void:
-	if _logger and _logger.has_method("error"):
-		_logger.error("RuleExecutionPipeline", message)
-	else:
-		push_error("[RuleExecutionPipeline] ERROR: " + message)
+	push_error("[RuleExecutionPipeline] ERROR: " + message)

@@ -16,9 +16,9 @@ static func integrate_ui_inputs() -> void:
 	# Find player
 	var player := _find_local_player()
 	if not player:
-		if tree:
-			if not tree.process_frame.is_connected(integrate_ui_inputs):
-				tree.process_frame.connect(integrate_ui_inputs, CONNECT_ONE_SHOT)
+		var tree := Engine.get_main_loop() as SceneTree
+		if tree and not tree.process_frame.is_connected(integrate_ui_inputs):
+			tree.process_frame.connect(integrate_ui_inputs, CONNECT_ONE_SHOT)
 		return
 
 	# Connect input signals

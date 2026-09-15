@@ -201,8 +201,9 @@ func _initialize_component_managers() -> void:
 	multimesh_manager = MultiMeshManager.new()
 	occlusion_culling_manager = OcclusionCullingManager.new()
 
-	# Rule system
+	# Rule modules are loaded once and executed by the live generation phases.
 	rule_module_loader = RuleModuleLoader.new()
+	rule_module_loader.load_rules()
 	rule_execution_pipeline = RuleExecutionPipeline.new(rule_module_loader)
 
 
@@ -245,6 +246,8 @@ func generate_map(seed_str: String, gen_config: GenConfig) -> void:
 	# Initialize RNG with hashed seed for deterministic generation
 	generation_context.rng.seed = seed_hash
 	rng.seed = seed_hash  # Also initialize MapGenerator's RNG for consistency
+	rule_execution_pipeline.reset()
+	generation_context.rule_modules_used.clear()
 	theme_manager.set_theme(config.theme, generation_context.create_cosmetic_rng())
 	generation_context.theme = theme_manager.get_current_theme()
 
@@ -621,8 +624,14 @@ func _run_phase_threaded(phase_name: String) -> bool:
 	return success
 
 
-## Execute a specific phase (extracted for retry logic)
 func _execute_phase(phase_name: String) -> bool:
+	if rule_execution_pipeline and generation_context:
+		var phase_rules := rule_module_loader.get_rules_for_phase(phase_name)
+		if not phase_rules.is_empty():
+			if not rule_execution_pipeline.execute_phase(phase_name, generation_context):
+				return false
+			generation_context.rule_modules_used = rule_execution_pipeline.get_applied_rules()
+
 	match phase_name:
 		"grid_layout":
 			return _execute_grid_layout_phase()
@@ -703,10 +712,15 @@ func _execute_grid_layout_phase() -> bool:
 		push_error("Generation config not initialized")
 		return false
 
-	# Initialize grid with configured size
-	grid_manager.initialize_grid(config.map_size)
-	generation_context.grid = grid_manager.grid
-	generation_context.grid_size = config.map_size
+	# Rule modules may provide the initial grid; preserve their output and
+	# fall back to the built-in initializer when no rule applies.
+	if generation_context.grid.is_empty():
+		grid_manager.initialize_grid(config.map_size)
+		generation_context.grid = grid_manager.grid
+		generation_context.grid_size = config.map_size
+	else:
+		grid_manager.grid = generation_context.grid
+		grid_manager.grid_size = generation_context.grid_size
 
 	return true
 
