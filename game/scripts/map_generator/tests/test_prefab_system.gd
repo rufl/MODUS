@@ -337,6 +337,46 @@ func test_socket_preview_is_non_mutating_and_matches_committed_pose() -> void:
 	root.free()
 
 
+func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root: Node3D = LevelRootScript.new()
+	root.authoring_mode = true
+	add_child(root)
+	var catalog := ModuleAssembly.get_catalog()
+	assert_true(ModuleAssembly.place_module(root, catalog[0]).success)
+	var pinned := ModuleAssembly.get_instances(root)[0]
+	var pin_result := ModuleAssembly.set_pinned(root, pinned.instance_id, true)
+	assert_true(pin_result.success)
+	var initial := ModuleAssembly.place_module(root, catalog[1], "airlock", "out", "in")
+	assert_true(initial.success)
+	var original_unpinned: ModuleInstance = initial.instance
+	var regenerated := ModuleAssembly.regenerate_unpinned(
+		root,
+		[
+			{
+				"definition": catalog[1],
+				"target_instance_id": "airlock",
+				"target_socket_id": "out",
+				"source_socket_id": "in"
+			}
+		]
+	)
+	assert_true(regenerated.success, "A valid replacement plan must commit")
+	assert_true(pinned.pinned, "Pinned modules must survive regeneration")
+	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
+	assert_ne(ModuleAssembly.get_instances(root)[1], original_unpinned)
+	EditorGlobals.get_undo_redo().undo()
+	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
+	assert_eq(ModuleAssembly.get_instances(root)[1], original_unpinned)
+	EditorGlobals.get_undo_redo().redo()
+	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
+	assert_ne(ModuleAssembly.get_instances(root)[1], original_unpinned)
+	EditorGlobals._runtime_undo_redo.clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
 func test_rejected_module_placement_does_not_mutate_document() -> void:
 	var saved_history := EditorGlobals._runtime_undo_redo
 	EditorGlobals._runtime_undo_redo = UndoRedo.new()

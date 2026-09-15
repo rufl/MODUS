@@ -46,15 +46,18 @@ static func place_module(
 	target_instance_id: String = "",
 	target_socket_id: String = "",
 	source_socket_id: String = "",
-	quarter_turns: int = 0
+	quarter_turns: int = 0,
+	record_history: bool = true,
+	validate_existing: bool = true
 ) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return _failure("Open a LevelRoot document before placing modules.")
 	if definition == null or definition.module_id.is_empty() or not definition.is_valid():
 		return _failure("The module definition is invalid.")
-	var previous := validate_level(root)
-	if not previous.valid:
-		return _failure("Repair the existing layout first: " + "; ".join(previous.errors))
+	if validate_existing:
+		var previous := validate_level(root)
+		if not previous.valid:
+			return _failure("Repair the existing layout first: " + "; ".join(previous.errors))
 	var instances := get_instances(root)
 	var candidate := ModuleInstance.new()
 	candidate.definition = definition
@@ -133,6 +136,9 @@ static func place_module(
 	if not errors.is_empty():
 		candidate.free()
 		return _failure("; ".join(errors))
+	if not record_history:
+		_attach(root, candidate, graph)
+		return {"success": true, "error": "", "instance": candidate}
 	var undo := EditorGlobals.get_undo_redo()
 	undo.create_action("Place module: " + definition.module_id)
 	undo.add_do_method(_attach.bind(root, candidate, graph))
@@ -140,6 +146,102 @@ static func place_module(
 	undo.add_do_reference(candidate)
 	undo.commit_action()
 	return {"success": true, "error": "", "instance": candidate}
+
+
+static func regenerate_unpinned(root: Node3D, plans: Array[Dictionary]) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return _failure("Open a LevelRoot document before regenerating modules.")
+	var old_graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	var old_nodes: Array[ModuleInstance] = []
+	var pinned_ids: Dictionary = {}
+	for instance: ModuleInstance in get_instances(root):
+		if instance.pinned:
+			pinned_ids[instance.instance_id] = true
+		else:
+			old_nodes.append(instance)
+	for instance: ModuleInstance in old_nodes:
+		root.remove_child(instance)
+	root.module_connections = _filter_graph(old_graph, pinned_ids)
+	var new_nodes: Array[ModuleInstance] = []
+	for plan: Dictionary in plans:
+		var definition := plan.get("definition") as PrefabMetadata
+		if definition == null:
+			_rollback_regeneration(root, old_nodes, new_nodes, old_graph)
+			return _failure("Every regeneration plan needs a valid module definition.")
+		var result := place_module(
+			root,
+			definition,
+			str(plan.get("target_instance_id", "")),
+			str(plan.get("target_socket_id", "")),
+			str(plan.get("source_socket_id", "")),
+			int(plan.get("quarter_turns", 0)),
+			false,
+			false
+		)
+		if not result.success:
+			_rollback_regeneration(root, old_nodes, new_nodes, old_graph)
+			return result
+		new_nodes.append(result.instance as ModuleInstance)
+	var final_validation := validate_level(root)
+	if not final_validation.valid:
+		_rollback_regeneration(root, old_nodes, new_nodes, old_graph)
+		return _failure("Regenerated layout is invalid: " + "; ".join(final_validation.errors))
+	var new_graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	var undo := EditorGlobals.get_undo_redo()
+	undo.create_action("Regenerate unpinned modules")
+	undo.add_do_method(_swap_layout.bind(root, old_nodes, new_nodes, new_graph))
+	undo.add_undo_method(_swap_layout.bind(root, new_nodes, old_nodes, old_graph))
+	for instance: ModuleInstance in old_nodes:
+		undo.add_do_reference(instance)
+	for instance: ModuleInstance in new_nodes:
+		undo.add_do_reference(instance)
+	undo.commit_action()
+	return {"success": true, "error": "", "instances": new_nodes}
+
+
+static func _filter_graph(graph: Array[Dictionary], instance_ids: Dictionary) -> Array[Dictionary]:
+	var filtered: Array[Dictionary] = []
+	for edge: Dictionary in graph:
+		if (
+			instance_ids.has(edge.get("from_instance", ""))
+			and instance_ids.has(edge.get("to_instance", ""))
+		):
+			filtered.append(edge.duplicate(true))
+	return filtered
+
+
+static func _rollback_regeneration(
+	root: Node3D,
+	old_nodes: Array[ModuleInstance],
+	new_nodes: Array[ModuleInstance],
+	old_graph: Array[Dictionary]
+) -> void:
+	for instance: ModuleInstance in new_nodes:
+		if instance.get_parent() == root:
+			root.remove_child(instance)
+		instance.free()
+	for instance: ModuleInstance in old_nodes:
+		root.add_child(instance)
+		instance.owner = root
+		LevelRootScript.prepare_ownership(instance, root)
+	root.module_connections = old_graph.duplicate(true)
+
+
+static func _swap_layout(
+	root: Node3D,
+	remove_nodes: Array[ModuleInstance],
+	add_nodes: Array[ModuleInstance],
+	graph: Array[Dictionary]
+) -> void:
+	for instance: ModuleInstance in remove_nodes:
+		if instance.get_parent() == root:
+			root.remove_child(instance)
+	for instance: ModuleInstance in add_nodes:
+		if instance.get_parent() == null:
+			root.add_child(instance)
+			instance.owner = root
+			LevelRootScript.prepare_ownership(instance, root)
+	root.module_connections = graph.duplicate(true)
 
 
 static func _remap_local_objectives(
