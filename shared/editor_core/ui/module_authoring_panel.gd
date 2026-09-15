@@ -114,10 +114,18 @@ func refresh_document() -> void:
 		return
 	_catalog = ModuleAssembly.get_catalog()
 	_generator_replacement_catalog.clear()
-	if _editor and _editor.has_method("get_generator_replacement_entries"):
-		_generator_replacement_catalog = ModuleAssembly.catalog_from_prefab_entries(
-			_editor.get_generator_replacement_entries()
+	if _editor and _editor.has_method("get_generator_replacement_metadata"):
+		_generator_replacement_catalog = ModuleAssembly.catalog_from_metadata_dicts(
+			_editor.get_generator_replacement_metadata()
 		)
+		for generated in _generator_replacement_catalog:
+			var duplicate := false
+			for existing in _catalog:
+				if existing.module_id == generated.module_id:
+					duplicate = true
+					break
+			if not duplicate:
+				_catalog.append(generated)
 	_module.clear()
 	for definition in _catalog:
 		_module.add_item(definition.module_id.replace("_", " ").capitalize())

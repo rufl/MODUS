@@ -433,6 +433,16 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 				return definition.module_id == catalog[1].module_id
 		)
 	)
+	assert_eq(
+		(
+			ModuleAssembly
+			. catalog_from_metadata_dicts(
+				[{"module_id": "invalid", "dimensions": [0.0, 0.0, 0.0]}, "ignored"]
+			)
+			. size()
+		),
+		0
+	)
 	assert_true(preview.success, "Regeneration preview must stage valid plans")
 	assert_eq(preview.transforms.size(), 1)
 	assert_eq(ModuleAssembly.get_instances(root).size(), 2)

@@ -23,6 +23,7 @@ var grid_system: Node
 var selection_manager: Node
 var editor_features: Node  ## Unified features controller
 var generator_prefab_system: RefCounted
+var _generator_replacement_metadata: Array = []
 var palette_panel: Control
 var toolbar_panel: Control
 var hotbar: Control
@@ -258,6 +259,22 @@ func get_generator_replacement_entries() -> Array:
 		for category: String in generator_prefab_system.get_categories(theme):
 			entries.append_array(generator_prefab_system.get_prefabs(theme, category))
 	return entries
+
+
+func get_generator_replacement_metadata() -> Array:
+	if not _generator_replacement_metadata.is_empty():
+		return _generator_replacement_metadata.duplicate(true)
+	var metadata: Array = []
+	for entry in get_generator_replacement_entries():
+		if entry and entry.metadata:
+			metadata.append(entry.metadata.to_dict())
+	return metadata
+
+
+func set_generator_replacement_metadata(entries: Array) -> void:
+	_generator_replacement_metadata = entries.duplicate(true)
+	if module_panel:
+		module_panel.refresh_document()
 
 
 func show_module_preview(
