@@ -244,6 +244,22 @@ func _init_viewport() -> void:
 		_env_interface.set_level_root(level_root)
 
 
+func show_module_preview(
+	definition: PrefabMetadata, transform: Transform3D, valid: bool = true
+) -> void:
+	if editor_features == null or definition == null:
+		return
+	editor_features.start_placement({"type": "scene", "scene_path": definition.scene_path})
+	var preview := editor_features.get_placement_preview()
+	if preview and preview.has_method("set_preview_transform"):
+		preview.set_preview_transform(transform, valid)
+
+
+func clear_module_preview() -> void:
+	if editor_features:
+		editor_features.clear_placement()
+
+
 func _process(_delta: float) -> void:
 	if not _is_active or is_instance_valid(_play_session) or _play_starting:
 		return

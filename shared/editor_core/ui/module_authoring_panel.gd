@@ -189,6 +189,8 @@ func _place() -> void:
 		_rotation.selected
 	)
 	if result.success:
+		if _editor and _editor.has_method("clear_module_preview"):
+			_editor.clear_module_preview()
 		refresh_document()
 		_status.text = (
 			"Placed " + result.instance.instance_id + ". Undo restores the previous layout."
@@ -201,21 +203,26 @@ func _preview() -> void:
 	if _module.selected < 0 or _module.selected >= _catalog.size():
 		_status.text = "No valid module definition is available."
 		return
+	var definition := _catalog[_module.selected]
 	var result := ModuleAssembly.preview_module(
 		_root(),
-		_catalog[_module.selected],
+		definition,
 		_selected(_target),
 		_selected(_target_socket),
 		_selected(_source_socket),
 		_rotation.selected
 	)
 	if result.success:
+		if _editor and _editor.has_method("show_module_preview"):
+			_editor.show_module_preview(definition, result.transform, true)
 		_status.text = (
 			"Valid socket placement at "
 			+ str((result.transform as Transform3D).origin)
 			+ ". Place module to commit it."
 		)
 	else:
+		if _editor and _editor.has_method("clear_module_preview"):
+			_editor.clear_module_preview()
 		_status.text = "Invalid socket placement: " + str(result.error)
 
 

@@ -337,6 +337,21 @@ func test_socket_preview_is_non_mutating_and_matches_committed_pose() -> void:
 	root.free()
 
 
+func test_module_ghost_preview_tracks_external_transform_and_clears() -> void:
+	var preview := PlacementPreview.new()
+	add_child(preview)
+	preview.start_preview(BoxMesh.new())
+	assert_true(preview.is_active)
+	var pose := Transform3D(Basis(Vector3.UP, PI / 2.0), Vector3(4, 2, -3))
+	preview.set_preview_transform(pose, false)
+	assert_true(preview.preview_node.global_transform.is_equal_approx(pose))
+	assert_false(preview.is_valid_placement)
+	preview.clear_preview()
+	assert_false(preview.is_active)
+	assert_null(preview.preview_node)
+	preview.free()
+
+
 func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	var saved_history := EditorGlobals._runtime_undo_redo
 	EditorGlobals._runtime_undo_redo = UndoRedo.new()

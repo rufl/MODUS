@@ -300,6 +300,18 @@ func reset_scale() -> void:
 ## Update visual transform
 
 
+## Apply an externally solved placement transform, such as a module socket pose.
+func set_preview_transform(transform: Transform3D, valid: bool = true) -> void:
+	if not is_active or not preview_node:
+		return
+	preview_position = transform.origin
+	preview_rotation = transform.basis.get_euler().y
+	preview_scale = transform.basis.get_scale()
+	preview_node.global_transform = transform
+	is_valid_placement = valid
+	_update_preview_color()
+
+
 func _update_preview_transform() -> void:
 	if not preview_node:
 		return
