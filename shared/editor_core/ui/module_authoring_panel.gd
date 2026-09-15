@@ -59,6 +59,7 @@ func _build() -> void:
 	_button(_rooms, "Regenerate unpinned modules", _regenerate_unpinned)
 	_button(_rooms, "Regenerate with selected definition", _regenerate_with_selected)
 	_button(_rooms, "Check selected replacement", _check_selected_replacement)
+	_button(_rooms, "Preview selected replacement", _preview_selected_replacement)
 	_button(_rooms, "Place module", _place)
 	_button(_rooms, "Preview socket placement", _preview)
 	_button(_rooms, "Toggle pin on selected module", _toggle_pin)
@@ -197,6 +198,44 @@ func _regenerate_unpinned() -> void:
 		)
 	else:
 		_status.text = "Regeneration failed: " + str(result.error)
+
+
+func _preview_selected_replacement() -> void:
+	if _module.selected < 0 or _module.selected >= _catalog.size():
+		_status.text = "Select a replacement module definition first."
+		return
+	var captured := ModuleAssembly.build_regeneration_plans(_root(), [_catalog[_module.selected]])
+	if not captured.success or captured.plans.is_empty():
+		_status.text = (
+			"Replacement preview failed: "
+			+ str(captured.error if not captured.success else "No unpinned modules.")
+		)
+		return
+	var plan: Dictionary = captured.plans[0]
+	var result := ModuleAssembly.preview_module(
+		_root(),
+		plan.definition,
+		str(plan.get("target_instance_id", "")),
+		str(plan.get("target_socket_id", "")),
+		str(plan.get("source_socket_id", "")),
+		0
+	)
+	if not result.success:
+		_status.text = "Replacement preview failed: " + str(result.error)
+		return
+	_preview_active = true
+	_preview_target_key = (
+		str(plan.get("target_instance_id", "")) + ":" + str(plan.get("target_socket_id", ""))
+	)
+	if _editor and _editor.has_method("show_module_preview"):
+		_editor.show_module_preview(plan.definition, result.transform, true)
+	if (
+		_editor
+		and _editor.has_method("show_socket_highlight")
+		and not str(plan.get("target_instance_id", "")).is_empty()
+	):
+		_editor.show_socket_highlight(str(plan.target_instance_id), str(plan.target_socket_id))
+	_status.text = "Previewing the first compatible unpinned replacement. Enter commits it."
 
 
 func _check_selected_replacement() -> void:
