@@ -23,6 +23,14 @@ const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
 const SUPPORTED_CAPABILITIES := ["walk"]
 
 
+static func _unsupported_capabilities(definition: PrefabMetadata) -> Array[String]:
+	var unsupported: Array[String] = []
+	for capability: String in definition.required_capabilities:
+		if not SUPPORTED_CAPABILITIES.has(capability):
+			unsupported.append(capability)
+	return unsupported
+
+
 static func get_catalog() -> Array[PrefabMetadata]:
 	var result: Array[PrefabMetadata] = []
 	for path: String in CATALOG:
@@ -88,6 +96,7 @@ static func get_replacement_diagnostics(
 					"module_id": definition.module_id,
 					"error": result.error,
 					"required_capabilities": Array(definition.required_capabilities),
+					"unsupported_capabilities": _unsupported_capabilities(definition),
 					"target_instance_ids": target_instance_ids.duplicate()
 				}
 			)
@@ -263,7 +272,11 @@ static func _replace_plan_definition(
 	var best_socket_id := ""
 	var best_score := -1
 	for definition: PrefabMetadata in replacement_catalog:
-		if definition == null or not definition.is_valid():
+		if (
+			definition == null
+			or not definition.is_valid()
+			or not _unsupported_capabilities(definition).is_empty()
+		):
 			continue
 		if source_socket.is_empty():
 			if best_definition == null or definition.module_id < best_definition.module_id:

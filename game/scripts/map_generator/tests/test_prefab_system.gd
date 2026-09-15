@@ -433,11 +433,13 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	var incompatible := catalog[1].duplicate(true) as PrefabMetadata
 	for socket in incompatible.sockets:
 		socket.kind = "vent"
+	incompatible.required_capabilities.append("teleport")
 	var rejected := ModuleAssembly.build_regeneration_plans(root, [incompatible])
 	assert_false(rejected.success, "Incompatible replacement definitions must be rejected")
 	var custom_diagnostics := ModuleAssembly.get_replacement_diagnostics(root, [incompatible])
 	assert_eq(custom_diagnostics.compatible.size(), 0)
 	assert_eq(custom_diagnostics.rejected.size(), 1)
+	assert_true(custom_diagnostics.rejected[0].unsupported_capabilities.has("teleport"))
 	assert_true(custom_diagnostics.rejected[0].has("target_instance_ids"))
 	assert_true(custom_diagnostics.rejected[0].target_instance_ids.has("airlock"))
 	var preview := ModuleAssembly.preview_regeneration(root, captured.plans)
