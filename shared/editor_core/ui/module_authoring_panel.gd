@@ -260,13 +260,15 @@ func _check_selected_replacement() -> void:
 		return
 	var captured := ModuleAssembly.build_regeneration_plans(_root(), [_catalog[_module.selected]])
 	if captured.success:
-		var compatible := ModuleAssembly.get_compatible_replacement_catalog(_root())
+		var diagnostics := ModuleAssembly.get_replacement_diagnostics(_root())
 		_status.text = (
 			"Replacement is valid for "
 			+ str(captured.plans.size())
 			+ " unpinned module(s); "
-			+ str(compatible.size())
-			+ " catalog candidate(s) are compatible."
+			+ str(diagnostics.compatible.size())
+			+ " compatible, "
+			+ str(diagnostics.rejected.size())
+			+ " rejected catalog candidate(s)."
 		)
 	else:
 		_status.text = "Replacement is invalid: " + str(captured.error)

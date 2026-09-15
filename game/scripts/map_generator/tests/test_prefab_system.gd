@@ -399,6 +399,13 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 				return definition.module_id == catalog[1].module_id
 		)
 	)
+	var diagnostics := ModuleAssembly.get_replacement_diagnostics(root)
+	assert_true(
+		diagnostics.compatible.any(
+			func(definition: PrefabMetadata) -> bool:
+				return definition.module_id == catalog[1].module_id
+		)
+	)
 	var incompatible := catalog[1].duplicate(true) as PrefabMetadata
 	for socket in incompatible.sockets:
 		socket.kind = "vent"
