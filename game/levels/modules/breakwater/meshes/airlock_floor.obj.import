@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://b7cm7lvw535te"
-valid=false
+path="res://.godot/imported/airlock_floor.obj-6a772cb4e3254b2172a372e8de8beaca.mesh"
 
 [deps]
 
+files=["res://.godot/imported/airlock_floor.obj-6a772cb4e3254b2172a372e8de8beaca.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/airlock_floor.obj"
+dest_files=["res://.godot/imported/airlock_floor.obj-6a772cb4e3254b2172a372e8de8beaca.mesh", "res://.godot/imported/airlock_floor.obj-6a772cb4e3254b2172a372e8de8beaca.mesh"]
 
 [params]
 

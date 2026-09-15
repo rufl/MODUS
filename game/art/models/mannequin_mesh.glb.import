@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://5r1wqx7vv66d"
-valid=false
+path="res://.godot/imported/mannequin_mesh.glb-31be2687599234622bc4ef3949c2f048.scn"
 
 [deps]
 
 source_file="res://game/art/models/mannequin_mesh.glb"
+dest_files=["res://.godot/imported/mannequin_mesh.glb-31be2687599234622bc4ef3949c2f048.scn"]
 
 [params]
 

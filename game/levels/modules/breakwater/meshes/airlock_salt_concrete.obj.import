@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://bkc8xq6mld6xo"
-valid=false
+path="res://.godot/imported/airlock_salt_concrete.obj-f7d0bc093c7d7b345defe90686f98739.mesh"
 
 [deps]
 
+files=["res://.godot/imported/airlock_salt_concrete.obj-f7d0bc093c7d7b345defe90686f98739.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/airlock_salt_concrete.obj"
+dest_files=["res://.godot/imported/airlock_salt_concrete.obj-f7d0bc093c7d7b345defe90686f98739.mesh", "res://.godot/imported/airlock_salt_concrete.obj-f7d0bc093c7d7b345defe90686f98739.mesh"]
 
 [params]
 

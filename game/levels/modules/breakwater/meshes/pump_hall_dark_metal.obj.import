@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://icicyicf5cls"
-valid=false
+path="res://.godot/imported/pump_hall_dark_metal.obj-939f4c9b58a41208dc41f44ce1bc4a9c.mesh"
 
 [deps]
 
+files=["res://.godot/imported/pump_hall_dark_metal.obj-939f4c9b58a41208dc41f44ce1bc4a9c.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/pump_hall_dark_metal.obj"
+dest_files=["res://.godot/imported/pump_hall_dark_metal.obj-939f4c9b58a41208dc41f44ce1bc4a9c.mesh", "res://.godot/imported/pump_hall_dark_metal.obj-939f4c9b58a41208dc41f44ce1bc4a9c.mesh"]
 
 [params]
 

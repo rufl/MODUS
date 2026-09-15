@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://b03la7vu7w2xb"
-valid=false
+path="res://.godot/imported/airlock_dark_metal.obj-0daca291fc096cd88d2bb84788478ff9.mesh"
 
 [deps]
 
+files=["res://.godot/imported/airlock_dark_metal.obj-0daca291fc096cd88d2bb84788478ff9.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/airlock_dark_metal.obj"
+dest_files=["res://.godot/imported/airlock_dark_metal.obj-0daca291fc096cd88d2bb84788478ff9.mesh", "res://.godot/imported/airlock_dark_metal.obj-0daca291fc096cd88d2bb84788478ff9.mesh"]
 
 [params]
 

@@ -4,11 +4,12 @@ importer="animation_library"
 importer_version=1
 type="AnimationLibrary"
 uid="uid://cuue3lqs1csva"
-valid=false
+path="res://.godot/imported/AnimationLibrary_Godot.glb-923428acf52e3c890b1c4ddbd7ac0832.res"
 
 [deps]
 
 source_file="res://game/art/anims/AnimationLibrary_Godot.glb"
+dest_files=["res://.godot/imported/AnimationLibrary_Godot.glb-923428acf52e3c890b1c4ddbd7ac0832.res"]
 
 [params]
 

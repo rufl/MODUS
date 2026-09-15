@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://m21rswjgqify"
-valid=false
+path="res://.godot/imported/coastal_hub_brass.obj-c4b726fbacc299d70e12c2ca4531e43d.mesh"
 
 [deps]
 
+files=["res://.godot/imported/coastal_hub_brass.obj-c4b726fbacc299d70e12c2ca4531e43d.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/coastal_hub_brass.obj"
+dest_files=["res://.godot/imported/coastal_hub_brass.obj-c4b726fbacc299d70e12c2ca4531e43d.mesh", "res://.godot/imported/coastal_hub_brass.obj-c4b726fbacc299d70e12c2ca4531e43d.mesh"]
 
 [params]
 

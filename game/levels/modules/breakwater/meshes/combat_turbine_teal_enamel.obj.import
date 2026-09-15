@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://elj3ma75iddo"
-valid=false
+path="res://.godot/imported/combat_turbine_teal_enamel.obj-83b9273076d64bfb63479be88f714191.mesh"
 
 [deps]
 
+files=["res://.godot/imported/combat_turbine_teal_enamel.obj-83b9273076d64bfb63479be88f714191.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/combat_turbine_teal_enamel.obj"
+dest_files=["res://.godot/imported/combat_turbine_teal_enamel.obj-83b9273076d64bfb63479be88f714191.mesh", "res://.godot/imported/combat_turbine_teal_enamel.obj-83b9273076d64bfb63479be88f714191.mesh"]
 
 [params]
 

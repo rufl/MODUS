@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://d00wkteai3pcm"
-valid=false
+path="res://.godot/imported/control_room_salt_concrete.obj-6875dd8cc2d69d0590a3080782a205f7.mesh"
 
 [deps]
 
+files=["res://.godot/imported/control_room_salt_concrete.obj-6875dd8cc2d69d0590a3080782a205f7.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/control_room_salt_concrete.obj"
+dest_files=["res://.godot/imported/control_room_salt_concrete.obj-6875dd8cc2d69d0590a3080782a205f7.mesh", "res://.godot/imported/control_room_salt_concrete.obj-6875dd8cc2d69d0590a3080782a205f7.mesh"]
 
 [params]
 

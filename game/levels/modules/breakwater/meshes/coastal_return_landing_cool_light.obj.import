@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://b8iabo4fccnpd"
-valid=false
+path="res://.godot/imported/coastal_return_landing_cool_light.obj-f55e10589f44648e2cc903015e1af984.mesh"
 
 [deps]
 
+files=["res://.godot/imported/coastal_return_landing_cool_light.obj-f55e10589f44648e2cc903015e1af984.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/coastal_return_landing_cool_light.obj"
+dest_files=["res://.godot/imported/coastal_return_landing_cool_light.obj-f55e10589f44648e2cc903015e1af984.mesh", "res://.godot/imported/coastal_return_landing_cool_light.obj-f55e10589f44648e2cc903015e1af984.mesh"]
 
 [params]
 

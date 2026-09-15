@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://r2hwcw65v6jt"
-valid=false
+path="res://.godot/imported/procedural_reference.glb-7e21e5f512d4c91c583f035f355fad25.scn"
 
 [deps]
 
 source_file="res://game/art/models/skel/procedural_reference.glb"
+dest_files=["res://.godot/imported/procedural_reference.glb-7e21e5f512d4c91c583f035f355fad25.scn"]
 
 [params]
 

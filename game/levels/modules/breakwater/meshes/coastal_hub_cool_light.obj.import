@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://cddu0p6qc6362"
-valid=false
+path="res://.godot/imported/coastal_hub_cool_light.obj-3b885846f0e97de7af5680f1a0660606.mesh"
 
 [deps]
 
+files=["res://.godot/imported/coastal_hub_cool_light.obj-3b885846f0e97de7af5680f1a0660606.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/coastal_hub_cool_light.obj"
+dest_files=["res://.godot/imported/coastal_hub_cool_light.obj-3b885846f0e97de7af5680f1a0660606.mesh", "res://.godot/imported/coastal_hub_cool_light.obj-3b885846f0e97de7af5680f1a0660606.mesh"]
 
 [params]
 

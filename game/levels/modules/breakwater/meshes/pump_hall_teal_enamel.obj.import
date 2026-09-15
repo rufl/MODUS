@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://lka8383alwde"
-valid=false
+path="res://.godot/imported/pump_hall_teal_enamel.obj-b8cd2123cd0d812efd6d620326d48fd3.mesh"
 
 [deps]
 
+files=["res://.godot/imported/pump_hall_teal_enamel.obj-b8cd2123cd0d812efd6d620326d48fd3.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/pump_hall_teal_enamel.obj"
+dest_files=["res://.godot/imported/pump_hall_teal_enamel.obj-b8cd2123cd0d812efd6d620326d48fd3.mesh", "res://.godot/imported/pump_hall_teal_enamel.obj-b8cd2123cd0d812efd6d620326d48fd3.mesh"]
 
 [params]
 

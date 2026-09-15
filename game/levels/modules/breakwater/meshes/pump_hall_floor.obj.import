@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://fb7hass2jvw"
-valid=false
+path="res://.godot/imported/pump_hall_floor.obj-c093f7bef857e7913cfed6d2b85de8f4.mesh"
 
 [deps]
 
+files=["res://.godot/imported/pump_hall_floor.obj-c093f7bef857e7913cfed6d2b85de8f4.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/pump_hall_floor.obj"
+dest_files=["res://.godot/imported/pump_hall_floor.obj-c093f7bef857e7913cfed6d2b85de8f4.mesh", "res://.godot/imported/pump_hall_floor.obj-c093f7bef857e7913cfed6d2b85de8f4.mesh"]
 
 [params]
 

@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://detshu8opddav"
-valid=false
+path="res://.godot/imported/pistol.glb-9a5ef7f4708a5e160de8146822397cc6.scn"
 
 [deps]
 
 source_file="res://game/art/models/pistol.glb"
+dest_files=["res://.godot/imported/pistol.glb-9a5ef7f4708a5e160de8146822397cc6.scn"]
 
 [params]
 

@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://35jrvhtc6k77"
-valid=false
+path="res://.godot/imported/combat_drive_rotor.obj-9d4cd615286b8a63a553efbeb57bddc5.mesh"
 
 [deps]
 
+files=["res://.godot/imported/combat_drive_rotor.obj-9d4cd615286b8a63a553efbeb57bddc5.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/combat_drive_rotor.obj"
+dest_files=["res://.godot/imported/combat_drive_rotor.obj-9d4cd615286b8a63a553efbeb57bddc5.mesh", "res://.godot/imported/combat_drive_rotor.obj-9d4cd615286b8a63a553efbeb57bddc5.mesh"]
 
 [params]
 

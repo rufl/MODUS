@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://bev7jwl7b2so0"
-valid=false
+path="res://.godot/imported/coastal_cavern_amber_light.obj-a60b763280fa4df8fc78ba0bb9e1aa02.mesh"
 
 [deps]
 
+files=["res://.godot/imported/coastal_cavern_amber_light.obj-a60b763280fa4df8fc78ba0bb9e1aa02.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/coastal_cavern_amber_light.obj"
+dest_files=["res://.godot/imported/coastal_cavern_amber_light.obj-a60b763280fa4df8fc78ba0bb9e1aa02.mesh", "res://.godot/imported/coastal_cavern_amber_light.obj-a60b763280fa4df8fc78ba0bb9e1aa02.mesh"]
 
 [params]
 

@@ -4,11 +4,14 @@ importer="wavefront_obj"
 importer_version=1
 type="Mesh"
 uid="uid://dyi4aj16sjg71"
-valid=false
+path="res://.godot/imported/coastal_hub_teal_enamel.obj-f96b0da34c30504c3c4ee51287a50456.mesh"
 
 [deps]
 
+files=["res://.godot/imported/coastal_hub_teal_enamel.obj-f96b0da34c30504c3c4ee51287a50456.mesh"]
+
 source_file="res://game/levels/modules/breakwater/meshes/coastal_hub_teal_enamel.obj"
+dest_files=["res://.godot/imported/coastal_hub_teal_enamel.obj-f96b0da34c30504c3c4ee51287a50456.mesh", "res://.godot/imported/coastal_hub_teal_enamel.obj-f96b0da34c30504c3c4ee51287a50456.mesh"]
 
 [params]
 
