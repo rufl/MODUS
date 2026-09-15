@@ -77,19 +77,19 @@ func validate_spawn_position() -> void:
 		if walls_nearby >= 3:
 			inside_geometry = true
 
-		# Check 3: Ceiling Check (Cargo Containers usually have low ceilings ~2.5m)
+		# Check 3: Ceiling clearance above the 2m enemy capsule.
+		# Start at the capsule top; the previous 0.5m start ray hit valid
+		# ceilings above the enemy and caused false reposition warnings.
 		if not inside_geometry:
 			var ceiling_query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(
-				_enemy.global_position + Vector3(0, 0.5, 0),
-				_enemy.global_position + Vector3(0, 2.5, 0),
+				_enemy.global_position + Vector3(0, 2.05, 0),
+				_enemy.global_position + Vector3(0, 2.25, 0),
 				CollisionLayers.MASK_WORLD_ONLY
 			)
 
 			var ceiling_result: Dictionary = space_state.intersect_ray(ceiling_query)
 			if not ceiling_result.is_empty():
-				# We hit a ceiling! likely inside a container or under a low bridge.
-				# Combined with any wall nearby, it's very risky.
-				# Let's be strict: If we spawn with a low ceiling, try to move.
+				# A ceiling within 0.25m of the capsule top is unsafe.
 				if logger:
 					logger.warning(
 						"[Enemy] %s blocked by low ceiling, repositioning..." % _enemy.name, "Enemy"
