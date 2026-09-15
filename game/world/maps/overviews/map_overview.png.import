@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bo3k7dm52jx4f"
-valid=false
+uid="uid://bcfejxvh60tjo"
+path="res://.godot/imported/map_overview.png-5ce145fa23b4490c4054240fe8e5cc75.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
-source_file="res://game/levels/overviews/map_overview.png"
+source_file="res://game/world/maps/overviews/map_overview.png"
+dest_files=["res://.godot/imported/map_overview.png-5ce145fa23b4490c4054240fe8e5cc75.ctex"]
 
 [params]
 
