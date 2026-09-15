@@ -38,7 +38,7 @@ var _play_session: Node3D
 var _play_starting: bool = false
 var _document_error: String = ""
 var _replacement_previews: Array[PlacementPreview] = []
-var _socket_highlight: CSGSphere3D
+var _socket_highlights: Array[CSGSphere3D] = []
 
 var _is_active: bool = false
 
@@ -278,32 +278,38 @@ func clear_module_preview() -> void:
 
 
 func show_socket_highlight(instance_id: String, socket_id: String) -> void:
+	show_socket_highlights([instance_id], [socket_id])
+
+
+func show_socket_highlights(instance_ids: Array[String], socket_ids: Array[String]) -> void:
 	clear_socket_highlight()
-	for instance: ModuleInstance in ModuleAssemblyScript.get_instances(level_root):
-		if instance.instance_id != instance_id:
-			continue
-		var socket := instance.get_socket(socket_id)
-		if socket.is_empty():
-			return
-		_socket_highlight = CSGSphere3D.new()
-		_socket_highlight.name = "SocketHighlight"
-		_socket_highlight.radius = 0.22
-		_socket_highlight.height = 0.44
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(1.0, 0.8, 0.1, 0.9)
-		material.emission_enabled = true
-		material.emission = Color(1.0, 0.45, 0.05)
-		material.emission_energy_multiplier = 2.0
-		_socket_highlight.material = material
-		sub_viewport.add_child(_socket_highlight)
-		_socket_highlight.global_transform = instance.global_transform * socket.local_transform
-		return
+	for index in range(mini(instance_ids.size(), socket_ids.size())):
+		for instance: ModuleInstance in ModuleAssemblyScript.get_instances(level_root):
+			if instance.instance_id != instance_ids[index]:
+				continue
+			var socket := instance.get_socket(socket_ids[index])
+			if socket.is_empty():
+				break
+			var highlight := CSGSphere3D.new()
+			highlight.name = "SocketHighlight"
+			highlight.radius = 0.22
+			highlight.height = 0.44
+			var material := StandardMaterial3D.new()
+			material.albedo_color = Color(1.0, 0.8, 0.1, 0.9)
+			material.emission_enabled = true
+			material.emission = Color(1.0, 0.45, 0.05)
+			material.emission_energy_multiplier = 2.0
+			highlight.material = material
+			sub_viewport.add_child(highlight)
+			highlight.global_transform = instance.global_transform * socket.local_transform
+			_socket_highlights.append(highlight)
+			break
 
 
 func clear_socket_highlight() -> void:
-	if is_instance_valid(_socket_highlight):
-		_socket_highlight.queue_free()
-	_socket_highlight = null
+	for highlight: CSGSphere3D in _socket_highlights:
+		highlight.queue_free()
+	_socket_highlights.clear()
 
 
 func _process(_delta: float) -> void:

@@ -227,14 +227,16 @@ func _preview_selected_replacement() -> void:
 		+ ":"
 		+ str(first_plan.get("target_socket_id", ""))
 	)
-	if (
-		_editor
-		and _editor.has_method("show_socket_highlight")
-		and not str(first_plan.get("target_instance_id", "")).is_empty()
-	):
-		_editor.show_socket_highlight(
-			str(first_plan.target_instance_id), str(first_plan.target_socket_id)
-		)
+	var target_ids: Array[String] = []
+	var target_sockets: Array[String] = []
+	for plan: Dictionary in captured.plans:
+		var target_id := str(plan.get("target_instance_id", ""))
+		if target_id.is_empty():
+			continue
+		target_ids.append(target_id)
+		target_sockets.append(str(plan.get("target_socket_id", "")))
+	if _editor and _editor.has_method("show_socket_highlights"):
+		_editor.show_socket_highlights(target_ids, target_sockets)
 	_status.text = (
 		"Previewing " + str(definitions.size()) + " compatible replacements. Enter commits them."
 	)
