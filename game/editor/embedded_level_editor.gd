@@ -15,12 +15,14 @@ const ToolbarDock = preload("res://shared/editor_core/ui/toolbar_dock.tscn")
 const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const ModuleAssemblyScript = preload("res://shared/editor_core/core/module_assembly.gd")
 const ModulePanelScript = preload("res://shared/editor_core/ui/module_authoring_panel.gd")
+const MapPrefabSystemScript = preload("res://game/scripts/map_generator/prefab_system.gd")
 
 var editor_state: Node
 var asset_registry: Node
 var grid_system: Node
 var selection_manager: Node
 var editor_features: Node  ## Unified features controller
+var generator_prefab_system: RefCounted
 var palette_panel: Control
 var toolbar_panel: Control
 var hotbar: Control
@@ -142,6 +144,8 @@ func _init_systems() -> void:
 	add_child(selection_manager)
 
 	# Editor Features (hotbar, console, preview, actors)
+	generator_prefab_system = MapPrefabSystemScript.new()
+	generator_prefab_system.load_all_prefabs()
 	editor_features = EditorFeaturesScript.new()
 	editor_features.name = "EditorFeatures"
 	add_child(editor_features)
@@ -244,6 +248,16 @@ func _init_viewport() -> void:
 		editor_features.setup(editor_state, asset_registry, grid_system, level_root, editor_camera)
 	if _env_interface:
 		_env_interface.set_level_root(level_root)
+
+
+func get_generator_replacement_entries() -> Array:
+	var entries: Array = []
+	if generator_prefab_system == null:
+		return entries
+	for theme: int in GenerationConfig.ThemeType.values():
+		for category: String in generator_prefab_system.get_categories(theme):
+			entries.append_array(generator_prefab_system.get_prefabs(theme, category))
+	return entries
 
 
 func show_module_preview(

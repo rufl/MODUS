@@ -26,6 +26,7 @@ var _actors: Dictionary = {}
 var _preview_target_key := ""
 var _preview_active := false
 var _pending_regeneration_plans: Array[Dictionary] = []
+var _generator_replacement_catalog: Array[PrefabMetadata] = []
 var _built := false
 
 
@@ -112,6 +113,11 @@ func refresh_document() -> void:
 	if not _built:
 		return
 	_catalog = ModuleAssembly.get_catalog()
+	_generator_replacement_catalog.clear()
+	if _editor and _editor.has_method("get_generator_replacement_entries"):
+		_generator_replacement_catalog = ModuleAssembly.catalog_from_prefab_entries(
+			_editor.get_generator_replacement_entries()
+		)
 	_module.clear()
 	for definition in _catalog:
 		_module.add_item(definition.module_id.replace("_", " ").capitalize())
@@ -259,8 +265,10 @@ func _check_selected_replacement() -> void:
 		_status.text = "Select a replacement module definition first."
 		return
 	var captured := ModuleAssembly.build_regeneration_plans(_root(), [_catalog[_module.selected]])
+	var diagnostics := ModuleAssembly.get_replacement_diagnostics(
+		_root(), _generator_replacement_catalog
+	)
 	if captured.success:
-		var diagnostics := ModuleAssembly.get_replacement_diagnostics(_root())
 		_status.text = (
 			"Replacement is valid for "
 			+ str(captured.plans.size())
