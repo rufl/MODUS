@@ -32,14 +32,19 @@ static func get_catalog() -> Array[PrefabMetadata]:
 	return result
 
 
-static func get_compatible_replacement_catalog(root: Node3D) -> Array[PrefabMetadata]:
-	return get_replacement_diagnostics(root).compatible
+static func get_compatible_replacement_catalog(
+	root: Node3D, catalog: Array[PrefabMetadata] = []
+) -> Array[PrefabMetadata]:
+	return get_replacement_diagnostics(root, catalog).compatible
 
 
-static func get_replacement_diagnostics(root: Node3D) -> Dictionary:
+static func get_replacement_diagnostics(
+	root: Node3D, catalog: Array[PrefabMetadata] = []
+) -> Dictionary:
+	var candidates := catalog if not catalog.is_empty() else get_catalog()
 	var compatible: Array[PrefabMetadata] = []
 	var rejected: Array[Dictionary] = []
-	for definition in get_catalog():
+	for definition in candidates:
 		var result := build_regeneration_plans(root, [definition])
 		if result.success:
 			compatible.append(definition)
