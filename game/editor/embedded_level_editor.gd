@@ -391,7 +391,8 @@ func open() -> void:
 
 func close() -> void:
 	end_playtest()
-	_is_active = false
+	clear_module_preview()
+	clear_socket_highlight()
 	visible = false
 	_author_surface.process_mode = Node.PROCESS_MODE_DISABLED
 	editor_features.process_mode = Node.PROCESS_MODE_DISABLED
