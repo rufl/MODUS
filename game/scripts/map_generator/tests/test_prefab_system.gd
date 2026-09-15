@@ -390,6 +390,11 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	var selected := ModuleAssembly.build_regeneration_plans(root, [catalog[1]])
 	assert_true(selected.success, "Compatible selected definitions must produce plans")
 	assert_eq(selected.plans[0].definition.module_id, catalog[1].module_id)
+	var incompatible := catalog[1].duplicate(true) as PrefabMetadata
+	for socket in incompatible.sockets:
+		socket.kind = "vent"
+	var rejected := ModuleAssembly.build_regeneration_plans(root, [incompatible])
+	assert_false(rejected.success, "Incompatible replacement definitions must be rejected")
 	var regenerated := ModuleAssembly.regenerate_unpinned(root, captured.plans)
 	assert_true(regenerated.success, "A valid replacement plan must commit")
 	assert_true(pinned.pinned, "Pinned modules must survive regeneration")
