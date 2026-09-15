@@ -277,6 +277,18 @@ func _check_selected_replacement() -> void:
 		_root(), _generator_replacement_catalog
 	)
 	if captured.success:
+		var rejection_detail := ""
+		if not diagnostics.rejected.is_empty():
+			var rejection: Dictionary = diagnostics.rejected[0]
+			rejection_detail = (
+				" First rejection: "
+				+ str(rejection.module_id)
+				+ " for "
+				+ str(rejection.target_instance_ids)
+				+ " — "
+				+ str(rejection.error)
+				+ "."
+			)
 		_status.text = (
 			"Replacement is valid for "
 			+ str(captured.plans.size())
@@ -285,6 +297,7 @@ func _check_selected_replacement() -> void:
 			+ " compatible, "
 			+ str(diagnostics.rejected.size())
 			+ " rejected catalog candidate(s)."
+			+ rejection_detail
 		)
 	else:
 		_status.text = "Replacement is invalid: " + str(captured.error)

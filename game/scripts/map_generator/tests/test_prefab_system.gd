@@ -431,6 +431,8 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	var custom_diagnostics := ModuleAssembly.get_replacement_diagnostics(root, [incompatible])
 	assert_eq(custom_diagnostics.compatible.size(), 0)
 	assert_eq(custom_diagnostics.rejected.size(), 1)
+	assert_true(custom_diagnostics.rejected[0].has("target_instance_ids"))
+	assert_true(custom_diagnostics.rejected[0].target_instance_ids.has("airlock"))
 	var preview := ModuleAssembly.preview_regeneration(root, captured.plans)
 	var generated_entry := MapPrefabSystem.PrefabEntry.new(
 		null, catalog[1], "generated/pump_hall.tscn"

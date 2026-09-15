@@ -74,13 +74,28 @@ static func get_replacement_diagnostics(
 	var candidates := catalog if not catalog.is_empty() else get_catalog()
 	var compatible: Array[PrefabMetadata] = []
 	var rejected: Array[Dictionary] = []
+	var target_instance_ids: Array[String] = []
+	for instance: ModuleInstance in get_instances(root):
+		if not instance.pinned:
+			target_instance_ids.append(instance.instance_id)
 	for definition in candidates:
 		var result := build_regeneration_plans(root, [definition])
 		if result.success:
 			compatible.append(definition)
 		else:
-			rejected.append({"module_id": definition.module_id, "error": result.error})
+			rejected.append(
+				{
+					"module_id": definition.module_id,
+					"error": result.error,
+					"target_instance_ids": target_instance_ids.duplicate()
+				}
+			)
+	compatible.sort_custom(_definition_precedes)
 	return {"compatible": compatible, "rejected": rejected}
+
+
+static func _definition_precedes(left: PrefabMetadata, right: PrefabMetadata) -> bool:
+	return left.module_id < right.module_id
 
 
 static func get_instances(root: Node) -> Array[ModuleInstance]:
