@@ -64,7 +64,7 @@
       "blast_radius": 0.0,       // No explosion
     },
     "visuals": {
-      "model": "res://game/weapons/models/pistol.glb",
+      "model": "res://game/art/models/pistol.glb",
       "recoil_amount": 0.1,      // Visual kick
       "recoil_recovery": 10.0,   // How fast recoil recovers
       "bob_amount": 0.04,        // Weapon sway when moving
