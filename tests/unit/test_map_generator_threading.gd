@@ -137,6 +137,16 @@ func test_generated_boss_session_completes_after_lethal_defeat_and_extraction() 
 	assert_not_null(spawned_boss, "Generated boss objective must expose its production enemy")
 	if not spawned_boss:
 		return
+	assert_eq(
+		Vector2(spawned_boss.global_position.x, spawned_boss.global_position.z),
+		Vector2(4.0, 4.0),
+		"Generated boss must retain its authored horizontal spawn"
+	)
+	assert_gt(
+		spawned_boss.global_position.y,
+		0.5,
+		"Generated boss must not start below the playable floor"
+	)
 	assert_false(
 		runtime_extraction.interact(player),
 		"Generated extraction must remain gated before lethal boss defeat"
