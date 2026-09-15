@@ -25,6 +25,7 @@ var _color: ColorPickerButton
 var _actors: Dictionary = {}
 var _preview_target_key := ""
 var _preview_active := false
+var _pending_regeneration_plans: Array[Dictionary] = []
 var _built := false
 
 
@@ -214,8 +215,8 @@ func _preview_selected_replacement() -> void:
 	var staged := ModuleAssembly.preview_regeneration(_root(), captured.plans)
 	if not staged.success:
 		_status.text = "Replacement preview failed: " + str(staged.error)
-		return
 	_preview_active = true
+	_pending_regeneration_plans = captured.plans.duplicate(true)
 	var definitions: Array[PrefabMetadata] = []
 	for plan: Dictionary in captured.plans:
 		definitions.append(plan.definition)
@@ -290,8 +291,8 @@ func _place() -> void:
 		_rotation.selected
 	)
 	if result.success:
+		_pending_regeneration_plans.clear()
 		if _editor and _editor.has_method("clear_module_preview"):
-			_editor.clear_module_preview()
 		if _editor and _editor.has_method("clear_socket_highlight"):
 			_editor.clear_socket_highlight()
 		refresh_document()
@@ -317,6 +318,7 @@ func _preview() -> void:
 	)
 	if result.success:
 		_preview_active = true
+		_pending_regeneration_plans.clear()
 		if _editor and _editor.has_method("show_module_preview"):
 			_editor.show_module_preview(definition, result.transform, true)
 		if _editor and _editor.has_method("show_socket_highlight"):
@@ -340,8 +342,23 @@ func is_module_preview_active() -> bool:
 
 
 func confirm_module_preview() -> void:
-	if _preview_active:
-		_place()
+	if not _preview_active:
+		return
+	if not _pending_regeneration_plans.is_empty():
+		var result := ModuleAssembly.regenerate_unpinned(_root(), _pending_regeneration_plans)
+		if result.success:
+			_pending_regeneration_plans.clear()
+			_preview_active = false
+			if _editor and _editor.has_method("clear_module_preview"):
+				_editor.clear_module_preview()
+			if _editor and _editor.has_method("clear_socket_highlight"):
+				_editor.clear_socket_highlight()
+			refresh_document()
+			_status.text = "Committed all previewed module replacements."
+		else:
+			_status.text = "Replacement commit failed: " + str(result.error)
+		return
+	_place()
 
 
 func cancel_module_preview() -> void:
@@ -349,6 +366,7 @@ func cancel_module_preview() -> void:
 		return
 	_preview_active = false
 	_preview_target_key = ""
+	_pending_regeneration_plans.clear()
 	if _editor and _editor.has_method("clear_module_preview"):
 		_editor.clear_module_preview()
 	if _editor and _editor.has_method("clear_socket_highlight"):
