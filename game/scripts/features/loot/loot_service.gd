@@ -20,11 +20,7 @@ const ITEM_SCENE_MAP: Dictionary = {
 	"weapon_rocket_launcher": "res://game/scenes/items/pickups/rocket_launcher_pickup.tscn",
 }
 const HEALTH_TIER_MAP: Dictionary = {
-	"health_potion": 3,
-	"health_small": 1,
-	"health_medium": 2,
-	"health_large": 3,
-	"health_mega": 4
+	"health_potion": 3, "health_small": 1, "health_medium": 2, "health_large": 3, "health_mega": 4
 }
 const AMMO_TIER_MAP: Dictionary = {"ammo_clip": 1, "ammo_box": 2}
 

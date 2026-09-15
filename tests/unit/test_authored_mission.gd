@@ -48,10 +48,7 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 	key.name = "KeyPickup_0"
 	key.actor_id = key.name
 	key.key_id = "key_red"
-	key.set_meta(
-		"mission_objective",
-		{"description": "Collect generated red key", "order": 0}
-	)
+	key.set_meta("mission_objective", {"description": "Collect generated red key", "order": 0})
 	document.add_child(key)
 
 	var door: DoorActor = DoorActorScript.new()
@@ -61,11 +58,7 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 	door.required_key = "key_red"
 	door.set_meta(
 		"mission_objective",
-		{
-			"description": "Open generated red door",
-			"requires": ["KeyPickup_0"],
-			"order": 1
-		}
+		{"description": "Open generated red door", "requires": ["KeyPickup_0"], "order": 1}
 	)
 	document.add_child(door)
 
@@ -99,15 +92,15 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 
 	var player := Node.new()
 	var player_script := GDScript.new()
-	player_script.source_code = (
-		"extends Node\nfunc has_item(_item_id: String) -> bool:\n\treturn true\n"
-	)
+	player_script.source_code = ("extends Node\nfunc has_item(_item_id: String) -> bool:\n\treturn true\n")
 	assert_eq(player_script.reload(), OK)
 	player.set_script(player_script)
 	add_child_autofree(player)
 
 	extraction.interact(player)
-	assert_eq(extraction.activation_count, 0, "Extraction cannot activate before generated progression")
+	assert_eq(
+		extraction.activation_count, 0, "Extraction cannot activate before generated progression"
+	)
 	door.trigger(player)
 	assert_eq(door.activation_count, 0, "Door cannot activate before its generated key")
 	key.trigger(player)
@@ -118,7 +111,9 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 	assert_false(door.locked)
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["LockedDoor_0"], 1)
-	assert_true(extraction.interact(player), "Extraction uses the public actor interaction contract")
+	assert_true(
+		extraction.interact(player), "Extraction uses the public actor interaction contract"
+	)
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["GeneratedExtraction"], 1)
 	assert_eq(_mission.completed_mission_id, "generated_dependency_regression")

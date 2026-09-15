@@ -1173,6 +1173,7 @@ func _run_phase_main_thread(phase_name: String) -> bool:
 	generation_progress.emit(phase_name, 1.0)
 	return success and is_generating and generation_context == context
 
+
 ## Build metadata dictionary for export
 func _build_metadata(total_time: int) -> Dictionary:
 	var metadata := {
@@ -1507,19 +1508,12 @@ func _generated_enemy_enabled(record: Dictionary) -> bool:
 
 func _generated_enemy_objective(record: Dictionary, index: int) -> Dictionary:
 	if record.get("type", "") == "boss":
-		return {
-			"description": "Defeat generated boss",
-			"final": true,
-			"order": 1000 + index
-		}
+		return {"description": "Defeat generated boss", "final": true, "order": 1000 + index}
 	if record.get("type", "") != "monster" or not _generated_enemy_supported(record):
 		return {}
 	if not _generated_enemy_enabled(record):
 		return {}
-	var objective := {
-		"description": "Defeat generated enemy",
-		"order": 100 + index
-	}
+	var objective := {"description": "Defeat generated enemy", "order": 100 + index}
 	if record.get("optional", false) is bool and record.get("optional", false):
 		objective["optional"] = true
 	return objective
@@ -1535,7 +1529,6 @@ func _apply_generated_enemy_objective(
 	var objective := _generated_enemy_objective(record, index)
 	if not objective.is_empty():
 		enemy_actor.set_meta("mission_objective", objective)
-
 
 
 func _generated_item_rarity_tier(record: Dictionary, fallback: int = -1) -> int:
@@ -1596,9 +1589,7 @@ func _generated_item_config(record: Dictionary) -> Dictionary:
 			# the reward or inventing a new pickup category.
 			category = GENERATED_SECRET_REWARD_CATEGORY
 			item_id = GENERATED_SECRET_REWARD_ITEM_ID
-			rarity_tier = _generated_item_rarity_tier(
-				record, GENERATED_SECRET_REWARD_RARITY_TIER
-			)
+			rarity_tier = _generated_item_rarity_tier(record, GENERATED_SECRET_REWARD_RARITY_TIER)
 		_:
 			# Unknown records remain outside the PickupSpawnerActor catalog.
 			supported = false
@@ -1646,6 +1637,7 @@ func _generated_extraction_record() -> Dictionary:
 		"position": Vector3(position.x * 2.0 + 1.0, cell.height + 0.5, position.y * 2.0 + 1.0),
 		"prerequisites": prerequisites
 	}
+
 
 ## Build final map scene from generation context
 func _build_map_scene(metadata: Dictionary) -> PackedScene:
@@ -1703,8 +1695,7 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		var item_config := _generated_item_config(record)
 		if not item_config["supported"]:
 			push_warning(
-				"[MapGenerator] Unsupported generated item type: %s"
-				% str(record.get("type", ""))
+				"[MapGenerator] Unsupported generated item type: %s" % str(record.get("type", ""))
 			)
 			continue
 		var item_actor: PickupSpawnerActor = PickupSpawnerActorScript.new()
@@ -1742,10 +1733,10 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		key_actor.set_meta("generation", record.duplicate(true))
 		key_actor.set_meta("color", color)
 		key_actor.set_meta("key_color", color)
-		key_actor.set_meta("mission_objective", {
-			"description": "Collect generated %s key" % color.to_lower(),
-			"order": index * 2
-		})
+		key_actor.set_meta(
+			"mission_objective",
+			{"description": "Collect generated %s key" % color.to_lower(), "order": index * 2}
+		)
 		root.add_child(key_actor)
 
 	var locked_doors: Array = generation_context.metadata.get("locked_doors", [])
@@ -1762,11 +1753,14 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		door_actor.set_meta("generation", record.duplicate(true))
 		door_actor.set_meta("color", color)
 		door_actor.set_meta("key_color", color)
-		door_actor.set_meta("mission_objective", {
-			"description": "Open generated %s door" % color.to_lower(),
-			"requires": ["KeyPickup_%d" % index],
-			"order": index * 2 + 1
-		})
+		door_actor.set_meta(
+			"mission_objective",
+			{
+				"description": "Open generated %s door" % color.to_lower(),
+				"requires": ["KeyPickup_%d" % index],
+				"order": index * 2 + 1
+			}
+		)
 		root.add_child(door_actor)
 
 	var extraction_record := _generated_extraction_record()
@@ -1777,12 +1771,15 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		extraction_actor.one_shot = true
 		extraction_actor.position = extraction_record.position
 		extraction_actor.set_meta("generation", extraction_record.duplicate(true))
-		extraction_actor.set_meta("mission_objective", {
-			"description": "Reach the generated extraction",
-			"final": true,
-			"requires": extraction_record.prerequisites,
-			"order": 2000
-		})
+		extraction_actor.set_meta(
+			"mission_objective",
+			{
+				"description": "Reach the generated extraction",
+				"final": true,
+				"requires": extraction_record.prerequisites,
+				"order": 2000
+			}
+		)
 		root.add_child(extraction_actor)
 
 	# Add CSG geometry
@@ -1819,8 +1816,6 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		return null
 
 	return scene
-
-
 
 
 ## Release generated nodes on cancellation, failure, or owner teardown.

@@ -236,14 +236,20 @@ func _is_detectable_text_entry(event: InputEvent) -> bool:
 		and key_event.key_label == 0
 	)
 
+
 func _load_overzeer_marker() -> bool:
-	var marker_path := OS.get_executable_path().get_base_dir().path_join("overzeer-modus-telemetry.json")
+	var marker_path := OS.get_executable_path().get_base_dir().path_join(
+		"overzeer-modus-telemetry.json"
+	)
 	if not FileAccess.file_exists(marker_path):
 		return false
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(marker_path))
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return false
-	if str(parsed.get("schema", "")) != "overzeer.modus-telemetry/v1" or not bool(parsed.get("enabled", false)):
+	if (
+		str(parsed.get("schema", "")) != "overzeer.modus-telemetry/v1"
+		or not bool(parsed.get("enabled", false))
+	):
 		return false
 	var directory := str(parsed.get("directory", "")).strip_edges()
 	if directory.is_empty() or not directory.is_absolute_path():

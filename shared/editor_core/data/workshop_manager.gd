@@ -236,6 +236,7 @@ func _steam_upload(
 
 	# The rest happens in callbacks
 
+
 func _local_upload(
 	mdsl_path: String,
 	manifest: LevelPackager.LevelManifest,
@@ -431,12 +432,15 @@ func is_installed(item_id: String) -> bool:
 
 
 func _set_download_state(item_id: String, state: String) -> void:
-	if state not in [
-		DOWNLOAD_STATE_IDLE,
-		DOWNLOAD_STATE_DOWNLOADING,
-		DOWNLOAD_STATE_INSTALLED,
-		DOWNLOAD_STATE_FAILED,
-	]:
+	if (
+		state
+		not in [
+			DOWNLOAD_STATE_IDLE,
+			DOWNLOAD_STATE_DOWNLOADING,
+			DOWNLOAD_STATE_INSTALLED,
+			DOWNLOAD_STATE_FAILED,
+		]
+	):
 		state = DOWNLOAD_STATE_FAILED
 	download_states[item_id] = state
 	_save_download_states()
@@ -741,6 +745,7 @@ func _load_cached_items() -> void:
 	_load_subscriptions()
 	_load_download_states()
 
+
 func _save_cached_items() -> void:
 	var path: String = WORKSHOP_CACHE + "items_cache.json"
 	var file := FileAccess.open(path, FileAccess.WRITE)
@@ -778,6 +783,7 @@ func _save_subscriptions() -> void:
 
 ## Check if item is subscribed
 
+
 func _load_download_states() -> void:
 	if not FileAccess.file_exists(DOWNLOAD_STATES_PATH):
 		return
@@ -791,12 +797,15 @@ func _load_download_states() -> void:
 	download_states.clear()
 	for item_id: String in parsed:
 		var state := str(parsed[item_id])
-		if state in [
-			DOWNLOAD_STATE_IDLE,
-			DOWNLOAD_STATE_DOWNLOADING,
-			DOWNLOAD_STATE_INSTALLED,
-			DOWNLOAD_STATE_FAILED,
-		]:
+		if (
+			state
+			in [
+				DOWNLOAD_STATE_IDLE,
+				DOWNLOAD_STATE_DOWNLOADING,
+				DOWNLOAD_STATE_INSTALLED,
+				DOWNLOAD_STATE_FAILED,
+			]
+		):
 			download_states[item_id] = state
 
 
@@ -805,6 +814,7 @@ func _save_download_states() -> void:
 	if file:
 		file.store_string(JSONHelperClass.safe_stringify(download_states, "\t"))
 		file.close()
+
 
 func is_subscribed(item_id: String) -> bool:
 	return item_id in subscribed_items

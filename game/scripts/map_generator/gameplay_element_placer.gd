@@ -77,9 +77,6 @@ func place_monster_spawns(context: GenerationContext) -> void:
 		push_warning("Only placed %d/%d monsters" % [monsters_placed, total_monsters])
 
 
-
-
-
 ## Calculate total monster count based on density and map size
 ## @param context: Generation context
 ## @return: Number of monsters to place

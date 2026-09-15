@@ -10,6 +10,7 @@ const SwitchActorScript := preload("res://shared/editor_core/actors/switch_actor
 const SpawnManagerScript := preload("res://game/world/enemy_spawn_manager.gd")
 const PlayerScene := preload("res://game/entities/player/player.tscn")
 
+
 class SpawnWorld:
 	extends "res://game/world/world.gd"
 
@@ -35,6 +36,7 @@ class PickupRecipient:
 	func add_ammo_for_weapon(weapon_type: int, amount: int) -> void:
 		ammo_by_weapon[weapon_type] = ammo_by_weapon.get(weapon_type, 0) + amount
 
+
 class GeneratedPlayer:
 	extends CharacterBody3D
 
@@ -45,6 +47,7 @@ class GeneratedPlayer:
 
 	func has_item(item_id: String) -> bool:
 		return collected_keys.has(item_id)
+
 
 func test_generated_key_collection_unlocks_dependent_door() -> void:
 	var document: Node3D = LevelRootScript.new()
@@ -68,11 +71,7 @@ func test_generated_key_collection_unlocks_dependent_door() -> void:
 	door.required_key = "key_red"
 	door.set_meta(
 		"mission_objective",
-		{
-			"description": "Open generated red door",
-			"requires": ["KeyPickup_0"],
-			"order": 1
-		}
+		{"description": "Open generated red door", "requires": ["KeyPickup_0"], "order": 1}
 	)
 	document.add_child(door)
 
@@ -94,6 +93,7 @@ func test_generated_key_collection_unlocks_dependent_door() -> void:
 	assert_eq(door.activation_count, 1)
 	assert_false(door.locked)
 	assert_eq(_mission.objective_state.get("LockedDoor_0", -1), 1)
+
 
 ## This keeps generation deterministic and cheap by packing a minimal LevelRoot
 ## that mirrors MapGenerator._build_map_scene's serialized actor records. The
@@ -137,10 +137,7 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	key.actor_id = key.name
 	key.key_id = "key_red"
 	key.set_meta("generation", {"color": "RED", "position": Vector3(2, 0, 0)})
-	key.set_meta(
-		"mission_objective",
-		{"description": "Collect generated red key", "order": 0}
-	)
+	key.set_meta("mission_objective", {"description": "Collect generated red key", "order": 0})
 	source.add_child(key)
 
 	var door: DoorActor = DoorActorScript.new()
@@ -151,11 +148,7 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	door.set_meta("generation", {"color": "RED", "position": Vector3(4, 0, 0)})
 	door.set_meta(
 		"mission_objective",
-		{
-			"description": "Open generated red door",
-			"requires": ["KeyPickup_0"],
-			"order": 1
-		}
+		{"description": "Open generated red door", "requires": ["KeyPickup_0"], "order": 1}
 	)
 	source.add_child(door)
 
@@ -179,8 +172,7 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 		}
 	)
 	boss.set_meta(
-		"mission_objective",
-		{"description": "Defeat generated boss", "final": true, "order": 1000}
+		"mission_objective", {"description": "Defeat generated boss", "final": true, "order": 1000}
 	)
 	source.add_child(boss)
 
@@ -244,7 +236,11 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	await get_tree().process_frame
 	assert_true(_mission.start_document_mission(document))
 	var objectives: Array = _mission.active_mission_data.get("objectives", [])
-	assert_eq(objectives.size(), 5, "Generated pickup, key, door, boss-defeat and extraction objectives are discovered")
+	assert_eq(
+		objectives.size(),
+		5,
+		"Generated pickup, key, door, boss-defeat and extraction objectives are discovered"
+	)
 	assert_eq(objectives[0].id, "KeyPickup_0")
 	assert_eq(objectives[1].id, "secret_reward_0")
 	assert_eq(objectives[2].id, "LockedDoor_0")
@@ -285,7 +281,6 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	)
 	assert_eq((runtime_boss.get("_enemies") as Dictionary).size(), 0)
 
-
 	assert_true(runtime_door.interact(player), "Generated key must unlock the generated door")
 	assert_eq(runtime_door.activation_count, 1)
 	_mission._process(0.0)
@@ -301,11 +296,15 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 		var health := spawned_boss.get_node_or_null("HealthComponent") as HealthComponent
 		assert_not_null(health, "Generated boss must use the production health lifecycle")
 		if health:
-			spawned_boss.take_damage(DamageInfo.create(health.current_health, DamageInfo.DamageType.BULLET))
+			spawned_boss.take_damage(
+				DamageInfo.create(health.current_health, DamageInfo.DamageType.BULLET)
+			)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_mission._process(0.0)
-	assert_eq(_mission.objective_state["boss_0"], 1, "Lethal damage must complete the boss objective")
+	assert_eq(
+		_mission.objective_state["boss_0"], 1, "Lethal damage must complete the boss objective"
+	)
 
 	assert_true(
 		runtime_extraction.interact(player),
@@ -316,13 +315,9 @@ func test_generated_serialized_session_progression_completes_extraction() -> voi
 	assert_eq(_mission.completed_mission_id, "generated_session_progression")
 
 
-
-
-
 var _mission: MissionMgr
 var _previous_mission: Dictionary
 var _previous_mission_level: Node3D
-
 
 var _world: Node
 var _level: Node3D
@@ -355,6 +350,7 @@ func after_each() -> void:
 	if is_instance_valid(_mission):
 		_mission.restore_runtime_state(_previous_mission, _previous_mission_level)
 	modus_teardown()
+
 
 func _item_marker(item_id: String, pos: Vector3, delay: float = 0.0) -> LevelSpawnPoint:
 	var marker: LevelSpawnPoint = SpawnPointScript.new()
@@ -421,10 +417,7 @@ func test_generated_actor_runtime_startup_preserves_metadata_and_save_boundary()
 	key.actor_id = key.name
 	key.key_id = "key_red"
 	key.set_meta("generation", key_record.duplicate(true))
-	key.set_meta(
-		"mission_objective",
-		{"description": "Collect generated red key", "order": 0}
-	)
+	key.set_meta("mission_objective", {"description": "Collect generated red key", "order": 0})
 	document.add_child(key)
 	key.owner = document
 
@@ -437,11 +430,7 @@ func test_generated_actor_runtime_startup_preserves_metadata_and_save_boundary()
 	door.set_meta("generation", door_record.duplicate(true))
 	door.set_meta(
 		"mission_objective",
-		{
-			"description": "Open generated red door",
-			"requires": ["KeyPickup_0"],
-			"order": 1
-		}
+		{"description": "Open generated red door", "requires": ["KeyPickup_0"], "order": 1}
 	)
 	document.add_child(door)
 	door.owner = document
@@ -505,6 +494,7 @@ func test_generated_actor_runtime_startup_preserves_metadata_and_save_boundary()
 				"Runtime pickup must be excluded from the authored scene"
 			)
 
+
 func test_generated_health_spawner_collects_catalog_effect_and_completes() -> void:
 	var player := PlayerScene.instantiate() as Player
 	assert_not_null(player, "Generated pickup completion needs the production player contract")
@@ -547,7 +537,9 @@ func test_generated_health_spawner_collects_catalog_effect_and_completes() -> vo
 		pickup.collect_for_player(player, player.get_multiplayer_authority()),
 		"Collection must use PickupBase's authoritative public API"
 	)
-	assert_eq(health.current_health, 75.0, "Catalog health potion must restore its advertised 50 HP")
+	assert_eq(
+		health.current_health, 75.0, "Catalog health potion must restore its advertised 50 HP"
+	)
 	assert_true(pickup.collected)
 	assert_false(
 		pickup.collect_for_player(player, player.get_multiplayer_authority()),
@@ -579,20 +571,19 @@ func test_generated_enemy_damage_marks_health_dead_and_clears_encounter() -> voi
 	assert_not_null(health, "EnemyBuilder output must include HealthComponent")
 	if not health:
 		return
-	var damage := DamageInfo.create(
-		health.current_health, DamageInfo.DamageType.BULLET
-	)
+	var damage := DamageInfo.create(health.current_health, DamageInfo.DamageType.BULLET)
 	enemy.take_damage(damage)
 	assert_true(health.is_dead, "Lethal DamageInfo must close the enemy health lifecycle")
 	assert_true(enemy.is_dead)
 	await get_tree().process_frame
 
 	var state := encounter.capture_runtime_state()
-	assert_true(state.encounter_cleared, "Enemy spawner must complete after its generated enemy dies")
+	assert_true(
+		state.encounter_cleared, "Enemy spawner must complete after its generated enemy dies"
+	)
 	assert_eq(state.enemies.size(), 1)
 	assert_false(state.enemies[0].alive)
 	assert_eq(encounter.activation_count, 1)
-
 
 
 func test_nested_authored_enemy_spawns_without_legacy_arena_enemies() -> void:
