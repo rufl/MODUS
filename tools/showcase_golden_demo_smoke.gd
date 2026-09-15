@@ -35,7 +35,11 @@ func _run() -> void:
 	await _wait_frames(30)
 	var world: Node = current_scene
 	_create_overlay(world)
-	_record("scene", world != null and world.scene_file_path == SHOWCASE_SCENE, "Maintained showcase scene loaded")
+	_record(
+		"scene",
+		world != null and world.scene_file_path == SHOWCASE_SCENE,
+		"Maintained showcase scene loaded"
+	)
 	if not world or not world.has_method("spawn_player_node"):
 		_record("player", false, "Showcase world cannot spawn a player")
 		await _finish()
@@ -53,11 +57,11 @@ func _run() -> void:
 	await _wait_frames(5)
 	var start_position: Vector3 = player.global_position
 	Input.action_press("up")
-	await _wait_frames(12)
+	await _wait_frames(30)
 	Input.action_release("up")
 	await _wait_frames(5)
 	var moved_distance := start_position.distance_to(player.global_position)
-	_record("movement", moved_distance >= 0.25, "Input moved the player %.2f m" % moved_distance)
+	_record("movement", moved_distance >= 0.5, "Input moved the player %.2f m" % moved_distance)
 
 	var enemy: Node3D = load(ENEMY_SCENE).instantiate()
 	enemy.name = "GoldenSmokeEnemy"
@@ -95,7 +99,8 @@ func _run() -> void:
 	pickup.global_position = player.global_position
 	await _wait_frames(60)
 	var pickup_collected: bool = (
-		player.health > health_before and world.match_stats.get("items_collected", 0) > pickups_before
+		player.health > health_before
+		and world.match_stats.get("items_collected", 0) > pickups_before
 	)
 	_record("pickup", pickup_collected, "Health pickup was collected and applied")
 
