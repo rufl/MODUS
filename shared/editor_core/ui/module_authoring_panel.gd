@@ -191,10 +191,10 @@ func _place() -> void:
 		_rotation.selected
 	)
 	if result.success:
-		_preview_active = false
-		_preview_target_key = ""
 		if _editor and _editor.has_method("clear_module_preview"):
 			_editor.clear_module_preview()
+		if _editor and _editor.has_method("clear_socket_highlight"):
+			_editor.clear_socket_highlight()
 		refresh_document()
 		_status.text = (
 			"Placed " + result.instance.instance_id + ". Undo restores the previous layout."
@@ -220,6 +220,8 @@ func _preview() -> void:
 		_preview_active = true
 		if _editor and _editor.has_method("show_module_preview"):
 			_editor.show_module_preview(definition, result.transform, true)
+		if _editor and _editor.has_method("show_socket_highlight"):
+			_editor.show_socket_highlight(_selected(_target), _selected(_target_socket))
 		_status.text = (
 			"Valid socket placement at "
 			+ str((result.transform as Transform3D).origin)
@@ -229,6 +231,8 @@ func _preview() -> void:
 		_preview_active = false
 		if _editor and _editor.has_method("clear_module_preview"):
 			_editor.clear_module_preview()
+		if _editor and _editor.has_method("clear_socket_highlight"):
+			_editor.clear_socket_highlight()
 		_status.text = "Invalid socket placement: " + str(result.error)
 
 
@@ -247,14 +251,17 @@ func cancel_module_preview() -> void:
 	_preview_active = false
 	_preview_target_key = ""
 	if _editor and _editor.has_method("clear_module_preview"):
+		_editor.clear_module_preview()
+	if _editor and _editor.has_method("clear_socket_highlight"):
+		_editor.clear_socket_highlight()
 	_status.text = "Module placement preview cancelled."
 
 
 func update_preview_target_from_ray(ray_origin: Vector3, ray_direction: Vector3) -> void:
-	if not _preview_active:
-		return
 	var match := ModuleAssembly.find_free_socket_on_ray(_root(), ray_origin, ray_direction)
 	if match.is_empty():
+		if _editor and _editor.has_method("clear_socket_highlight"):
+			_editor.clear_socket_highlight()
 		return
 	var target_id := str(match.target_instance_id)
 	var socket_id := str(match.target_socket_id)
@@ -266,6 +273,8 @@ func update_preview_target_from_ray(ray_origin: Vector3, ray_direction: Vector3)
 			_target.select(index)
 			break
 	_refresh_target_sockets()
+	if _editor and _editor.has_method("show_socket_highlight"):
+		_editor.show_socket_highlight(target_id, socket_id)
 	for index in _target_socket.item_count:
 		if _target_socket.get_item_metadata(index) == socket_id:
 			_target_socket.select(index)

@@ -37,6 +37,7 @@ var _play_overlay: Control
 var _play_session: Node3D
 var _play_starting: bool = false
 var _document_error: String = ""
+var _socket_highlight: CSGSphere3D
 
 var _is_active: bool = false
 
@@ -258,6 +259,35 @@ func show_module_preview(
 func clear_module_preview() -> void:
 	if editor_features:
 		editor_features.clear_placement()
+
+
+func show_socket_highlight(instance_id: String, socket_id: String) -> void:
+	clear_socket_highlight()
+	for instance: ModuleInstance in ModuleAssemblyScript.get_instances(level_root):
+		if instance.instance_id != instance_id:
+			continue
+		var socket := instance.get_socket(socket_id)
+		if socket.is_empty():
+			return
+		_socket_highlight = CSGSphere3D.new()
+		_socket_highlight.name = "SocketHighlight"
+		_socket_highlight.radius = 0.22
+		_socket_highlight.height = 0.44
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(1.0, 0.8, 0.1, 0.9)
+		material.emission_enabled = true
+		material.emission = Color(1.0, 0.45, 0.05)
+		material.emission_energy_multiplier = 2.0
+		_socket_highlight.material = material
+		sub_viewport.add_child(_socket_highlight)
+		_socket_highlight.global_transform = instance.global_transform * socket.local_transform
+		return
+
+
+func clear_socket_highlight() -> void:
+	if is_instance_valid(_socket_highlight):
+		_socket_highlight.queue_free()
+	_socket_highlight = null
 
 
 func _process(_delta: float) -> void:
