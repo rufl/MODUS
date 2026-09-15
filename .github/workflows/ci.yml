@@ -74,14 +74,25 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .godot/imported/
-          key: import-assets-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import') }}
-          restore-keys: |
-            import-assets-${{ runner.os }}-${{ env.GODOT_VERSION }}-
+          key: import-assets-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import', '**/*.glb', '**/*.obj', '**/*.png', '**/*.svg', '**/*.ttf', '**/*.wav', '**/*.ogg', '**/*.mp3', '**/*.tscn', '**/*.tres', '**/*.res', 'project.godot') }}
+          # Do not restore a cache for a different source tree: generated imports can be stale
+          # even when tracked .import metadata is unchanged.
 
       - name: Import project assets
         run: |
+          set -o pipefail
+          import_log="$RUNNER_TEMP/godot-import.log"
           godot --version
-          godot --headless --verbose --path . --import
+          if ! godot --headless --verbose --path . --import 2>&1 | tee "$import_log"; then
+            printf 'Godot asset import failed. Import log: %s\n' "$import_log" >&2
+            exit 1
+          fi
+          if grep -Fq 'Failed loading resource' "$import_log"; then
+            printf 'Godot reported missing resources during import:\n' >&2
+            grep -Fn 'Failed loading resource' "$import_log" >&2
+            printf 'Godot import diagnostics reported above.\n' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
       - name: Run Unit and Integration Tests
         id: unit-tests
@@ -191,14 +202,25 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .godot/imported/
-          key: import-assets-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import') }}
-          restore-keys: |
-            import-assets-${{ runner.os }}-${{ env.GODOT_VERSION }}-
+          key: import-assets-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import', '**/*.glb', '**/*.obj', '**/*.png', '**/*.svg', '**/*.ttf', '**/*.wav', '**/*.ogg', '**/*.mp3', '**/*.tscn', '**/*.tres', '**/*.res', 'project.godot') }}
+          # Do not restore a cache for a different source tree: generated imports can be stale
+          # even when tracked .import metadata is unchanged.
 
       - name: Import project assets
         run: |
+          set -o pipefail
+          import_log="$RUNNER_TEMP/godot-import.log"
           godot --version
-          godot --headless --verbose --path . --import
+          if ! godot --headless --verbose --path . --import 2>&1 | tee "$import_log"; then
+            printf 'Godot asset import failed. Import log: %s\n' "$import_log" >&2
+            exit 1
+          fi
+          if grep -Fq 'Failed loading resource' "$import_log"; then
+            printf 'Godot reported missing resources during import:\n' >&2
+            grep -Fn 'Failed loading resource' "$import_log" >&2
+            printf 'Godot import diagnostics reported above.\n' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
       - name: Build for ${{ matrix.platform }}
         env:
