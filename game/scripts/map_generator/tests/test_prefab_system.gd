@@ -172,6 +172,10 @@ func test_prefab_system_statistics() -> void:
 	assert_eq(stats["total_prefabs"], 0, "Initial total should be 0")
 
 
+func test_prefab_system_replacement_metadata_is_empty_before_loading() -> void:
+	assert_eq(prefab_system.get_replacement_metadata().size(), 0)
+
+
 func test_module_json_roundtrip_retains_attachable_socket_geometry() -> void:
 	var original := PrefabMetadata.new()
 	original.module_id = "rotated_room"

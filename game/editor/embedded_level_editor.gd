@@ -23,7 +23,7 @@ var grid_system: Node
 var selection_manager: Node
 var editor_features: Node  ## Unified features controller
 var generator_prefab_system: RefCounted
-var _generator_replacement_metadata: Array = []
+var _map_generator: Node
 var palette_panel: Control
 var toolbar_panel: Control
 var hotbar: Control
@@ -147,6 +147,10 @@ func _init_systems() -> void:
 	# Editor Features (hotbar, console, preview, actors)
 	generator_prefab_system = MapPrefabSystemScript.new()
 	generator_prefab_system.load_all_prefabs()
+	_map_generator = get_node_or_null("/root/MapGenerator")
+	if _map_generator and _map_generator.has_signal("generation_completed"):
+		if not _map_generator.generation_completed.is_connected(_on_generation_completed):
+			_map_generator.generation_completed.connect(_on_generation_completed)
 	editor_features = EditorFeaturesScript.new()
 	editor_features.name = "EditorFeatures"
 	add_child(editor_features)
@@ -275,6 +279,12 @@ func set_generator_replacement_metadata(entries: Array) -> void:
 	_generator_replacement_metadata = entries.duplicate(true)
 	if module_panel:
 		module_panel.refresh_document()
+
+
+func _on_generation_completed(_map_scene: PackedScene, metadata: Dictionary) -> void:
+	var replacement_catalog: Variant = metadata.get("replacement_catalog", [])
+	if replacement_catalog is Array:
+		set_generator_replacement_metadata(replacement_catalog)
 
 
 func show_module_preview(

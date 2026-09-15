@@ -520,6 +520,23 @@ func get_all_prefabs_by_category(category: String) -> Array[PrefabEntry]:
 	return result
 
 
+## Return canonical module metadata for all loaded prefab entries.
+func get_replacement_metadata() -> Array:
+	var result: Array = []
+	var seen := {}
+	for theme: int in GenerationConfig.ThemeType.values():
+		for category: String in get_categories(theme):
+			for entry: PrefabEntry in get_prefabs(theme, category):
+				if entry == null or entry.metadata == null:
+					continue
+				var module_id := entry.metadata.module_id
+				if module_id.is_empty() or seen.has(module_id):
+					continue
+				seen[module_id] = true
+				result.append(entry.metadata.to_dict())
+	return result
+
+
 ## Get statistics about loaded prefabs
 func get_statistics() -> Dictionary:
 	var stats := {"total_prefabs": 0, "by_theme": {}, "by_category": {}}
