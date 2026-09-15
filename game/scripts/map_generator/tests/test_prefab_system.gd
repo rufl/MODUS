@@ -415,6 +415,12 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	assert_eq(custom_diagnostics.compatible.size(), 0)
 	assert_eq(custom_diagnostics.rejected.size(), 1)
 	var preview := ModuleAssembly.preview_regeneration(root, captured.plans)
+	var generated_entry := MapPrefabSystem.PrefabEntry.new(
+		null, catalog[1], "generated/pump_hall.tscn"
+	)
+	var generated_catalog := ModuleAssembly.catalog_from_prefab_entries([generated_entry])
+	assert_eq(generated_catalog.size(), 1)
+	assert_eq(generated_catalog[0].module_id, catalog[1].module_id)
 	assert_true(preview.success, "Regeneration preview must stage valid plans")
 	assert_eq(preview.transforms.size(), 1)
 	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
