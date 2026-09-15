@@ -57,6 +57,7 @@ func _build() -> void:
 	for turn in 4:
 		_rotation.add_item(str(turn * 90) + " degrees")
 	_button(_rooms, "Regenerate unpinned modules", _regenerate_unpinned)
+	_button(_rooms, "Regenerate with selected definition", _regenerate_with_selected)
 	_button(_rooms, "Place module", _place)
 	_button(_rooms, "Preview socket placement", _preview)
 	_button(_rooms, "Toggle pin on selected module", _toggle_pin)
@@ -195,6 +196,28 @@ func _regenerate_unpinned() -> void:
 		)
 	else:
 		_status.text = "Regeneration failed: " + str(result.error)
+
+
+func _regenerate_with_selected() -> void:
+	if _module.selected < 0 or _module.selected >= _catalog.size():
+		_status.text = "Select a replacement module definition first."
+		return
+	var captured := ModuleAssembly.build_regeneration_plans(_root(), [_catalog[_module.selected]])
+	if not captured.success:
+		_status.text = "Replacement planning failed: " + str(captured.error)
+		return
+	var result := ModuleAssembly.regenerate_unpinned(_root(), captured.plans)
+	if result.success:
+		refresh_document()
+		_status.text = (
+			"Replaced "
+			+ str(captured.plans.size())
+			+ " unpinned module(s) with "
+			+ _catalog[_module.selected].module_id
+			+ "."
+		)
+	else:
+		_status.text = "Replacement failed: " + str(result.error)
 
 
 func _place() -> void:

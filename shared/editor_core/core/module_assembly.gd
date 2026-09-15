@@ -148,7 +148,9 @@ static func place_module(
 	return {"success": true, "error": "", "instance": candidate}
 
 
-static func build_regeneration_plans(root: Node3D) -> Dictionary:
+static func build_regeneration_plans(
+	root: Node3D, replacement_catalog: Array[PrefabMetadata] = []
+) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return _failure("Open a LevelRoot document before capturing regeneration plans.")
 	var pending: Array[ModuleInstance] = []
@@ -171,6 +173,12 @@ static func build_regeneration_plans(root: Node3D) -> Dictionary:
 					seeded = true
 				else:
 					continue
+			if not replacement_catalog.is_empty():
+				plan = _replace_plan_definition(plan, replacement_catalog)
+				if plan.is_empty():
+					return _failure(
+						"No compatible replacement exists for " + instance.instance_id + "."
+					)
 			plans.append(plan)
 			placed_ids[instance.instance_id] = true
 			pending.remove_at(index)
@@ -178,6 +186,29 @@ static func build_regeneration_plans(root: Node3D) -> Dictionary:
 		if not progressed:
 			return _failure("Unable to derive a connected regeneration order.")
 	return {"success": true, "error": "", "plans": plans}
+
+
+static func _replace_plan_definition(
+	plan: Dictionary, replacement_catalog: Array[PrefabMetadata]
+) -> Dictionary:
+	var source_socket: Dictionary = plan.get("source_socket", {})
+	for definition: PrefabMetadata in replacement_catalog:
+		if definition == null or not definition.is_valid():
+			continue
+		if source_socket.is_empty():
+			var root_plan := plan.duplicate(true)
+			root_plan["definition"] = definition
+			return root_plan
+		for socket: Dictionary in definition.sockets:
+			if (
+				socket.get("kind", "walk") == source_socket.get("kind", "walk")
+				and socket.opening.is_equal_approx(source_socket.opening)
+			):
+				var replacement := plan.duplicate(true)
+				replacement["definition"] = definition
+				replacement["source_socket_id"] = str(socket.id)
+				return replacement
+	return {}
 
 
 static func _build_plan_for_instance(
@@ -189,6 +220,7 @@ static func _build_plan_for_instance(
 		if to_id == instance.instance_id and placed_ids.has(from_id):
 			return {
 				"definition": instance.definition,
+				"source_socket": instance.get_socket(str(edge.get("to_socket", ""))),
 				"target_instance_id": from_id,
 				"target_socket_id": str(edge.get("from_socket", "")),
 				"source_socket_id": str(edge.get("to_socket", ""))
@@ -196,6 +228,7 @@ static func _build_plan_for_instance(
 		if from_id == instance.instance_id and placed_ids.has(to_id):
 			return {
 				"definition": instance.definition,
+				"source_socket": instance.get_socket(str(edge.get("from_socket", ""))),
 				"target_instance_id": to_id,
 				"target_socket_id": str(edge.get("to_socket", "")),
 				"source_socket_id": str(edge.get("from_socket", ""))
