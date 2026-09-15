@@ -278,10 +278,12 @@ func clear_module_preview() -> void:
 
 
 func show_socket_highlight(instance_id: String, socket_id: String) -> void:
-	show_socket_highlights([instance_id], [socket_id])
+	show_socket_highlights([instance_id], [socket_id], true)
 
 
-func show_socket_highlights(instance_ids: Array[String], socket_ids: Array[String]) -> void:
+func show_socket_highlights(
+	instance_ids: Array[String], socket_ids: Array[String], valid: bool = true
+) -> void:
 	clear_socket_highlight()
 	for index in range(mini(instance_ids.size(), socket_ids.size())):
 		for instance: ModuleInstance in ModuleAssemblyScript.get_instances(level_root):
@@ -295,9 +297,11 @@ func show_socket_highlights(instance_ids: Array[String], socket_ids: Array[Strin
 			highlight.radius = 0.22
 			highlight.height = 0.44
 			var material := StandardMaterial3D.new()
-			material.albedo_color = Color(1.0, 0.8, 0.1, 0.9)
+			material.albedo_color = (
+				Color(0.2, 0.9, 0.3, 0.9) if valid else Color(0.95, 0.15, 0.1, 0.9)
+			)
 			material.emission_enabled = true
-			material.emission = Color(1.0, 0.45, 0.05)
+			material.emission = Color(0.05, 0.7, 0.1) if valid else Color(0.8, 0.05, 0.02)
 			material.emission_energy_multiplier = 2.0
 			highlight.material = material
 			sub_viewport.add_child(highlight)

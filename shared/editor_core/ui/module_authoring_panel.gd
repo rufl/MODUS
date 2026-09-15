@@ -214,7 +214,18 @@ func _preview_selected_replacement() -> void:
 		return
 	var staged := ModuleAssembly.preview_regeneration(_root(), captured.plans)
 	if not staged.success:
+		if _editor and _editor.has_method("show_socket_highlights"):
+			var target_ids: Array[String] = []
+			var target_sockets: Array[String] = []
+			for plan: Dictionary in captured.plans:
+				var target_id := str(plan.get("target_instance_id", ""))
+				if target_id.is_empty():
+					continue
+				target_ids.append(target_id)
+				target_sockets.append(str(plan.get("target_socket_id", "")))
+			_editor.show_socket_highlights(target_ids, target_sockets, false)
 		_status.text = "Replacement preview failed: " + str(staged.error)
+		return
 	_preview_active = true
 	_pending_regeneration_plans = captured.plans.duplicate(true)
 	var definitions: Array[PrefabMetadata] = []
