@@ -408,6 +408,13 @@ func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
 	assert_true(selected.success, "Compatible selected definitions must produce plans")
 	assert_eq(selected.plans[0].definition.module_id, catalog[1].module_id)
 	assert_eq(selected.plans[0].target_instance_id, "airlock")
+	var capability_definition := catalog[1].duplicate(true) as PrefabMetadata
+	capability_definition.module_id = "teleport_replacement"
+	capability_definition.required_capabilities = PackedStringArray(["teleport"])
+	var capability_plan := ModuleAssembly.build_regeneration_plans(
+		root, [capability_definition], ["walk", "teleport"]
+	)
+	assert_true(capability_plan.success)
 	assert_eq(selected.plans[0].target_socket_id, "out")
 	var zeta := catalog[1].duplicate(true) as PrefabMetadata
 	zeta.module_id = "zeta_replacement"

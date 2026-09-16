@@ -24,6 +24,7 @@ var selection_manager: Node
 var editor_features: Node  ## Unified features controller
 var generator_prefab_system: RefCounted
 var _map_generator: Node
+var _replacement_capabilities: Array[String] = ["walk"]
 var palette_panel: Control
 var toolbar_panel: Control
 var hotbar: Control
@@ -285,6 +286,16 @@ func _on_generation_completed(_map_scene: PackedScene, metadata: Dictionary) -> 
 	var replacement_catalog: Variant = metadata.get("replacement_catalog", [])
 	if replacement_catalog is Array:
 		set_generator_replacement_metadata(replacement_catalog)
+
+
+func get_replacement_capabilities() -> Array[String]:
+	return _replacement_capabilities.duplicate()
+
+
+func set_replacement_capabilities(capabilities: Array[String]) -> void:
+	_replacement_capabilities = capabilities.duplicate()
+	if module_panel:
+		module_panel.refresh_document()
 
 
 func show_module_preview(

@@ -23,10 +23,12 @@ const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
 const SUPPORTED_CAPABILITIES := ["walk"]
 
 
-static func _unsupported_capabilities(definition: PrefabMetadata) -> Array[String]:
+static func _unsupported_capabilities(
+	definition: PrefabMetadata, supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+) -> Array[String]:
 	var unsupported: Array[String] = []
 	for capability: String in definition.required_capabilities:
-		if not SUPPORTED_CAPABILITIES.has(capability):
+		if not supported_capabilities.has(capability):
 			unsupported.append(capability)
 	return unsupported
 
@@ -77,7 +79,9 @@ static func get_compatible_replacement_catalog(
 
 
 static func get_replacement_diagnostics(
-	root: Node3D, catalog: Array[PrefabMetadata] = []
+	root: Node3D,
+	catalog: Array[PrefabMetadata] = [],
+	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
 ) -> Dictionary:
 	var candidates := catalog if not catalog.is_empty() else get_catalog()
 	var compatible: Array[PrefabMetadata] = []
@@ -87,7 +91,7 @@ static func get_replacement_diagnostics(
 		if not instance.pinned:
 			target_instance_ids.append(instance.instance_id)
 	for definition in candidates:
-		var result := build_regeneration_plans(root, [definition])
+		var result := build_regeneration_plans(root, [definition], supported_capabilities)
 		if result.success:
 			compatible.append(definition)
 		else:
@@ -96,7 +100,8 @@ static func get_replacement_diagnostics(
 					"module_id": definition.module_id,
 					"error": result.error,
 					"required_capabilities": Array(definition.required_capabilities),
-					"unsupported_capabilities": _unsupported_capabilities(definition),
+					"unsupported_capabilities":
+					_unsupported_capabilities(definition, supported_capabilities),
 					"target_instance_ids": target_instance_ids.duplicate()
 				}
 			)
@@ -225,7 +230,9 @@ static func place_module(
 
 
 static func build_regeneration_plans(
-	root: Node3D, replacement_catalog: Array[PrefabMetadata] = []
+	root: Node3D,
+	replacement_catalog: Array[PrefabMetadata] = [],
+	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
 ) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return _failure("Open a LevelRoot document before capturing regeneration plans.")
@@ -249,8 +256,7 @@ static func build_regeneration_plans(
 					seeded = true
 				else:
 					continue
-			if not replacement_catalog.is_empty():
-				plan = _replace_plan_definition(plan, replacement_catalog)
+				plan = _replace_plan_definition(plan, replacement_catalog, supported_capabilities)
 				if plan.is_empty():
 					return _failure(
 						"No compatible replacement exists for " + instance.instance_id + "."
@@ -265,7 +271,9 @@ static func build_regeneration_plans(
 
 
 static func _replace_plan_definition(
-	plan: Dictionary, replacement_catalog: Array[PrefabMetadata]
+	plan: Dictionary,
+	replacement_catalog: Array[PrefabMetadata],
+	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
 ) -> Dictionary:
 	var source_socket: Dictionary = plan.get("source_socket", {})
 	var best_definition: PrefabMetadata
@@ -275,7 +283,7 @@ static func _replace_plan_definition(
 		if (
 			definition == null
 			or not definition.is_valid()
-			or not _unsupported_capabilities(definition).is_empty()
+			or not _unsupported_capabilities(definition, supported_capabilities).is_empty()
 		):
 			continue
 		if source_socket.is_empty():

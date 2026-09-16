@@ -219,7 +219,9 @@ func _preview_selected_replacement() -> void:
 	if _module.selected < 0 or _module.selected >= _catalog.size():
 		_status.text = "Select a replacement module definition first."
 		return
-	var captured := ModuleAssembly.build_regeneration_plans(_root(), [_catalog[_module.selected]])
+	var captured := ModuleAssembly.build_regeneration_plans(
+		_root(), [_catalog[_module.selected]], _replacement_capabilities()
+	)
 	if not captured.success or captured.plans.is_empty():
 		_status.text = (
 			"Replacement preview failed: "
@@ -272,9 +274,11 @@ func _check_selected_replacement() -> void:
 	if _module.selected < 0 or _module.selected >= _catalog.size():
 		_status.text = "Select a replacement module definition first."
 		return
-	var captured := ModuleAssembly.build_regeneration_plans(_root(), [_catalog[_module.selected]])
+	var captured := ModuleAssembly.build_regeneration_plans(
+		_root(), [_catalog[_module.selected]], _replacement_capabilities()
+	)
 	var diagnostics := ModuleAssembly.get_replacement_diagnostics(
-		_root(), _generator_replacement_catalog
+		_root(), _generator_replacement_catalog, _replacement_capabilities()
 	)
 	if captured.success:
 		var rejection_detail := ""
@@ -309,7 +313,9 @@ func _regenerate_with_selected() -> void:
 	if _module.selected < 0 or _module.selected >= _catalog.size():
 		_status.text = "Select a replacement module definition first."
 		return
-	var captured := ModuleAssembly.build_regeneration_plans(_root(), [_catalog[_module.selected]])
+	var captured := ModuleAssembly.build_regeneration_plans(
+		_root(), [_catalog[_module.selected]], _replacement_capabilities()
+	)
 	if not captured.success:
 		_status.text = "Replacement planning failed: " + str(captured.error)
 		return
@@ -627,6 +633,12 @@ func _selected(option: OptionButton) -> String:
 		return ""
 	var value: Variant = option.get_item_metadata(option.selected)
 	return "" if value == null else str(value)
+
+
+func _replacement_capabilities() -> Array[String]:
+	if _editor and _editor.has_method("get_replacement_capabilities"):
+		return _editor.get_replacement_capabilities()
+	return ["walk"]
 
 
 func _label(parent: Control, text: String) -> void:
