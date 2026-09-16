@@ -112,3 +112,23 @@ The September 10 refreshed aggregate supersedes the August 4 historical total fo
   - Progress 2026-09-10: notice checks and executable exports pass with installed Godot 4.7.2 templates; no installer definition/toolchain is present.
   - Progress 2026-09-11: author-confirmed liquid, skybox, resource, model, editor-icon, shader, effect-texture, weapon-icon, and retro prototype textures are original/generated LichForge work; the generated map overview is classified as a MODUS capture artifact. The ledger now has 218 cleared and 0 unverified assets. The production validator's two-count does not include legal/distribution clearance.
   - Completion proof: `docs/PROVENANCE_LEDGER.csv` passes `tools/generate_provenance_ledger.py --check --strict` with 318 cleared and 0 unverified rows, including original Breakwater geometry, collision, metadata and synthesized ambience.
+
+<!-- OVERZEER:DOCS_BACKLOG_BEGIN -->
+## OVERZEER project summary
+- Git evidence in selected window: `128` commit(s).
+- Documentation evidence: authored open tasks below; generated text is a proposal and does not mark work complete.
+- [ ] Publish versioned client/server/editor release artifacts with locked dependencies, hashes and bounded target evidence; CI artifacts alone do not close this row. `[truth:source-audit]`
+- [ ] Bundle a compatible GodotSteam/peer/runtime combination and cleared native dependency notices; player-side manual extension installation must not be required. `[truth:source-audit]`
+- [ ] Configure an app-owned Workshop showcase item with persistent PublishedFileId and approved visibility. Requires owner/AppID/permissions. `[truth:blocked]`
+- [ ] Prove two-account Steam lobby/auth/transport and dedicated-server behavior against installed artifacts; reconcile existing server API mismatch first. `[truth:source-audit]` `[truth:blocked]`
+- [ ] Prove real Workshop create/update/browse/subscription/install/play/unsubscribe; keep filesystem simulation separate. `[truth:blocked]`
+- [ ] Prove representative WAN sessions using authorized independently routed endpoints, including reconnect and host loss. `[truth:blocked]`
+- [ ] Prove native target-Windows client rendering/input/save/network behavior; Wine and Linux cross-export are supplementary only. `[truth:blocked]`
+- [ ] Close graphical/target-platform proof for the exported editor's author/connect/play/save/reopen/package/game roundtrip. Ownership/root-state loss, cursor compilation and channel ownership are repaired; source and exported Linux editor → package → game headless workflows pass. The display pressure guard blocks graphical acceptance; retain the [dated artifact/display boundary](docs/EDITOR_ROUNDTRIP_PROOF.md). `[truth:runtime]` `[truth:test]`
+- [ ] Implement the selected bundled native-runtime capability contract; preserve common offline mission behavior and reject maps/peers requiring unavailable capabilities rather than claiming stock-Godot parity. `[truth:source-audit]`
+- [ ] Produce the composed Breakwater Station first mission, finished module quality reference and reviewed audiovisual/gameplay route; retain Systems Lab separately. `[truth:source-audit]`
+- [ ] Improve procedural mission graphs, spatial solving, encounter/resource pacing and reproducible editable output using the authored kit. `[truth:source-audit]`
+- [ ] Implement persistent hub travel without tearing down the host session; preserve world/objective/inventory state on revisit and late join. `[truth:source-audit]`
+- [ ] Finish pinning, ghost placement and bounded partial regeneration; Modules/Gameplay authoring modes, socket placement, actual channel wiring and transactional undo/redo are implemented. `[truth:source-audit]`
+- [ ] Import manual gameplay evidence and clear the zero-hours blocker. `[truth:source-audit]` `[truth:test]`
+<!-- OVERZEER:DOCS_BACKLOG_END -->
