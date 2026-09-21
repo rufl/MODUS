@@ -1213,6 +1213,13 @@ func get_replacement_catalog_metadata() -> Array:
 	return prefab_system.get_replacement_metadata()
 
 
+func get_runtime_capabilities() -> Array[String]:
+	var capabilities: Array[String] = ["walk"]
+	if feature_availability and feature_availability.voxel_tools_available:
+		capabilities.append("voxel")
+	return capabilities
+
+
 ## Variant records are retained in the PackedScene, not only transient signals.
 func _build_gameplay_metadata() -> Dictionary:
 	if not generation_context:

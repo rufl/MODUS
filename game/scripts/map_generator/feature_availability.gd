@@ -70,6 +70,16 @@ func is_feature_available(feature_name: String) -> bool:
 			return false
 
 
+## Return the detected optional feature state for editor/runtime consumers.
+func get_capability_snapshot() -> Dictionary:
+	return {
+		"voxel_tools": voxel_tools_available,
+		"advanced_geometry": advanced_geometry_available,
+		"multimesh": multimesh_available,
+		"occlusion_culling": occlusion_culling_available
+	}
+
+
 ## Get fallback method for a feature
 func get_fallback_method(feature_name: String) -> String:
 	match feature_name:

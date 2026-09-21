@@ -5,6 +5,7 @@ extends GutTest
 const PrefabMetadata = preload("res://game/scripts/map_generator/prefab_metadata.gd")
 const MapPrefabSystem = preload("res://game/scripts/map_generator/prefab_system.gd")
 const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
+const FeatureAvailability = preload("res://game/scripts/map_generator/feature_availability.gd")
 
 var prefab_system: MapPrefabSystem
 
@@ -187,6 +188,15 @@ func test_prefab_system_replacement_metadata_deduplicates_entries() -> void:
 	var metadata := prefab_system.get_replacement_metadata()
 	assert_eq(metadata.size(), 1)
 	assert_eq(metadata[0].module_id, "generated_room")
+
+
+func test_feature_availability_exposes_capability_snapshot() -> void:
+	var availability := FeatureAvailability.new()
+	var snapshot := availability.get_capability_snapshot()
+	assert_true(snapshot.has("voxel_tools"))
+	assert_true(snapshot.has("advanced_geometry"))
+	assert_true(snapshot.has("multimesh"))
+	assert_true(snapshot.has("occlusion_culling"))
 
 
 func test_module_json_roundtrip_retains_attachable_socket_geometry() -> void:
