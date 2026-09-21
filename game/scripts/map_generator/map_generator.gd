@@ -1214,10 +1214,9 @@ func get_replacement_catalog_metadata() -> Array:
 
 
 func get_runtime_capabilities() -> Array[String]:
-	var capabilities: Array[String] = ["walk"]
-	if feature_availability and feature_availability.voxel_tools_available:
-		capabilities.append("voxel")
-	return capabilities
+	if feature_availability:
+		return feature_availability.get_available_capabilities()
+	return ["walk"]
 
 
 ## Variant records are retained in the PackedScene, not only transient signals.

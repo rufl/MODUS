@@ -199,6 +199,13 @@ func test_feature_availability_exposes_capability_snapshot() -> void:
 	assert_true(snapshot.has("occlusion_culling"))
 
 
+func test_feature_availability_exposes_replacement_capabilities() -> void:
+	var availability := FeatureAvailability.new()
+	var capabilities := availability.get_available_capabilities()
+	assert_true(capabilities.has("walk"))
+	assert_false(capabilities.has("voxel"))
+
+
 func test_module_json_roundtrip_retains_attachable_socket_geometry() -> void:
 	var original := PrefabMetadata.new()
 	original.module_id = "rotated_room"

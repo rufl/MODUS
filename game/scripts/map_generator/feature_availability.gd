@@ -80,6 +80,14 @@ func get_capability_snapshot() -> Dictionary:
 	}
 
 
+## Return replacement capabilities supported by this runtime.
+func get_available_capabilities() -> Array[String]:
+	var capabilities: Array[String] = ["walk"]
+	if voxel_tools_available:
+		capabilities.append("voxel")
+	return capabilities
+
+
 ## Get fallback method for a feature
 func get_fallback_method(feature_name: String) -> String:
 	match feature_name:
