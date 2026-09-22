@@ -818,7 +818,10 @@ func _handle_swarmling_out_of_bounds() -> void:
 func _setup_synchronizer() -> void:
 	# Check if we already have a synchronizer (e.g. from scene)
 	var synchronizer: MultiplayerSynchronizer = get_node_or_null("MultiplayerSynchronizer")
+	var session_owned: bool = is_instance_valid(authored_document) and authored_document.get_meta("document_runtime_session", false)
 	if synchronizer:
+		if session_owned:
+			synchronizer.public_visibility = false
 		# Scene already has a configured synchronizer
 		# Verify it has replication_interval set for optimal performance
 		if synchronizer.replication_interval == 0.0:
@@ -828,6 +831,7 @@ func _setup_synchronizer() -> void:
 	# No synchronizer in scene, create one programmatically
 	synchronizer = MultiplayerSynchronizer.new()
 	synchronizer.name = "MultiplayerSynchronizer"
+	synchronizer.public_visibility = not session_owned
 	synchronizer.replication_interval = 0.033  # 30Hz updates
 	synchronizer.delta_interval = 0.0  # Always use delta compression
 	add_child(synchronizer)

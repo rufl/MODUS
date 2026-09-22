@@ -126,6 +126,8 @@ func _create_enemy(index: int, saved: Dictionary = {}, prepared: Enemy = null) -
 	enemy.global_transform = (
 		global_transform if saved.is_empty() else PickupBase._decode_transform(saved.transform)
 	)
+	enemy._target_position = enemy.global_position
+	enemy._target_rotation = enemy.global_rotation
 	enemy.configure_authored_spawn(behavior, _completion_source)
 	if not saved.is_empty():
 		enemy.health_component.max_health = float(saved.max_health)

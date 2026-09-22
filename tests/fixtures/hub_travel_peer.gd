@@ -56,6 +56,7 @@ func _host() -> void:
 	encounter._process(0.0)
 	MissionMgr.get_instance()._process(0.0)
 	_check(await session.travel_to("travel_destination"), session.error_message)
+	session.document.find_actor("encounter").trigger(participant)
 	_check(await session.travel_to("travel_origin"), session.error_message)
 	FileAccess.open(evidence.path_join("port"), FileAccess.WRITE).store_string(str(peer.host.get_local_port()))
 	if not await _wait_file("first_ready"):
@@ -72,6 +73,7 @@ func _host() -> void:
 	if not await _wait_file("content_repaired"):
 		return
 	_check(await session.travel_to("travel_destination"), session.error_message)
+	session.set_travel_frozen(true)
 	_mark("destination_committed")
 	if not await _wait_file("first_traveled"):
 		return
@@ -79,6 +81,7 @@ func _host() -> void:
 	if not await _wait_file("late_ready"):
 		return
 	_check(session.get_session_players().size() == 3, "Late join adds one validated player")
+	_check(session.document.find_actor("encounter")._enemies.size() == 1, "One living encounter survives revisits and late join")
 	_check(await session.travel_to("travel_origin"), session.error_message)
 	_mark("return_committed")
 	if not await _wait_file("first_returned") or not await _wait_file("late_returned"):
@@ -86,8 +89,8 @@ func _host() -> void:
 	_check(session.document.find_actor("supplies").capture_runtime_state().pickup_phase == "collected", "No duplicate reward after group revisit")
 	_check(multiplayer.multiplayer_peer == peer, "Three destinations share one ENet transport")
 	_mark("finish")
-	await _wait_file("first_passed")
-	await _wait_file("late_passed")
+	await _wait_file("first_done")
+	await _wait_file("late_done")
 
 
 func _client() -> void:
@@ -122,9 +125,11 @@ func _client() -> void:
 		if not await _wait_destination("travel_destination"):
 			return
 		_check(session.player == participant, "Client player survives travel")
+		_check(session.document.find_actor("encounter")._enemies.size() == 1, "Travel restores living encounter")
 		_mark("first_traveled")
 	else:
 		_check(session.current_destination_id == "travel_destination", "Late client joins current destination, not entry map")
+		_check(session.document.find_actor("encounter")._enemies.size() == 1, "Late join restores living encounter")
 		_mark("late_ready")
 	if not await _wait_destination("travel_origin"):
 		return
@@ -133,6 +138,8 @@ func _client() -> void:
 	_check(multiplayer.multiplayer_peer == peer, "Client never reconnects during travel")
 	_mark(role + "_returned")
 	await _wait_file("finish")
+	_mark(role + "_done")
+	await _wait_file("host_passed")
 
 
 func _check_origin() -> void:

@@ -14,6 +14,8 @@ func _init() -> void:
 func _on_actor_ready() -> void:
 	super._on_actor_ready()
 	var label := Label3D.new()
+	label.name = "TravelLabel"
+	label.set_meta("editor_runtime_only", true)
 	label.text = actor_name
 	label.position.y = 0.65
 	label.font_size = 32

@@ -499,13 +499,20 @@ func _configure_default_particles(mat: ParticleProcessMaterial, color: Color) ->
 
 
 func _request_effect_snapshot() -> void:
+	# A staged authored enemy has no matching live RPC path on the authority yet.
+	if is_instance_valid(_parent) and "authored_document" in _parent:
+		var document: Node3D = _parent.authored_document
+		while is_instance_valid(document) and document.get_meta("document_runtime_session", false) and not document.has_meta("travel_session"):
+			await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	if (
 		multiplayer.has_multiplayer_peer()
-		and not multiplayer.is_server()
 		and (
 			multiplayer.multiplayer_peer.get_connection_status()
 			== MultiplayerPeer.CONNECTION_CONNECTED
 		)
+		and not multiplayer.is_server()
 	):
 		_request_effects.rpc_id(1)
 

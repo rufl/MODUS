@@ -94,7 +94,11 @@ func _connected() -> bool:
 
 
 func _host() -> bool:
-	return _network != null and _network.is_server()
+	return (
+		_network != null and _network.has_multiplayer_peer()
+		and _network.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+		and _network.is_server()
+	)
 
 
 func _known_peer(peer_id: int) -> bool:

@@ -114,6 +114,7 @@ func travel_to(identity: String, spawn_id: String = "") -> bool:
 		error_message = "Unknown destination: " + identity
 		return false
 	_travel_busy = true
+	error_message = ""
 	set_travel_frozen(true)
 	var saved: Dictionary = _visits.get(identity, {})
 	var descriptor: Dictionary = destinations[identity]
@@ -123,6 +124,8 @@ func travel_to(identity: String, spawn_id: String = "") -> bool:
 	var prepared := stage_travel_offer(offer)
 	if not prepared.success:
 		error_message = prepared.error
+		_notice = error_message
+		_refresh_status()
 		_travel_busy = false
 		set_travel_frozen(false)
 		return false
@@ -137,6 +140,8 @@ func travel_to(identity: String, spawn_id: String = "") -> bool:
 	set_travel_frozen(false)
 	if not success:
 		error_message = travel_network.last_error
+	_notice = error_message
+	_refresh_status()
 	return success
 
 
@@ -216,11 +221,13 @@ func commit_staged_travel() -> bool:
 		apply_player_roster(_staged_players)
 	_staged_players = []
 	document.runtime_player = player
+	var navigation_map := get_world_3d().navigation_map
 	for actor: Node in document.find_children("*", "", true, false):
 		if actor is ActorBase:
 			actor.start_runtime()
+		elif actor is Enemy and actor.movement_component and actor.movement_component.nav_agent:
+			actor.movement_component.nav_agent.set_navigation_map(navigation_map)
 	navigation_region.enabled = true
-	var navigation_map := get_world_3d().navigation_map
 	NavigationServer3D.map_set_use_async_iterations(navigation_map, false)
 	NavigationServer3D.region_set_use_async_iterations(navigation_region.get_rid(), false)
 	NavigationServer3D.map_force_update(navigation_map)

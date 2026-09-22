@@ -526,6 +526,8 @@ func _get_player_node(peer_id: int) -> Node:
 
 
 func _on_peer_connected(peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
 	# Load or create data
 	get_player_data(peer_id)
 	create_session(peer_id)
