@@ -148,6 +148,23 @@ func _get_eligible_rooms_for_monsters(
 		if distance >= min_distance:
 			eligible.append(room)
 
+	# Tiny deterministic maps may have no room outside the protected start
+	# radius. Respect an authored minimum by falling back to non-boss rooms.
+	if eligible.is_empty():
+		for room in context.rooms:
+			if room.type != Room.RoomType.BOSS_ARENA and not room.cells.is_empty():
+				eligible.append(room)
+
+	# Rule-only layouts can expose walkable grid cells without Room objects.
+	if eligible.is_empty():
+		var fallback := Room.new(-1, player_start, Room.RoomType.MEDIUM)
+		for y in range(context.grid.size()):
+			for x in range(context.grid[y].size()):
+				if _is_walkable_cell(Vector2i(x, y), context.grid):
+					fallback.cells.append(Vector2i(x, y))
+		if not fallback.cells.is_empty():
+			eligible.append(fallback)
+
 	return eligible
 
 

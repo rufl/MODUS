@@ -22,9 +22,13 @@ func generate_key_lock_system(context: GenerationContext) -> Dictionary:
 	# Analyze room progression to determine key placement order
 	var progression_order := _analyze_room_progression(context)
 
-	if progression_order.size() < 3:
+	if progression_order.size() < 2:
 		push_warning("Not enough rooms for key-lock system")
 		return {"keys": [], "locked_doors": []}
+
+	# Small maps still need one valid pair when key locks are enabled.
+	if progression_order.size() < 4:
+		key_count = 1
 
 	# Place keys and locked doors in progression order
 	var keys: Array = []
@@ -82,6 +86,11 @@ func _analyze_room_progression(context: GenerationContext) -> Array[Room]:
 					queue.append(connected_room)
 					visited[connected_id] = true
 
+	if progression.size() < 2:
+		for room: Room in context.rooms:
+			if room not in progression and not room.cells.is_empty():
+				progression.append(room)
+
 	return progression
 
 
@@ -106,33 +115,17 @@ func _find_room_by_id(context: GenerationContext, room_id: int) -> Room:
 func _place_key_lock_pair(
 	context: GenerationContext, progression: Array[Room], key_color: KeyColor, pair_index: int
 ) -> Dictionary:
-	# Divide progression into segments for key placement
-	var segment_size: int = max(1, progression.size() / 4)
-
-	# Key should be in earlier segment
-	var key_segment_start: int = pair_index * segment_size
-	var key_segment_end: int = min(key_segment_start + segment_size, progression.size() / 2)
-
-	# Door should be in later segment (after key)
-	var door_segment_start: int = key_segment_end + 1
-	var door_segment_end: int = min(door_segment_start + segment_size * 2, progression.size())
-
-	# Ensure valid ranges
-	if (
-		key_segment_start >= key_segment_end
-		or key_segment_end >= progression.size()
-		or door_segment_start >= door_segment_end
-	):
+	if progression.size() < 2:
 		return {}
 
-	# Select rooms for key and door
-	var key_room_idx: int = context.rng.randi_range(key_segment_start, key_segment_end - 1)
-	var door_room_idx: int = context.rng.randi_range(door_segment_start, door_segment_end - 1)
-
+	# Keep the key before its door, including on maps with only two or three
+	# reachable rooms.
+	var key_room_idx := mini(pair_index, progression.size() - 2)
+	var door_room_idx := mini(key_room_idx + 1, progression.size() - 1)
 	var key_room: Room = progression[key_room_idx]
 	var door_room: Room = progression[door_room_idx]
 
-	if key_room.cells.is_empty():
+	if key_room.cells.is_empty() or door_room.cells.is_empty():
 		return {}
 
 	# Commit the key only after its paired door has a valid placement.
@@ -244,6 +237,15 @@ func _find_door_position(context: GenerationContext, room: Room) -> Vector2i:
 				var neighbor_cell: Cell = context.grid[neighbor_pos.y][neighbor_pos.x]
 				if neighbor_cell.type == Cell.Type.HALLWAY:
 					return cell_pos
+
+	for cell_pos: Vector2i in room.cells:
+		if _is_in_bounds(context, cell_pos):
+			var fallback_cell: Cell = context.grid[cell_pos.y][cell_pos.x]
+			if (
+				fallback_cell.type != Cell.Type.EMPTY
+				and not fallback_cell.metadata.get("has_locked_door", false)
+			):
+				return cell_pos
 
 	return Vector2i(-1, -1)
 

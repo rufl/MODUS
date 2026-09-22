@@ -1202,7 +1202,8 @@ func _build_metadata(total_time: int) -> Dictionary:
 		"rule_modules_used": _get_rule_modules_used(),
 		"replacement_capabilities": get_runtime_capabilities(),
 		"replacement_catalog": get_replacement_catalog_metadata(),
-		"phase_times": _build_phase_times_metadata()
+		"phase_times": _build_phase_times_metadata(),
+		"gameplay": _build_gameplay_metadata()
 	}
 	return metadata
 
@@ -1642,6 +1643,14 @@ func _generated_extraction_record() -> Dictionary:
 	):
 		return {}
 	var cell: Cell = generation_context.grid[position.y][position.x]
+	if not cell or cell.type == Cell.Type.EMPTY:
+		# Room centers can fall on a removed/empty cell after hallway cleanup.
+		# Use a stable room cell so every successful generation has extraction.
+		for room: Room in generation_context.rooms:
+			if not room.cells.is_empty():
+				position = room.cells[-1]
+				cell = generation_context.grid[position.y][position.x]
+				break
 	if not cell or cell.type == Cell.Type.EMPTY:
 		return {}
 	var prerequisites: Array[String] = []

@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -52,7 +52,7 @@ jobs:
     needs: code-quality
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -71,7 +71,7 @@ jobs:
           mkdir -p test-results
 
       - name: Cache import assets
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .godot/imported/
           key: import-assets-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import', '**/*.glb', '**/*.obj', '**/*.png', '**/*.svg', '**/*.ttf', '**/*.wav', '**/*.ogg', '**/*.mp3', '**/*.tscn', '**/*.tres', '**/*.res', 'project.godot') }}
@@ -100,6 +100,7 @@ jobs:
           source tests/runners/headless_common.sh
           modus_collect_gut_tests tests/unit tests/integration
           modus_print_headless_selection
+          set -o pipefail
           modus_run_godot godot --headless -s addons/gut/gut_cmdln.gd \
             "${MODUS_GUT_TEST_ARGS[@]}" -gdisable_colors 2>&1 | tee test-results/unit-tests.log
           # GUT's bootstrap can exit zero before running tests if imports fail.
@@ -112,6 +113,7 @@ jobs:
           source tests/runners/headless_common.sh
           modus_collect_gut_tests tests/property
           modus_print_headless_selection
+          set -o pipefail
           modus_run_godot godot --headless -s addons/gut/gut_cmdln.gd \
             "${MODUS_GUT_TEST_ARGS[@]}" -gdisable_colors 2>&1 | tee test-results/property-tests.log
           grep -Eq '^[[:space:]]*Tests[[:space:]]+[1-9][0-9]*[[:space:]]*$' test-results/property-tests.log
@@ -124,6 +126,7 @@ jobs:
           source tests/runners/headless_common.sh
           modus_collect_gut_tests tests/benchmarks
           modus_print_headless_selection
+          set -o pipefail
           modus_run_godot godot --headless -s addons/gut/gut_cmdln.gd \
             "${MODUS_GUT_TEST_ARGS[@]}" -gdisable_colors 2>&1 | tee test-results/benchmark-tests.log
           grep -Eq '^[[:space:]]*Tests[[:space:]]+[1-9][0-9]*[[:space:]]*$' test-results/benchmark-tests.log
@@ -148,7 +151,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ github.run_number }}
           path: |
@@ -175,7 +178,7 @@ jobs:
             executable: MODUS-editor.exe
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -199,7 +202,7 @@ jobs:
             "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
 
       - name: Cache import assets
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .godot/imported/
           key: import-assets-v2-${{ runner.os }}-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import', '**/*.glb', '**/*.obj', '**/*.png', '**/*.svg', '**/*.ttf', '**/*.wav', '**/*.ogg', '**/*.mp3', '**/*.tscn', '**/*.tres', '**/*.res', 'project.godot') }}
@@ -239,7 +242,7 @@ jobs:
             --log "build/$EXPORT_PLATFORM/export-launch.log"
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.platform }}-build-${{ github.run_number }}
           path: build/${{ matrix.platform }}/
@@ -255,7 +258,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0

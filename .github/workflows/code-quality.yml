@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -30,11 +30,13 @@ jobs:
         run: python -m pip install gdtoolkit==4.5.0
 
       - name: Check GDScript Formatting
-        run: gdformat --check --diff game/ tests/ 2>&1 | tee format-check.log
+        run: |
+          set -o pipefail
+          gdformat --check --diff game/ tests/ 2>&1 | tee format-check.log
 
       - name: Upload Formatting Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: formatting-report
           path: format-check.log
@@ -45,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -56,11 +58,13 @@ jobs:
         run: python -m pip install gdtoolkit==4.5.0
 
       - name: Run GDScript Linting
-        run: gdlint game/ tests/ 2>&1 | tee lint-report.log
+        run: |
+          set -o pipefail
+          gdlint game/ tests/ 2>&1 | tee lint-report.log
 
       - name: Upload Linting Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linting-report
           path: lint-report.log
@@ -71,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -151,7 +155,7 @@ jobs:
 
       - name: Upload Analysis Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: static-analysis-results
           path: |
@@ -169,7 +173,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -242,7 +246,7 @@ jobs:
 
       - name: Upload Security Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: security-reports
           path: |
@@ -284,7 +288,7 @@ jobs:
 
       - name: Upload Dependency Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-report
           path: addon-list.txt
@@ -329,7 +333,7 @@ jobs:
 
       - name: Upload Quality Summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quality-summary
           path: quality-summary.md
