@@ -197,6 +197,17 @@ func test_edge_smoothing_applied() -> void:
 	assert_gt(cave_count, 0, "Should generate cave cells")
 
 
+## Test: Voxel geometry has a safe fallback when the addon is unavailable
+func test_voxel_geometry_fallback_is_safe() -> void:
+	var region := Rect2i(12, 12, 10, 10)
+	if cave_generator.is_using_voxel_tools():
+		pass_test("Voxel Tools integration is available")
+		return
+
+	var geometry := cave_generator.generate_voxel_cave_geometry(region, context)
+	assert_null(geometry, "Unavailable Voxel Tools must not create partial geometry")
+
+
 ## Helper: Reset grid with new size
 func _reset_grid(new_size: Vector2i) -> void:
 	context.grid_size = new_size

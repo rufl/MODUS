@@ -882,8 +882,17 @@ func _execute_cave_generation_phase() -> bool:
 		push_error("Cave system generator or context not initialized")
 		return false
 
-	# Generate cave areas
+	# Generate cave cells first so voxel terrain follows the same deterministic
+	# layout as the CSG fallback.
 	generation_context.cave_areas = cave_system_generator.generate_cave_areas(generation_context)
+	generation_context.voxel_cave_geometry.clear()
+	if cave_system_generator.is_using_voxel_tools():
+		for region: Rect2i in generation_context.cave_areas:
+			var voxel_geometry := cave_system_generator.generate_voxel_cave_geometry(
+				region, generation_context
+			)
+			if voxel_geometry:
+				generation_context.voxel_cave_geometry.append(voxel_geometry)
 
 	return true
 
@@ -926,6 +935,9 @@ func _execute_csg_geometry_phase() -> bool:
 	generation_context.csg_root = csg_builder.build_geometry()
 
 	if generation_context.csg_root:
+		for voxel_geometry: Node3D in generation_context.voxel_cave_geometry:
+			if not voxel_geometry.get_parent():
+				generation_context.csg_root.add_child(voxel_geometry)
 		# Updating CSG requires a SceneTree, not the player's world or navigation map.
 		_generation_viewport = SubViewport.new()
 		_generation_viewport.own_world_3d = true
@@ -1276,7 +1288,8 @@ func _build_statistics_metadata() -> Dictionary:
 		"monster_spawn_count": generation_context.monster_spawns.size(),
 		"item_spawn_count": generation_context.item_spawns.size(),
 		"outdoor_area_count": generation_context.outdoor_areas.size(),
-		"cave_area_count": generation_context.cave_areas.size()
+		"cave_area_count": generation_context.cave_areas.size(),
+		"voxel_cave_geometry_count": generation_context.voxel_cave_geometry.size()
 	}
 
 	return stats

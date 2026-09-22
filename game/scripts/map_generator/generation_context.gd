@@ -31,6 +31,7 @@ var exit_position: Vector2i = Vector2i(-1, -1)
 # Geometry
 var csg_root: CSGCombiner3D
 var prefab_instances: Array[Node3D] = []
+var voxel_cave_geometry: Array[Node3D] = []
 var navigation_region: NavigationRegion3D
 
 # Metadata
