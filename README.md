@@ -242,6 +242,8 @@ Generator revision **2** changes seed-to-content output. Saved scenes retain see
 
 Play the built-in mission from **Breakwater Station** in the main menu, or launch `godot --path . -- --breakwater`. Launch the authoring app with `godot --path . -- --editor`; **File → Open Breakwater Station** opens the mission, while **Open Three-Room Gate** retains the smaller authoring example. See the [standalone guide](standalone/editor/README.md). The [production brief](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#mission-direction-and-quality-reference) still governs audiovisual review, pacing, cyclic generation and hubs.
 
+The shared editor now supports persistent module pins, visual-only socket ghosts (**Enter** commits, **Esc** cancels) and bounded partial replacement with complete undo/redo. Regeneration preserves module identities, poses and all graph connections; incompatible or stale plans leave the document unchanged. This does not yet generate new mission graphs or spatial layouts. See [pins and partial regeneration](standalone/editor/README.md#pins-previews-and-partial-regeneration).
+
 Persistent hub travel is available in the authored-level runtime:
 
 ```bash

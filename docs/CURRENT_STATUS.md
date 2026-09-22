@@ -30,6 +30,16 @@ Authored sessions preserve the host transport and player nodes across staged, va
 
 The completed delivery passes 40 focused tests/263 assertions and actual hub → mission → hub console interaction headlessly. This batch rechecked the three hub tests (**3/3, 45 assertions**) and the separate-process ENet scenario: content refusal, revisits, living/cleared encounters, late join and disconnect during preparation all pass. This is not host migration, cross-build save compatibility or graphical acceptance.
 
+### September 22 Authoring and Network Cadence
+
+Persistent pins, socket-following visual-only ghosts and bounded partial regeneration now work through the shared standalone/embedded editor. Regeneration retains module IDs/poses, pinned objects, complete loop/boundary connections and valid channel/objective references. Planning and previews stage detached content; failure preserves live objects/history, and commit is one undoable transaction. Mode/document/history transitions invalidate pending ghosts.
+
+**73/73 focused tests, 483 assertions** pass across prefab assembly, module authoring, authored missions, network manager, weapon validation and weapon synchronization. Twenty actual standalone-editor checks pass headlessly, including pin/save/reopen, regeneration/undo/redo, ghost cancellation and single Enter placement. The isolated graphical attempt deferred on the occupied display lock; no rendered or exported-app evidence is refreshed.
+
+The movement limiter now uses a monotonic microsecond token bucket instead of minimum packet spacing. Movement retains a sustained 60-command/s limit with at most eight coalesced catch-up commands; other RPC policies retain one-call burst capacity. Deterministic tests cover ten seconds of jittered input, floods, per-peer isolation and bounded idle credit. Whitelist, sender and payload validation remain in force.
+
+Real host/client CLI join/disconnect completed without engine/script errors; two movement burst-limit rejections remain in that run. The cap was retained rather than increased until warnings disappeared.
+
 ### September 13 Generator Correctness and World-Building Plan
 
 The [release and world-building plan](RELEASE_AND_WORLD_BUILDING_PLAN.md) separates implemented generator/module/editor contracts from release acceptance. The three-room gate and eleven-module **Breakwater Black Start** mission are implemented; the production pass adds room detail, power-driven presentation, original zoned ambience and finite-supply tuning. Native completion and isolated rendered review are proven below. A local Linux portable package now has a clean install/verify/uninstall lifecycle with save preservation. Human audiovisual/balance acceptance, signed/published installers, bundled native integrations and external-service proof remain open.

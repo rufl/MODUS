@@ -31,6 +31,16 @@ Launch source with `godot --path . -- --editor`, or run an exported standalone-e
 
 Packages declare the required host document runtime API and scripts; meshes are serialized into native resources, with package-relative asset paths. The current authored actor/checkpoint contract is runtime API **2**. Only open trusted packages: Godot scene/script content is executable, not sandboxed.
 
+## Pins, previews and partial regeneration
+
+- **Toggle pin on selected module** preserves selection and is undoable. Pins survive save/reopen; pinned module objects and poses are never replaced by regeneration.
+- **Preview socket placement** creates a visual-only ghost. Point at a free socket, choose sockets/quarter turns, then **Enter** to commit once or **Esc** to cancel. Moving off valid sockets prevents placement. The panel reports incompatible sockets and clearance in text, not just color.
+- **Preview selected replacement** previews replacements for all unpinned rooms. Pointer movement cannot turn this into a placement preview. Enter commits the previewed transaction; edits to the document or definitions invalidate stale previews.
+- **Regenerate unpinned modules** uses current definitions; **Regenerate with selected definition** searches the selected authored replacement. The deterministic search is bounded to 128 candidate attempts. It retains original module IDs/poses, all loop and pinned-boundary connections, and valid actor/channel/objective references. It is not a new mission-graph or spatial-layout generator.
+- Failed validation/exhaustion changes nothing. One Undo/Redo restores the complete replacement transaction. Mode/tool changes, document replacement, playtest and close clear pending ghosts.
+
+Ghost construction reads serialized native visuals without instantiating scripts, actors or collision. Committed content and imported packages remain trusted executable Godot content.
+
 ## Remaining proof boundaries
 
 Focused source regressions and actual headless workflow actions cover document ownership, invalid-root rejection, history, channels, play isolation and package reconstruction. Graphical layout/input feel, every advertised legacy editor tool, cross-platform filesystem failures and real Workshop transfer require their own evidence.

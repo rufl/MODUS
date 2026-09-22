@@ -287,7 +287,6 @@ func update_from_raycast(from: Vector3, direction: Vector3, _camera: Camera3D) -
 	var ray_length: float = 100.0
 	var query := PhysicsRayQueryParameters3D.create(from, from + direction * ray_length)
 	query.collision_mask = 0xFFFFFFFF  # All layers
-	query.exclude = _get_preview_bodies()
 
 	var result: Dictionary = space_state.intersect_ray(query)
 
@@ -307,23 +306,6 @@ func update_from_raycast(from: Vector3, direction: Vector3, _camera: Camera3D) -
 		var default_distance: float = 5.0
 		update_position(from + direction * default_distance)
 		is_valid_placement = true
-
-
-## Get physics bodies in preview (to exclude from raycast)
-
-
-func _get_preview_bodies() -> Array[RID]:
-	var bodies: Array[RID] = []
-	if preview_node:
-		_collect_bodies_recursive(preview_node, bodies)
-	return bodies
-
-
-func _collect_bodies_recursive(node: Node, bodies: Array[RID]) -> void:
-	if node is CollisionObject3D:
-		bodies.append(node.get_rid())
-	for child: Node in node.get_children():
-		_collect_bodies_recursive(child, bodies)
 
 
 ## Check if current placement position is valid
@@ -352,7 +334,6 @@ func _check_placement_valid() -> bool:
 	var offset: Vector3 = aabb.position + aabb.size * 0.5
 	params.transform = Transform3D(Basis.IDENTITY, preview_position + offset)
 	params.collision_mask = 0xFFFFFFFF
-	params.exclude = _get_preview_bodies()
 
 	var results: Array[Dictionary] = space_state.intersect_shape(params, 1)
 

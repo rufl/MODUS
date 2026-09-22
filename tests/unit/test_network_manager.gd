@@ -214,20 +214,21 @@ func test_movement_input_burst_is_bounded_per_peer_without_idle_credit() -> void
 	var limiter := RateLimitProbe.new()
 	add_child_autofree(limiter)
 	limiter._setup_rate_limits()
-	assert_true(limiter.validate_rpc(42, "sync_position"))
-	assert_true(limiter.validate_rpc(42, "sync_position"), "Allow one coalesced input frame")
-	assert_false(limiter.validate_rpc(42, "sync_position"), "A burst cannot exceed two inputs")
+	var capacity: int = RPCWhitelist.get_config("sync_position").burst_capacity
+	for command in capacity:
+		assert_true(limiter.validate_rpc(42, "sync_position"), "Allow coalesced input commands")
+	assert_false(limiter.validate_rpc(42, "sync_position"), "Catch-up batches remain bounded")
 	assert_true(limiter.validate_rpc(43, "sync_position"), "Peers have independent budgets")
-	var accepted := 2
+	var accepted := capacity
 	for millisecond in range(1, 1001):
 		limiter.now_usec = millisecond * 1000
 		if limiter._check_rate_limit(42, "sync_position"):
 			accepted += 1
-	assert_lte(accepted, 62, "Flooding cannot exceed 60/s plus the bounded initial burst")
-	assert_gte(accepted, 61, "Rejected packets must not postpone replenishment")
+	assert_lte(accepted, capacity + 60, "Flooding cannot exceed 60/s plus the initial burst")
+	assert_gte(accepted, capacity + 59, "Rejected packets must not postpone replenishment")
 	limiter.now_usec += 10000000
-	assert_true(limiter.validate_rpc(42, "sync_position"))
-	assert_true(limiter.validate_rpc(42, "sync_position"))
+	for command in capacity:
+		assert_true(limiter.validate_rpc(42, "sync_position"))
 	assert_false(limiter.validate_rpc(42, "sync_position"), "Idle time cannot bank extra bursts")
 
 

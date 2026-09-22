@@ -287,7 +287,7 @@ Use stable `(module_instance_id, actor_id)` identities, not absolute scene-tree 
 - `godot --path . -- --hub` starts the playable hub; **E** uses departure/return consoles, **F5/F9** save/load on the host. Both peers need the same content. Custom campaigns register their own trusted local destinations before starting the session.
 - Proof on Godot 4.7.2: **40/40 focused tests, 263 assertions** across hub travel, authored missions/encounters/traversal, saves and movement; encrypted restore into a fresh session; actual hub → mission → hub through `InteractionComponent`; and `python3 tests/runners/test_hub_travel_network.py` with three separate headless ENet processes, including content refusal, live/cleared encounters and disconnect during preparation.
 - Boundaries: the display wrapper deferred two graphical capture attempts because its serialized lock was occupied. Headless interaction is not rendered or human-play acceptance. Exported-platform and Steam transport proof, cross-build save migration and host migration are not claimed.
-- The shipped `--hub-host`/`--hub-join` entrypoints also completed a two-process headless join/disconnect smoke without engine or script errors. This exposed existing `sync_position` rate-limit warnings: the 60/s limiter measures minimum packet spacing with a millisecond clock and can reject normal 60 Hz input. The shared RPC security policy is unchanged by this delivery.
+- The shipped `--hub-host`/`--hub-join` entrypoints completed a two-process headless join/disconnect smoke. The subsequent authoring/network batch replaces the minimum-spacing limiter exposed by that smoke with a microsecond token bucket: movement remains 60 commands/s with an eight-command catch-up cap; other RPC methods retain one-call burst capacity and their existing validation.
 
 ### Snap-style editor workflow
 
@@ -297,6 +297,10 @@ Extend the current embedded/standalone editor with two explicit workspaces:
 - **Gameplay:** actor placement and named logic ports, switch/door/objective connections, readable channel errors, encounter/spawn/navigation overlays.
 
 Share history, clipboard, selection and save/export services. A module placement or regeneration is one undoable transaction; failed operations preserve the old map. Play starts at a chosen spawn and returns to the same editable state. Export must roundtrip module identity, transforms, connections, dependencies and objective behavior, not merely produce a `.tscn`.
+
+**Implemented September 22, 2026 — pins, ghosts and bounded partial replacement:** the shared panel now persists undoable pin state, follows free sockets with script/physics-free visual ghosts, rejects stale placement/replacement commits and clears preview state across document/history/mode transitions. Replacement planning preserves original module IDs and poses, every loop and pinned-boundary edge, plus valid channel/objective references. Stable candidate ordering and a 128-attempt bound govern backtracking; detached staging prevents live-tree notifications or ownership changes during preview/failure. Commit/undo/redo swap the complete unpinned set atomically. This is bounded replacement within an existing layout, not the still-planned mission-graph/spatial solver.
+
+The six-script authoring/network batch passes **73/73 focused tests with 483 assertions**. Twenty actual standalone-editor workflow checks pass headlessly, including saved pins and preview/cancel/commit/history. Graphical capture deferred on the serialized isolated-display lock; exported-platform and human interaction acceptance remain separate.
 
 ### First complete module/editor delivery
 

@@ -61,9 +61,9 @@ const ALLOWED_RPCS: Dictionary = {
 	"sync_position":
 	{
 		"calls_per_second": 60.0,
-		"burst_capacity": 2,
+		"burst_capacity": 8,
 		"requires_validation": false,
-		"description": "Sync player position; one input frame of packet jitter is allowed"
+		"description": "Sync player position; allow one bounded physics catch-up batch"
 	},
 	"_sync_movement_state":
 	{
