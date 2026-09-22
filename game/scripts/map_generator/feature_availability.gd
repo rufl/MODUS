@@ -134,7 +134,7 @@ func validate_capability_manifest(manifest: Variant) -> Dictionary:
 	if (
 		not runtime is Dictionary
 		or not runtime.get("id") is String
-		or not runtime.get("version") is int
+		or not _is_integer_number(runtime.get("version"))
 	):
 		result.error = "Capability manifest is malformed: runtime identity is required."
 		return result
@@ -208,6 +208,10 @@ func negotiate_capabilities(
 	var result := validate_capability_manifest(manifest)
 	result["manifest"] = manifest
 	return result
+
+
+func _is_integer_number(value: Variant) -> bool:
+	return value is int or (value is float and is_finite(value) and value == floor(value))
 
 
 func _normalize_capabilities(value: Variant) -> Array[String]:

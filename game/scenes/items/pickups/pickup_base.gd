@@ -542,7 +542,9 @@ func _allows_collector(player: Node3D) -> bool:
 		return false
 	if not is_instance_valid(authored_document):
 		return true
-	var session: Node = authored_document.get_meta("travel_session", null)
+	var session: Node = null
+	if authored_document.has_meta("travel_session"):
+		session = authored_document.get_meta("travel_session")
 	if is_instance_valid(session):
 		return player is Player and player.get_parent() == session
 	return player == authored_document.runtime_player

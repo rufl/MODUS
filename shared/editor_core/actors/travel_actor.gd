@@ -27,7 +27,9 @@ func interact(participant: Node = null) -> bool:
 	if not is_enabled or is_authoring() or not _can_mutate_runtime():
 		return false
 	var level := get_level_document()
-	var session: Node = level.get_meta("travel_session", null) if level else null
+	var session: Node = null
+	if level and level.has_meta("travel_session"):
+		session = level.get_meta("travel_session")
 	if not session or session.is_travel_pending() or not participant is Player:
 		return false
 	if (

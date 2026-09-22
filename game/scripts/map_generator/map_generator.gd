@@ -1262,6 +1262,16 @@ func get_runtime_capabilities() -> Array[String]:
 
 ## Variant records are retained in the PackedScene, not only transient signals.
 func _build_gameplay_metadata() -> Dictionary:
+	if not generation_context:
+		return {
+			"player_start": Vector2i(-1, -1),
+			"exit_position": Vector2i(-1, -1),
+			"monsters": [],
+			"items": [],
+			"keys": [],
+			"locked_doors": [],
+			"secrets": []
+		}
 	var gameplay := {
 		"player_start": generation_context.player_start_position,
 		"exit_position": generation_context.exit_position,

@@ -106,7 +106,9 @@ func allows_runtime_target(candidate: Node3D) -> bool:
 		return false
 	if not is_instance_valid(authored_document):
 		return true
-	var session: Node = authored_document.get_meta("travel_session", null)
+	var session: Node = null
+	if authored_document.has_meta("travel_session"):
+		session = authored_document.get_meta("travel_session")
 	if is_instance_valid(session) and candidate is Player:
 		return candidate.get_parent() == session
 	return (
@@ -117,7 +119,9 @@ func allows_runtime_target(candidate: Node3D) -> bool:
 func get_authored_targets() -> Array[Node]:
 	var targets: Array[Node] = []
 	if is_instance_valid(authored_document):
-		var session: Node = authored_document.get_meta("travel_session", null)
+		var session: Node = null
+		if authored_document.has_meta("travel_session"):
+			session = authored_document.get_meta("travel_session")
 		if is_instance_valid(session):
 			targets.append_array(session.get_session_players())
 		elif is_instance_valid(authored_document.runtime_player):
