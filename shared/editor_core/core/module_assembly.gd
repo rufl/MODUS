@@ -110,7 +110,11 @@ static func get_replacement_diagnostics(
 
 
 static func _definition_precedes(left: PrefabMetadata, right: PrefabMetadata) -> bool:
-	return left.module_id < right.module_id
+	if left.module_id != right.module_id:
+		return left.module_id < right.module_id
+	if left.scene_path != right.scene_path:
+		return left.scene_path < right.scene_path
+	return JSON.stringify(left.to_dict()) < JSON.stringify(right.to_dict())
 
 
 static func get_instances(root: Node) -> Array[ModuleInstance]:
@@ -232,252 +236,350 @@ static func place_module(
 static func build_regeneration_plans(
 	root: Node3D,
 	replacement_catalog: Array[PrefabMetadata] = [],
-	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES,
+	max_attempts: int = 128
 ) -> Dictionary:
 	if root == null or not "module_connections" in root:
-		return _failure("Open a LevelRoot document before capturing regeneration plans.")
-	var pending: Array[ModuleInstance] = []
-	var placed_ids: Dictionary = {}
-	for instance: ModuleInstance in get_instances(root):
-		if instance.pinned:
-			placed_ids[instance.instance_id] = true
-		else:
-			pending.append(instance)
+		return _regeneration_failure("Open a LevelRoot document before capturing regeneration plans.")
+	if max_attempts <= 0:
+		return _regeneration_failure("Regeneration attempt limit must be positive.")
+	var previous := validate_level(root)
+	if not previous.valid:
+		return _regeneration_failure("Repair the existing layout first: " + "; ".join(previous.errors))
+	var instances := get_instances(root)
+	instances.sort_custom(
+		func(left: ModuleInstance, right: ModuleInstance) -> bool:
+			return left.instance_id < right.instance_id
+	)
+	var catalog: Array[PrefabMetadata] = replacement_catalog.duplicate()
+	for definition in catalog:
+		if definition == null or definition.module_id.is_empty() or not definition.is_valid():
+			return _regeneration_failure("Replacement catalog contains an invalid definition.")
+	catalog.sort_custom(_definition_precedes)
+	var layout := _capture_layout(root)
 	var plans: Array[Dictionary] = []
-	var seeded := false
-	while not pending.is_empty():
-		var progressed := false
-		for index in range(pending.size() - 1, -1, -1):
-			var instance := pending[index]
-			var plan := _build_plan_for_instance(root, instance, placed_ids)
-			if plan.is_empty():
-				if not seeded and placed_ids.is_empty():
-					plan = {"definition": instance.definition}
-					seeded = true
-				else:
-					continue
-				plan = _replace_plan_definition(plan, replacement_catalog, supported_capabilities)
-				if plan.is_empty():
-					return _failure(
-						"No compatible replacement exists for " + instance.instance_id + "."
-					)
-			plans.append(plan)
-			placed_ids[instance.instance_id] = true
-			pending.remove_at(index)
-			progressed = true
-		if not progressed:
-			return _failure("Unable to derive a connected regeneration order.")
-	return {"success": true, "error": "", "plans": plans}
+	var choices: Array = []
+	for instance in instances:
+		if instance.pinned:
+			continue
+		var plan := {
+			"definition": instance.definition,
+			"instance_id": instance.instance_id,
+			"transform": instance.transform,
+			"_layout": layout
+		}
+		for edge: Dictionary in root.module_connections:
+			if edge.from_instance == instance.instance_id:
+				plan.merge({
+					"target_instance_id": edge.to_instance,
+					"target_socket_id": edge.to_socket,
+					"source_socket_id": edge.from_socket
+				})
+				break
+			if edge.to_instance == instance.instance_id:
+				plan.merge({
+					"target_instance_id": edge.from_instance,
+					"target_socket_id": edge.from_socket,
+					"source_socket_id": edge.to_socket
+				})
+				break
+		plans.append(plan)
+		choices.append(catalog if not catalog.is_empty() else [instance.definition])
+	var search := {"attempts": 0, "error": "", "exhausted": false}
+	if _search_regeneration(root, plans, choices, 0, supported_capabilities, max_attempts, search):
+		return {"success": true, "error": "", "plans": plans, "attempts": search.attempts}
+	var reason := "Regeneration attempt limit exhausted" if search.exhausted else "No compatible replacement layout"
+	return _regeneration_failure(reason + ": " + str(search.error), search.attempts)
 
 
-static func _replace_plan_definition(
-	plan: Dictionary,
-	replacement_catalog: Array[PrefabMetadata],
-	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
-) -> Dictionary:
-	var source_socket: Dictionary = plan.get("source_socket", {})
-	var best_definition: PrefabMetadata
-	var best_socket_id := ""
-	var best_score := -1
-	for definition: PrefabMetadata in replacement_catalog:
+static func _regeneration_failure(message: String, attempts: int = 0) -> Dictionary:
+	return {"success": false, "error": message, "plans": [], "transforms": [], "attempts": attempts}
+
+
+static func _capture_layout(root: Node3D) -> Dictionary:
+	var modules: Dictionary = {}
+	for instance in get_instances(root):
+		modules[instance.instance_id] = {
+			"object_id": instance.get_instance_id(),
+			"transform": instance.transform,
+			"pinned": instance.pinned,
+			"definition": instance.definition.to_dict().duplicate(true)
+		}
+	return {"modules": modules, "graph": root.module_connections.duplicate(true)}
+
+
+static func _retained_socket_error(
+	instance: ModuleInstance, definition: PrefabMetadata, graph: Array[Dictionary]
+) -> String:
+	for edge in graph:
+		var socket_id := ""
+		if edge.from_instance == instance.instance_id:
+			socket_id = edge.from_socket
+		elif edge.to_instance == instance.instance_id:
+			socket_id = edge.to_socket
+		else:
+			continue
+		var retained := instance.get_socket(socket_id)
+		var replacement: Dictionary = {}
+		for socket in definition.sockets:
+			if socket.id == socket_id:
+				replacement = socket
+				break
 		if (
-			definition == null
-			or not definition.is_valid()
-			or not _unsupported_capabilities(definition, supported_capabilities).is_empty()
+			replacement.is_empty()
+			or replacement.get("kind", "walk") != retained.get("kind", "walk")
+			or not replacement.opening.is_equal_approx(retained.opening)
+			or not replacement.local_transform.is_equal_approx(retained.local_transform)
 		):
-			continue
-		if source_socket.is_empty():
-			if best_definition == null or definition.module_id < best_definition.module_id:
-				best_definition = definition
-			continue
-		for socket: Dictionary in definition.sockets:
-			if (
-				socket.get("kind", "walk") == source_socket.get("kind", "walk")
-				and socket.opening.is_equal_approx(source_socket.opening)
-			):
-				var score := definition.sockets.size()
-				if (
-					score > best_score
-					or (
-						score == best_score
-						and (
-							best_definition == null
-							or definition.module_id < best_definition.module_id
-						)
-					)
-				):
-					best_definition = definition
-					best_socket_id = str(socket.id)
-					best_score = score
-	if best_definition == null:
-		return {}
-	var replacement := plan.duplicate(true)
-	replacement["definition"] = best_definition
-	if not source_socket.is_empty():
-		replacement["source_socket_id"] = best_socket_id
-	return replacement
+			return "%s: replacement %s violates retained socket %s." % [
+				instance.instance_id, definition.module_id, socket_id
+			]
+	return ""
 
 
-static func _build_plan_for_instance(
-	root: Node3D, instance: ModuleInstance, placed_ids: Dictionary
-) -> Dictionary:
-	for edge: Dictionary in root.module_connections:
-		var from_id := str(edge.get("from_instance", ""))
-		var to_id := str(edge.get("to_instance", ""))
-		if to_id == instance.instance_id and placed_ids.has(from_id):
-			return {
-				"definition": instance.definition,
-				"source_socket": instance.get_socket(str(edge.get("to_socket", ""))),
-				"target_instance_id": from_id,
-				"target_socket_id": str(edge.get("from_socket", "")),
-				"source_socket_id": str(edge.get("to_socket", ""))
-			}
-		if from_id == instance.instance_id and placed_ids.has(to_id):
-			return {
-				"definition": instance.definition,
-				"source_socket": instance.get_socket(str(edge.get("from_socket", ""))),
-				"target_instance_id": to_id,
-				"target_socket_id": str(edge.get("to_socket", "")),
-				"source_socket_id": str(edge.get("from_socket", ""))
-			}
-	return {}
+static func _search_regeneration(
+	root: Node3D, plans: Array[Dictionary], choices: Array, depth: int,
+	supported_capabilities: Array[String], max_attempts: int, search: Dictionary
+) -> bool:
+	if depth == plans.size():
+		var staged := _stage_regeneration(root, plans, supported_capabilities)
+		if not staged.success:
+			search.error = staged.error
+			return false
+		staged.document.free()
+		return true
+	var original: ModuleInstance
+	for instance in get_instances(root):
+		if instance.instance_id == plans[depth].instance_id:
+			original = instance
+			break
+	for definition: PrefabMetadata in choices[depth]:
+		if search.attempts >= max_attempts:
+			search.exhausted = true
+			return false
+		search.attempts += 1
+		var unsupported := _unsupported_capabilities(definition, supported_capabilities)
+		if not unsupported.is_empty():
+			search.error = "%s: replacement %s requires unsupported capabilities: %s." % [
+				original.instance_id, definition.module_id, ", ".join(unsupported)
+			]
+			continue
+		var socket_error := _retained_socket_error(original, definition, root.module_connections)
+		if not socket_error.is_empty():
+			search.error = socket_error
+			continue
+		plans[depth].definition = definition
+		if _search_regeneration(
+			root, plans, choices, depth + 1, supported_capabilities, max_attempts, search
+		):
+			return true
+		if search.exhausted:
+			return false
+	return false
 
 
 static func preview_regeneration(root: Node3D, plans: Array[Dictionary]) -> Dictionary:
-	if root == null or not "module_connections" in root:
-		return _failure("Open a LevelRoot document before previewing regeneration.")
-	var old_graph: Array[Dictionary] = root.module_connections.duplicate(true)
-	var old_nodes: Array[ModuleInstance] = []
-	var pinned_ids: Dictionary = {}
-	for instance: ModuleInstance in get_instances(root):
-		if instance.pinned:
-			pinned_ids[instance.instance_id] = true
-		else:
-			old_nodes.append(instance)
-	for instance: ModuleInstance in old_nodes:
-		root.remove_child(instance)
-	root.module_connections = _filter_graph(old_graph, pinned_ids)
-	var staged: Array[ModuleInstance] = []
+	var staged := _stage_regeneration(root, plans)
+	if not staged.success:
+		return staged
 	var transforms: Array[Transform3D] = []
-	for plan: Dictionary in plans:
-		var definition := plan.get("definition") as PrefabMetadata
-		if definition == null:
-			_rollback_regeneration(root, old_nodes, staged, old_graph)
-			return _failure("Every regeneration preview plan needs a valid definition.")
-		var result := place_module(
-			root,
-			definition,
-			str(plan.get("target_instance_id", "")),
-			str(plan.get("target_socket_id", "")),
-			str(plan.get("source_socket_id", "")),
-			int(plan.get("quarter_turns", 0)),
-			false,
-			false
-		)
-		if not result.success:
-			_rollback_regeneration(root, old_nodes, staged, old_graph)
-			return result
-		var instance := result.instance as ModuleInstance
-		staged.append(instance)
+	for instance: ModuleInstance in staged.instances:
 		transforms.append(instance.transform)
-	_rollback_regeneration(root, old_nodes, staged, old_graph)
+	staged.document.free()
 	return {"success": true, "error": "", "transforms": transforms}
 
 
-static func regenerate_unpinned(root: Node3D, plans: Array[Dictionary]) -> Dictionary:
+static func _instantiate_replacement(original: ModuleInstance, definition: PrefabMetadata) -> Dictionary:
+	var scene := load(definition.scene_path) as PackedScene
+	if scene == null:
+		return _regeneration_failure("Module scene could not be loaded: " + definition.module_id)
+	var content := scene.instantiate()
+	if not content is Node3D or not content.transform.is_equal_approx(Transform3D.IDENTITY):
+		content.free()
+		return _regeneration_failure("Module scene roots must be Node3D with an identity transform.")
+	var candidate: ModuleInstance
+	if content is ModuleInstance:
+		candidate = content
+		_remap_local_objectives(candidate, candidate.instance_id, original.instance_id)
+	else:
+		candidate = ModuleInstance.new()
+		candidate.add_child(content)
+	candidate.name = original.name
+	candidate.instance_id = original.instance_id
+	candidate.definition = definition
+	candidate.transform = original.transform
+	candidate.pinned = false
+	return {"success": true, "instance": candidate}
+
+
+static func _stage_regeneration(
+	root: Node3D, plans: Array[Dictionary],
+	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+) -> Dictionary:
 	if root == null or not "module_connections" in root:
-		return _failure("Open a LevelRoot document before regenerating modules.")
-	var old_graph: Array[Dictionary] = root.module_connections.duplicate(true)
-	var old_nodes: Array[ModuleInstance] = []
-	var pinned_ids: Dictionary = {}
-	for instance: ModuleInstance in get_instances(root):
-		if instance.pinned:
-			pinned_ids[instance.instance_id] = true
-		else:
-			old_nodes.append(instance)
-	for instance: ModuleInstance in old_nodes:
-		root.remove_child(instance)
-	root.module_connections = _filter_graph(old_graph, pinned_ids)
-	var new_nodes: Array[ModuleInstance] = []
-	for plan: Dictionary in plans:
+		return _regeneration_failure("Open a LevelRoot document before regenerating modules.")
+	var previous := validate_level(root)
+	if not previous.valid:
+		return _regeneration_failure("Repair the existing layout first: " + "; ".join(previous.errors))
+	var layout := _capture_layout(root)
+	var by_id: Dictionary = {}
+	for plan in plans:
+		var id := str(plan.get("instance_id", ""))
 		var definition := plan.get("definition") as PrefabMetadata
-		if definition == null:
-			_rollback_regeneration(root, old_nodes, new_nodes, old_graph)
-			return _failure("Every regeneration plan needs a valid module definition.")
-		var result := place_module(
-			root,
-			definition,
-			str(plan.get("target_instance_id", "")),
-			str(plan.get("target_socket_id", "")),
-			str(plan.get("source_socket_id", "")),
-			int(plan.get("quarter_turns", 0)),
-			false,
-			false
-		)
+		if not layout.modules.has(id) or by_id.has(id):
+			return _regeneration_failure("Invalid or duplicate regeneration instance: " + id)
+		if plan.get("_layout") != layout:
+			return _regeneration_failure("Stale regeneration layout: " + id)
+		if layout.modules[id].pinned:
+			return _regeneration_failure("Cannot regenerate pinned module: " + id)
+		if not plan.get("transform") is Transform3D or plan.transform != layout.modules[id].transform:
+			return _regeneration_failure("Regeneration must preserve the original pose: " + id)
+		if definition == null or not definition.is_valid():
+			return _regeneration_failure("Invalid replacement definition: " + id)
+		var unsupported := _unsupported_capabilities(definition, supported_capabilities)
+		if not unsupported.is_empty():
+			return _regeneration_failure(id + ": unsupported capabilities: " + ", ".join(unsupported))
+		by_id[id] = plan
+	for instance in get_instances(root):
+		if not instance.pinned and not by_id.has(instance.instance_id):
+			return _regeneration_failure("Missing regeneration plan: " + instance.instance_id)
+		if by_id.has(instance.instance_id):
+			var error := _retained_socket_error(instance, by_id[instance.instance_id].definition, root.module_connections)
+			if not error.is_empty():
+				return _regeneration_failure(error)
+	# All validation occurs in a detached document. Never remove, reparent or assign owners
+	# on live nodes while planning, previewing, or rejecting a transaction.
+	var document: Node3D = LevelRootScript.new()
+	document.name = root.name
+	document.module_connections = root.module_connections.duplicate(true)
+	document.channel_data = root.channel_data.duplicate(true)
+	for child in root.get_children():
+		if not child.get_meta("editor_runtime_only", false):
+			document.add_child(child.duplicate(Node.DUPLICATE_GROUPS | Node.DUPLICATE_SCRIPTS | Node.DUPLICATE_USE_INSTANTIATION))
+	# Include unsaved editor channel changes without assigning IDs on the live tree.
+	if root.has_method("get_channel_system"):
+		for channel_name: String in root.get_channel_system().channels:
+			var channel: Dictionary = root.get_channel_system().channels[channel_name]
+			var saved := {
+				"color": channel.color.to_html(), "enabled": channel.enabled,
+				"delay": channel.delay, "inverted": channel.inverted
+			}
+			for role: String in ["sources", "targets"]:
+				var identities: Array[String] = []
+				for node: Node in channel[role]:
+					if is_instance_valid(node) and root.is_ancestor_of(node):
+						var copy := document.get_node_or_null(root.get_path_to(node))
+						if copy:
+							identities.append(document.get_actor_identity(copy))
+				saved[role] = identities
+			document.channel_data[channel_name] = saved
+	var old_channel_data: Dictionary = document.channel_data.duplicate(true)
+	var replacements: Dictionary = {}
+	for original in get_instances(root):
+		if not by_id.has(original.instance_id):
+			continue
+		var result := _instantiate_replacement(original, by_id[original.instance_id].definition)
 		if not result.success:
-			_rollback_regeneration(root, old_nodes, new_nodes, old_graph)
+			document.free()
 			return result
-		new_nodes.append(result.instance as ModuleInstance)
-	var final_validation := validate_level(root)
-	if not final_validation.valid:
-		_rollback_regeneration(root, old_nodes, new_nodes, old_graph)
-		return _failure("Regenerated layout is invalid: " + "; ".join(final_validation.errors))
-	var new_graph: Array[Dictionary] = root.module_connections.duplicate(true)
+		var copy := document.get_node(NodePath(str(original.name)))
+		var index := copy.get_index()
+		document.remove_child(copy)
+		copy.free()
+		document.add_child(result.instance)
+		document.move_child(result.instance, index)
+		replacements[original.instance_id] = result.instance
+	var errors := _validate(get_instances(document), document.module_connections, supported_capabilities)
+	errors.append_array(document.get_channel_system().validate_data(document.channel_data))
+	var mission := MissionMgr.new()
+	var mission_state := mission.build_document_state(document)
+	mission.free()
+	if not mission_state.success:
+		errors.append(mission_state.error)
+	if not errors.is_empty():
+		document.free()
+		return _regeneration_failure("Regenerated layout is invalid: " + "; ".join(errors))
+	# Preserve saved channel contracts and include channels authored by replacement scenes.
+	document._bind_actors(document, document.get_channel_system())
+	var new_channel_data: Dictionary = document.get_channel_system().serialize()
+	for channel_name: String in old_channel_data:
+		var saved: Dictionary = old_channel_data[channel_name].duplicate(true)
+		if new_channel_data.has(channel_name):
+			for role: String in ["sources", "targets"]:
+				for identity: String in new_channel_data[channel_name][role]:
+					if not saved.get(role, []).has(identity):
+						if not saved.has(role):
+							saved[role] = []
+						saved[role].append(identity)
+		new_channel_data[channel_name] = saved
+	var instances: Array[ModuleInstance] = []
+	for plan in plans:
+		instances.append(replacements[plan.instance_id])
+	return {
+		"success": true, "error": "", "document": document,
+		"instances": instances, "old_channel_data": old_channel_data,
+		"channel_data": new_channel_data
+	}
+
+
+static func regenerate_unpinned(root: Node3D, plans: Array[Dictionary]) -> Dictionary:
+	var staged := _stage_regeneration(root, plans)
+	if not staged.success:
+		return staged
+	var new_nodes: Array[ModuleInstance] = staged.instances
+	var old_nodes: Array[ModuleInstance] = []
+	var indices: Array[int] = []
+	for plan in plans:
+		for instance in get_instances(root):
+			if instance.instance_id == plan.instance_id:
+				old_nodes.append(instance)
+				indices.append(instance.get_index())
+				break
+	for instance in new_nodes:
+		staged.document.remove_child(instance)
+	staged.document.free()
+	if new_nodes.is_empty():
+		return {"success": true, "error": "", "instances": new_nodes}
+	var graph: Array[Dictionary] = root.module_connections.duplicate(true)
 	var undo := EditorGlobals.get_undo_redo()
 	undo.create_action("Regenerate unpinned modules")
-	undo.add_do_method(_swap_layout.bind(root, old_nodes, new_nodes, new_graph))
-	undo.add_undo_method(_swap_layout.bind(root, new_nodes, old_nodes, old_graph))
-	for instance: ModuleInstance in old_nodes:
-		undo.add_do_reference(instance)
-	for instance: ModuleInstance in new_nodes:
+	undo.add_do_method(_swap_layout.bind(
+		root, old_nodes, new_nodes, indices, graph, staged.channel_data, staged.channel_data
+	))
+	undo.add_undo_method(_swap_layout.bind(
+		root, new_nodes, old_nodes, indices, graph, root.channel_data.duplicate(true), staged.old_channel_data
+	))
+	for instance in old_nodes:
+		undo.add_undo_reference(instance)
+	for instance in new_nodes:
 		undo.add_do_reference(instance)
 	undo.commit_action()
 	return {"success": true, "error": "", "instances": new_nodes}
 
 
-static func _filter_graph(graph: Array[Dictionary], instance_ids: Dictionary) -> Array[Dictionary]:
-	var filtered: Array[Dictionary] = []
-	for edge: Dictionary in graph:
-		if (
-			instance_ids.has(edge.get("from_instance", ""))
-			and instance_ids.has(edge.get("to_instance", ""))
-		):
-			filtered.append(edge.duplicate(true))
-	return filtered
-
-
-static func _rollback_regeneration(
-	root: Node3D,
-	old_nodes: Array[ModuleInstance],
-	new_nodes: Array[ModuleInstance],
-	old_graph: Array[Dictionary]
+static func _swap_layout(
+	root: Node3D, remove_nodes: Array[ModuleInstance], add_nodes: Array[ModuleInstance],
+	indices: Array[int], graph: Array[Dictionary], channel_data: Dictionary, bindings: Dictionary
 ) -> void:
-	for instance: ModuleInstance in new_nodes:
-		if instance.get_parent() == root:
-			root.remove_child(instance)
-		instance.free()
-	for instance: ModuleInstance in old_nodes:
+	for instance in remove_nodes:
+		root.remove_child(instance)
+	for instance in add_nodes:
 		root.add_child(instance)
 		instance.owner = root
 		LevelRootScript.prepare_ownership(instance, root)
-	root.module_connections = old_graph.duplicate(true)
-
-
-static func _swap_layout(
-	root: Node3D,
-	remove_nodes: Array[ModuleInstance],
-	add_nodes: Array[ModuleInstance],
-	graph: Array[Dictionary]
-) -> void:
-	for instance: ModuleInstance in remove_nodes:
-		if instance.get_parent() == root:
-			root.remove_child(instance)
-	for instance: ModuleInstance in add_nodes:
-		if instance.get_parent() == null:
-			root.add_child(instance)
-			instance.owner = root
-			LevelRootScript.prepare_ownership(instance, root)
+	# Restore positions in ascending order even though plans are ordered by stable ID.
+	var order: Array[int] = []
+	for index in indices.size():
+		order.append(index)
+	order.sort_custom(func(a: int, b: int) -> bool: return indices[a] < indices[b])
+	for index in order:
+		root.move_child(add_nodes[index], indices[index])
 	root.module_connections = graph.duplicate(true)
+	root.channel_data = channel_data.duplicate(true)
+	root.get_channel_system().deserialize(bindings, root)
+	root._bind_actors(root, root.get_channel_system())
+	if root.authoring_mode:
+		root.freeze_authoring()
 
 
 static func _remap_local_objectives(
@@ -643,7 +745,10 @@ static func validate_level(root: Node3D) -> Dictionary:
 	return {"valid": errors.is_empty(), "errors": errors}
 
 
-static func _validate(instances: Array[ModuleInstance], graph: Array[Dictionary]) -> Array[String]:
+static func _validate(
+	instances: Array[ModuleInstance], graph: Array[Dictionary],
+	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+) -> Array[String]:
 	var errors: Array[String] = []
 	var ids := {}
 	for instance in instances:
@@ -662,7 +767,7 @@ static func _validate(instances: Array[ModuleInstance], graph: Array[Dictionary]
 			errors.append("Invalid definition on " + instance.instance_id)
 			continue
 		for capability: String in instance.definition.required_capabilities:
-			if capability not in SUPPORTED_CAPABILITIES:
+			if capability not in supported_capabilities:
 				errors.append(
 					instance.instance_id + ": unsupported runtime capability " + capability
 				)

@@ -26,6 +26,8 @@ var _actors: Dictionary = {}
 var _preview_target_key := ""
 var _preview_active := false
 var _pending_regeneration_plans: Array[Dictionary] = []
+var _pending_placement: Dictionary = {}
+var _preview_document_state: Dictionary = {}
 var _generator_replacement_catalog: Array[PrefabMetadata] = []
 var _built := false
 
@@ -50,6 +52,7 @@ func _build() -> void:
 	_mode.add_item("Gameplay")
 	_mode.item_selected.connect(
 		func(index: int) -> void:
+			clear_module_preview()
 			_rooms.visible = index == 0
 			_gameplay.visible = index == 1
 	)
@@ -71,8 +74,18 @@ func _build() -> void:
 	_button(_rooms, "Preview socket placement", _preview)
 	_button(_rooms, "Toggle pin on selected module", _toggle_pin)
 	_button(_rooms, "Validate layout", _validate_document)
-	_module.item_selected.connect(func(_index: int) -> void: _refresh_source_sockets())
-	_target.item_selected.connect(func(_index: int) -> void: _refresh_target_sockets())
+	_module.item_selected.connect(
+		func(_index: int) -> void:
+			_refresh_source_sockets()
+			_on_placement_option_changed()
+	)
+	_target.item_selected.connect(
+		func(_index: int) -> void:
+			_refresh_target_sockets()
+			_on_placement_option_changed()
+	)
+	for option in [_target_socket, _source_socket, _rotation]:
+		option.item_selected.connect(func(_index: int) -> void: _on_placement_option_changed())
 	_gameplay = VBoxContainer.new()
 	_gameplay.add_theme_constant_override("separation", 8)
 	_gameplay.visible = false
@@ -117,6 +130,13 @@ func _build() -> void:
 func refresh_document() -> void:
 	if not _built:
 		return
+	var selected_module := _selected(_module)
+	var selected_target := _selected(_target)
+	var selected_source_socket := _selected(_source_socket)
+	var selected_target_socket := _selected(_target_socket)
+	var selected_source_actor := _selected(_source_actor)
+	var selected_target_actor := _selected(_target_actor)
+	clear_module_preview()
 	_catalog = ModuleAssembly.get_catalog()
 	_generator_replacement_catalog.clear()
 	if _editor and _editor.has_method("get_generator_replacement_metadata"):
@@ -134,6 +154,8 @@ func refresh_document() -> void:
 	_module.clear()
 	for definition in _catalog:
 		_module.add_item(definition.module_id.replace("_", " ").capitalize())
+		_module.set_item_metadata(_module.item_count - 1, definition.module_id)
+	_select_metadata(_module, selected_module)
 	_target.clear()
 	_actors.clear()
 	_source_actor.clear()
@@ -159,8 +181,13 @@ func refresh_document() -> void:
 			if actor.has_method("on_channel_triggered") or actor.has_method("trigger"):
 				_target_actor.add_item(actor_id)
 				_target_actor.set_item_metadata(_target_actor.item_count - 1, actor_id)
+	_select_metadata(_target, selected_target)
+	_select_metadata(_source_actor, selected_source_actor)
+	_select_metadata(_target_actor, selected_target_actor)
 	_refresh_source_sockets()
 	_refresh_target_sockets()
+	_select_metadata(_source_socket, selected_source_socket)
+	_select_metadata(_target_socket, selected_target_socket)
 	_refresh_input_port()
 	_status.text = "Select a module and matching free sockets, or wire real actors in Gameplay mode."
 
@@ -221,6 +248,7 @@ func _regenerate_unpinned() -> void:
 
 
 func _preview_selected_replacement() -> void:
+	clear_module_preview()
 	if _module.selected < 0 or _module.selected >= _catalog.size():
 		_status.text = "Select a replacement module definition first."
 		return
@@ -249,6 +277,7 @@ func _preview_selected_replacement() -> void:
 		return
 	_preview_active = true
 	_pending_regeneration_plans = captured.plans.duplicate(true)
+	_preview_document_state = _document_state()
 	var definitions: Array[PrefabMetadata] = []
 	for plan: Dictionary in captured.plans:
 		definitions.append(plan.definition)
@@ -271,7 +300,7 @@ func _preview_selected_replacement() -> void:
 	if _editor and _editor.has_method("show_socket_highlights"):
 		_editor.show_socket_highlights(target_ids, target_sockets)
 	_status.text = (
-		"Previewing " + str(definitions.size()) + " compatible replacements. Enter commits them."
+		"Previewing " + str(definitions.size()) + " compatible replacements. Enter commits; Esc cancels."
 	)
 
 
@@ -339,62 +368,62 @@ func _regenerate_with_selected() -> void:
 
 
 func _place() -> void:
-	if _module.selected < 0 or _module.selected >= _catalog.size():
-		_status.text = "No valid module definition is available."
+	if _preview_active:
+		confirm_module_preview()
 		return
-	var result := ModuleAssembly.place_module(
-		_root(),
-		_catalog[_module.selected],
-		_selected(_target),
-		_selected(_target_socket),
-		_selected(_source_socket),
-		_rotation.selected
-	)
-	if result.success:
-		_pending_regeneration_plans.clear()
-		if _editor and _editor.has_method("clear_module_preview"):
-		if _editor and _editor.has_method("clear_socket_highlight"):
-			_editor.clear_socket_highlight()
-		refresh_document()
-		_status.text = (
-			"Placed " + result.instance.instance_id + ". Undo restores the previous layout."
-		)
-	else:
-		_status.text = "Not placed: " + str(result.error)
+	_preview()
+	confirm_module_preview()
 
 
 func _preview() -> void:
+	clear_module_preview()
+	_preview_active = true
 	if _module.selected < 0 or _module.selected >= _catalog.size():
-		_status.text = "No valid module definition is available."
+		_status.text = "Invalid preview: no valid module definition is available. Esc cancels."
 		return
 	var definition := _catalog[_module.selected]
+	var target_id := _selected(_target)
+	var target_socket_id := _selected(_target_socket)
+	var source_socket_id := _selected(_source_socket)
 	var result := ModuleAssembly.preview_module(
-		_root(),
-		definition,
-		_selected(_target),
-		_selected(_target_socket),
-		_selected(_source_socket),
-		_rotation.selected
+		_root(), definition, target_id, target_socket_id, source_socket_id, _rotation.selected
 	)
-	if result.success:
-		_preview_active = true
-		_pending_regeneration_plans.clear()
-		if _editor and _editor.has_method("show_module_preview"):
-			_editor.show_module_preview(definition, result.transform, true)
-		if _editor and _editor.has_method("show_socket_highlight"):
-			_editor.show_socket_highlight(_selected(_target), _selected(_target_socket))
-		_status.text = (
-			"Valid socket placement at "
-			+ str((result.transform as Transform3D).origin)
-			+ ". Place module to commit it."
-		)
+	_preview_target_key = target_id + ":" + target_socket_id
+	if _editor and _editor.has_method("show_socket_highlights"):
+		_editor.show_socket_highlights([target_id], [target_socket_id], result.success)
+	if not result.success:
+		_status.text = "Invalid socket placement: " + str(result.error) + " Esc cancels."
+		return
+	_pending_placement = {
+		"definition": definition,
+		"target_instance_id": target_id,
+		"target_socket_id": target_socket_id,
+		"source_socket_id": source_socket_id,
+		"quarter_turns": _rotation.selected,
+		"transform": result.transform,
+	}
+	_preview_document_state = _document_state()
+	if _editor and _editor.has_method("show_module_preview"):
+		_editor.show_module_preview(definition, _root().global_transform * result.transform, true)
+	_status.text = "Valid socket placement. Enter or Place module commits; Esc cancels."
+
+
+func _on_placement_option_changed() -> void:
+	if not _preview_active:
+		return
+	if not _pending_regeneration_plans.is_empty():
+		cancel_module_preview()
+		_status.text = "Replacement options changed. Preview the replacement again before committing."
 	else:
-		_preview_active = false
-		if _editor and _editor.has_method("clear_module_preview"):
-			_editor.clear_module_preview()
-		if _editor and _editor.has_method("clear_socket_highlight"):
-			_editor.clear_socket_highlight()
-		_status.text = "Invalid socket placement: " + str(result.error)
+		_preview()
+
+
+func rotate_module_preview() -> void:
+	if not _pending_regeneration_plans.is_empty():
+		_status.text = "Replacement poses are preserved. Esc cancels; Enter commits."
+		return
+	_rotation.select(posmod(_rotation.selected + 1, 4))
+	_on_placement_option_changed()
 
 
 func is_module_preview_active() -> bool:
@@ -404,59 +433,105 @@ func is_module_preview_active() -> bool:
 func confirm_module_preview() -> void:
 	if not _preview_active:
 		return
+	if _pending_placement.is_empty() and _pending_regeneration_plans.is_empty():
+		_status.text = "Cannot commit an invalid preview. Select a valid free socket or press Esc."
+		return
+	if _preview_document_state != _document_state():
+		clear_module_preview()
+		_status.text = "Preview is stale: the document changed. Preview again before committing."
+		return
 	if not _pending_regeneration_plans.is_empty():
-		var result := ModuleAssembly.regenerate_unpinned(_root(), _pending_regeneration_plans)
+		var plans := _pending_regeneration_plans.duplicate(true)
+		clear_module_preview()
+		var result := ModuleAssembly.regenerate_unpinned(_root(), plans)
 		if result.success:
-			_pending_regeneration_plans.clear()
-			_preview_active = false
-			if _editor and _editor.has_method("clear_module_preview"):
-				_editor.clear_module_preview()
-			if _editor and _editor.has_method("clear_socket_highlight"):
-				_editor.clear_socket_highlight()
 			refresh_document()
 			_status.text = "Committed all previewed module replacements."
 		else:
 			_status.text = "Replacement commit failed: " + str(result.error)
 		return
-	_place()
-
-
-func cancel_module_preview() -> void:
-	if not _preview_active:
+	var plan := _pending_placement.duplicate()
+	var checked := ModuleAssembly.preview_module(
+		_root(), plan.definition, plan.target_instance_id, plan.target_socket_id,
+		plan.source_socket_id, plan.quarter_turns
+	)
+	clear_module_preview()
+	if not checked.success:
+		_status.text = "Preview is no longer valid: " + str(checked.error)
 		return
+	if not (checked.transform as Transform3D).is_equal_approx(plan.transform):
+		_status.text = "Preview pose changed. Preview again before committing."
+		return
+	var result := ModuleAssembly.place_module(
+		_root(), plan.definition, plan.target_instance_id, plan.target_socket_id,
+		plan.source_socket_id, plan.quarter_turns
+	)
+	if result.success:
+		refresh_document()
+		_status.text = "Placed " + result.instance.instance_id + ". Undo restores the previous layout."
+	else:
+		_status.text = "Not placed: " + str(result.error)
+
+
+func clear_module_preview() -> void:
 	_preview_active = false
 	_preview_target_key = ""
+	_pending_placement.clear()
 	_pending_regeneration_plans.clear()
+	_preview_document_state.clear()
 	if _editor and _editor.has_method("clear_module_preview"):
 		_editor.clear_module_preview()
 	if _editor and _editor.has_method("clear_socket_highlight"):
 		_editor.clear_socket_highlight()
-	_status.text = "Module placement preview cancelled."
+
+
+func cancel_module_preview() -> void:
+	clear_module_preview()
+	_status.text = "Module preview cancelled. The document is unchanged."
+
+
+func _document_state() -> Dictionary:
+	var root := _root()
+	if not is_instance_valid(root):
+		return {}
+	var instances: Array[Dictionary] = []
+	for instance in ModuleAssembly.get_instances(root):
+		instances.append({
+			"node": instance.get_instance_id(),
+			"id": instance.instance_id,
+			"transform": instance.transform,
+			"pinned": instance.pinned,
+			"definition": instance.definition.to_dict().duplicate(true),
+		})
+	return {
+		"root": root.get_instance_id(),
+		"transform": root.global_transform,
+		"version": _history().get_version(),
+		"instances": instances,
+		"connections": root.module_connections.duplicate(true),
+	}
 
 
 func update_preview_target_from_ray(ray_origin: Vector3, ray_direction: Vector3) -> void:
+	if not _preview_active or not _pending_regeneration_plans.is_empty():
+		return
+	# The empty document's origin placement does not require a socket under the pointer.
+	if ModuleAssembly.get_instances(_root()).is_empty():
+		return
 	var match := ModuleAssembly.find_free_socket_on_ray(_root(), ray_origin, ray_direction)
 	if match.is_empty():
-		if _editor and _editor.has_method("clear_socket_highlight"):
-			_editor.clear_socket_highlight()
+		clear_module_preview()
+		_preview_active = true
+		_status.text = "No free socket under the pointer. Aim at a free socket; Esc cancels."
 		return
 	var target_id := str(match.target_instance_id)
 	var socket_id := str(match.target_socket_id)
 	var key := target_id + ":" + socket_id
 	if key == _preview_target_key:
 		return
-	for index in _target.item_count:
-		if _target.get_item_metadata(index) == target_id:
-			_target.select(index)
-			break
+	_select_metadata(_target, target_id)
 	_refresh_target_sockets()
-	if _editor and _editor.has_method("show_socket_highlight"):
-		_editor.show_socket_highlight(target_id, socket_id)
-	for index in _target_socket.item_count:
-		if _target_socket.get_item_metadata(index) == socket_id:
-			_target_socket.select(index)
-			break
-	_preview_target_key = key
+	_select_metadata(_target_socket, socket_id)
 	_preview()
 
 
@@ -480,7 +555,7 @@ func _toggle_pin() -> void:
 		_status.text = (
 			("Pinned " if result.pinned else "Unpinned ")
 			+ instance_id
-			+ ". Regeneration will preserve this module."
+			+ (". Regeneration will preserve this module." if result.pinned else ". This module can now be regenerated.")
 		)
 	else:
 		_status.text = "Pin change failed: " + str(result.error)
@@ -639,6 +714,13 @@ func _selected(option: OptionButton) -> String:
 	var value: Variant = option.get_item_metadata(option.selected)
 	return "" if value == null else str(value)
 
+
+
+func _select_metadata(option: OptionButton, value: String) -> void:
+	for index in option.item_count:
+		if str(option.get_item_metadata(index)) == value:
+			option.select(index)
+			return
 
 func _replacement_capabilities() -> Array[String]:
 	if _editor and _editor.has_method("get_replacement_capabilities"):

@@ -39,7 +39,7 @@ const MAX_SERVER_TICKS_PER_FRAME: int = 8
 var config: NetworkConfig = null
 var delta_compressor: RefCounted = null  # DeltaCompression instance
 
-var _rpc_rate_limits: Dictionary = {}  # method -> {calls_per_sec, last_call_time}
+var _rpc_rate_limits: Dictionary = {}  # method -> {calls_per_second, burst_capacity, peers}
 var _validation_enabled: bool = true
 var _state_snapshots: Dictionary = {}  # peer_id -> Dictionary
 var _trusted_peers: Array[int] = []
@@ -400,7 +400,7 @@ func _setup_rate_limits() -> void:
 	# Load rate limits from whitelist
 	for method: String in RPC_WHITELIST.get_all_methods():
 		var rate: float = RPC_WHITELIST.get_rate_limit(method)
-		add_rate_limit(method, rate)
+		add_rate_limit(method, rate, int(RPC_WHITELIST.get_config(method).get("burst_capacity", 1)))
 
 	var gm: Node = get_node_or_null("/root/GameManager")
 	if gm:
@@ -419,8 +419,14 @@ func _setup_rate_limits() -> void:
 ## Add rate limit for an RPC method
 
 
-func add_rate_limit(method_name: String, calls_per_second: float) -> void:
-	_rpc_rate_limits[method_name] = {"calls_per_second": calls_per_second, "last_call_time": {}}
+func add_rate_limit(
+	method_name: String, calls_per_second: float, burst_capacity: int = 1
+) -> void:
+	_rpc_rate_limits[method_name] = {
+		"calls_per_second": calls_per_second,
+		"burst_capacity": maxi(1, burst_capacity),
+		"peers": {}
+	}
 
 
 ## Validate RPC call (server-side validation)
@@ -511,25 +517,30 @@ func validate_rpc(peer_id: int, method: String, args: Array = []) -> bool:
 
 func _check_rate_limit(peer_id: int, method: String) -> bool:
 	if not _rpc_rate_limits.has(method):
-		return true  # No rate limit defined
+		return true  # Whitelist validation precedes this method.
 
-	var limit_data: Dictionary = _rpc_rate_limits[method]
-	var calls_per_second: float = limit_data.calls_per_second
-	var last_call_times: Dictionary = limit_data.last_call_time
-
-	var current_time: float = Time.get_ticks_msec() / 1000.0
-	var min_interval: float = 1.0 / calls_per_second
-
-	if last_call_times.has(peer_id):
-		var last_call: float = last_call_times[peer_id]
-		var time_since_last: float = current_time - last_call
-
-		if time_since_last < min_interval:
-			return false  # Too soon
-
-	# Update last call time
-	last_call_times[peer_id] = current_time
+	var limit: Dictionary = _rpc_rate_limits[method]
+	var rate: float = limit.calls_per_second
+	if not is_finite(rate) or rate <= 0.0:
+		return false
+	var now: int = _rpc_time_usec()
+	var peers: Dictionary = limit.peers
+	var capacity: float = float(limit.burst_capacity)
+	if not peers.has(peer_id):
+		peers[peer_id] = {"tokens": capacity - 1.0, "updated_usec": now}
+		return true
+	var bucket: Dictionary = peers[peer_id]
+	var elapsed: int = maxi(0, now - int(bucket.updated_usec))
+	bucket.tokens = minf(capacity, float(bucket.tokens) + float(elapsed) * rate / 1000000.0)
+	bucket.updated_usec = now
+	if float(bucket.tokens) < 1.0:
+		return false
+	bucket.tokens -= 1.0
 	return true
+
+
+func _rpc_time_usec() -> int:
+	return Time.get_ticks_usec()
 
 
 func _process(delta: float) -> void:
@@ -1467,7 +1478,7 @@ func _on_peer_disconnected(id: int) -> void:
 
 	# Clean up rate limit data
 	for limit_data: Dictionary in _rpc_rate_limits.values():
-		limit_data.last_call_time.erase(id)
+		limit_data.peers.erase(id)
 
 	# Clean up validation tracking data
 	_violation_counts.erase(id)

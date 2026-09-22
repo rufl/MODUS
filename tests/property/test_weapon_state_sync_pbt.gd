@@ -46,8 +46,6 @@ func test_property_state_sync_with_rate_limiting() -> void:
 
 	var peer_id := get_instance_id()
 	var method := "request_weapon_switch"
-	if _network_manager._rpc_rate_limits.has(method):
-		_network_manager._rpc_rate_limits[method].last_call_time.erase(peer_id)
 
 	assert_true(_network_manager._check_rate_limit(peer_id, method))
 	for attempt: int in range(4):

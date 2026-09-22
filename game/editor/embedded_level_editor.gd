@@ -45,6 +45,7 @@ var _play_starting: bool = false
 var _document_error: String = ""
 var _replacement_previews: Array[PlacementPreview] = []
 var _socket_highlights: Array[CSGSphere3D] = []
+var _preview_keys_down: Dictionary = {}
 
 var _is_active: bool = false
 
@@ -173,6 +174,7 @@ func _init_ui() -> void:
 	var assets := VBoxContainer.new()
 	assets.name = "Assets"
 	tabs.add_child(assets)
+	tabs.tab_changed.connect(func(_index: int) -> void: module_panel.clear_module_preview())
 	# Asset Palette
 	if ResourceLoader.exists(AssetPaletteDock.resource_path):
 		var palette: Control = AssetPaletteDock.instantiate()
@@ -223,6 +225,12 @@ func _finish_ui() -> void:
 		if panel:
 			panel.reparent(_author_surface)
 			panel.hide()
+	editor_state.tool_changed.connect(func(_tool: int) -> void: module_panel.clear_module_preview())
+	editor_state.editing_mode_changed.connect(
+		func(editing: bool) -> void:
+			if not editing:
+				module_panel.clear_module_preview()
+	)
 	module_panel.setup(self)
 
 
@@ -324,12 +332,14 @@ func set_replacement_capabilities(capabilities: Array[String]) -> void:
 func show_module_preview(
 	definition: PrefabMetadata, transform: Transform3D, valid: bool = true
 ) -> void:
-	if editor_features == null or definition == null:
+	clear_module_preview()
+	if definition == null:
 		return
-	editor_features.start_placement({"type": "scene", "scene_path": definition.scene_path})
-	var preview := editor_features.get_placement_preview()
-	if preview and preview.has_method("set_preview_transform"):
-		preview.set_preview_transform(transform, valid)
+	var preview := PlacementPreview.new()
+	sub_viewport.add_child(preview)
+	preview.start_preview(load(definition.scene_path) as PackedScene)
+	preview.set_preview_transform(transform, valid)
+	_replacement_previews.append(preview)
 
 
 func show_module_previews(
@@ -340,12 +350,13 @@ func show_module_previews(
 		var preview := PlacementPreview.new()
 		sub_viewport.add_child(preview)
 		preview.start_preview(load(definitions[index].scene_path) as PackedScene)
-		preview.set_preview_transform(transforms[index], true)
+		preview.set_preview_transform(level_root.global_transform * transforms[index], true)
 		_replacement_previews.append(preview)
 
 
 func clear_module_preview() -> void:
 	for preview: PlacementPreview in _replacement_previews:
+		preview.clear_preview()
 		preview.queue_free()
 	_replacement_previews.clear()
 	if editor_features:
@@ -387,6 +398,7 @@ func show_socket_highlights(
 
 func clear_socket_highlight() -> void:
 	for highlight: CSGSphere3D in _socket_highlights:
+		highlight.hide()
 		highlight.queue_free()
 	_socket_highlights.clear()
 
@@ -419,7 +431,7 @@ func _handle_editor_input(event: InputEvent) -> void:
 		var ray_direction := editor_camera.project_ray_normal(event.position)
 		module_panel.update_preview_target_from_ray(ray_origin, ray_direction)
 		return
-	if event is InputEventKey and event.pressed and module_panel:
+	if event is InputEventKey and event.pressed and not event.echo and module_panel:
 		if module_panel.is_module_preview_active():
 			if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
 				module_panel.confirm_module_preview()
@@ -427,6 +439,12 @@ func _handle_editor_input(event: InputEvent) -> void:
 			if event.keycode == KEY_ESCAPE:
 				module_panel.cancel_module_preview()
 				return
+			if event.keycode == KEY_R:
+				module_panel.rotate_module_preview()
+				return
+	# Socket previews never fall through to ordinary asset placement or selection.
+	if event is InputEventMouse and module_panel and module_panel.is_module_preview_active():
+		return
 	# Forward to editor features first (for custom tools like Visual Connection)
 	if editor_features and editor_features.has_method("handle_3d_input"):
 		if editor_features.handle_3d_input(editor_camera, event):
@@ -491,9 +509,10 @@ func open() -> void:
 
 
 func close() -> void:
+	_preview_keys_down.clear()
 	end_playtest()
-	clear_module_preview()
-	clear_socket_highlight()
+	_is_active = false
+	module_panel.clear_module_preview()
 	visible = false
 	_author_surface.process_mode = Node.PROCESS_MODE_DISABLED
 	editor_features.process_mode = Node.PROCESS_MODE_DISABLED
@@ -588,6 +607,7 @@ func new_level() -> bool:
 
 
 func _replace_document(candidate: Node3D) -> void:
+	module_panel.clear_module_preview()
 	selection_manager.clear_selection()
 	selection_manager.clipboard.clear()
 	selection_manager.clipboard_changed.emit()
@@ -666,6 +686,7 @@ func _on_generate_candidates_pressed() -> void:
 func begin_playtest() -> bool:
 	if is_instance_valid(_play_session) or _play_starting or not is_instance_valid(level_root):
 		return false
+	module_panel.clear_module_preview()
 	_play_starting = true
 	editor_state.set_editing_mode(false)
 	editor_features.process_mode = Node.PROCESS_MODE_DISABLED
@@ -731,7 +752,26 @@ func end_playtest() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not _is_active or not event is InputEventKey or not event.pressed or event.echo:
+	if not _is_active or not event is InputEventKey:
+		return
+	if _preview_keys_down.has(event.keycode):
+		get_viewport().set_input_as_handled()
+		if not event.pressed:
+			_preview_keys_down.erase(event.keycode)
+		return
+	if (
+		module_panel and module_panel.is_module_preview_active()
+		and event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_R]
+		and not is_playtesting()
+	):
+		# Consume releases and repeats too, before focused buttons see Enter.
+		get_viewport().set_input_as_handled()
+		if event.pressed:
+			_preview_keys_down[event.keycode] = true
+		if event.pressed and not event.echo:
+			_handle_editor_input(event)
+		return
+	if not event.pressed or event.echo:
 		return
 	if event.keycode == KEY_ESCAPE and is_instance_valid(_play_session) and not _play_starting:
 		get_viewport().set_input_as_handled()
@@ -742,6 +782,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _exit_tree() -> void:
+	if is_instance_valid(module_panel):
+		module_panel.clear_module_preview()
 	var history := EditorGlobals.get_undo_redo()
 	if history.version_changed.is_connected(_on_history_changed):
 		history.version_changed.disconnect(_on_history_changed)

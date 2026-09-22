@@ -12,6 +12,7 @@ class_name RPCWhitelist
 ## {
 ##   "method_name": {
 ##     "calls_per_second": float,
+##     "burst_capacity": int (optional, defaults to one call),
 ##     "requires_validation": bool,
 ##     "validator_method": String (optional),
 ##     "description": String
@@ -58,7 +59,12 @@ const ALLOWED_RPCS: Dictionary = {
 	# MOVEMENT RPCS (Very High Frequency)
 	# ========================================================================
 	"sync_position":
-	{"calls_per_second": 60.0, "requires_validation": false, "description": "Sync player position"},
+	{
+		"calls_per_second": 60.0,
+		"burst_capacity": 2,
+		"requires_validation": false,
+		"description": "Sync player position; one input frame of packet jitter is allowed"
+	},
 	"_sync_movement_state":
 	{
 		"calls_per_second": 60.0,

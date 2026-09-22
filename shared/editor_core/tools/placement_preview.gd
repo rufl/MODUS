@@ -48,13 +48,13 @@ func start_preview(template: Variant) -> void:
 	clear_preview()
 
 	if template is PackedScene:
-		preview_node = template.instantiate()
+		preview_node = _create_scene_visuals(template.get_state())
 	elif template is Mesh:
 		var mesh_instance := MeshInstance3D.new()
 		mesh_instance.mesh = template
 		preview_node = mesh_instance
 	elif template is Node3D:
-		preview_node = template.duplicate()
+		preview_node = _copy_node_visuals(template)
 	elif template is Dictionary:
 		# Asset dictionary - create appropriate preview
 		preview_node = _create_preview_from_asset(template)
@@ -62,9 +62,12 @@ func start_preview(template: Variant) -> void:
 		push_warning("[PlacementPreview] Unknown template type: %s" % typeof(template))
 		return
 
+	if preview_material == null:
+		_create_preview_material()
 	if preview_node:
-		add_child(preview_node)
+		# Visual-only nodes have no owners, scripts, groups, signals or physics.
 		_apply_preview_material_recursive(preview_node)
+		add_child(preview_node)
 		is_active = true
 		_update_preview_transform()
 
@@ -106,7 +109,7 @@ func _create_preview_from_asset(asset: Dictionary) -> Node3D:
 			if ResourceLoader.exists(scene_path):
 				var scene: PackedScene = load(scene_path)
 				if scene:
-					return scene.instantiate()
+					return _create_scene_visuals(scene.get_state())
 
 		_:
 			# Default: simple cube
@@ -117,16 +120,99 @@ func _create_preview_from_asset(asset: Dictionary) -> Node3D:
 	return null
 
 
+## Read serialized visuals without instantiate(): even a script's _init must not run.
+func _create_scene_visuals(state: SceneState) -> Node3D:
+	var root: Node3D = null
+	var base := state.get_base_scene_state()
+	if base:
+		root = _create_scene_visuals(base)
+	for index in state.get_node_count():
+		var path := state.get_node_path(index)
+		var node: Node3D = root.get_node_or_null(path) as Node3D if root else null
+		if node == null:
+			var scene := state.get_node_instance(index)
+			node = (
+				_create_scene_visuals(scene.get_state())
+				if scene else _create_visual_node(state.get_node_type(index))
+			)
+			node.name = state.get_node_name(index)
+			if root == null:
+				root = node
+			else:
+				var parent := root.get_node_or_null(state.get_node_path(index, true))
+				if parent == null:
+					node.free()
+					continue
+				parent.add_child(node)
+		for property_index in state.get_node_property_count(index):
+			_set_visual_property(
+				node, state.get_node_property_name(index, property_index),
+				state.get_node_property_value(index, property_index)
+			)
+	return root
+
+
+func _create_visual_node(native_type: StringName) -> Node3D:
+	if (
+		native_type in [&"MeshInstance3D", &"MultiMeshInstance3D", &"Path3D"]
+		or ClassDB.is_parent_class(native_type, &"CSGShape3D")
+	):
+		if ClassDB.can_instantiate(native_type):
+			return ClassDB.instantiate(native_type) as Node3D
+	return Node3D.new()
+
+
+func _copy_node_visuals(source: Node) -> Node3D:
+	var visual := _create_visual_node(source.get_class())
+	visual.name = source.name
+	for property in ClassDB.class_get_property_list(source.get_class()):
+		var property_name: StringName = property.name
+		if _is_visual_property(visual, property_name):
+			visual.set(property_name, source.get(property_name))
+	for child in source.get_children():
+		visual.add_child(_copy_node_visuals(child))
+	return visual
+
+
+func _set_visual_property(node: Node3D, property: StringName, value: Variant) -> void:
+	if _is_visual_property(node, property):
+		node.set(property, value)
+
+
+func _is_visual_property(node: Node3D, property: StringName) -> bool:
+	if property in [
+		&"transform", &"position", &"rotation", &"rotation_degrees", &"scale", &"visible"
+	]:
+		return true
+	if node is MeshInstance3D:
+		return property == &"mesh"
+	if node is MultiMeshInstance3D:
+		return property == &"multimesh"
+	if node is Path3D:
+		return property == &"curve"
+	if node is CSGShape3D:
+		# Geometry only: deliberately exclude use_collision and collision layers.
+		return property in [
+			&"operation", &"snap", &"calculate_tangents", &"flip_faces", &"mesh",
+			&"size", &"radius", &"height", &"sides", &"cone", &"smooth_faces",
+			&"inner_radius", &"outer_radius", &"ring_sides", &"polygon", &"mode",
+			&"depth", &"spin_degrees", &"spin_sides", &"path_node", &"path_interval",
+			&"path_simplify_angle", &"path_rotation", &"path_local", &"path_continuous_u",
+			&"path_u_distance", &"path_joined",
+		]
+	return false
+
+
 ## Apply transparent material to all meshes
 
 
 func _apply_preview_material_recursive(node: Node) -> void:
-	if node is MeshInstance3D:
-		var mesh_inst: MeshInstance3D = node
-		mesh_inst.material_override = preview_material
-	elif node is CSGShape3D:
-		var csg: CSGShape3D = node
-		csg.material = preview_material
+	node.process_mode = Node.PROCESS_MODE_DISABLED
+	if node is GeometryInstance3D:
+		node.material_override = preview_material
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if node is CSGShape3D:
+		node.use_collision = false
 
 	for child: Node in node.get_children():
 		_apply_preview_material_recursive(child)
@@ -332,7 +418,7 @@ func _update_preview_color() -> void:
 
 
 func confirm_placement() -> Dictionary:
-	if not is_active:
+	if not is_active or not is_valid_placement:
 		return {}
 
 	var result := {
@@ -360,6 +446,8 @@ func cancel_preview() -> void:
 
 func clear_preview() -> void:
 	if preview_node:
+		preview_node.hide()
+		remove_child(preview_node)
 		preview_node.queue_free()
 		preview_node = null
 

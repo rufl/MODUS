@@ -17,6 +17,18 @@ class ReconnectProbe:
 		return OK
 
 
+
+class RateLimitProbe:
+	extends NetworkManager
+
+	var now_usec: int = 0
+
+	func _ready() -> void:
+		set_process(false)
+
+	func _rpc_time_usec() -> int:
+		return now_usec
+
 func before_each():
 	await modus_setup()
 	# Get NetworkManager via NetworkService
@@ -53,21 +65,6 @@ func test_autoload_exists():
 	assert_not_null(_network_manager, "NetworkManager should be found via NetworkSvc.get_service()")
 
 
-func test_validation_toggle():
-	if not _network_manager:
-		var ns := NetworkSvc.get_service()
-		if ns:
-			_network_manager = ns.network_manager
-
-	assert_not_null(_network_manager, "NetworkManager should be available")
-
-	if _network_manager:
-		# Test enabling/disabling validation
-		_network_manager.set_validation_enabled(false)
-		_network_manager.set_validation_enabled(true)
-
-		# If we got here without crashing, it works
-		assert_true(true, "Validation toggle should work without errors")
 
 
 func test_validate_rpc_server_trusted():
@@ -84,21 +81,6 @@ func test_validate_rpc_server_trusted():
 		assert_true(result, "Server peer should be trusted")
 
 
-func test_add_trusted_peer():
-	if not _network_manager:
-		var ns := NetworkSvc.get_service()
-		if ns:
-			_network_manager = ns.network_manager
-
-	assert_not_null(_network_manager, "NetworkManager should be available")
-
-	if _network_manager:
-		# Test adding/removing trusted peers
-		_network_manager.add_trusted_peer(999)
-		_network_manager.remove_trusted_peer(999)
-
-		# If we got here without crashing, it works
-		assert_true(true, "Trusted peer management should work without errors")
 
 
 func test_trusted_peer_still_obeys_rpc_rate_limits() -> void:
@@ -215,6 +197,41 @@ func test_rpc_rate_limiting_editor():
 		# Third call should succeed
 		var result3: bool = _network_manager.validate_rpc(peer_id, method, [{}])
 		assert_true(result3, "place_block call after cooldown should succeed")
+
+
+func test_movement_input_accepts_sustained_sixty_hz_with_packet_jitter() -> void:
+	var limiter := RateLimitProbe.new()
+	add_child_autofree(limiter)
+	limiter._setup_rate_limits()
+	var accepted := 0
+	for frame in 600:
+		limiter.now_usec = roundi(float(frame) * 1000000.0 / 60.0)
+		if frame > 0:
+			limiter.now_usec += 1000 if frame % 2 == 1 else -1000
+		if limiter.validate_rpc(42, "sync_position"):
+			accepted += 1
+	assert_eq(accepted, 600, "Normal input cadence must not lose commands to packet jitter")
+
+
+func test_movement_input_burst_is_bounded_per_peer_without_idle_credit() -> void:
+	var limiter := RateLimitProbe.new()
+	add_child_autofree(limiter)
+	limiter._setup_rate_limits()
+	assert_true(limiter.validate_rpc(42, "sync_position"))
+	assert_true(limiter.validate_rpc(42, "sync_position"), "Allow one coalesced input frame")
+	assert_false(limiter.validate_rpc(42, "sync_position"), "A burst cannot exceed two inputs")
+	assert_true(limiter.validate_rpc(43, "sync_position"), "Peers have independent budgets")
+	var accepted := 2
+	for millisecond in range(1, 1001):
+		limiter.now_usec = millisecond * 1000
+		if limiter._check_rate_limit(42, "sync_position"):
+			accepted += 1
+	assert_lte(accepted, 62, "Flooding cannot exceed 60/s plus the bounded initial burst")
+	assert_gte(accepted, 61, "Rejected packets must not postpone replenishment")
+	limiter.now_usec += 10000000
+	assert_true(limiter.validate_rpc(42, "sync_position"))
+	assert_true(limiter.validate_rpc(42, "sync_position"))
+	assert_false(limiter.validate_rpc(42, "sync_position"), "Idle time cannot bank extra bursts")
 
 
 func test_semantic_validation_rejects_forged_status_and_chat_payloads() -> void:
