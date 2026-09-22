@@ -284,6 +284,10 @@ func set_generator_replacement_metadata(entries: Array) -> void:
 
 
 func _on_generation_completed(_map_scene: PackedScene, metadata: Dictionary) -> void:
+	if not _replacement_capabilities_configured:
+		var replacement_capabilities: Variant = metadata.get("replacement_capabilities", [])
+		if replacement_capabilities is Array:
+			_replacement_capabilities = replacement_capabilities.duplicate()
 	var replacement_catalog: Variant = metadata.get("replacement_catalog", [])
 	if replacement_catalog is Array:
 		set_generator_replacement_metadata(replacement_catalog)

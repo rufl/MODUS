@@ -1200,8 +1200,8 @@ func _build_metadata(total_time: int) -> Dictionary:
 		"config": _build_config_metadata(),
 		"statistics": _build_statistics_metadata(),
 		"rule_modules_used": _get_rule_modules_used(),
+		"replacement_capabilities": get_runtime_capabilities(),
 		"replacement_catalog": get_replacement_catalog_metadata(),
-		"gameplay": _build_gameplay_metadata(),
 		"phase_times": _build_phase_times_metadata()
 	}
 	return metadata
