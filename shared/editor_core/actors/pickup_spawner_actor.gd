@@ -230,6 +230,16 @@ func restore_runtime_state(state: Dictionary) -> bool:
 	return true
 
 
+func apply_runtime_update(state: Dictionary) -> bool:
+	if not is_applying_authoritative_state() or not validate_runtime_state(state):
+		return false
+	if state.pickup_phase != _phase or not is_instance_valid(_current_pickup):
+		return restore_runtime_state(state)
+	super.restore_runtime_state(state)
+	_respawn_timer = float(state.respawn_timer)
+	return _current_pickup.restore_motion_state(state.pickup)
+
+
 func _get_pickup_scene() -> PackedScene:
 	var scene_path: String = ""
 

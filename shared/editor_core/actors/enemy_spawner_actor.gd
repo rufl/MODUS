@@ -357,6 +357,47 @@ func restore_runtime_state(state: Dictionary) -> bool:
 	return true
 
 
+func apply_runtime_update(state: Dictionary) -> bool:
+	if not is_applying_authoritative_state() or not validate_runtime_state(state):
+		return false
+	# Rebuild only when encounter membership changes, not on every motion snapshot.
+	if state.enemies.size() != _records.size() or state.loot.size() != _loot.size():
+		return restore_runtime_state(state)
+	for record: Dictionary in state.enemies:
+		var index := int(record.index)
+		if record.alive != _records[index].alive:
+			return restore_runtime_state(state)
+		if record.alive and not is_instance_valid(_enemies.get(index)):
+			return restore_runtime_state(state)
+	for index: int in _loot.size():
+		var pickup := _loot[index]
+		if not is_instance_valid(pickup) or pickup.collected:
+			return restore_runtime_state(state)
+		var previous := LootSvc.get_instance().capture_authored_drop(pickup)
+		for key: String in ["table_id", "entry", "item_id", "owner_peer"]:
+			if previous[key] != state.loot[index][key]:
+				return restore_runtime_state(state)
+	super.restore_runtime_state(state)
+	_encounter_started = state.encounter_started
+	_encounter_cleared = state.encounter_cleared
+	_spawn_timer = float(state.spawn_timer)
+	_records.assign(state.enemies.duplicate(true))
+	for record: Dictionary in _records:
+		if not record.alive:
+			continue
+		var enemy: Enemy = _enemies[int(record.index)]
+		var pose := PickupBase._decode_transform(record.transform)
+		enemy._target_position = pose.origin
+		enemy._target_rotation = pose.basis.get_euler()
+		enemy.health_component.max_health = float(record.max_health)
+		enemy.health_component._apply_health_state(float(record.health), float(record.armor))
+		enemy.health = float(record.health)
+		enemy.max_health = float(record.max_health)
+	for index: int in _loot.size():
+		_loot[index].restore_motion_state(state.loot[index])
+	return true
+
+
 func _setup_editor_visuals() -> void:
 	# Clear old
 	for child in get_children():

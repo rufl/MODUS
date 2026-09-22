@@ -161,7 +161,7 @@ static func _validate_actors(document: Node3D, actors: Variant) -> bool:
 	return actors.size() == identities.size()
 
 
-static func restore_actors(document: Node3D, state: Dictionary) -> bool:
+static func restore_actors(document: Node3D, state: Dictionary, live_update: bool = false) -> bool:
 	# Check every record before the first actor can change.
 	if not _validate_actors(document, state.get("actors")):
 		return false
@@ -169,6 +169,13 @@ static func restore_actors(document: Node3D, state: Dictionary) -> bool:
 		var actor: Node = document.find_actor(identity)
 		var actor_state: Dictionary = state.actors[identity].duplicate(true)
 		actor_state.activation_count = int(actor_state.activation_count)
+		if live_update:
+			if _same_json_value(actor_state, actor.capture_runtime_state()):
+				continue
+			if actor.has_method("apply_runtime_update"):
+				if not actor.apply_runtime_update(actor_state):
+					return false
+				continue
 		if not actor.restore_runtime_state(actor_state):
 			return false
 	return true

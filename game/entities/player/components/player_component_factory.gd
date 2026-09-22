@@ -146,7 +146,7 @@ static func setup_local(player: Node) -> void:
 	_setup_interaction(player)
 	_setup_movement_state_machine(player)
 	_setup_movement_component(player)
-	if not player.isolated_session:
+	if not player.isolated_session and not player.session_managed:
 		_setup_persistence(player)
 	_setup_camera(player)
 	_setup_weapon_pose(player)

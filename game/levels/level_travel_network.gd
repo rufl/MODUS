@@ -25,6 +25,7 @@ var _participants: Dictionary = {}
 var _admitted: Dictionary = {}
 var _joining: Dictionary = {}
 var _expected_commits: Dictionary = {}
+var _expected_rosters: Dictionary = {}
 var _disconnected_during_travel: Array[int] = []
 var _queued_joins: Dictionary = {}
 var _join_attempt_at: Dictionary = {}
@@ -97,7 +98,13 @@ func _host() -> bool:
 
 
 func _known_peer(peer_id: int) -> bool:
-	return _connected() and peer_id > 1 and _network.get_peers().has(peer_id)
+	if not _connected() or peer_id <= 1 or not _network.get_peers().has(peer_id):
+		return false
+	var transport := _network.multiplayer_peer
+	if transport is ENetMultiplayerPeer:
+		var connection: ENetPacketPeer = transport.get_peer(peer_id)
+		return connection != null and connection.get_state() == ENetPacketPeer.STATE_CONNECTED
+	return true
 
 
 func _authority_message() -> bool:
@@ -389,6 +396,8 @@ func _commit_reply(transaction: int, committed_generation: int, success: bool) -
 	if not success or Time.get_ticks_msec() >= int(expected.deadline):
 		_evict_uncommitted_peer(sender, transaction)
 
+	else:
+		session.set_peer_replication(sender, true)
 
 func _expect_commit(peer_id: int, transaction: int) -> void:
 	_expected_commits[peer_id] = {
@@ -443,6 +452,7 @@ func _broadcast_roster() -> void:
 	_snapshot_sequence += 1
 	for peer_id: int in _admitted:
 		if _known_peer(peer_id):
+			_expected_rosters[peer_id] = _snapshot_sequence
 			_receive_roster.rpc_id(peer_id, generation, _current_id, _current_signature, _snapshot_sequence, packet)
 
 
@@ -453,6 +463,18 @@ func _receive_roster(world_generation: int, destination_id: String, signature: S
 	var roster: Variant = _decode(packet)
 	if roster is Array and session.apply_player_roster(roster):
 		_last_snapshot_sequence = sequence
+		_roster_ready.rpc_id(1, world_generation, sequence)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _roster_ready(world_generation: int, sequence: int) -> void:
+	var sender := _network.get_remote_sender_id()
+	if not _host() or pending or world_generation != generation or not _admitted.has(sender):
+		return
+	if not _known_peer(sender) or _expected_rosters.get(sender, -1) != sequence:
+		return
+	_expected_rosters.erase(sender)
+	session.set_peer_replication(sender, true)
 
 
 func _accept_current(world_generation: int, destination_id: String, signature: String) -> bool:
@@ -527,6 +549,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 	_queued_joins.erase(peer_id)
 	_joining.erase(peer_id)
 	_expected_commits.erase(peer_id)
+	_expected_rosters.erase(peer_id)
 	_participants.erase(peer_id)
 	if _admitted.erase(peer_id) and is_instance_valid(session):
 		if pending:
@@ -619,7 +642,7 @@ func _safe_value(value: Variant, depth: int, remaining: Array[int]) -> bool:
 			if value.size() * 2 > remaining[0]:
 				return false
 			for key: Variant in value:
-				if not key is String or not _safe_value(key, depth + 1, remaining) or not _safe_value(value[key], depth + 1, remaining):
+				if not (key is String or key is StringName) or not _safe_value(key, depth + 1, remaining) or not _safe_value(value[key], depth + 1, remaining):
 					return false
 			return true
 		TYPE_PACKED_BYTE_ARRAY, TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_INT64_ARRAY, TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY, TYPE_PACKED_STRING_ARRAY, TYPE_PACKED_VECTOR2_ARRAY, TYPE_PACKED_VECTOR3_ARRAY, TYPE_PACKED_VECTOR4_ARRAY, TYPE_PACKED_COLOR_ARRAY:

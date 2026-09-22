@@ -245,15 +245,36 @@ func abort_staged_travel() -> void:
 
 
 func set_travel_frozen(frozen: bool) -> void:
+	var resuming := _frozen and not frozen
 	_frozen = frozen
+	if frozen and multiplayer.is_server():
+		for peer_id: int in multiplayer.get_peers():
+			set_peer_replication(peer_id, false)
 	if is_instance_valid(document):
 		document.process_mode = Node.PROCESS_MODE_DISABLED if frozen else Node.PROCESS_MODE_INHERIT
 	for participant: Player in get_session_players():
 		participant.process_mode = Node.PROCESS_MODE_DISABLED if frozen else Node.PROCESS_MODE_INHERIT
+		var predictor := participant.get_node_or_null("PlayerMovementPredictor") as PlayerMovementPredictor
+		if predictor:
+			predictor.set_session_boundary(frozen, travel_network.generation)
+		var interpolator := participant.get_node_or_null("RemoteInterpolator") as RemoteEntityInterpolator
+		if interpolator and interpolator.snapshot_buffer:
+			interpolator.snapshot_buffer.snapshots.clear()
+		if participant.network_sync:
+			participant.network_sync.set_target_position(participant.global_position)
+			participant.network_sync.set_target_rotation(participant.rotation)
 	if is_instance_valid(_mission) and frozen:
 		_mission.set_process(false)
 	elif _started and is_instance_valid(_mission):
 		_mission.set_process(true)
+
+	if resuming and travel_network and multiplayer.is_server():
+		travel_network._broadcast_roster()
+
+func set_peer_replication(peer_id: int, enabled: bool) -> void:
+	for participant: Player in get_session_players():
+		for synchronizer: MultiplayerSynchronizer in participant.find_children("*", "MultiplayerSynchronizer", true, false):
+			synchronizer.set_visibility_for(peer_id, enabled)
 
 
 func get_session_players() -> Array[Player]:
@@ -270,6 +291,8 @@ func ensure_peer_player(peer_id: int) -> void:
 	var participant := PLAYER_SCENE.instantiate() as Player
 	participant.name = str(peer_id)
 	participant.isolated_session = is_editor_preview
+	participant.session_managed = true
+	participant.disable_mode = CollisionObject3D.DISABLE_MODE_KEEP_ACTIVE
 	participant.process_mode = Node.PROCESS_MODE_DISABLED
 	add_child(participant)
 	if not participant.interaction_component:
@@ -286,6 +309,9 @@ func ensure_peer_player(peer_id: int) -> void:
 	elif player == null and peer_id == 1:
 		player = participant
 	participant.process_mode = Node.PROCESS_MODE_DISABLED if _frozen else Node.PROCESS_MODE_INHERIT
+	var predictor := participant.get_node_or_null("PlayerMovementPredictor") as PlayerMovementPredictor
+	if predictor:
+		predictor.set_session_boundary(_frozen, travel_network.generation)
 
 
 func remove_peer_player(peer_id: int) -> void:
@@ -352,7 +378,15 @@ func restore_runtime_state(state: Dictionary) -> bool:
 
 
 func apply_runtime_update(state: Dictionary) -> bool:
-	return not _frozen and restore_runtime_state(state)
+	if _frozen or not validate_runtime_state(state):
+		return false
+	document.set_meta("applying_authoritative_state", true)
+	var restored := LevelRuntimeState.restore_actors(document, state, true)
+	document.remove_meta("applying_authoritative_state")
+	if restored and not LevelRuntimeState._same_json_value(state.mission, _mission.capture_runtime_state()):
+		_mission.restore_runtime_state(state.mission, document)
+		_refresh_status()
+	return restored
 
 
 func capture_campaign_state() -> Dictionary:
@@ -439,8 +473,7 @@ func stop() -> void:
 	for child: Node in get_children():
 		if child == travel_network:
 			continue
-		remove_child(child)
-		child.queue_free()
+		child.free()
 	document = null
 	player = null
 	navigation_region = null

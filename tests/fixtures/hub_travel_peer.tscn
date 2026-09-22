@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/fixtures/hub_travel_peer.gd" id="driver"]
+
+[node name="TravelProbe" type="Node"]
+script = ExtResource("driver")

@@ -9,6 +9,15 @@ var last_processed_sequence: int = 0
 var next_sequence: int = 1
 var player: CharacterBody3D = null
 var net_config: Resource = null
+var session_epoch: int = 0
+var suspended: bool = false
+
+
+func set_session_boundary(frozen: bool, epoch: int) -> void:
+	if frozen or epoch != session_epoch:
+		pending_inputs.clear()
+	session_epoch = epoch
+	suspended = frozen
 
 
 func _ready() -> void:
@@ -42,7 +51,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	# Only predict on client
-	if not net_config or not net_config.enable_client_prediction:
+	if suspended or not net_config or not net_config.enable_client_prediction:
 		return
 
 	# Capture and predict input
@@ -71,7 +80,7 @@ func _capture_and_predict_input(delta: float) -> void:
 	apply_movement(input_cmd)
 
 	## Step 3: Send to server
-	_send_input_to_server.rpc_id(1, input_cmd.to_bytes())
+	_send_input_to_server.rpc_id(1, session_epoch, input_cmd.to_bytes())
 
 	# Log for debugging (disable in production)
 	if OS.is_debug_build() and false:
@@ -81,9 +90,9 @@ func _capture_and_predict_input(delta: float) -> void:
 
 
 @rpc("any_peer", "unreliable", "call_remote")
-func _send_input_to_server(input_bytes: PackedByteArray) -> void:
+func _send_input_to_server(epoch: int, input_bytes: PackedByteArray) -> void:
 	## Server receives and processes client input
-	if not multiplayer.is_server():
+	if suspended or epoch != session_epoch or not multiplayer.is_server():
 		return  # Only server processes
 
 	var sender_id := multiplayer.get_remote_sender_id()
@@ -105,6 +114,7 @@ func _send_input_to_server(input_bytes: PackedByteArray) -> void:
 	# Send back authoritative state with ack
 	_send_state_update.rpc_id(
 		sender_id,
+		session_epoch,
 		input_cmd.sequence_number,
 		player.global_position,
 		player.velocity,
@@ -114,10 +124,10 @@ func _send_input_to_server(input_bytes: PackedByteArray) -> void:
 
 @rpc("authority", "unreliable", "call_remote")
 func _send_state_update(
-	ack_sequence: int, position: Vector3, velocity: Vector3, rotation_y: float
+	epoch: int, ack_sequence: int, position: Vector3, velocity: Vector3, rotation_y: float
 ) -> void:
 	## Client receives authoritative state from server
-	if multiplayer.is_server():
+	if suspended or epoch != session_epoch or multiplayer.is_server():
 		return  # Only clients receive
 	if ack_sequence <= last_server_ack:
 		return
@@ -156,7 +166,7 @@ func _send_state_update(
 func apply_movement(input: RefCounted) -> void:
 	## Apply one command through the player's shared movement stack.
 	## Both prediction and server replay use this exact path.
-	if not player or not input:
+	if suspended or not player or not input:
 		return
 
 	if player.has_method("process_input_command"):

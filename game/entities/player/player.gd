@@ -40,6 +40,8 @@ const DEFAULT_BASE_HEALTH: float = 100.0
 @export var crouch_transition_speed: float = 10.0
 ## Private editor sessions use the real controller without altering campaign inventory/registries.
 @export var isolated_session: bool = false
+## Persistent authored sessions restore their own campaign, not legacy match state.
+var session_managed: bool = false
 
 var respawn_time: float = 5.0
 var health: float:
@@ -185,6 +187,11 @@ func _enter_tree() -> void:
 	var peer_id: int = str(name).to_int()
 	if peer_id != 0:
 		set_multiplayer_authority(peer_id)
+	if session_managed:
+		var state_sync := get_node_or_null("MultiplayerSynchronizer") as MultiplayerSynchronizer
+		if state_sync:
+			state_sync.set_multiplayer_authority(1)
+			state_sync.public_visibility = false
 
 	if peer_id > 1 and multiplayer.has_multiplayer_peer():
 		# The owning client's live synchronizer cannot restore server-authored spawn state.
@@ -201,6 +208,7 @@ func _enter_tree() -> void:
 					property, SceneReplicationConfig.REPLICATION_MODE_NEVER
 				)
 			spawn_sync.replication_config = spawn_config
+			spawn_sync.public_visibility = not session_managed
 		spawn_sync.set_multiplayer_authority(1)
 		if not spawn_sync.get_parent():
 			add_child(spawn_sync)

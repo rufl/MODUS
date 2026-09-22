@@ -37,6 +37,7 @@ func test_revisit_preserves_world_rewards_and_party_without_rehosting() -> void:
 	assert_true(key.interact(participant))
 	participant.health_component.set_health(50.0, 7.0)
 	var supplies: PickupSpawnerActor = _session.document.find_actor("supplies")
+	participant.global_position = supplies._current_pickup.global_position
 	assert_not_null(supplies._current_pickup)
 	assert_true(supplies._current_pickup.collect_for_player(participant, 1))
 	var health := participant.health_component.current_health
@@ -49,9 +50,7 @@ func test_revisit_preserves_world_rewards_and_party_without_rehosting() -> void:
 	encounter.trigger(participant)
 	assert_eq(encounter._enemies.size(), 1)
 	var enemy: Enemy = encounter._enemies[0]
-	enemy.health_component.current_health = 0.0
-	enemy.health_component.set("_is_dead", true)
-	enemy.is_dead = true
+	enemy.take_damage(10000.0, 1, Vector3.ZERO, 0.0, "bullet", participant)
 	encounter._process(0.0)
 	MissionMgr.get_instance()._process(0.0)
 
@@ -98,6 +97,12 @@ func test_encrypted_checkpoint_restores_all_visited_destinations() -> void:
 	assert_true(await _session.travel_to("travel_destination"), _session.error_message)
 	_session.set_travel_frozen(true)
 	assert_true(state_manager.save_game("hub_travel_regression"))
+	_session.free()
+	_session = LevelPlaySession.new()
+	_session.name = "TravelSession"
+	add_child(_session)
+	_session.register_destination("travel_origin", ORIGIN)
+	_session.register_destination("travel_destination", DESTINATION)
 	assert_true(await _session.travel_to("travel_origin"), _session.error_message)
 	assert_true(await state_manager.load_game("hub_travel_regression"))
 	_session.set_travel_frozen(true)
