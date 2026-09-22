@@ -20,7 +20,15 @@ func _ready() -> void:
 	if role == "host":
 		_check(peer.create_server(0, 4) == OK, "Host binds ENet")
 	else:
-		_check(peer.create_client("127.0.0.1", int(FileAccess.get_file_as_string(evidence.path_join("port")))) == OK, "Client connects")
+		_check(
+			(
+				peer.create_client(
+					"127.0.0.1", int(FileAccess.get_file_as_string(evidence.path_join("port")))
+				)
+				== OK
+			),
+			"Client connects"
+		)
 	multiplayer.multiplayer_peer = peer
 	session = LevelPlaySession.new()
 	session.name = "Session"
@@ -35,6 +43,7 @@ func _ready() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	peer.close()
 	_mark(role + "_passed" if not failed else role + "_failed")
+	_mark(role + "_closed")
 	get_tree().quit(1 if failed else 0)
 
 
@@ -58,7 +67,9 @@ func _host() -> void:
 	_check(await session.travel_to("travel_destination"), session.error_message)
 	session.document.find_actor("encounter").trigger(participant)
 	_check(await session.travel_to("travel_origin"), session.error_message)
-	FileAccess.open(evidence.path_join("port"), FileAccess.WRITE).store_string(str(peer.host.get_local_port()))
+	FileAccess.open(evidence.path_join("port"), FileAccess.WRITE).store_string(
+		str(peer.host.get_local_port())
+	)
 	if not await _wait_file("first_ready"):
 		return
 	_check(session.get_session_players().size() == 2, "Validated first client has one player")
@@ -66,8 +77,13 @@ func _host() -> void:
 	_mark("reject_content")
 	if not await _wait_file("content_rejected_ready"):
 		return
-	_check(not await session.travel_to("travel_destination"), "Client content mismatch aborts travel")
-	_check(session.document == original and session.player == participant, "Refusal keeps live world and party")
+	_check(
+		not await session.travel_to("travel_destination"), "Client content mismatch aborts travel"
+	)
+	_check(
+		session.document == original and session.player == participant,
+		"Refusal keeps live world and party"
+	)
 	_check(multiplayer.multiplayer_peer == peer, "Refusal keeps transport")
 	_mark("repair_content")
 	if not await _wait_file("content_repaired"):
@@ -81,15 +97,36 @@ func _host() -> void:
 	if not await _wait_file("late_ready"):
 		return
 	_check(session.get_session_players().size() == 3, "Late join adds one validated player")
-	_check(session.document.find_actor("encounter")._enemies.size() == 1, "One living encounter survives revisits and late join")
+	_check(
+		session.document.find_actor("encounter")._enemies.size() == 1,
+		"One living encounter survives revisits and late join"
+	)
 	_check(await session.travel_to("travel_origin"), session.error_message)
 	_mark("return_committed")
 	if not await _wait_file("first_returned") or not await _wait_file("late_returned"):
 		return
-	_check(session.document.find_actor("supplies").capture_runtime_state().pickup_phase == "collected", "No duplicate reward after group revisit")
+	_check(
+		session.document.find_actor("supplies").capture_runtime_state().pickup_phase == "collected",
+		"No duplicate reward after group revisit"
+	)
 	_check(multiplayer.multiplayer_peer == peer, "Three destinations share one ENet transport")
+	_mark("hold_prepare")
+	if not await _wait_file("late_paused"):
+		return
+	_mark("disconnect_during_travel")
+	if not await _wait_file("first_armed"):
+		return
+	_check(
+		await session.travel_to("travel_destination"),
+		"Travel commits for remaining peers after a preparation disconnect"
+	)
+	_check(
+		session.get_session_players().size() == 2,
+		"Disconnected player is absent from the committed roster"
+	)
+	if not await _wait_file("late_final"):
+		return
 	_mark("finish")
-	await _wait_file("first_done")
 	await _wait_file("late_done")
 
 
@@ -99,7 +136,10 @@ func _client() -> void:
 	if not joined[0]:
 		return
 	var participant := session.player
-	_check(participant.get_multiplayer_authority() == multiplayer.get_unique_id(), "Local player restored after admission")
+	_check(
+		participant.get_multiplayer_authority() == multiplayer.get_unique_id(),
+		"Local player restored after admission"
+	)
 	var host_player := session.get_node("1") as Player
 	_check(host_player.has_item("hub_key"), "Late join restores host keys")
 	_check(host_player.health_component.current_armor == 7.0, "Late join restores armor")
@@ -119,17 +159,29 @@ func _client() -> void:
 		_mark("content_rejected_ready")
 		if not await _wait_file("repair_content"):
 			return
-		_check(session.current_destination_id == "travel_origin", "Refusing client remains in old world")
+		_check(
+			session.current_destination_id == "travel_origin",
+			"Refusing client remains in old world"
+		)
 		session._sources.erase("travel_destination")
 		_mark("content_repaired")
 		if not await _wait_destination("travel_destination"):
 			return
 		_check(session.player == participant, "Client player survives travel")
-		_check(session.document.find_actor("encounter")._enemies.size() == 1, "Travel restores living encounter")
+		_check(
+			session.document.find_actor("encounter")._enemies.size() == 1,
+			"Travel restores living encounter"
+		)
 		_mark("first_traveled")
 	else:
-		_check(session.current_destination_id == "travel_destination", "Late client joins current destination, not entry map")
-		_check(session.document.find_actor("encounter")._enemies.size() == 1, "Late join restores living encounter")
+		_check(
+			session.current_destination_id == "travel_destination",
+			"Late client joins current destination, not entry map"
+		)
+		_check(
+			session.document.find_actor("encounter")._enemies.size() == 1,
+			"Late join restores living encounter"
+		)
 		_mark("late_ready")
 	if not await _wait_destination("travel_origin"):
 		return
@@ -137,17 +189,52 @@ func _client() -> void:
 	_check(session.player == participant, "Client player survives group revisit")
 	_check(multiplayer.multiplayer_peer == peer, "Client never reconnects during travel")
 	_mark(role + "_returned")
+	if role == "first":
+		if not await _wait_file("disconnect_during_travel"):
+			return
+		_mark("first_armed")
+		var deadline := Time.get_ticks_msec() + 20000
+		while not session.travel_network.pending and Time.get_ticks_msec() < deadline:
+			await get_tree().process_frame
+		_check(
+			session.travel_network.pending, "Disconnect occurs during preparation, not after commit"
+		)
+		multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+		peer.close()
+		return
+	if not await _wait_file("hold_prepare"):
+		return
+	get_tree().multiplayer_poll = false
+	_mark("late_paused")
+	await _wait_file("first_closed")
+	get_tree().multiplayer_poll = true
+	if not await _wait_destination("travel_destination"):
+		return
+	_check(
+		session.get_session_players().size() == 2,
+		"Remaining client restores roster without disconnected peer"
+	)
+	_mark("late_final")
 	await _wait_file("finish")
 	_mark(role + "_done")
-	await _wait_file("host_passed")
+	await _wait_file("host_closed")
 
 
 func _check_origin() -> void:
 	_check(session.current_destination_id == "travel_origin", "Restored origin destination")
 	_check(session.document.find_actor("power").activation_count == 1, "Restored objective actor")
-	_check(MissionMgr.get_instance().completed_mission_id == "travel_origin", "Restored objective completion")
-	_check(session.document.find_actor("supplies").capture_runtime_state().pickup_phase == "collected", "Restored consumed supply")
-	_check(session.document.find_actor("encounter").capture_runtime_state().encounter_cleared, "Restored cleared encounter")
+	_check(
+		MissionMgr.get_instance().completed_mission_id == "travel_origin",
+		"Restored objective completion"
+	)
+	_check(
+		session.document.find_actor("supplies").capture_runtime_state().pickup_phase == "collected",
+		"Restored consumed supply"
+	)
+	_check(
+		session.document.find_actor("encounter").capture_runtime_state().encounter_cleared,
+		"Restored cleared encounter"
+	)
 
 
 func _wait_destination(identity: String) -> bool:

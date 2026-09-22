@@ -60,8 +60,12 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	_exiting = true
-	if pending:
-		cancel_travel("Session closed.")
+	# Parent disposal owns staged children; never free siblings during tree exit.
+	if pending and _host():
+		for peer_id: int in _participants:
+			if _known_peer(peer_id):
+				_abort.rpc_id(peer_id, _active_token, "Session closed.")
+	pending = false
 	if _host():
 		for peer_id: int in _joining:
 			if _known_peer(peer_id):
@@ -80,6 +84,7 @@ func _exit_tree() -> void:
 	_queued_joins.clear()
 	_admitted.clear()
 	_expected_commits.clear()
+	_expected_rosters.clear()
 	_join_attempt_at.clear()
 
 
@@ -89,14 +94,21 @@ func _connected() -> bool:
 		and _network != null
 		and _network.has_multiplayer_peer()
 		and not _network.multiplayer_peer is OfflineMultiplayerPeer
-		and _network.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+		and (
+			_network.multiplayer_peer.get_connection_status()
+			== MultiplayerPeer.CONNECTION_CONNECTED
+		)
 	)
 
 
 func _host() -> bool:
 	return (
-		_network != null and _network.has_multiplayer_peer()
-		and _network.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+		_network != null
+		and _network.has_multiplayer_peer()
+		and (
+			_network.multiplayer_peer.get_connection_status()
+			== MultiplayerPeer.CONNECTION_CONNECTED
+		)
 		and _network.is_server()
 	)
 
@@ -284,7 +296,9 @@ func _drain_joins() -> void:
 
 
 @rpc("authority", "call_remote", "reliable")
-func _prepare(transaction: int, offered_generation: int, joining: bool, packet: PackedByteArray) -> void:
+func _prepare(
+	transaction: int, offered_generation: int, joining: bool, packet: PackedByteArray
+) -> void:
 	if not _authority_message() or transaction <= _last_received_token or transaction > MAX_TOKEN:
 		return
 	if offered_generation < 0 or offered_generation > MAX_TOKEN:
@@ -340,7 +354,11 @@ func _ready_reply(transaction: int, offered_generation: int, accepted: bool) -> 
 	if pending or not _joining.has(sender):
 		return
 	var joining: Dictionary = _joining[sender]
-	if transaction != joining.token or offered_generation != joining.generation or offered_generation != generation:
+	if (
+		transaction != joining.token
+		or offered_generation != joining.generation
+		or offered_generation != generation
+	):
 		return
 	_joining.erase(sender)
 	if not accepted or Time.get_ticks_msec() >= int(joining.deadline):
@@ -350,13 +368,26 @@ func _ready_reply(transaction: int, offered_generation: int, accepted: bool) -> 
 	session.ensure_peer_player(sender)
 	_admitted[sender] = true
 	_expect_commit(sender, transaction)
-	_commit.rpc_id(sender, transaction, generation, _snapshot_sequence, _encode(session.capture_player_roster()))
+	_commit.rpc_id(
+		sender,
+		transaction,
+		generation,
+		_snapshot_sequence,
+		_encode(session.capture_player_roster())
+	)
 	_broadcast_roster()
 
 
 @rpc("authority", "call_remote", "reliable")
-func _commit(transaction: int, committed_generation: int, sequence: int, roster_packet: PackedByteArray) -> void:
-	if not _authority_message() or not pending or transaction != _active_token or committed_generation != _staged_generation:
+func _commit(
+	transaction: int, committed_generation: int, sequence: int, roster_packet: PackedByteArray
+) -> void:
+	if (
+		not _authority_message()
+		or not pending
+		or transaction != _active_token
+		or committed_generation != _staged_generation
+	):
 		return
 	var roster: Variant = _decode(roster_packet)
 	if not roster is Array or sequence < 0 or sequence > MAX_TOKEN:
@@ -402,6 +433,7 @@ func _commit_reply(transaction: int, committed_generation: int, success: bool) -
 
 	else:
 		session.set_peer_replication(sender, true)
+
 
 func _expect_commit(peer_id: int, transaction: int) -> void:
 	_expected_commits[peer_id] = {
@@ -457,12 +489,24 @@ func _broadcast_roster() -> void:
 	for peer_id: int in _admitted:
 		if _known_peer(peer_id):
 			_expected_rosters[peer_id] = _snapshot_sequence
-			_receive_roster.rpc_id(peer_id, generation, _current_id, _current_signature, _snapshot_sequence, packet)
+			_receive_roster.rpc_id(
+				peer_id, generation, _current_id, _current_signature, _snapshot_sequence, packet
+			)
 
 
 @rpc("authority", "call_remote", "reliable")
-func _receive_roster(world_generation: int, destination_id: String, signature: String, sequence: int, packet: PackedByteArray) -> void:
-	if not _accept_current(world_generation, destination_id, signature) or sequence < _last_snapshot_sequence or sequence > MAX_TOKEN:
+func _receive_roster(
+	world_generation: int,
+	destination_id: String,
+	signature: String,
+	sequence: int,
+	packet: PackedByteArray
+) -> void:
+	if (
+		not _accept_current(world_generation, destination_id, signature)
+		or sequence < _last_snapshot_sequence
+		or sequence > MAX_TOKEN
+	):
 		return
 	var roster: Variant = _decode(packet)
 	if roster is Array and session.apply_player_roster(roster):
@@ -483,18 +527,35 @@ func _roster_ready(world_generation: int, sequence: int) -> void:
 
 func _accept_current(world_generation: int, destination_id: String, signature: String) -> bool:
 	return (
-		_authority_message() and _client_admitted and not pending
-		and world_generation == generation and destination_id == _current_id
+		_authority_message()
+		and _client_admitted
+		and not pending
+		and world_generation == generation
+		and destination_id == _current_id
 		and signature == _current_signature
 	)
 
 
-@rpc("authority", "call_remote", "unreliable_ordered")
-func _receive_snapshot(world_generation: int, destination_id: String, signature: String, sequence: int, packet: PackedByteArray) -> void:
-	if not _accept_current(world_generation, destination_id, signature) or sequence <= _last_snapshot_sequence or sequence > MAX_TOKEN:
+@rpc("authority", "call_remote", "reliable", 1)
+func _receive_snapshot(
+	world_generation: int,
+	destination_id: String,
+	signature: String,
+	sequence: int,
+	packet: PackedByteArray
+) -> void:
+	if (
+		not _accept_current(world_generation, destination_id, signature)
+		or sequence <= _last_snapshot_sequence
+		or sequence > MAX_TOKEN
+	):
 		return
 	var snapshot: Variant = _decode(packet)
-	if not snapshot is Dictionary or not snapshot.get("runtime") is Dictionary or not snapshot.get("players") is Array:
+	if (
+		not snapshot is Dictionary
+		or not snapshot.get("runtime") is Dictionary
+		or not snapshot.get("players") is Array
+	):
 		return
 	if session.apply_runtime_update(snapshot.runtime):
 		session.apply_player_roster(snapshot.players)
@@ -529,15 +590,19 @@ func _process(delta: float) -> void:
 	if _snapshot_sequence >= MAX_TOKEN:
 		return
 	_snapshot_sequence += 1
-	var packet := _encode({
-		"runtime": session.capture_runtime_state(),
-		"players": session.capture_player_roster(),
-	})
+	var packet := _encode(
+		{
+			"runtime": session.capture_runtime_state(),
+			"players": session.capture_player_roster(),
+		}
+	)
 	if packet.is_empty():
 		return
 	for peer_id: int in _admitted:
 		if _known_peer(peer_id) and not _expected_commits.has(peer_id):
-			_receive_snapshot.rpc_id(peer_id, generation, _current_id, _current_signature, _snapshot_sequence, packet)
+			_receive_snapshot.rpc_id(
+				peer_id, generation, _current_id, _current_signature, _snapshot_sequence, packet
+			)
 
 
 func _on_peer_connected(_peer_id: int) -> void:
@@ -593,13 +658,18 @@ func _valid_offer(offer: Dictionary) -> bool:
 	var descriptor: Variant = offer.get("descriptor")
 	return (
 		descriptor is Dictionary
-		and descriptor.get("id") is String and not descriptor.id.is_empty()
+		and descriptor.get("id") is String
+		and not descriptor.id.is_empty()
 		and descriptor.id.length() <= 256
-		and descriptor.get("path") is String and descriptor.path.length() <= 2048
-		and descriptor.get("signature") is String and descriptor.signature.length() <= 256
+		and descriptor.get("path") is String
+		and descriptor.path.length() <= 2048
+		and descriptor.get("signature") is String
+		and descriptor.signature.length() <= 256
 		and descriptor.get("required_capabilities") is Array
-		and offer.get("spawn_id") is String and offer.spawn_id.length() <= 256
-		and offer.get("runtime") is Dictionary and offer.get("players") is Array
+		and offer.get("spawn_id") is String
+		and offer.spawn_id.length() <= 256
+		and offer.get("runtime") is Dictionary
+		and offer.get("players") is Array
 	)
 
 
@@ -634,7 +704,12 @@ func _safe_value(value: Variant, depth: int, remaining: Array[int]) -> bool:
 		TYPE_VECTOR2, TYPE_VECTOR3, TYPE_VECTOR4, TYPE_QUATERNION, TYPE_BASIS, TYPE_TRANSFORM2D, TYPE_TRANSFORM3D:
 			return value.is_finite()
 		TYPE_COLOR:
-			return is_finite(value.r) and is_finite(value.g) and is_finite(value.b) and is_finite(value.a)
+			return (
+				is_finite(value.r)
+				and is_finite(value.g)
+				and is_finite(value.b)
+				and is_finite(value.a)
+			)
 		TYPE_ARRAY:
 			if value.size() > remaining[0]:
 				return false
@@ -646,7 +721,11 @@ func _safe_value(value: Variant, depth: int, remaining: Array[int]) -> bool:
 			if value.size() * 2 > remaining[0]:
 				return false
 			for key: Variant in value:
-				if not (key is String or key is StringName) or not _safe_value(key, depth + 1, remaining) or not _safe_value(value[key], depth + 1, remaining):
+				if (
+					not (key is String or key is StringName)
+					or not _safe_value(key, depth + 1, remaining)
+					or not _safe_value(value[key], depth + 1, remaining)
+				):
 					return false
 			return true
 		TYPE_PACKED_BYTE_ARRAY, TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_INT64_ARRAY, TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY, TYPE_PACKED_STRING_ARRAY, TYPE_PACKED_VECTOR2_ARRAY, TYPE_PACKED_VECTOR3_ARRAY, TYPE_PACKED_VECTOR4_ARRAY, TYPE_PACKED_COLOR_ARRAY:

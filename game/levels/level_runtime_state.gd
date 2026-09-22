@@ -13,9 +13,17 @@ static func signature(document: Node3D) -> String:
 	var modules: Array = []
 	for module: Node3D in ModuleAssemblyScript.get_instances(document):
 		var definition: Resource = module.definition
-		modules.append({"instance": module.instance_id, "module": definition.module_id,
-			"revision": definition.content_revision, "transform": var_to_str(module.transform)})
-	_hash_value([modules, document.module_connections, document.channel_data], context, files, resources)
+		modules.append(
+			{
+				"instance": module.instance_id,
+				"module": definition.module_id,
+				"revision": definition.content_revision,
+				"transform": var_to_str(module.transform)
+			}
+		)
+	_hash_value(
+		[modules, document.module_connections, document.channel_data], context, files, resources
+	)
 	_hash_node(document, document, context, files, resources)
 	return context.finish().hex_encode()
 
@@ -48,26 +56,39 @@ static func _hash_file(path: String, context: HashingContext, files: Dictionary)
 		_hash_file(dependency_path, context, files)
 
 
-static func _hash_node(document: Node3D, node: Node, context: HashingContext,
-	files: Dictionary, resources: Dictionary) -> void:
+static func _hash_node(
+	document: Node3D, node: Node, context: HashingContext, files: Dictionary, resources: Dictionary
+) -> void:
 	if node.get_meta("editor_runtime_only", false):
 		return
-	context.update(var_to_bytes([str(document.get_path_to(node)), node.get_class(),
-		node.transform if node is Node3D else Transform3D.IDENTITY]))
+	context.update(
+		var_to_bytes(
+			[
+				str(document.get_path_to(node)),
+				node.get_class(),
+				node.transform if node is Node3D else Transform3D.IDENTITY
+			]
+		)
+	)
 	for property: Dictionary in node.get_property_list():
 		var usage: int = property.get("usage", 0)
 		if not (usage & PROPERTY_USAGE_STORAGE):
 			continue
 		var value: Variant = node.get(property.name)
-		if value is Resource or usage & PROPERTY_USAGE_SCRIPT_VARIABLE or str(property.name).begins_with("metadata/"):
+		if (
+			value is Resource
+			or usage & PROPERTY_USAGE_SCRIPT_VARIABLE
+			or str(property.name).begins_with("metadata/")
+		):
 			context.update(var_to_bytes(property.name))
 			_hash_value(value, context, files, resources)
 	for child: Node in node.get_children():
 		_hash_node(document, child, context, files, resources)
 
 
-static func _hash_value(value: Variant, context: HashingContext,
-	files: Dictionary, resources: Dictionary) -> void:
+static func _hash_value(
+	value: Variant, context: HashingContext, files: Dictionary, resources: Dictionary
+) -> void:
 	if value is Resource:
 		context.update(var_to_bytes([value.get_class(), value.resource_path]))
 		_hash_file(value.resource_path, context, files)
@@ -94,31 +115,50 @@ static func _hash_value(value: Variant, context: HashingContext,
 		context.update(var_to_bytes(value))
 
 
-static func capture(document: Node3D, document_signature: String, mission_state: Dictionary) -> Dictionary:
+static func capture(
+	document: Node3D, document_signature: String, mission_state: Dictionary
+) -> Dictionary:
 	var actors: Dictionary = {}
 	for actor: Node in document.find_children("*", "", true, false):
 		if actor is ActorBase:
 			actors[document.get_actor_identity(actor)] = actor.capture_runtime_state()
-	return {"version": 1, "document": document_signature, "actors": actors,
-		"mission": mission_state.duplicate(true)}
+	return {
+		"version": 1,
+		"document": document_signature,
+		"actors": actors,
+		"mission": mission_state.duplicate(true)
+	}
 
 
-static func validate(document: Node3D, document_signature: String,
-	baseline_mission: Dictionary, state: Variant) -> bool:
-	if not state is Dictionary or state.get("version") != 1 or state.get("document") != document_signature:
+static func validate(
+	document: Node3D, document_signature: String, baseline_mission: Dictionary, state: Variant
+) -> bool:
+	if (
+		not state is Dictionary
+		or state.get("version") != 1
+		or state.get("document") != document_signature
+	):
 		return false
 	if not _validate_actors(document, state.get("actors")):
 		return false
 	var mission: Variant = state.get("mission")
-	if not mission is Dictionary or not _same_json_value(mission.get("definition"), baseline_mission.get("definition")):
+	if (
+		not mission is Dictionary
+		or not _same_json_value(mission.get("definition"), baseline_mission.get("definition"))
+	):
 		return false
 	if not mission.get("active_id") is String or not mission.get("completed_id") is String:
 		return false
 	var mission_id: String = str(document.get_meta("mission_id", "document_mission"))
-	if not ((mission.active_id == mission_id and mission.completed_id == "")
-		or (mission.active_id == "" and mission.completed_id == mission_id)):
+	if not (
+		(mission.active_id == mission_id and mission.completed_id == "")
+		or (mission.active_id == "" and mission.completed_id == mission_id)
+	):
 		return false
-	if not _same_json_value(mission.get("totals"), baseline_mission.get("totals")) or not mission.get("state") is Dictionary:
+	if (
+		not _same_json_value(mission.get("totals"), baseline_mission.get("totals"))
+		or not mission.get("state") is Dictionary
+	):
 		return false
 	if mission.state.size() != baseline_mission.state.size():
 		return false

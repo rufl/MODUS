@@ -30,7 +30,10 @@ func interact(participant: Node = null) -> bool:
 	var session: Node = level.get_meta("travel_session", null) if level else null
 	if not session or session.is_travel_pending() or not participant is Player:
 		return false
-	if participant.get_parent() != session or participant.global_position.distance_to(global_position) > 4.0:
+	if (
+		participant.get_parent() != session
+		or participant.global_position.distance_to(global_position) > 4.0
+	):
 		return false
 	if not session.destinations.has(destination_id):
 		return false

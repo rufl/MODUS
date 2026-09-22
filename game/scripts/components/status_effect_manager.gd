@@ -502,7 +502,11 @@ func _request_effect_snapshot() -> void:
 	# A staged authored enemy has no matching live RPC path on the authority yet.
 	if is_instance_valid(_parent) and "authored_document" in _parent:
 		var document: Node3D = _parent.authored_document
-		while is_instance_valid(document) and document.get_meta("document_runtime_session", false) and not document.has_meta("travel_session"):
+		while (
+			is_instance_valid(document)
+			and document.get_meta("document_runtime_session", false)
+			and not document.has_meta("travel_session")
+		):
 			await get_tree().process_frame
 	if not is_inside_tree():
 		return

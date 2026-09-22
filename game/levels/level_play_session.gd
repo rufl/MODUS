@@ -30,6 +30,7 @@ var _started: bool = false
 var _initialized: bool = false
 var _frozen: bool = false
 var _travel_busy: bool = false
+var _exiting: bool = false
 var _sources: Dictionary = {}
 var _visits: Dictionary = {}
 var _stage: LevelDestination
@@ -90,7 +91,9 @@ func start_document(source: Node3D) -> bool:
 	source.process_mode = previous_mode
 	if result != OK:
 		return _fail("Unable to clone document: " + error_string(result))
-	var identity := str(source.get_meta("destination_id", source.get_meta("mission_id", "document")))
+	var identity := str(
+		source.get_meta("destination_id", source.get_meta("mission_id", "document"))
+	)
 	_sources[identity] = packed
 	destinations[identity] = {"id": identity, "path": source.scene_file_path}
 	if _is_networked() and not multiplayer.is_server():
@@ -100,7 +103,10 @@ func start_document(source: Node3D) -> bool:
 
 
 func _is_networked() -> bool:
-	return multiplayer.has_multiplayer_peer() and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+	return (
+		multiplayer.has_multiplayer_peer()
+		and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+	)
 
 
 func is_travel_pending() -> bool:
@@ -120,7 +126,12 @@ func travel_to(identity: String, spawn_id: String = "") -> bool:
 	var descriptor: Dictionary = destinations[identity]
 	if identity == current_destination_id:
 		saved = capture_runtime_state()
-	var offer := {"descriptor": descriptor, "spawn_id": spawn_id, "runtime": saved, "players": capture_player_roster()}
+	var offer := {
+		"descriptor": descriptor,
+		"spawn_id": spawn_id,
+		"runtime": saved,
+		"players": capture_player_roster()
+	}
 	var prepared := stage_travel_offer(offer)
 	if not prepared.success:
 		error_message = prepared.error
@@ -131,10 +142,19 @@ func travel_to(identity: String, spawn_id: String = "") -> bool:
 		return false
 	# Arrival moves the existing players, never restores their older destination inventory.
 	for record: Dictionary in _staged_players:
-		record.position = [_stage.spawn_transform.origin.x, _stage.spawn_transform.origin.y, _stage.spawn_transform.origin.z]
+		record.position = [
+			_stage.spawn_transform.origin.x,
+			_stage.spawn_transform.origin.y,
+			_stage.spawn_transform.origin.z
+		]
 		var rotation := _stage.spawn_transform.basis.get_euler()
 		record.rotation = [rotation.x, rotation.y, rotation.z]
-	offer = {"descriptor": _stage.descriptor, "spawn_id": _stage.spawn_id, "runtime": _stage.runtime, "players": _staged_players}
+	offer = {
+		"descriptor": _stage.descriptor,
+		"spawn_id": _stage.spawn_id,
+		"runtime": _stage.runtime,
+		"players": _staged_players
+	}
 	var success := await travel_network.synchronize_travel(offer)
 	_travel_busy = false
 	set_travel_frozen(false)
@@ -149,7 +169,11 @@ func stage_travel_offer(offer: Dictionary) -> Dictionary:
 	abort_staged_travel()
 	if not _initialize_session():
 		return {"success": false, "error": error_message}
-	if not offer.get("descriptor") is Dictionary or not offer.get("spawn_id") is String or not offer.get("runtime") is Dictionary:
+	if (
+		not offer.get("descriptor") is Dictionary
+		or not offer.get("spawn_id") is String
+		or not offer.get("runtime") is Dictionary
+	):
 		return {"success": false, "error": "Malformed destination offer."}
 	var identity: Dictionary = offer.descriptor
 	if not identity.get("id") is String or not identity.get("path") is String:
@@ -161,7 +185,10 @@ func stage_travel_offer(offer: Dictionary) -> Dictionary:
 		return {"success": false, "error": "Invalid destination player state."}
 	var packed: PackedScene = _sources.get(identity.id)
 	if not packed and not identity.path.is_empty():
-		packed = ResourceLoader.load(identity.path, "PackedScene", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+		packed = (
+			ResourceLoader.load(identity.path, "PackedScene", ResourceLoader.CACHE_MODE_REPLACE)
+			as PackedScene
+		)
 	if not packed:
 		return {"success": false, "error": "Destination content is unavailable."}
 	_stage = LevelDestination.new()
@@ -188,20 +215,24 @@ func commit_staged_travel() -> bool:
 			_visits[identity] = entry.runtime.duplicate(true)
 		_pending_campaign.clear()
 	var old_document := document
-	var old_navigation := navigation_region
+	var old_viewport: SubViewport = (
+		old_document.get_parent() if is_instance_valid(old_document) else null
+	)
 	if is_instance_valid(old_document):
 		old_document.runtime_player = null
-		remove_child(old_document)
-	if is_instance_valid(old_navigation):
-		remove_child(old_navigation)
+		remove_child(old_viewport)
 	document = stage.document
 	navigation_region = stage.navigation
-	stage.viewport.remove_child(document)
-	stage.viewport.remove_child(navigation_region)
+	# Share the committed World3D without exiting/re-entering the staged subtree:
+	# encounter ownership, loot tracking and component signals remain intact.
+	stage.viewport.name = "Destination"
+	# Keep the old scenario alive until Godot has rebound the viewport visibility mask.
+	var _staging_world := stage.viewport.find_world_3d()
+	stage.viewport.own_world_3d = false
+	stage.viewport.process_mode = Node.PROCESS_MODE_INHERIT
+	stage.viewport = null
 	stage.document = null
 	stage.navigation = null
-	add_child(document)
-	add_child(navigation_region)
 	stage.discard()
 	current_destination_id = stage.descriptor.id
 	current_spawn_id = stage.spawn_id
@@ -231,10 +262,8 @@ func commit_staged_travel() -> bool:
 	NavigationServer3D.map_set_use_async_iterations(navigation_map, false)
 	NavigationServer3D.region_set_use_async_iterations(navigation_region.get_rid(), false)
 	NavigationServer3D.map_force_update(navigation_map)
-	if is_instance_valid(old_document):
-		old_document.free()
-	if is_instance_valid(old_navigation):
-		old_navigation.free()
+	if is_instance_valid(old_viewport):
+		old_viewport.free()
 	GameManager.change_state(GameManager.State.RUNNING)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	set_travel_frozen(_frozen)
@@ -260,11 +289,17 @@ func set_travel_frozen(frozen: bool) -> void:
 	if is_instance_valid(document):
 		document.process_mode = Node.PROCESS_MODE_DISABLED if frozen else Node.PROCESS_MODE_INHERIT
 	for participant: Player in get_session_players():
-		participant.process_mode = Node.PROCESS_MODE_DISABLED if frozen else Node.PROCESS_MODE_INHERIT
-		var predictor := participant.get_node_or_null("PlayerMovementPredictor") as PlayerMovementPredictor
+		participant.process_mode = (
+			Node.PROCESS_MODE_DISABLED if frozen else Node.PROCESS_MODE_INHERIT
+		)
+		var predictor := (
+			participant.get_node_or_null("PlayerMovementPredictor") as PlayerMovementPredictor
+		)
 		if predictor:
 			predictor.set_session_boundary(frozen, travel_network.generation)
-		var interpolator := participant.get_node_or_null("RemoteInterpolator") as RemoteEntityInterpolator
+		var interpolator := (
+			participant.get_node_or_null("RemoteInterpolator") as RemoteEntityInterpolator
+		)
 		if interpolator and interpolator.snapshot_buffer:
 			interpolator.snapshot_buffer.snapshots.clear()
 		if participant.network_sync:
@@ -278,9 +313,12 @@ func set_travel_frozen(frozen: bool) -> void:
 	if resuming and travel_network and multiplayer.is_server():
 		travel_network._broadcast_roster()
 
+
 func set_peer_replication(peer_id: int, enabled: bool) -> void:
 	for participant: Player in get_session_players():
-		for synchronizer: MultiplayerSynchronizer in participant.find_children("*", "MultiplayerSynchronizer", true, false):
+		for synchronizer: MultiplayerSynchronizer in participant.find_children(
+			"*", "MultiplayerSynchronizer", true, false
+		):
 			synchronizer.set_visibility_for(peer_id, enabled)
 
 
@@ -316,7 +354,9 @@ func ensure_peer_player(peer_id: int) -> void:
 	elif player == null and peer_id == 1:
 		player = participant
 	participant.process_mode = Node.PROCESS_MODE_DISABLED if _frozen else Node.PROCESS_MODE_INHERIT
-	var predictor := participant.get_node_or_null("PlayerMovementPredictor") as PlayerMovementPredictor
+	var predictor := (
+		participant.get_node_or_null("PlayerMovementPredictor") as PlayerMovementPredictor
+	)
 	if predictor:
 		predictor.set_session_boundary(_frozen, travel_network.generation)
 
@@ -344,8 +384,12 @@ func apply_player_roster(records: Array) -> bool:
 		ensure_peer_player(peer_id)
 		if arriving:
 			var participant := get_node(str(peer_id)) as Player
-			participant.global_position = Vector3(record.position[0], record.position[1], record.position[2])
-			participant.global_rotation = Vector3(record.rotation[0], record.rotation[1], record.rotation[2])
+			participant.global_position = Vector3(
+				record.position[0], record.position[1], record.position[2]
+			)
+			participant.global_rotation = Vector3(
+				record.rotation[0], record.rotation[1], record.rotation[2]
+			)
 			participant.velocity = Vector3.ZERO
 			participant.spawns = PackedVector3Array([participant.global_position])
 	for participant: Player in get_session_players():
@@ -360,15 +404,25 @@ func apply_player_roster(records: Array) -> bool:
 func get_travel_offer() -> Dictionary:
 	if not _started:
 		return {}
-	return {"descriptor": destinations[current_destination_id].duplicate(true), "spawn_id": current_spawn_id, "runtime": capture_runtime_state(), "players": capture_player_roster()}
+	return {
+		"descriptor": destinations[current_destination_id].duplicate(true),
+		"spawn_id": current_spawn_id,
+		"runtime": capture_runtime_state(),
+		"players": capture_player_roster()
+	}
 
 
 func capture_runtime_state() -> Dictionary:
-	return LevelRuntimeState.capture(document, _document_signature, _mission.capture_runtime_state())
+	return LevelRuntimeState.capture(
+		document, _document_signature, _mission.capture_runtime_state()
+	)
 
 
 func validate_runtime_state(state: Variant) -> bool:
-	return _started and LevelRuntimeState.validate(document, _document_signature, _baseline_mission, state)
+	return (
+		_started
+		and LevelRuntimeState.validate(document, _document_signature, _baseline_mission, state)
+	)
 
 
 func restore_runtime_state(state: Dictionary) -> bool:
@@ -390,7 +444,10 @@ func apply_runtime_update(state: Dictionary) -> bool:
 	document.set_meta("applying_authoritative_state", true)
 	var restored := LevelRuntimeState.restore_actors(document, state, true)
 	document.remove_meta("applying_authoritative_state")
-	if restored and not LevelRuntimeState._same_json_value(state.mission, _mission.capture_runtime_state()):
+	if (
+		restored
+		and not LevelRuntimeState._same_json_value(state.mission, _mission.capture_runtime_state())
+	):
 		_mission.restore_runtime_state(state.mission, document)
 		_refresh_status()
 	return restored
@@ -399,16 +456,38 @@ func apply_runtime_update(state: Dictionary) -> bool:
 func capture_campaign_state() -> Dictionary:
 	var entries: Dictionary = {}
 	for identity: String in _visits:
-		entries[identity] = {"descriptor": destinations[identity].duplicate(true), "runtime": _visits[identity].duplicate(true)}
+		entries[identity] = {
+			"descriptor": destinations[identity].duplicate(true),
+			"runtime": _visits[identity].duplicate(true)
+		}
 	if _started:
-		entries[current_destination_id] = {"descriptor": destinations[current_destination_id].duplicate(true), "runtime": capture_runtime_state()}
-	return {"version": 1, "current_id": current_destination_id, "spawn_id": current_spawn_id, "destinations": entries, "players": capture_player_roster()}
+		entries[current_destination_id] = {
+			"descriptor": destinations[current_destination_id].duplicate(true),
+			"runtime": capture_runtime_state()
+		}
+	return {
+		"version": 1,
+		"current_id": current_destination_id,
+		"spawn_id": current_spawn_id,
+		"destinations": entries,
+		"players": capture_player_roster()
+	}
 
 
 func validate_campaign_state(state: Variant) -> bool:
-	if not state is Dictionary or state.get("version") != 1 or not state.get("current_id") is String or not state.get("spawn_id") is String or not state.get("destinations") is Dictionary:
+	if (
+		not state is Dictionary
+		or state.get("version") != 1
+		or not state.get("current_id") is String
+		or not state.get("spawn_id") is String
+		or not state.get("destinations") is Dictionary
+	):
 		return false
-	if state.destinations.is_empty() or state.destinations.size() > MAX_DESTINATIONS or not state.destinations.has(state.current_id):
+	if (
+		state.destinations.is_empty()
+		or state.destinations.size() > MAX_DESTINATIONS
+		or not state.destinations.has(state.current_id)
+	):
 		return false
 	var state_manager: Node = GameManager.get_core_system("state_manager")
 	if not state_manager or not state_manager.validate_session_players(state.get("players")):
@@ -417,9 +496,16 @@ func validate_campaign_state(state: Variant) -> bool:
 		if not identity is String or not destinations.has(identity):
 			return false
 		var entry: Variant = state.destinations[identity]
-		if not entry is Dictionary or not entry.get("descriptor") is Dictionary or not entry.get("runtime") is Dictionary:
+		if (
+			not entry is Dictionary
+			or not entry.get("descriptor") is Dictionary
+			or not entry.get("runtime") is Dictionary
+		):
 			return false
-		if entry.descriptor.get("id") != identity or entry.descriptor.get("path") != destinations[identity].path:
+		if (
+			entry.descriptor.get("id") != identity
+			or entry.descriptor.get("path") != destinations[identity].path
+		):
 			return false
 		var packed: PackedScene = _sources.get(identity)
 		if not packed:
@@ -436,12 +522,21 @@ func validate_campaign_state(state: Variant) -> bool:
 
 
 func restore_campaign_state(state: Dictionary) -> bool:
-	if is_travel_pending() or (_is_networked() and not multiplayer.is_server()) or not validate_campaign_state(state):
+	if (
+		is_travel_pending()
+		or (_is_networked() and not multiplayer.is_server())
+		or not validate_campaign_state(state)
+	):
 		return false
 	_travel_busy = true
 	set_travel_frozen(true)
 	var entry: Dictionary = state.destinations[state.current_id]
-	var offer := {"descriptor": entry.descriptor, "spawn_id": state.spawn_id, "runtime": entry.runtime, "players": state.players}
+	var offer := {
+		"descriptor": entry.descriptor,
+		"spawn_id": state.spawn_id,
+		"runtime": entry.runtime,
+		"players": state.players
+	}
 	var prepared := stage_travel_offer(offer)
 	if not prepared.success:
 		_travel_busy = false
@@ -461,26 +556,33 @@ func _fail(message: String) -> bool:
 
 
 func stop() -> void:
-	if travel_network:
+	if travel_network and not _exiting:
 		travel_network.cancel_travel()
-	abort_staged_travel()
+	if _exiting:
+		# The parent frees its entire subtree after exit notifications complete.
+		_stage = null
+	else:
+		abort_staged_travel()
 	if is_instance_valid(_mission):
 		if _mission.objective_updated.is_connected(_on_objective_updated):
 			_mission.objective_updated.disconnect(_on_objective_updated)
 		if _mission.mission_completed.is_connected(_on_mission_completed):
 			_mission.mission_completed.disconnect(_on_mission_completed)
 		if _initialized:
-			_mission.restore_runtime_state(_previous_mission, _previous_mission_level if is_instance_valid(_previous_mission_level) else null)
+			_mission.restore_runtime_state(
+				_previous_mission,
+				_previous_mission_level if is_instance_valid(_previous_mission_level) else null
+			)
 	if _initialized:
 		GameManager.change_state(_previous_game_state)
 		Input.mouse_mode = _previous_mouse_mode
 	_initialized = false
 	_started = false
 	remove_from_group("level_play_session")
-	for child: Node in get_children():
-		if child == travel_network:
-			continue
-		child.free()
+	if not _exiting:
+		for child: Node in get_children():
+			if child != travel_network:
+				child.free()
 	document = null
 	player = null
 	navigation_region = null
@@ -491,6 +593,7 @@ func stop() -> void:
 
 
 func _exit_tree() -> void:
+	_exiting = true
 	stop()
 
 

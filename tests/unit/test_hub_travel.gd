@@ -58,7 +58,9 @@ func test_revisit_preserves_world_rewards_and_party_without_rehosting() -> void:
 	_session.set_travel_frozen(true)
 	assert_same(multiplayer.multiplayer_peer, _peer, "Travel preserves the bound transport")
 	assert_eq(_peer.get_connection_status(), MultiplayerPeer.CONNECTION_CONNECTED)
-	assert_same(_session.player, participant, "Party nodes and inventory survive destination replacement")
+	assert_same(
+		_session.player, participant, "Party nodes and inventory survive destination replacement"
+	)
 	assert_true(participant.global_position.is_equal_approx(Vector3(4, 1.2, 4)))
 	assert_eq(participant.inventory.to_dict(), inventory)
 	assert_true(await _session.travel_to("travel_origin", "arrival"), _session.error_message)
@@ -67,7 +69,9 @@ func test_revisit_preserves_world_rewards_and_party_without_rehosting() -> void:
 	assert_eq(MissionMgr.get_instance().completed_mission_id, "travel_origin")
 	assert_true(participant.has_item("hub_key"))
 	assert_eq(participant.health_component.current_health, health, "Revisit grants no supplies")
-	assert_eq(_session.document.find_actor("supplies").capture_runtime_state().pickup_phase, "collected")
+	assert_eq(
+		_session.document.find_actor("supplies").capture_runtime_state().pickup_phase, "collected"
+	)
 	assert_true(_session.document.find_actor("encounter").capture_runtime_state().encounter_cleared)
 	assert_eq(_session.document.find_actor("encounter")._enemies.size(), 0)
 	assert_eq(participant.inventory.to_dict(), inventory)
@@ -86,7 +90,10 @@ func test_rejected_destination_and_corrupt_campaign_leave_current_world_usable()
 	assert_false(await _session.restore_campaign_state(corrupted))
 	assert_same(_session.document, document)
 	assert_eq(_session.capture_campaign_state(), snapshot)
-	assert_true(_session.document.find_actor("power").interact(participant), "Failed travel leaves interactions usable")
+	assert_true(
+		_session.document.find_actor("power").interact(participant),
+		"Failed travel leaves interactions usable"
+	)
 
 
 func test_encrypted_checkpoint_restores_all_visited_destinations() -> void:

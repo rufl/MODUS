@@ -59,10 +59,16 @@ func _ready() -> void:
 	session.register_destination("breakwater_hub", HUB_LEVEL)
 	session.register_destination("breakwater_station", BUILTIN_LEVEL)
 	add_child(session)
+	session.travel_network.join_finished.connect(_on_join_finished)
 	var started := await session.start_document(source)
 	holder.queue_free()
 	if not started:
 		_show_error(session.error_message)
+
+
+func _on_join_finished(success: bool, message: String) -> void:
+	if not success:
+		_show_error(message)
 
 
 func _show_error(message: String) -> void:

@@ -109,7 +109,11 @@ func _process(delta: float) -> void:
 
 
 func _spawn_pickup(saved: Dictionary = {}, prepared: PickupBase = null) -> bool:
-	if is_authoring() or (not _has_authority() and not is_applying_authoritative_state()) or is_instance_valid(_current_pickup):
+	if (
+		is_authoring()
+		or (not _has_authority() and not is_applying_authoritative_state())
+		or is_instance_valid(_current_pickup)
+	):
 		return false
 	var scene := _get_pickup_scene()
 	if not scene:
@@ -208,8 +212,10 @@ func validate_runtime_state(state: Dictionary) -> bool:
 
 
 func restore_runtime_state(state: Dictionary) -> bool:
-	if not validate_runtime_state(state) or is_authoring() or (
-		not _has_authority() and not is_applying_authoritative_state()
+	if (
+		not validate_runtime_state(state)
+		or is_authoring()
+		or (not _has_authority() and not is_applying_authoritative_state())
 	):
 		return false
 	var prepared: PickupBase = null

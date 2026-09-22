@@ -96,7 +96,9 @@ func return_instance(instance: Node) -> void:
 
 func _reset_instance(instance: Node) -> void:
 	instance.process_mode = Node.PROCESS_MODE_DISABLED
-	for synchronizer: MultiplayerSynchronizer in instance.find_children("*", "MultiplayerSynchronizer", true, false):
+	for synchronizer: MultiplayerSynchronizer in instance.find_children(
+		"*", "MultiplayerSynchronizer", true, false
+	):
 		synchronizer.public_visibility = false
 	if instance is Node3D:
 		instance.visible = false
@@ -109,7 +111,9 @@ func _reset_instance(instance: Node) -> void:
 
 func _activate_instance(instance: Node) -> void:
 	instance.process_mode = Node.PROCESS_MODE_INHERIT
-	for synchronizer: MultiplayerSynchronizer in instance.find_children("*", "MultiplayerSynchronizer", true, false):
+	for synchronizer: MultiplayerSynchronizer in instance.find_children(
+		"*", "MultiplayerSynchronizer", true, false
+	):
 		synchronizer.public_visibility = true
 	if instance is Node3D or instance is CanvasItem:
 		instance.visible = true

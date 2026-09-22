@@ -117,7 +117,10 @@ func _setup_synchronizer() -> void:
 	if not synchronizer:
 		synchronizer = MultiplayerSynchronizer.new()
 		synchronizer.name = "MultiplayerSynchronizer"
-	if is_instance_valid(authored_document) and authored_document.get_meta("document_runtime_session", false):
+	if (
+		is_instance_valid(authored_document)
+		and authored_document.get_meta("document_runtime_session", false)
+	):
 		# Session snapshots own authored pickup identity, motion and collection.
 		synchronizer.public_visibility = false
 

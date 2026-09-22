@@ -818,7 +818,10 @@ func _handle_swarmling_out_of_bounds() -> void:
 func _setup_synchronizer() -> void:
 	# Check if we already have a synchronizer (e.g. from scene)
 	var synchronizer: MultiplayerSynchronizer = get_node_or_null("MultiplayerSynchronizer")
-	var session_owned: bool = is_instance_valid(authored_document) and authored_document.get_meta("document_runtime_session", false)
+	var session_owned: bool = (
+		is_instance_valid(authored_document)
+		and authored_document.get_meta("document_runtime_session", false)
+	)
 	if synchronizer:
 		if session_owned:
 			synchronizer.public_visibility = false

@@ -64,7 +64,7 @@ September 13 [research and acceptance plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN
 - [ ] Implement the selected bundled native-runtime capability contract; preserve common offline mission behavior and reject maps/peers requiring unavailable capabilities rather than claiming stock-Godot parity. `[truth:source-audit]`
 - [ ] Produce the composed Breakwater Station first mission, finished module quality reference and reviewed audiovisual/gameplay route; retain Systems Lab separately. `[truth:source-audit]`
 - [ ] Improve procedural mission graphs, spatial solving, encounter/resource pacing and reproducible editable output using the authored kit. `[truth:source-audit]`
-- [ ] Implement persistent hub travel without tearing down the host session; preserve world/objective/inventory state on revisit and late join. `[truth:source-audit]`
+- [x] Implement persistent authored hub travel without tearing down the host session; preserve world/objective/inventory state on revisit and late join. Forty focused tests/263 assertions, encrypted reload into a new session, actual hub/mission console interaction and three-process ENet content refusal/late join/pending-travel disconnect pass. Graphical capture remains blocked by the isolated-display lock; no host-migration claim. `[truth:source-audit]` `[truth:runtime]` `[truth:test]`
 - [x] Unify module metadata, typed sockets, clearance and dependency contracts through canonical `PrefabMetadata`, editor assembly and `.mdsl`; retain the existing decorative-anchor use separately. Module/navigation proof passes 25/25 with 105 assertions. This is not automatic procedural mission generation. `[truth:source-audit]` `[truth:runtime]` `[truth:test]`
 - [ ] Finish pinning, ghost placement and bounded partial regeneration; Modules/Gameplay authoring modes, socket placement, actual channel wiring and transactional undo/redo are implemented. `[truth:source-audit]`
 
@@ -129,7 +129,6 @@ The September 10 refreshed aggregate supersedes the August 4 historical total fo
 - [ ] Implement the selected bundled native-runtime capability contract; preserve common offline mission behavior and reject maps/peers requiring unavailable capabilities rather than claiming stock-Godot parity. `[truth:source-audit]`
 - [ ] Produce the composed Breakwater Station first mission, finished module quality reference and reviewed audiovisual/gameplay route; retain Systems Lab separately. `[truth:source-audit]`
 - [ ] Improve procedural mission graphs, spatial solving, encounter/resource pacing and reproducible editable output using the authored kit. `[truth:source-audit]`
-- [ ] Implement persistent hub travel without tearing down the host session; preserve world/objective/inventory state on revisit and late join. `[truth:source-audit]`
 - [ ] Finish pinning, ghost placement and bounded partial regeneration; Modules/Gameplay authoring modes, socket placement, actual channel wiring and transactional undo/redo are implemented. `[truth:source-audit]`
 - [ ] Import manual gameplay evidence and clear the zero-hours blocker. `[truth:source-audit]` `[truth:test]`
 <!-- OVERZEER:DOCS_BACKLOG_END -->

@@ -238,9 +238,19 @@ No display-synchronized solo, splitscreen, multiplayer, low-end hardware, or lon
 
 September 13 generator-correctness proof passes **55/55 focused tests with 1,319 assertions** on Godot 4.7.2. It covers seed isolation, connected layouts, retained keys/secrets, simultaneous-lock progression, collision-backed navigation, saved-scene routes and cancellation/restart. Separate 64×64 and default 128×128 source-generation smokes pass; the latter produces 1,405 navigation polygons. Historical unit/threading/export counts are not a current full-suite result.
 
-Generator revision **2** changes seed-to-content output. Saved scenes retain seed, configuration, revision and typed gameplay records; replay requires the same generator/runtime/content. The authored Breakwater mission uses real encounter, pickup, traversal and objective actors, but the generator's retained records are not yet automatically realized through that runtime. Rule/module/voxel generation integration, mission presentation/balance review and persistent hubs remain open. See the [repair evidence and next deliveries](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#generator-correctness-delivery).
+Generator revision **2** changes seed-to-content output. Saved scenes retain seed, configuration, revision and typed gameplay records; replay requires the same generator/runtime/content. The authored Breakwater mission uses real encounter, pickup, traversal and objective actors, but the generator's retained records are not yet automatically realized through that runtime. Rule/module/voxel generation integration and mission presentation/balance review remain open. See the [repair evidence and next deliveries](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#generator-correctness-delivery).
 
 Play the built-in mission from **Breakwater Station** in the main menu, or launch `godot --path . -- --breakwater`. Launch the authoring app with `godot --path . -- --editor`; **File → Open Breakwater Station** opens the mission, while **Open Three-Room Gate** retains the smaller authoring example. See the [standalone guide](standalone/editor/README.md). The [production brief](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#mission-direction-and-quality-reference) still governs audiovisual review, pacing, cyclic generation and hubs.
+
+Persistent hub travel is available in the authored-level runtime:
+
+```bash
+godot --path . -- --hub
+godot --path . -- --hub --hub-host 7777
+godot --path . -- --hub --hub-join 127.0.0.1 7777
+```
+
+Use **E** at the departure/return consoles. Players and the transport survive destination replacement; revisits retain objectives, gates, encounters and consumed rewards. **F5/F9** save/load the visited campaign through the encrypted save service; only the host can save, load or commit travel. Peers must have matching content and supported traversal capabilities before admission. Source proof includes 40 focused tests/263 assertions and a three-process ENet refusal/travel/late-join/disconnect scenario. This does not establish host migration, Steam transport, cross-build save migration or exported-platform acceptance. See [hub persistence](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#hubs-and-persistence).
 
 ## Data and Configuration
 

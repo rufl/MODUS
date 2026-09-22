@@ -19,7 +19,10 @@ func prepare(
 ) -> bool:
 	descriptor = identity.duplicate(true)
 	spawn_id = arrival
-	document = packed.instantiate() as Node3D
+	var instance := packed.instantiate()
+	document = instance as Node3D
+	if not document:
+		instance.free()
 	if not document or not document.has_method("prepare_for_save"):
 		return _fail("Destination must contain a LevelRoot document.")
 	document.scene_file_path = identity.path
@@ -62,15 +65,36 @@ func prepare(
 		return _fail("Destination content differs from the authoritative manifest.")
 	descriptor.signature = signature
 	var required: Array[String] = []
+	var modules: Array[Dictionary] = []
 	for module: Node3D in Assembly.get_instances(document):
+		(
+			modules
+			. append(
+				{
+					"instance_id": module.instance_id,
+					"module_id": module.definition.module_id,
+					"scene_path": module.definition.scene_path,
+					"content_revision": module.definition.content_revision,
+					"transform": PickupBase._encode_transform(module.transform),
+				}
+			)
+		)
 		for capability: String in module.definition.required_capabilities:
 			if capability not in required:
 				required.append(capability)
 	required.sort()
+	var layout := {"modules": modules, "connections": document.module_connections.duplicate(true)}
+	if identity.has("layout") and not LevelRuntimeState._same_json_value(identity.layout, layout):
+		return _fail("Destination canonical layout differs from the checkpoint.")
+	descriptor.layout = layout
 	if identity.has("required_capabilities") and identity.required_capabilities != required:
 		return _fail("Destination capability manifest differs from local content.")
 	descriptor.required_capabilities = required
-	runtime = saved.duplicate(true) if not saved.is_empty() else LevelRuntimeState.capture(document, signature, baseline)
+	runtime = (
+		saved.duplicate(true)
+		if not saved.is_empty()
+		else LevelRuntimeState.capture(document, signature, baseline)
+	)
 	if not LevelRuntimeState.validate(document, signature, baseline, runtime):
 		return _fail("Destination runtime checkpoint is incompatible with its content.")
 	var context := GenerationContext.new()

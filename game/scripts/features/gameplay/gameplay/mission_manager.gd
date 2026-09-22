@@ -279,7 +279,10 @@ func build_document_state(level: Node3D) -> Dictionary:
 					)
 				if not objective.optional and declarations[prerequisite].get("optional", false):
 					return _document_error(
-						objective.id + ": a required objective cannot depend on an optional objective."
+						(
+							objective.id
+							+ ": a required objective cannot depend on an optional objective."
+						)
 					)
 				objective.requires.append(prerequisite)
 		elif objective.final:
@@ -297,12 +300,12 @@ func build_document_state(level: Node3D) -> Dictionary:
 	return {
 		"success": true,
 		"error": "",
-		"state": {
+		"state":
+		{
 			"active_id": str(level.get_meta("mission_id", "document_mission")),
 			"completed_id": "",
-			"definition": {
-				"name": str(level.get("level_name")), "objectives": ordered, "ends_match": false
-			},
+			"definition":
+			{"name": str(level.get("level_name")), "objectives": ordered, "ends_match": false},
 			"state": counts,
 			"totals": totals
 		}

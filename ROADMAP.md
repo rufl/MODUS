@@ -23,7 +23,7 @@ Historical August and July totals remain below only as dated context. They must 
 
 ## Release and World-Building Program
 
-The [implementation plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) separates the implemented Breakwater three-room gate from the full composed mission, procedural mission graphs, persistent hubs and release engineering. Installer, versioned-release, bundled-native-runtime, Steam/Workshop, WAN and target-Windows acceptance remain open.
+The [implementation plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) tracks authored Breakwater content, procedural mission graphs, persistent hubs and release engineering. Persistent authored hub travel now has encrypted revisit restoration and three-process ENet refusal/late-join/pending-disconnect proof. Versioned-release publication, bundled-native-runtime, Steam/Workshop, WAN and target-Windows acceptance remain open.
 
 The owner selected a bundled full-feature runtime. Generator revision 2 has focused correctness proof; canonical module metadata, editor document ownership, channel execution and the three-room key/door/objective loop are now implemented. Package engineering can advance independently; Steam/Workshop publication requires the still-missing Steamworks app.
 

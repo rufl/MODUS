@@ -78,9 +78,11 @@ func save_game(slot: String = QUICKSAVE_SLOT) -> bool:
 
 	var metadata: Dictionary = {
 		"version": SAVE_VERSION,
-		"player_count": (
+		"player_count":
+		(
 			save_data.level_campaign.players.size()
-			if save_data.has("level_campaign") else save_data.get("players", []).size()
+			if save_data.has("level_campaign")
+			else save_data.get("players", []).size()
 		),
 		"time_played": get_session_time()
 	}
@@ -190,7 +192,8 @@ func _validate_player_records(data: Variant) -> bool:
 			return false
 		if (
 			not _is_integer_value(record.get("peer_id"))
-			or record.peer_id <= 0 or record.peer_id > 2147483647
+			or record.peer_id <= 0
+			or record.peer_id > 2147483647
 			or seen_peers.has(int(record.peer_id))
 		):
 			return false
@@ -223,7 +226,10 @@ func validate_session_players(records: Variant) -> bool:
 			var value: Variant = record.get(field)
 			if not (value is int or value is float) or not is_finite(value) or value < 0:
 				return false
-		if not _is_integer_value(record.get("lifecycle")) or not int(record.lifecycle) in Enums.PlayerState.values():
+		if (
+			not _is_integer_value(record.get("lifecycle"))
+			or not int(record.lifecycle) in Enums.PlayerState.values()
+		):
 			return false
 		if record.lifecycle == Enums.PlayerState.ALIVE and record.health <= 0:
 			return false
@@ -256,7 +262,10 @@ func _validate_inventory(data: Variant, peer_id: int) -> bool:
 		return false
 	if not data.get("slots") is Array or data.slots.size() != Inventory.MAX_SLOTS:
 		return false
-	if not data.get("equipment") is Dictionary or data.equipment.size() != Inventory.EQUIPMENT_SLOTS.size():
+	if (
+		not data.get("equipment") is Dictionary
+		or data.equipment.size() != Inventory.EQUIPMENT_SLOTS.size()
+	):
 		return false
 	for item: Variant in data.slots:
 		if item != null and not _validate_inventory_item(item):
@@ -276,19 +285,36 @@ func _validate_inventory(data: Variant, peer_id: int) -> bool:
 func _validate_inventory_item(item: Variant) -> bool:
 	if not item is Dictionary:
 		return false
-	for field: String in ["id", "display_name", "description", "icon_path", "equip_slot", "weapon_scene", "effect_type"]:
+	for field: String in [
+		"id",
+		"display_name",
+		"description",
+		"icon_path",
+		"equip_slot",
+		"weapon_scene",
+		"effect_type"
+	]:
 		if not item.get(field) is String:
 			return false
-	if item.id.is_empty() or (not item.equip_slot.is_empty() and not item.equip_slot in Inventory.EQUIPMENT_SLOTS):
+	if (
+		item.id.is_empty()
+		or (not item.equip_slot.is_empty() and not item.equip_slot in Inventory.EQUIPMENT_SLOTS)
+	):
 		return false
 	for field: String in ["item_type", "rarity", "max_stack", "current_stack", "value"]:
 		if not _is_integer_value(item.get(field)) or item[field] < 0 or item[field] > 2147483647:
 			return false
-	if not int(item.item_type) in InventoryItem.ItemType.values() or not int(item.rarity) in ItemRarity.Tier.values():
+	if (
+		not int(item.item_type) in InventoryItem.ItemType.values()
+		or not int(item.rarity) in ItemRarity.Tier.values()
+	):
 		return false
 	if item.current_stack < 1 or item.max_stack < 1 or item.current_stack > item.max_stack:
 		return false
-	return (item.get("effect_value") is int or item.get("effect_value") is float) and is_finite(item.effect_value)
+	return (
+		(item.get("effect_value") is int or item.get("effect_value") is float)
+		and is_finite(item.effect_value)
+	)
 
 
 func _validate_enemy_records(data: Variant) -> bool:
@@ -447,7 +473,10 @@ func deserialize_world(data: Dictionary) -> bool:
 		return false
 	if data.has("level_campaign"):
 		var session := _get_level_session()
-		if not session or (session.multiplayer.has_multiplayer_peer() and not session.multiplayer.is_server()):
+		if (
+			not session
+			or (session.multiplayer.has_multiplayer_peer() and not session.multiplayer.is_server())
+		):
 			return false
 		return await session.restore_campaign_state(data.level_campaign)
 
@@ -593,17 +622,28 @@ func _deserialize_players(data: Array, scope: Node = null) -> void:
 						node.velocity = Vector3.ZERO
 				if "interaction_component" in node and node.interaction_component:
 					var keys: Array = player_data.get("keys", [])
-					if not scope or not LevelRuntimeState._same_json_value(
-						keys, node.interaction_component.get_collected_keys()
+					if (
+						not scope
+						or not LevelRuntimeState._same_json_value(
+							keys, node.interaction_component.get_collected_keys()
+						)
 					):
 						node.interaction_component.restore_collected_keys(keys)
 				if player_data.has("inventory") and "inventory" in node and node.inventory:
-					if not scope or not LevelRuntimeState._same_json_value(
-						player_data.inventory, node.inventory.to_dict()
+					if (
+						not scope
+						or not LevelRuntimeState._same_json_value(
+							player_data.inventory, node.inventory.to_dict()
+						)
 					):
 						node.inventory.from_dict(player_data.inventory)
 				# The server restores lifecycle and health once, then replicates both.
-				if not scope and (not node.multiplayer.has_multiplayer_peer() or node.multiplayer.is_server()):
+				if (
+					not scope
+					and (
+						not node.multiplayer.has_multiplayer_peer() or node.multiplayer.is_server()
+					)
+				):
 					var hp: float = player_data.get("health", 100)
 					var armor: float = player_data.get("armor", 0)
 					if "state_manager" in node and node.state_manager:
@@ -620,11 +660,16 @@ func _deserialize_players(data: Array, scope: Node = null) -> void:
 						else:
 							node.weapon_manager.switch_to_weapon(saved_idx)
 					if player_data.get("weapon_ammo") is Dictionary:
-						if not scope or not LevelRuntimeState._same_json_value(
-							player_data.weapon_ammo, node.weapon_manager.get_ammo_data()
+						if (
+							not scope
+							or not LevelRuntimeState._same_json_value(
+								player_data.weapon_ammo, node.weapon_manager.get_ammo_data()
+							)
 						):
 							node.weapon_manager.apply_ammo_data(player_data.weapon_ammo)
-					elif player_data.get("weapon_ammo") is Array and node.weapon_manager.ammo_system:
+					elif (
+						player_data.get("weapon_ammo") is Array and node.weapon_manager.ammo_system
+					):
 						var current_ammo: Array = node.weapon_manager.ammo_system.weapon_ammo
 						var limit: int = mini(player_data.weapon_ammo.size(), current_ammo.size())
 						for i in range(limit):
