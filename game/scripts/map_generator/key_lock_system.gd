@@ -375,39 +375,77 @@ func _calculate_key_count(context: GenerationContext) -> int:
 	return 1
 
 
-## Analyze room progression from player start
-## Returns array of rooms in order of distance from start
+## Analyze a deterministic, connected recovery route from the start room.
+## Prefer the room containing the configured extraction, otherwise use the
+## farthest reachable room. Every returned consecutive pair is a real edge.
 func _analyze_room_progression(context: GenerationContext) -> Array[Room]:
 	if context.rooms.is_empty():
 		return []
 
-	# Find player start room (typically first room or room closest to center)
 	var start_room: Room = _find_start_room(context)
+	if not start_room:
+		return []
+	var goal_room := _find_goal_room(context)
+	if goal_room and goal_room.id != start_room.id:
+		var goal_path := _find_room_path(context, start_room.id, goal_room.id)
+		if not goal_path.is_empty():
+			return goal_path
+	return _find_room_path(context, start_room.id, -1)
 
-	# Build progression order using breadth-first search
-	var progression: Array[Room] = []
-	var visited: Dictionary = {}
-	var queue: Array[Room] = [start_room]
-	visited[start_room.id] = true
 
+## Find the room containing the configured extraction position.
+func _find_goal_room(context: GenerationContext) -> Room:
+	var exit := context.exit_position
+	if (
+		exit.x < 0
+		or exit.y < 0
+		or exit.y >= context.grid.size()
+		or exit.x >= context.grid[exit.y].size()
+	):
+		return null
+	var room_id: int = context.grid[exit.y][exit.x].room_id
+	return _find_room_by_id(context, room_id) if room_id >= 0 else null
+
+
+## Find a shortest deterministic room path, or the farthest path when target=-1.
+func _find_room_path(
+	context: GenerationContext, start_room_id: int, target_room_id: int
+) -> Array[Room]:
+	var parents: Dictionary = {start_room_id: -1}
+	var queue: Array[int] = [start_room_id]
+	var last_room_id := start_room_id
 	while not queue.is_empty():
-		var current: Room = queue.pop_front()
-		progression.append(current)
+		var room_id: int = queue.pop_front()
+		last_room_id = room_id
+		if room_id == target_room_id:
+			break
+		var room := _find_room_by_id(context, room_id)
+		if not room:
+			continue
+		var neighbors: Array = room.connections.duplicate()
+		neighbors.sort()
+		for connected_id: Variant in neighbors:
+			if not connected_id is int or parents.has(connected_id):
+				continue
+			parents[connected_id] = room_id
+			queue.append(connected_id)
 
-		# Add connected rooms to queue
-		for connected_id: int in current.connections:
-			if not visited.has(connected_id):
-				var connected_room := _find_room_by_id(context, connected_id)
-				if connected_room:
-					queue.append(connected_room)
-					visited[connected_id] = true
-
-	if progression.size() < 2:
-		for room: Room in context.rooms:
-			if room not in progression and not room.cells.is_empty():
-				progression.append(room)
-
-	return progression
+	if target_room_id >= 0:
+		if not parents.has(target_room_id):
+			return []
+		last_room_id = target_room_id
+	var room_path: Array[Room] = []
+	var path_ids: Array[int] = []
+	var current_id := last_room_id
+	while current_id >= 0:
+		path_ids.push_front(current_id)
+		current_id = int(parents.get(current_id, -1))
+	for room_id: int in path_ids:
+		var room := _find_room_by_id(context, room_id)
+		if not room:
+			return []
+		room_path.append(room)
+	return room_path
 
 
 ## Find the starting room (first room or closest to center)

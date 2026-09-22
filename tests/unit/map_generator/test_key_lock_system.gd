@@ -85,6 +85,31 @@ func test_manifest_retains_reachable_mandatory_order_and_unique_records() -> voi
 	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
 
 
+func test_branching_graph_uses_a_real_route_to_extraction() -> void:
+	_create_room_chain(context, 4)
+	context.rooms[0].connections = [2, 1]
+	context.rooms[1].connections = [0, 3]
+	context.rooms[2].connections = [0, 3]
+	context.rooms[3].connections = [1, 2]
+	context.exit_position = context.rooms[3].center
+	var manifest: Dictionary = (
+		key_lock_system.generate_key_lock_system(context).progression_manifest
+	)
+	assert_eq(manifest.recovery_route, [0, 1, 3])
+	assert_eq(manifest.goal_room_id, 3)
+	for index in range(manifest.recovery_route.size() - 1):
+		assert_true(
+			(
+				{
+					"from_room_id": manifest.recovery_route[index],
+					"to_room_id": manifest.recovery_route[index + 1]
+				}
+				in manifest.room_edges
+			)
+		)
+	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
+
+
 func test_manifest_rejects_forged_room_edge() -> void:
 	_create_room_chain(context, 6)
 	var manifest: Dictionary = (

@@ -412,7 +412,7 @@ Every completed slice updates its source/tests, README page, this plan's relevan
 
 ### Generated graph and packaging hardening — September 22
 
-Generated key/lock manifests now publish deterministic room adjacency and reject disconnected graphs, forged edges, invalid recovery routes and locks without actual transitions before state replacement; `MissionManager` validates the retained edge contract while preserving legacy manifests without the optional field. Standalone `.mdsl` packaging refuses an existing output without changing its bytes. Focused graph, package and authored-mission proof passes 7/7, 6/6 and 5/5; generated actor production, graphical editor acceptance and audiovisual review remain open.
+Generated key/lock manifests now publish deterministic room adjacency and select a real deterministic extraction path through branching graphs; disconnected graphs, forged edges, invalid recovery routes and locks without actual transitions are rejected before state replacement. `MissionManager` validates the retained edge contract while preserving legacy manifests without the optional field. Packed generated scenes refuse progression/actor-record mismatches before actor realization. Standalone `.mdsl` packaging refuses an existing output without changing its bytes. Focused graph, actor, package and authored-mission proof passes 8/8, 9/9, 6/6 and 5/5; runtime interaction, graphical editor acceptance and audiovisual review remain open.
 
 ### Black Start authored mission delivery — September 13
 

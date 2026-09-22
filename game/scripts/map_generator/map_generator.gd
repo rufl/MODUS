@@ -1727,8 +1727,75 @@ func _generated_extraction_record() -> Dictionary:
 	}
 
 
+## Validate generated gameplay records before creating the packed scene.
+## The progression manifest is authoritative when present; mismatches must not
+## produce a scene whose actors and mission contract disagree.
+func _validate_generated_actor_records() -> bool:
+	if not generation_context:
+		return false
+	var key_records: Array = generation_context.key_placements
+	var door_records: Variant = generation_context.metadata.get("locked_doors", [])
+	if not door_records is Array:
+		return false
+	var progression: Variant = generation_context.progression_manifest
+	if progression is Dictionary and not progression.is_empty():
+		var manifest_keys: Variant = progression.get("keys", [])
+		var manifest_doors: Variant = progression.get("locked_transitions", [])
+		if (
+			not manifest_keys is Array
+			or not manifest_doors is Array
+			or manifest_keys.size() != key_records.size()
+			or manifest_doors.size() != door_records.size()
+		):
+			return false
+		for index in range(key_records.size()):
+			var manifest_key: Variant = manifest_keys[index]
+			var key_record: Variant = key_records[index]
+			if (
+				not manifest_key is Dictionary
+				or not key_record is Dictionary
+				or str(manifest_key.get("id", "")) != "KeyPickup_%d" % index
+				or str(manifest_key.get("color", "")) != str(key_record.get("color", ""))
+				or manifest_key.get("room_id", -1) != key_record.get("room_id", -2)
+			):
+				return false
+		for index in range(door_records.size()):
+			var manifest_door: Variant = manifest_doors[index]
+			var door_record: Variant = door_records[index]
+			if (
+				not manifest_door is Dictionary
+				or not door_record is Dictionary
+				or str(manifest_door.get("id", "")) != "LockedDoor_%d" % index
+				or str(manifest_door.get("color", "")) != str(door_record.get("color", ""))
+				or manifest_door.get("room_id", -1) != door_record.get("room_id", -2)
+			):
+				return false
+	for record: Variant in key_records:
+		if (
+			not record is Dictionary
+			or not record.get("position") is Vector3
+			or not record.position.is_finite()
+			or not record.get("room_id") is int
+			or str(record.get("color", "")).is_empty()
+		):
+			return false
+	for record: Variant in door_records:
+		if (
+			not record is Dictionary
+			or not record.get("position") is Vector3
+			or not record.position.is_finite()
+			or not record.get("room_id") is int
+			or str(record.get("color", "")).is_empty()
+		):
+			return false
+	return true
+
+
 ## Build final map scene from generation context
 func _build_map_scene(metadata: Dictionary) -> PackedScene:
+	if not _validate_generated_actor_records():
+		push_error("MapGenerator: generated actor records do not match progression metadata")
+		return null
 	var scene := PackedScene.new()
 
 	# Generated maps are editable level documents, not anonymous world roots.

@@ -685,6 +685,19 @@ func test_seeded_scene_roundtrip_retains_routes_and_gameplay() -> void:
 	second_instance.free()
 
 
+func test_generated_actor_manifest_mismatch_refuses_scene() -> void:
+	var context: GenerationContext = GenerationContextScript.new()
+	context.key_placements = [
+		{"id": 0, "color": "RED", "room_id": 0, "position": Vector3(1.0, 0.5, 1.0)}
+	]
+	context.metadata["locked_doors"] = []
+	context.progression_manifest = {"keys": [], "locked_transitions": []}
+	map_generator.generation_context = context
+	var refused_scene: PackedScene = map_generator._build_map_scene({"gameplay": {}})
+	assert_push_error("generated actor records do not match progression metadata")
+	assert_null(refused_scene, "Actor realization must refuse mismatched progression records")
+
+
 func test_cancelling_prepared_geometry_cannot_abort_replacement_generation() -> void:
 	var config := GenerationConfig.new()
 	config.map_size = Vector2i(64, 64)
