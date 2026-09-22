@@ -307,7 +307,9 @@ func validate_runtime_state(state: Dictionary) -> bool:
 
 
 func restore_runtime_state(state: Dictionary) -> bool:
-	if not validate_runtime_state(state) or is_authoring() or not _has_authority():
+	if not validate_runtime_state(state) or is_authoring() or (
+		not _has_authority() and not is_applying_authoritative_state()
+	):
 		return false
 	# Stage every living enemy before mutating the current encounter.
 	var staged: Dictionary = {}

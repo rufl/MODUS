@@ -29,6 +29,8 @@ func _ready() -> void:
 
 	if _is_standalone_editor():
 		_launch_editor()
+	elif "--hub" in OS.get_cmdline_user_args():
+		LevelGame.launch(LevelGame.HUB_LEVEL)
 	elif "--breakwater" in OS.get_cmdline_user_args():
 		LevelGame.launch()
 	elif "--breakwater-gate" in OS.get_cmdline_user_args():

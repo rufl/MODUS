@@ -2,45 +2,87 @@ class_name LevelPlaySession
 extends Node3D
 
 signal session_finished
+signal destination_changed(destination_id: String)
 
 const PLAYER_SCENE := preload("res://game/entities/player/player.tscn")
 const ModuleAssemblyScript := preload("res://shared/editor_core/core/module_assembly.gd")
+const MAX_DESTINATIONS := 64
 
 var document: Node3D
 var player: Player
 var navigation_region: NavigationRegion3D
 var error_message: String = ""
 var is_editor_preview: bool = false
+var current_destination_id: String = ""
+var current_spawn_id: String = ""
+var destinations: Dictionary = {}
+var travel_network: LevelTravelNetwork
 var _mission: MissionMgr
 var _previous_mission: Dictionary = {}
 var _previous_mission_level: Node3D
 var _previous_game_state: int
 var _previous_mouse_mode: Input.MouseMode
 var _document_signature: String
+var _baseline_mission: Dictionary = {}
 var _status: Label
 var _notice: String = ""
 var _started: bool = false
+var _initialized: bool = false
+var _frozen: bool = false
+var _travel_busy: bool = false
+var _sources: Dictionary = {}
+var _visits: Dictionary = {}
+var _stage: LevelDestination
+var _staged_players: Array = []
+var _pending_campaign: Dictionary = {}
+
+
+func _ready() -> void:
+	travel_network = LevelTravelNetwork.new()
+	travel_network.name = "TravelNetwork"
+	travel_network.session = self
+	add_child(travel_network)
+
+
+func _initialize_session() -> bool:
+	if _initialized:
+		return true
+	_mission = MissionMgr.get_instance()
+	if not _mission:
+		error_message = "The gameplay mission service is unavailable."
+		return false
+	_previous_mission = _mission.capture_runtime_state()
+	_previous_mission_level = _mission.mission_level
+	_previous_game_state = GameManager.get_state()
+	_previous_mouse_mode = Input.mouse_mode
+	is_editor_preview = get_viewport() is SubViewport
+	_mission.objective_updated.connect(_on_objective_updated)
+	_mission.mission_completed.connect(_on_mission_completed)
+	_initialized = true
+	return true
+
+
+func register_destination(identity: String, path: String) -> bool:
+	if identity.is_empty() or identity.length() > 256 or destinations.size() >= MAX_DESTINATIONS:
+		return false
+	if not (path.begins_with("res://") or path.begins_with("user://")) or ".." in path:
+		return false
+	if path.get_extension() != "tscn" or not ResourceLoader.exists(path, "PackedScene"):
+		return false
+	if destinations.has(identity):
+		return destinations[identity].path == path
+	destinations[identity] = {"id": identity, "path": path}
+	return true
 
 
 func start_document(source: Node3D) -> bool:
 	if _started or not is_inside_tree() or not source or not source.has_method("prepare_for_save"):
 		return _fail("A tree-attached level session requires an authored level document.")
-	if (
-		multiplayer.has_multiplayer_peer()
-		and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer
-	):
-		return _fail(
-			"Document play sessions are offline; disconnect multiplayer before playtesting."
-		)
+	if not _initialize_session():
+		return false
+	if is_editor_preview and _is_networked():
+		return _fail("Editor playtests require an offline session.")
 	source.prepare_for_save()
-	var channel_errors: Array[String] = source.get_channel_system().validate_data(
-		source.channel_data
-	)
-	if not channel_errors.is_empty():
-		return _fail("\n".join(channel_errors))
-	var validation: Dictionary = ModuleAssemblyScript.validate_level(source)
-	if not validation.valid:
-		return _fail("\n".join(PackedStringArray(validation.errors)))
 	var packed := PackedScene.new()
 	var previous_mode := source.process_mode
 	source.process_mode = Node.PROCESS_MODE_INHERIT
@@ -48,64 +90,327 @@ func start_document(source: Node3D) -> bool:
 	source.process_mode = previous_mode
 	if result != OK:
 		return _fail("Unable to clone document: " + error_string(result))
-	document = packed.instantiate() as Node3D
-	if not document:
-		return _fail("Document has no spatial root.")
-	document.authoring_mode = false
-	document.set_meta("document_runtime_session", true)
-	document.process_mode = Node.PROCESS_MODE_INHERIT
-	add_child(document)
-	document.restore_runtime_bindings()
-	var spawns: Array[Node3D] = document.get_spawn_points("player")
-	if spawns.is_empty():
-		return _fail("Place a player spawn before starting the level.")
-	_mission = MissionMgr.get_instance()
-	if not _mission:
-		return _fail("The gameplay mission service is unavailable.")
-	_previous_mission = _mission.capture_runtime_state()
-	_previous_mission_level = _mission.mission_level
-	_previous_game_state = GameManager.get_state()
-	_previous_mouse_mode = Input.mouse_mode
-	is_editor_preview = get_viewport() is SubViewport
-	_started = true
-	player = PLAYER_SCENE.instantiate() as Player
-	document.runtime_player = player
-	player.name = "1"
-	player.isolated_session = is_editor_preview
-	player.process_mode = Node.PROCESS_MODE_DISABLED
-	add_child(player)
-	player.global_transform = spawns[0].global_transform
-	player.spawns = PackedVector3Array([player.global_position])
+	var identity := str(source.get_meta("destination_id", source.get_meta("mission_id", "document")))
+	_sources[identity] = packed
+	destinations[identity] = {"id": identity, "path": source.scene_file_path}
+	if _is_networked() and not multiplayer.is_server():
+		travel_network.request_join()
+		return true
+	return await travel_to(identity)
 
-	var context := GenerationContext.new()
-	var baker := NavigationMeshBaker.new()
-	baker.initialize(context)
-	baker.get_navigation_mesh().agent_max_slope = rad_to_deg(player.floor_max_angle)
-	if not baker.bake_navigation_mesh(document):
-		baker.initialize(null)
-		return _fail("The authored collision produced no walkable navigation mesh.")
-	navigation_region = baker.get_navigation_region()
+
+func _is_networked() -> bool:
+	return multiplayer.has_multiplayer_peer() and not multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+
+
+func is_travel_pending() -> bool:
+	return _travel_busy or (travel_network != null and travel_network.pending)
+
+
+func travel_to(identity: String, spawn_id: String = "") -> bool:
+	if is_travel_pending() or (_is_networked() and not multiplayer.is_server()):
+		return false
+	if not destinations.has(identity) or not _initialize_session():
+		error_message = "Unknown destination: " + identity
+		return false
+	_travel_busy = true
+	set_travel_frozen(true)
+	var saved: Dictionary = _visits.get(identity, {})
+	var descriptor: Dictionary = destinations[identity]
+	if identity == current_destination_id:
+		saved = capture_runtime_state()
+	var offer := {"descriptor": descriptor, "spawn_id": spawn_id, "runtime": saved, "players": capture_player_roster()}
+	var prepared := stage_travel_offer(offer)
+	if not prepared.success:
+		error_message = prepared.error
+		_travel_busy = false
+		set_travel_frozen(false)
+		return false
+	# Arrival moves the existing players, never restores their older destination inventory.
+	for record: Dictionary in _staged_players:
+		record.position = [_stage.spawn_transform.origin.x, _stage.spawn_transform.origin.y, _stage.spawn_transform.origin.z]
+		var rotation := _stage.spawn_transform.basis.get_euler()
+		record.rotation = [rotation.x, rotation.y, rotation.z]
+	offer = {"descriptor": _stage.descriptor, "spawn_id": _stage.spawn_id, "runtime": _stage.runtime, "players": _staged_players}
+	var success := await travel_network.synchronize_travel(offer)
+	_travel_busy = false
+	set_travel_frozen(false)
+	if not success:
+		error_message = travel_network.last_error
+	return success
+
+
+func stage_travel_offer(offer: Dictionary) -> Dictionary:
+	abort_staged_travel()
+	if not _initialize_session():
+		return {"success": false, "error": error_message}
+	if not offer.get("descriptor") is Dictionary or not offer.get("spawn_id") is String or not offer.get("runtime") is Dictionary:
+		return {"success": false, "error": "Malformed destination offer."}
+	var identity: Dictionary = offer.descriptor
+	if not identity.get("id") is String or not identity.get("path") is String:
+		return {"success": false, "error": "Malformed destination identity."}
+	if not destinations.has(identity.id) or destinations[identity.id].path != identity.path:
+		return {"success": false, "error": "Destination is not in the local campaign catalog."}
+	var state_manager: Node = GameManager.get_core_system("state_manager")
+	if not state_manager or not state_manager.validate_session_players(offer.get("players")):
+		return {"success": false, "error": "Invalid destination player state."}
+	var packed: PackedScene = _sources.get(identity.id)
+	if not packed and not identity.path.is_empty():
+		packed = ResourceLoader.load(identity.path, "PackedScene", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+	if not packed:
+		return {"success": false, "error": "Destination content is unavailable."}
+	_stage = LevelDestination.new()
+	if not _stage.prepare(self, packed, identity, offer.spawn_id, offer.runtime):
+		var message := _stage.error
+		_stage = null
+		return {"success": false, "error": message}
+	_staged_players = offer.players.duplicate(true)
+	return {"success": true, "error": ""}
+
+
+func commit_staged_travel() -> bool:
+	if not _stage or not is_instance_valid(_stage.document):
+		return false
+	var stage := _stage
+	_stage = null
+	if _started and is_instance_valid(document):
+		_visits[current_destination_id] = capture_runtime_state()
+	if not _pending_campaign.is_empty():
+		_visits.clear()
+		for identity: String in _pending_campaign.destinations:
+			var entry: Dictionary = _pending_campaign.destinations[identity]
+			destinations[identity] = entry.descriptor.duplicate(true)
+			_visits[identity] = entry.runtime.duplicate(true)
+		_pending_campaign.clear()
+	var old_document := document
+	var old_navigation := navigation_region
+	if is_instance_valid(old_document):
+		old_document.runtime_player = null
+		remove_child(old_document)
+	if is_instance_valid(old_navigation):
+		remove_child(old_navigation)
+	document = stage.document
+	navigation_region = stage.navigation
+	stage.viewport.remove_child(document)
+	stage.viewport.remove_child(navigation_region)
+	stage.document = null
+	stage.navigation = null
+	add_child(document)
 	add_child(navigation_region)
+	stage.discard()
+	current_destination_id = stage.descriptor.id
+	current_spawn_id = stage.spawn_id
+	_document_signature = stage.descriptor.signature
+	_baseline_mission = stage.baseline
+	destinations[current_destination_id] = stage.descriptor.duplicate(true)
+	document.set_meta("travel_session", self)
+	_mission.restore_runtime_state(stage.runtime.mission, document)
+	if not _started:
+		_started = true
+		add_to_group("level_play_session")
+		_create_status()
+	if _staged_players.is_empty() and (not _is_networked() or multiplayer.is_server()):
+		ensure_peer_player(1)
+		player.global_transform = stage.spawn_transform
+	else:
+		apply_player_roster(_staged_players)
+	_staged_players = []
+	document.runtime_player = player
+	for actor: Node in document.find_children("*", "", true, false):
+		if actor is ActorBase:
+			actor.start_runtime()
+	navigation_region.enabled = true
 	var navigation_map := get_world_3d().navigation_map
 	NavigationServer3D.map_set_use_async_iterations(navigation_map, false)
 	NavigationServer3D.region_set_use_async_iterations(navigation_region.get_rid(), false)
 	NavigationServer3D.map_force_update(navigation_map)
-	_document_signature = _make_document_signature()
-	_create_status()
-	_mission.objective_updated.connect(_on_objective_updated)
-	_mission.mission_completed.connect(_on_mission_completed)
-	if not _mission.start_document_mission(document):
-		return _fail(_mission.document_error)
-	add_to_group("level_play_session")
-	for actor: Node in document.find_children("*", "", true, false):
-		if actor is ActorBase:
-			actor.start_runtime()
-	await get_tree().physics_frame
-	player.process_mode = Node.PROCESS_MODE_INHERIT
+	if is_instance_valid(old_document):
+		old_document.free()
+	if is_instance_valid(old_navigation):
+		old_navigation.free()
 	GameManager.change_state(GameManager.State.RUNNING)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	set_travel_frozen(_frozen)
+	_refresh_status()
+	destination_changed.emit(current_destination_id)
+	return true
+
+
+func abort_staged_travel() -> void:
+	if _stage:
+		_stage.discard()
+	_stage = null
+	_staged_players = []
+	_pending_campaign.clear()
+
+
+func set_travel_frozen(frozen: bool) -> void:
+	_frozen = frozen
+	if is_instance_valid(document):
+		document.process_mode = Node.PROCESS_MODE_DISABLED if frozen else Node.PROCESS_MODE_INHERIT
+	for participant: Player in get_session_players():
+		participant.process_mode = Node.PROCESS_MODE_DISABLED if frozen else Node.PROCESS_MODE_INHERIT
+	if is_instance_valid(_mission) and frozen:
+		_mission.set_process(false)
+	elif _started and is_instance_valid(_mission):
+		_mission.set_process(true)
+
+
+func get_session_players() -> Array[Player]:
+	var participants: Array[Player] = []
+	for child: Node in get_children():
+		if child is Player:
+			participants.append(child)
+	return participants
+
+
+func ensure_peer_player(peer_id: int) -> void:
+	if peer_id <= 0 or get_node_or_null(str(peer_id)):
+		return
+	var participant := PLAYER_SCENE.instantiate() as Player
+	participant.name = str(peer_id)
+	participant.isolated_session = is_editor_preview
+	participant.process_mode = Node.PROCESS_MODE_DISABLED
+	add_child(participant)
+	if not participant.interaction_component:
+		PlayerComponentFactory._setup_interaction(participant)
+	if is_instance_valid(document):
+		var points: Array[Node3D] = document.get_spawn_points("player")
+		for point: Node3D in points:
+			if str(point.get_meta("spawn_id", document.get_path_to(point))) == current_spawn_id:
+				participant.global_transform = point.global_transform
+				break
+	participant.spawns = PackedVector3Array([participant.global_position])
+	if peer_id == multiplayer.get_unique_id():
+		player = participant
+	elif player == null and peer_id == 1:
+		player = participant
+	participant.process_mode = Node.PROCESS_MODE_DISABLED if _frozen else Node.PROCESS_MODE_INHERIT
+
+
+func remove_peer_player(peer_id: int) -> void:
+	var participant := get_node_or_null(str(peer_id))
+	if participant is Player:
+		participant.free()
+
+
+func capture_player_roster() -> Array:
+	var state_manager: Node = GameManager.get_core_system("state_manager")
+	return state_manager.capture_session_players(self) if state_manager else []
+
+
+func apply_player_roster(records: Array) -> bool:
+	var state_manager: Node = GameManager.get_core_system("state_manager")
+	if not state_manager or not state_manager.validate_session_players(records):
+		return false
+	var present: Dictionary = {}
+	for record: Dictionary in records:
+		var peer_id := int(record.peer_id)
+		var arriving := _frozen or not get_node_or_null(str(peer_id))
+		present[peer_id] = true
+		ensure_peer_player(peer_id)
+		if arriving:
+			var participant := get_node(str(peer_id)) as Player
+			participant.global_position = Vector3(record.position[0], record.position[1], record.position[2])
+			participant.global_rotation = Vector3(record.rotation[0], record.rotation[1], record.rotation[2])
+			participant.velocity = Vector3.ZERO
+			participant.spawns = PackedVector3Array([participant.global_position])
+	for participant: Player in get_session_players():
+		if not present.has(participant.get_multiplayer_authority()):
+			participant.free()
+	state_manager.restore_session_players(records, self)
+	if is_instance_valid(document):
+		document.runtime_player = player
+	return true
+
+
+func get_travel_offer() -> Dictionary:
+	if not _started:
+		return {}
+	return {"descriptor": destinations[current_destination_id].duplicate(true), "spawn_id": current_spawn_id, "runtime": capture_runtime_state(), "players": capture_player_roster()}
+
+
+func capture_runtime_state() -> Dictionary:
+	return LevelRuntimeState.capture(document, _document_signature, _mission.capture_runtime_state())
+
+
+func validate_runtime_state(state: Variant) -> bool:
+	return _started and LevelRuntimeState.validate(document, _document_signature, _baseline_mission, state)
+
+
+func restore_runtime_state(state: Dictionary) -> bool:
+	if not validate_runtime_state(state):
+		return false
+	document.set_meta("applying_authoritative_state", true)
+	var restored := LevelRuntimeState.restore_actors(document, state)
+	document.remove_meta("applying_authoritative_state")
+	if not restored:
+		return false
+	_mission.restore_runtime_state(state.mission, document)
 	_refresh_status()
 	return true
+
+
+func apply_runtime_update(state: Dictionary) -> bool:
+	return not _frozen and restore_runtime_state(state)
+
+
+func capture_campaign_state() -> Dictionary:
+	var entries: Dictionary = {}
+	for identity: String in _visits:
+		entries[identity] = {"descriptor": destinations[identity].duplicate(true), "runtime": _visits[identity].duplicate(true)}
+	if _started:
+		entries[current_destination_id] = {"descriptor": destinations[current_destination_id].duplicate(true), "runtime": capture_runtime_state()}
+	return {"version": 1, "current_id": current_destination_id, "spawn_id": current_spawn_id, "destinations": entries, "players": capture_player_roster()}
+
+
+func validate_campaign_state(state: Variant) -> bool:
+	if not state is Dictionary or state.get("version") != 1 or not state.get("current_id") is String or not state.get("spawn_id") is String or not state.get("destinations") is Dictionary:
+		return false
+	if state.destinations.is_empty() or state.destinations.size() > MAX_DESTINATIONS or not state.destinations.has(state.current_id):
+		return false
+	var state_manager: Node = GameManager.get_core_system("state_manager")
+	if not state_manager or not state_manager.validate_session_players(state.get("players")):
+		return false
+	for identity: Variant in state.destinations:
+		if not identity is String or not destinations.has(identity):
+			return false
+		var entry: Variant = state.destinations[identity]
+		if not entry is Dictionary or not entry.get("descriptor") is Dictionary or not entry.get("runtime") is Dictionary:
+			return false
+		if entry.descriptor.get("id") != identity or entry.descriptor.get("path") != destinations[identity].path:
+			return false
+		var packed: PackedScene = _sources.get(identity)
+		if not packed:
+			packed = load(destinations[identity].path) as PackedScene
+		if not packed:
+			return false
+		var candidate := LevelDestination.new()
+		var arrival: String = state.spawn_id if identity == state.current_id else ""
+		var valid := candidate.prepare(self, packed, entry.descriptor, arrival, entry.runtime)
+		candidate.discard()
+		if not valid:
+			return false
+	return true
+
+
+func restore_campaign_state(state: Dictionary) -> bool:
+	if is_travel_pending() or (_is_networked() and not multiplayer.is_server()) or not validate_campaign_state(state):
+		return false
+	_travel_busy = true
+	set_travel_frozen(true)
+	var entry: Dictionary = state.destinations[state.current_id]
+	var offer := {"descriptor": entry.descriptor, "spawn_id": state.spawn_id, "runtime": entry.runtime, "players": state.players}
+	var prepared := stage_travel_offer(offer)
+	if not prepared.success:
+		_travel_busy = false
+		set_travel_frozen(false)
+		return false
+	_pending_campaign = state.duplicate(true)
+	var success := await travel_network.synchronize_travel(offer)
+	_travel_busy = false
+	set_travel_frozen(false)
+	return success
 
 
 func _fail(message: String) -> bool:
@@ -115,30 +420,34 @@ func _fail(message: String) -> bool:
 
 
 func stop() -> void:
+	if travel_network:
+		travel_network.cancel_travel()
+	abort_staged_travel()
 	if is_instance_valid(_mission):
 		if _mission.objective_updated.is_connected(_on_objective_updated):
 			_mission.objective_updated.disconnect(_on_objective_updated)
 		if _mission.mission_completed.is_connected(_on_mission_completed):
 			_mission.mission_completed.disconnect(_on_mission_completed)
-		if _started:
-			var previous_level := (
-				_previous_mission_level if is_instance_valid(_previous_mission_level) else null
-			)
-			_mission.restore_runtime_state(_previous_mission, previous_level)
-	if _started:
+		if _initialized:
+			_mission.restore_runtime_state(_previous_mission, _previous_mission_level if is_instance_valid(_previous_mission_level) else null)
+	if _initialized:
 		GameManager.change_state(_previous_game_state)
 		Input.mouse_mode = _previous_mouse_mode
+	_initialized = false
 	_started = false
-	if is_instance_valid(document):
-		document.runtime_player = null
 	remove_from_group("level_play_session")
 	for child: Node in get_children():
+		if child == travel_network:
+			continue
 		remove_child(child)
 		child.queue_free()
 	document = null
 	player = null
 	navigation_region = null
 	_status = null
+	_visits.clear()
+	_sources.clear()
+	destinations.clear()
 
 
 func _exit_tree() -> void:
@@ -171,184 +480,6 @@ func _input(event: InputEvent) -> void:
 				else "Checkpoint load failed"
 			)
 		_refresh_status()
-
-
-func _make_document_signature() -> String:
-	var modules: Array = []
-	for module: Node3D in ModuleAssemblyScript.get_instances(document):
-		var definition: Resource = module.definition
-		modules.append(
-			{
-				"instance": module.instance_id,
-				"module": definition.module_id,
-				"revision": definition.content_revision,
-				"transform": var_to_str(module.transform)
-			}
-		)
-	var hash_context := HashingContext.new()
-	hash_context.start(HashingContext.HASH_SHA256)
-	hash_context.update(
-		(
-			JSON
-			. stringify(
-				{
-					"modules": modules,
-					"connections": document.module_connections,
-					"channels": document.channel_data
-				}
-			)
-			. to_utf8_buffer()
-		)
-	)
-	_hash_authored_node(document, hash_context)
-	return hash_context.finish().hex_encode()
-
-
-func _hash_authored_node(node: Node, hash_context: HashingContext) -> void:
-	if node.get_meta("editor_runtime_only", false):
-		return
-	hash_context.update(
-		var_to_bytes(
-			[
-				str(document.get_path_to(node)),
-				node.get_class(),
-				node.transform if node is Node3D else Transform3D.IDENTITY
-			]
-		)
-	)
-	for property: Dictionary in node.get_property_list():
-		var usage: int = property.get("usage", 0)
-		if not (usage & PROPERTY_USAGE_STORAGE and usage & PROPERTY_USAGE_SCRIPT_VARIABLE):
-			continue
-		var value: Variant = node.get(property.name)
-		if not value is Object:
-			hash_context.update(var_to_bytes([property.name, value]))
-	if node is CollisionShape3D and node.shape:
-		hash_context.update(node.shape.get_class().to_utf8_buffer())
-		for property: Dictionary in node.shape.get_property_list():
-			if not (int(property.get("usage", 0)) & PROPERTY_USAGE_STORAGE):
-				continue
-			var value: Variant = node.shape.get(property.name)
-			if not value is Object:
-				hash_context.update(var_to_bytes([property.name, value]))
-	for child: Node in node.get_children():
-		_hash_authored_node(child, hash_context)
-
-
-func capture_runtime_state() -> Dictionary:
-	var actors: Dictionary = {}
-	for actor: Node in document.find_children("*", "", true, false):
-		if actor is ActorBase:
-			actors[document.get_actor_identity(actor)] = actor.capture_runtime_state()
-	return {
-		"version": 1,
-		"document": _document_signature,
-		"actors": actors,
-		"mission": _mission.capture_runtime_state()
-	}
-
-
-func validate_runtime_state(state: Variant) -> bool:
-	if (
-		not state is Dictionary
-		or state.get("version") != 1
-		or state.get("document") != _document_signature
-	):
-		return false
-	var current := capture_runtime_state()
-	var actors: Variant = state.get("actors")
-	var mission: Variant = state.get("mission")
-	if (
-		not actors is Dictionary
-		or actors.size() != current.actors.size()
-		or not mission is Dictionary
-	):
-		return false
-	for identity: String in current.actors:
-		if not actors.get(identity) is Dictionary:
-			return false
-		var expected: Dictionary = current.actors[identity]
-		var saved: Dictionary = actors[identity]
-		var actor: ActorBase = document.find_actor(identity)
-		if not actor or not actor.validate_runtime_state(saved):
-			return false
-		if expected.size() != saved.size():
-			return false
-		for field: String in expected:
-			if expected[field] is int:
-				if not _is_integer(saved.get(field)):
-					return false
-			elif expected[field] is float:
-				var value: Variant = saved.get(field)
-				if not (value is int or value is float) or not is_finite(value):
-					return false
-			elif typeof(saved.get(field)) != typeof(expected[field]):
-				return false
-		if saved.activation_count < 0:
-			return false
-	if not _same_json_value(mission.get("definition"), current.mission.definition):
-		return false
-	if not mission.get("active_id") is String or not mission.get("completed_id") is String:
-		return false
-	var mission_id: String = str(document.get_meta("mission_id", "document_mission"))
-	if not (
-		(mission.active_id == mission_id and mission.completed_id == "")
-		or (mission.active_id == "" and mission.completed_id == mission_id)
-	):
-		return false
-	if (
-		not _same_json_value(mission.get("totals"), current.mission.totals)
-		or not mission.get("state") is Dictionary
-	):
-		return false
-	if mission.state.size() != current.mission.state.size():
-		return false
-	for identity: String in current.mission.state:
-		var count: Variant = mission.state.get(identity)
-		if not _is_integer(count) or count < 0 or count > int(mission.totals[identity]):
-			return false
-	return true
-
-
-func restore_runtime_state(state: Dictionary) -> bool:
-	if not validate_runtime_state(state):
-		return false
-	for identity: String in state.actors:
-		var actor: Node = document.find_actor(identity)
-		var actor_state: Dictionary = state.actors[identity].duplicate()
-		actor_state.activation_count = int(actor_state.activation_count)
-		if not actor.restore_runtime_state(actor_state):
-			return false
-	_mission.restore_runtime_state(state.mission, document)
-	_refresh_status()
-	return true
-
-
-func _is_integer(value: Variant) -> bool:
-	return value is int or (value is float and is_finite(value) and value == floor(value))
-
-
-## JSON numbers are floats; compare their values without weakening container or boolean types.
-func _same_json_value(saved: Variant, expected: Variant) -> bool:
-	if expected is int or expected is float:
-		return (saved is int or saved is float) and is_finite(saved) and saved == expected
-	if typeof(saved) != typeof(expected):
-		return false
-	if expected is Dictionary:
-		if saved.size() != expected.size():
-			return false
-		for key: Variant in expected:
-			if not saved.has(key) or not _same_json_value(saved[key], expected[key]):
-				return false
-		return true
-	if expected is Array:
-		if saved.size() != expected.size():
-			return false
-		for index in expected.size():
-			if not _same_json_value(saved[index], expected[index]):
-				return false
-		return true
-	return saved == expected
 
 
 func _create_status() -> void:

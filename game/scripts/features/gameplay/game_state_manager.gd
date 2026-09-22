@@ -57,6 +57,10 @@ func save_game(slot: String = QUICKSAVE_SLOT) -> bool:
 	if not is_server_or_sp:
 		push_warning("Only server can save game")
 		return false
+	var session := _get_level_session()
+	if session and session.is_travel_pending():
+		save_failed.emit("Travel is pending")
+		return false
 
 	var save_svc: Node = GameManager.get_core_system("save")
 	if not save_svc:
@@ -65,13 +69,19 @@ func save_game(slot: String = QUICKSAVE_SLOT) -> bool:
 		return false
 
 	var save_data: Dictionary = serialize_world()
+	if session and not _validate_world_data(save_data):
+		save_failed.emit("Invalid campaign state")
+		return false
 	save_data["version"] = SAVE_VERSION
 	save_data["timestamp"] = Time.get_datetime_string_from_system(true)
 	save_data["slot"] = slot
 
 	var metadata: Dictionary = {
 		"version": SAVE_VERSION,
-		"player_count": get_tree().get_nodes_in_group("player").size(),
+		"player_count": (
+			save_data.level_campaign.players.size()
+			if save_data.has("level_campaign") else save_data.get("players", []).size()
+		),
 		"time_played": get_session_time()
 	}
 
@@ -93,6 +103,10 @@ func load_game(slot: String = QUICKSAVE_SLOT) -> bool:
 	var is_server_or_sp: bool = not multiplayer.has_multiplayer_peer() or multiplayer.is_server()
 	if not is_server_or_sp:
 		push_warning("Only server can load game")
+		return false
+	var session := _get_level_session()
+	if session and session.is_travel_pending():
+		load_failed.emit("Travel is pending")
 		return false
 
 	var save_svc: Node = GameManager.get_core_system("save")
@@ -116,7 +130,7 @@ func load_game(slot: String = QUICKSAVE_SLOT) -> bool:
 		return false
 
 	# Sync to all clients only after the authoritative world was restored.
-	if multiplayer.has_multiplayer_peer():
+	if multiplayer.has_multiplayer_peer() and not save_data.has("level_campaign"):
 		_sync_load_to_clients.rpc(save_data)
 
 	GameManager.get_core_system("logger").info(
@@ -129,6 +143,8 @@ func load_game(slot: String = QUICKSAVE_SLOT) -> bool:
 @rpc("authority", "call_remote", "reliable")
 func _sync_load_to_clients(save_data: Dictionary) -> void:
 	# Clients receive world state from server
+	if save_data.has("level_campaign"):
+		return
 	if not _validate_world_data(save_data):
 		load_failed.emit("Invalid synchronized save data")
 		return
@@ -139,18 +155,16 @@ func _sync_load_to_clients(save_data: Dictionary) -> void:
 
 
 func _validate_world_data(data: Dictionary) -> bool:
-	var session := get_tree().get_first_node_in_group("level_play_session")
+	var session := _get_level_session()
 	if session:
-		if not session.validate_runtime_state(data.get("level_runtime")):
-			return false
-		if not data.get("players") is Array or data.players.size() != 1:
-			return false
-		if (
-			not data.players[0] is Dictionary
-			or data.players[0].get("peer_id") != session.player.get_multiplayer_authority()
-		):
-			return false
-	elif data.has("level_runtime"):
+		var campaign: Variant = data.get("level_campaign")
+		return (
+			not session.is_travel_pending()
+			and campaign is Dictionary
+			and validate_session_players(campaign.get("players"))
+			and session.validate_campaign_state(campaign)
+		)
+	if data.has("level_campaign") or data.has("level_runtime"):
 		return false
 	if data.has("enemies") and not _validate_enemy_records(data["enemies"]):
 		push_warning("[GameStateManager] Save validation failed: enemies")
@@ -170,11 +184,17 @@ func _validate_world_data(data: Dictionary) -> bool:
 func _validate_player_records(data: Variant) -> bool:
 	if not data is Array:
 		return false
+	var seen_peers: Dictionary = {}
 	for record: Variant in data:
 		if not record is Dictionary:
 			return false
-		if not record.has("peer_id") or not _is_integer_value(record.peer_id):
+		if (
+			not _is_integer_value(record.get("peer_id"))
+			or record.peer_id <= 0 or record.peer_id > 2147483647
+			or seen_peers.has(int(record.peer_id))
+		):
 			return false
+		seen_peers[int(record.peer_id)] = true
 		if record.has("position") and not _is_valid_vec3_array(record.position):
 			return false
 		if record.has("rotation") and not _is_valid_vec3_array(record.rotation):
@@ -188,6 +208,87 @@ func _validate_player_records(data: Variant) -> bool:
 					return false
 				seen_keys[key] = true
 	return true
+
+
+## Session records are complete, JSON-safe snapshots; world saves retain their
+## historical optional fields.
+func validate_session_players(records: Variant) -> bool:
+	if not _validate_player_records(records):
+		return false
+	for record: Dictionary in records:
+		for field: String in ["position", "rotation"]:
+			if not _is_valid_vec3_array(record.get(field)):
+				return false
+		for field: String in ["health", "armor"]:
+			var value: Variant = record.get(field)
+			if not (value is int or value is float) or not is_finite(value) or value < 0:
+				return false
+		if not _is_integer_value(record.get("lifecycle")) or not int(record.lifecycle) in Enums.PlayerState.values():
+			return false
+		if record.lifecycle == Enums.PlayerState.ALIVE and record.health <= 0:
+			return false
+		if not record.get("keys") is Array:
+			return false
+		var ammo: Variant = record.get("weapon_ammo")
+		if not ammo is Dictionary:
+			return false
+		for weapon: Variant in ammo:
+			if not weapon is String or weapon.is_empty():
+				return false
+			var counts: Variant = ammo[weapon]
+			if not counts is Array or counts.size() != 2:
+				return false
+			for count: Variant in counts:
+				if not _is_integer_value(count) or count < 0 or count > 2147483647:
+					return false
+		var index: Variant = record.get("current_weapon_index")
+		if not _is_integer_value(index) or index < 0 or index >= maxi(1, ammo.size()):
+			return false
+		if not _validate_inventory(record.get("inventory"), int(record.peer_id)):
+			return false
+	return true
+
+
+func _validate_inventory(data: Variant, peer_id: int) -> bool:
+	if not data is Dictionary or not _is_integer_value(data.get("owner_peer_id")):
+		return false
+	if int(data.owner_peer_id) != peer_id:
+		return false
+	if not data.get("slots") is Array or data.slots.size() != Inventory.MAX_SLOTS:
+		return false
+	if not data.get("equipment") is Dictionary or data.equipment.size() != Inventory.EQUIPMENT_SLOTS.size():
+		return false
+	for item: Variant in data.slots:
+		if item != null and not _validate_inventory_item(item):
+			return false
+	for slot: String in Inventory.EQUIPMENT_SLOTS:
+		if not data.equipment.has(slot):
+			return false
+		var item: Variant = data.equipment[slot]
+		if item != null:
+			if not _validate_inventory_item(item):
+				return false
+			if not item.equip_slot.is_empty() and item.equip_slot != slot:
+				return false
+	return true
+
+
+func _validate_inventory_item(item: Variant) -> bool:
+	if not item is Dictionary:
+		return false
+	for field: String in ["id", "display_name", "description", "icon_path", "equip_slot", "weapon_scene", "effect_type"]:
+		if not item.get(field) is String:
+			return false
+	if item.id.is_empty() or (not item.equip_slot.is_empty() and not item.equip_slot in Inventory.EQUIPMENT_SLOTS):
+		return false
+	for field: String in ["item_type", "rarity", "max_stack", "current_stack", "value"]:
+		if not _is_integer_value(item.get(field)) or item[field] < 0 or item[field] > 2147483647:
+			return false
+	if not int(item.item_type) in InventoryItem.ItemType.values() or not int(item.rarity) in ItemRarity.Tier.values():
+		return false
+	if item.current_stack < 1 or item.max_stack < 1 or item.current_stack > item.max_stack:
+		return false
+	return (item.get("effect_value") is int or item.get("effect_value") is float) and is_finite(item.effect_value)
 
 
 func _validate_enemy_records(data: Variant) -> bool:
@@ -266,7 +367,7 @@ func _is_integer_value(value: Variant) -> bool:
 	if value is int:
 		return true
 	if value is float:
-		return is_equal_approx(value, round(value))
+		return is_finite(value) and value == floor(value)
 	return false
 
 
@@ -316,12 +417,9 @@ func _is_valid_vec3_array(value: Variant) -> bool:
 
 func serialize_world() -> Dictionary:
 	var data: Dictionary = {}
-	var session := get_tree().get_first_node_in_group("level_play_session")
+	var session := _get_level_session()
 	if session:
-		return {
-			"players": _serialize_players(session.player),
-			"level_runtime": session.capture_runtime_state()
-		}
+		return {"level_campaign": session.capture_campaign_state()}
 
 	# Match state
 	data["match"] = _serialize_match()
@@ -347,6 +445,11 @@ func serialize_world() -> Dictionary:
 func deserialize_world(data: Dictionary) -> bool:
 	if not _validate_world_data(data):
 		return false
+	if data.has("level_campaign"):
+		var session := _get_level_session()
+		if not session or (session.multiplayer.has_multiplayer_peer() and not session.multiplayer.is_server()):
+			return false
+		return await session.restore_campaign_state(data.level_campaign)
 
 	# Match state and players are non-destructive; enemy/item restoration is
 	# staged before their existing nodes are removed.
@@ -366,9 +469,6 @@ func deserialize_world(data: Dictionary) -> bool:
 
 	if data.has("environment") and not _deserialize_environment(data["environment"]):
 		return false
-	if data.has("level_runtime"):
-		var session := get_tree().get_first_node_in_group("level_play_session")
-		return session != null and session.restore_runtime_state(data.level_runtime)
 	return true
 
 
@@ -414,12 +514,35 @@ func _normalize_player_scores(scores: Dictionary) -> Dictionary:
 	return normalized
 
 
+func capture_session_players(session: Node) -> Array:
+	return _serialize_players(session) if is_instance_valid(session) else []
+
+
+func restore_session_players(records: Array, session: Node) -> void:
+	if is_instance_valid(session) and validate_session_players(records):
+		_deserialize_players(records, session)
+
+
+func _get_level_session() -> Node:
+	for session: Node in get_tree().get_nodes_in_group("level_play_session"):
+		if session.multiplayer == multiplayer:
+			return session
+	return null
+
+
+func _player_nodes(scope: Node = null) -> Array:
+	if scope:
+		return scope.get_session_players()
+	var players: Array = []
+	for node: Node in get_tree().get_nodes_in_group("player"):
+		if node.multiplayer == multiplayer and node is CharacterBody3D:
+			players.append(node)
+	return players
+
+
 func _serialize_players(scope: Node = null) -> Array:
 	var players_data: Array = []
-
-	for node in get_tree().get_nodes_in_group("player"):
-		if scope and node != scope:
-			continue
+	for node: Node in _player_nodes(scope):
 		if node is CharacterBody3D:
 			# Access properties via components (Player uses health_component and weapon_manager)
 			var health_val: float = 100.0
@@ -446,30 +569,41 @@ func _serialize_players(scope: Node = null) -> Array:
 			}
 			if "interaction_component" in node and node.interaction_component:
 				player_data["keys"] = node.interaction_component.get_collected_keys()
+			if "inventory" in node and node.inventory:
+				player_data["inventory"] = node.inventory.to_dict()
+			if "state_manager" in node and node.state_manager:
+				player_data["lifecycle"] = node.state_manager.current_state
 
 			players_data.append(player_data)
 
 	return players_data
 
 
-func _deserialize_players(data: Array) -> void:
+func _deserialize_players(data: Array, scope: Node = null) -> void:
 	for player_data: Dictionary in data:
 		var peer_id: int = player_data.get("peer_id", 0)
 
 		# Find player node by authority
-		for node in get_tree().get_nodes_in_group("player"):
-			var session := get_tree().get_first_node_in_group("level_play_session")
-			if session and node != session.player:
-				continue
+		for node: Node in _player_nodes(scope):
 			if node.get_multiplayer_authority() == peer_id:
-				node.global_position = _array_to_vec3(player_data.get("position", [0, 0, 0]))
-				node.global_rotation = _array_to_vec3(player_data.get("rotation", [0, 0, 0]))
-				if node is CharacterBody3D:
-					node.velocity = Vector3.ZERO
+				if not scope:
+					node.global_position = _array_to_vec3(player_data.get("position", [0, 0, 0]))
+					node.global_rotation = _array_to_vec3(player_data.get("rotation", [0, 0, 0]))
+					if node is CharacterBody3D:
+						node.velocity = Vector3.ZERO
 				if "interaction_component" in node and node.interaction_component:
-					node.interaction_component.restore_collected_keys(player_data.get("keys", []))
+					var keys: Array = player_data.get("keys", [])
+					if not scope or not LevelRuntimeState._same_json_value(
+						keys, node.interaction_component.get_collected_keys()
+					):
+						node.interaction_component.restore_collected_keys(keys)
+				if player_data.has("inventory") and "inventory" in node and node.inventory:
+					if not scope or not LevelRuntimeState._same_json_value(
+						player_data.inventory, node.inventory.to_dict()
+					):
+						node.inventory.from_dict(player_data.inventory)
 				# The server restores lifecycle and health once, then replicates both.
-				if not multiplayer.has_multiplayer_peer() or multiplayer.is_server():
+				if not scope and (not node.multiplayer.has_multiplayer_peer() or node.multiplayer.is_server()):
 					var hp: float = player_data.get("health", 100)
 					var armor: float = player_data.get("armor", 0)
 					if "state_manager" in node and node.state_manager:
@@ -479,20 +613,65 @@ func _deserialize_players(data: Array) -> void:
 
 				# Restore weapon state via weapon_manager
 				if "weapon_manager" in node and node.weapon_manager:
-					var saved_idx: int = player_data.get("current_weapon_index", 0)
-					node.weapon_manager.switch_to_weapon(saved_idx)
-
-					if player_data.has("weapon_ammo"):
-						var saved_ammo: Variant = player_data["weapon_ammo"]
-						if saved_ammo is Dictionary:
-							node.weapon_manager.apply_ammo_data(saved_ammo)
-						elif saved_ammo is Array and node.weapon_manager.ammo_system:
-							var current_ammo: Array = node.weapon_manager.ammo_system.weapon_ammo
-							var limit: int = mini(saved_ammo.size(), current_ammo.size())
-							for i in range(limit):
-								current_ammo[i] = saved_ammo[i]
-							node.weapon_manager.ammo_system.emit_ammo_update()
+					var saved_idx: int = int(player_data.get("current_weapon_index", 0))
+					if not scope or saved_idx != node.weapon_manager.current_weapon_index:
+						if scope and node.weapon_manager.inventory:
+							node.weapon_manager.inventory.switch_to_weapon(saved_idx)
+						else:
+							node.weapon_manager.switch_to_weapon(saved_idx)
+					if player_data.get("weapon_ammo") is Dictionary:
+						if not scope or not LevelRuntimeState._same_json_value(
+							player_data.weapon_ammo, node.weapon_manager.get_ammo_data()
+						):
+							node.weapon_manager.apply_ammo_data(player_data.weapon_ammo)
+					elif player_data.get("weapon_ammo") is Array and node.weapon_manager.ammo_system:
+						var current_ammo: Array = node.weapon_manager.ammo_system.weapon_ammo
+						var limit: int = mini(player_data.weapon_ammo.size(), current_ammo.size())
+						for i in range(limit):
+							current_ammo[i] = player_data.weapon_ammo[i]
+						node.weapon_manager.ammo_system.emit_ammo_update()
+				if scope:
+					_restore_session_lifecycle(node, player_data)
 				break
+
+
+func _restore_session_lifecycle(node: Node, record: Dictionary) -> void:
+	var state: Node = node.state_manager if "state_manager" in node else null
+	var health: HealthComponent = node.health_component if "health_component" in node else null
+	if not state or not health:
+		return
+	# Campaign snapshots are authenticated by the travel coordinator and apply
+	# locally on every peer; ordinary setters would duplicate network updates.
+	var lifecycle: int = int(record.lifecycle)
+	var lifecycle_changed: bool = state.current_state != lifecycle
+	if lifecycle_changed:
+		state._restore_alive()
+	if health.current_health != record.health or health.current_armor != record.armor:
+		health._apply_health_state(float(record.health), float(record.armor))
+	health.set("_is_dead", record.health <= 0)
+	if not lifecycle_changed:
+		return
+	if lifecycle == Enums.PlayerState.DOWNED:
+		if state.current_state != lifecycle:
+			state.current_state = lifecycle
+			state.state_changed.emit(lifecycle)
+		if node.downed_handler and not node.downed_handler.is_downed:
+			node.downed_handler.enter_downed()
+		state._sync_downed_visuals(true)
+	elif lifecycle == Enums.PlayerState.DEAD or lifecycle == Enums.PlayerState.SPECTATING:
+		state._cancel_pending_respawn()
+		if node.downed_handler:
+			node.downed_handler.exit_downed()
+		state._sync_downed_visuals(false)
+		state._sync_death_visuals(true)
+		if state.current_state != lifecycle:
+			state.current_state = lifecycle
+			state.state_changed.emit(lifecycle)
+		if node.is_multiplayer_authority() and not is_instance_valid(state._spectator_instance):
+			state._start_spectating()
+	elif state.current_state != lifecycle:
+		state.current_state = lifecycle
+		state.state_changed.emit(lifecycle)
 
 
 func _serialize_enemies() -> Array:

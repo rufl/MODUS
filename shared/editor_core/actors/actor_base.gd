@@ -109,6 +109,8 @@ func _on_actor_ready() -> void:
 func trigger(source: Node = null, data: Dictionary = {}) -> void:
 	if not is_enabled or is_authoring():
 		return
+	if not _can_mutate_runtime():
+		return
 	var mission := MissionMgr.get_instance()
 	if mission and not mission.can_activate_actor(self):
 		return
@@ -138,6 +140,8 @@ func trigger(source: Node = null, data: Dictionary = {}) -> void:
 
 func _do_activate(data: Dictionary) -> void:
 	if is_authoring():
+		return
+	if not _can_mutate_runtime():
 		return
 	is_active = true
 	activation_count += 1
@@ -169,6 +173,8 @@ func _on_activated(_data: Dictionary) -> void:
 func deactivate() -> void:
 	if not is_active or is_authoring() or _is_delaying:
 		return
+	if not _can_mutate_runtime():
+		return
 
 	# Handle delay
 	if deactivation_delay > 0 and not _is_delaying:
@@ -185,6 +191,8 @@ func deactivate() -> void:
 
 func _do_deactivate() -> void:
 	if is_authoring():
+		return
+	if not _can_mutate_runtime():
 		return
 	is_active = false
 
@@ -252,6 +260,21 @@ func is_authoring() -> bool:
 			return bool(current.get("authoring_mode"))
 		current = current.get_parent()
 	return false
+
+
+func _can_mutate_runtime() -> bool:
+	var document := get_level_document()
+	return (
+		not document
+		or not document.get_meta("document_runtime_session", false)
+		or not multiplayer.has_multiplayer_peer()
+		or multiplayer.is_server()
+	)
+
+
+func is_applying_authoritative_state() -> bool:
+	var document := get_level_document()
+	return document != null and document.get_meta("applying_authoritative_state", false)
 
 
 ## Handle input from channel

@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/level_root.gd" id="level"]
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/dock.tscn" id="dock"]
@@ -23,6 +23,7 @@
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="rock"]
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="emergency_lens"]
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/cool_light.tres" id="powered_lens"]
+[ext_resource type="Script" path="res://shared/editor_core/actors/travel_actor.gd" id="travel"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_coastal"]
 sky_top_color = Color(0.19, 0.33, 0.43, 1)
@@ -92,8 +93,16 @@ level_author = "MODUS"
 level_description = "Restart the coastal station through the pump hall, intake, turbine and relay, then ride the powered lift home."
 level_tags = Array[String](["breakwater", "mission", "industrial"])
 metadata/mission_id = "breakwater_station"
+metadata/destination_id = "breakwater_station"
 module_connections = Array[Dictionary]([{"from_instance": "dock", "from_socket": "out", "to_instance": "hub", "to_socket": "in"}, {"from_instance": "hub", "from_socket": "pump", "to_instance": "pump", "to_socket": "in"}, {"from_instance": "pump", "from_socket": "out", "to_instance": "intake", "to_socket": "in"}, {"from_instance": "intake", "from_socket": "out", "to_instance": "turbine", "to_socket": "in"}, {"from_instance": "intake", "from_socket": "cavern", "to_instance": "cavern", "to_socket": "intake"}, {"from_instance": "cavern", "from_socket": "turbine", "to_instance": "turbine", "to_socket": "cavern"}, {"from_instance": "turbine", "from_socket": "out", "to_instance": "relay", "to_socket": "in"}, {"from_instance": "relay", "from_socket": "return", "to_instance": "return_landing", "to_socket": "relay"}, {"from_instance": "return_landing", "from_socket": "lift", "to_instance": "return", "to_socket": "in"}, {"from_instance": "return", "from_socket": "out", "to_instance": "return_gallery", "to_socket": "lift"}, {"from_instance": "return_gallery", "from_socket": "hub", "to_instance": "return_elbow", "to_socket": "gallery"}, {"from_instance": "return_elbow", "from_socket": "hub", "to_instance": "hub", "to_socket": "return"}])
 channel_data = {"pump_encounter": {"sources": ["pump/encounter_entry"], "targets": ["pump/encounter_clear"], "color": "e6953cff", "enabled": true, "delay": 0.0, "inverted": false}, "aux_power": {"sources": ["pump/power_switch"], "targets": ["pump/intake_gate", "pump/aux_lights"], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "turbine_encounter": {"sources": ["turbine/encounter_entry", "turbine/cavern_entry"], "targets": ["turbine/encounter_clear", "turbine/ranged_clear"], "color": "e6953cff", "enabled": true, "delay": 0.0, "inverted": false}, "coolant": {"sources": ["turbine/coolant_switch"], "targets": ["turbine/relay_gate", "turbine/cooling_gantry", "turbine/cooling_lights"], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "relay_encounter": {"sources": ["relay/encounter_entry"], "targets": ["relay/encounter_clear", "relay/ranged_clear"], "color": "e6953cff", "enabled": true, "delay": 0.0, "inverted": false}, "relay_power": {"sources": ["relay/transmit_switch"], "targets": ["relay/return_gate", "hub/return_gate", "hub/station_power", "return/return_lift"], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "return_arrived": {"sources": ["return/return_arrival"], "targets": [], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "mission_complete": {"sources": ["hub/return_complete"], "targets": [], "color": "33c9aaff", "enabled": true, "delay": 0.0, "inverted": false}, "hub_secret": {"sources": ["hub/service_secret"], "targets": [], "color": "e6cf69ff", "enabled": true, "delay": 0.0, "inverted": false}, "cavern_secret": {"sources": ["cavern/cavern_secret"], "targets": [], "color": "e6cf69ff", "enabled": true, "delay": 0.0, "inverted": false}}
+
+[node name="HubReturn" type="Node3D" parent="."]
+position = Vector3(2, 1.25, 3)
+script = ExtResource("travel")
+actor_id = "hub_return"
+actor_name = "E: Return to station hub"
+destination_id = "breakwater_hub"
 
 [node name="Dock" parent="." instance=ExtResource("dock")]
 position = Vector3(0, 0, 0)

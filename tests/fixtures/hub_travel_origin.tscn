@@ -1,0 +1,55 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://shared/editor_core/nodes/level_root.gd" id="level"]
+[ext_resource type="Script" path="res://shared/editor_core/nodes/spawn_point.gd" id="spawn"]
+[ext_resource type="Script" path="res://shared/editor_core/actors/switch_actor.gd" id="switch"]
+[ext_resource type="Script" path="res://shared/editor_core/actors/key_pickup_actor.gd" id="key"]
+[ext_resource type="Script" path="res://shared/editor_core/actors/pickup_spawner_actor.gd" id="supply"]
+[ext_resource type="Script" path="res://shared/editor_core/actors/enemy_spawner_actor.gd" id="encounter"]
+
+[sub_resource type="BoxShape3D" id="floor"]
+size = Vector3(16, 0.5, 16)
+
+[node name="TravelOrigin" type="Node3D"]
+script = ExtResource("level")
+level_name = "Travel origin"
+metadata/mission_id = "travel_origin"
+metadata/destination_id = "travel_origin"
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.25, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("floor")
+
+[node name="Arrival" type="Marker3D" parent="."]
+position = Vector3(0, 1.2, 4)
+script = ExtResource("spawn")
+metadata/spawn_id = "arrival"
+
+[node name="Power" type="Node3D" parent="."]
+position = Vector3(2, 1, 0)
+script = ExtResource("switch")
+actor_id = "power"
+one_shot = true
+metadata/mission_objective = {"description": "Restore power"}
+
+[node name="Key" type="Node3D" parent="."]
+position = Vector3(-2, 1, 0)
+script = ExtResource("key")
+actor_id = "key"
+key_id = "hub_key"
+
+[node name="Supplies" type="Node3D" parent="."]
+position = Vector3(4, 1, 0)
+script = ExtResource("supply")
+actor_id = "supplies"
+auto_spawn = true
+respawn_time = 0.0
+
+[node name="Encounter" type="Node3D" parent="."]
+position = Vector3(-4, 1, 0)
+script = ExtResource("encounter")
+actor_id = "encounter"
+auto_spawn = false
+spawn_count = 1

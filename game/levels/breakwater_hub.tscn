@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://game/levels/breakwater_gate.tscn" id="hub"]
+[ext_resource type="Script" path="res://shared/editor_core/actors/travel_actor.gd" id="travel"]
+
+[node name="BreakwaterHub" instance=ExtResource("hub")]
+level_name = "Breakwater Station — Hub"
+level_description = "Prepare in the station hub, visit Black Start and return without losing progress."
+metadata/mission_id = "breakwater_hub"
+metadata/destination_id = "breakwater_hub"
+
+[node name="MissionDeparture" type="Node3D" parent="."]
+position = Vector3(2, 1.25, 3)
+script = ExtResource("travel")
+actor_id = "mission_departure"
+actor_name = "E: Travel to Black Start"
+destination_id = "breakwater_station"

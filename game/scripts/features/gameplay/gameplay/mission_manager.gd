@@ -216,9 +216,22 @@ func _begin_mission(mission_id: String, definition: Dictionary, level: Node3D) -
 
 
 func start_document_mission(level: Node3D) -> bool:
-	document_error = ""
+	var preview := build_document_state(level)
+	document_error = preview.error
+	if not preview.success:
+		return false
+	# Ordinary authored maps keep the normal match mission; travel explicitly
+	# installs the preview's empty document-scoped state instead.
+	if preview.state.definition.objectives.is_empty():
+		return true
+	_begin_mission(preview.state.active_id, preview.state.definition, level)
+	return true
+
+
+## Pure preview: no service state, signals, or actor activation changes.
+func build_document_state(level: Node3D) -> Dictionary:
 	if not level or not level.has_method("get_actor_identity"):
-		return _invalid_document("Mission requires an authored level document.")
+		return _document_error("Mission requires an authored level document.")
 	var objectives: Array[Dictionary] = []
 	var declarations: Dictionary = {}
 	for node: Node in level.find_children("*", "", true, false):
@@ -226,17 +239,17 @@ func start_document_mission(level: Node3D) -> bool:
 			continue
 		var authored: Variant = node.get_meta("mission_objective")
 		if not authored is Dictionary or not "activation_count" in node:
-			return _invalid_document("Objective must belong to a gameplay actor: " + str(node.name))
+			return _document_error("Objective must belong to a gameplay actor: " + str(node.name))
 		var identity: String = level.get_actor_identity(node)
 		if identity.is_empty() or declarations.has(identity):
-			return _invalid_document("Objective actor identity is empty or duplicated: " + identity)
+			return _document_error("Objective actor identity is empty or duplicated: " + identity)
 		for flag: String in ["optional", "final"]:
 			if not authored.get(flag, false) is bool:
-				return _invalid_document(identity + ": " + flag + " must be boolean.")
+				return _document_error(identity + ": " + flag + " must be boolean.")
 		if not authored.get("order", 0) is int:
-			return _invalid_document(identity + ": order must be an integer.")
+			return _document_error(identity + ": order must be an integer.")
 		if authored.has("requires") and not authored.requires is Array:
-			return _invalid_document(identity + ": requires must be an array of actor identities.")
+			return _document_error(identity + ": requires must be an array of actor identities.")
 		declarations[identity] = authored
 		objectives.append(
 			{
@@ -251,10 +264,6 @@ func start_document_mission(level: Node3D) -> bool:
 				"order": authored.get("order", 0)
 			}
 		)
-	if objectives.is_empty():
-		# A document without objective metadata is an ordinary authored level.
-		# Leave any mission selected by the normal match flow untouched.
-		return true
 	for objective: Dictionary in objectives:
 		var authored: Dictionary = declarations[objective.id]
 		if authored.has("requires"):
@@ -265,15 +274,12 @@ func start_document_mission(level: Node3D) -> bool:
 					or prerequisite == objective.id
 					or objective.requires.has(prerequisite)
 				):
-					return _invalid_document(
+					return _document_error(
 						objective.id + ": invalid prerequisite " + str(prerequisite)
 					)
 				if not objective.optional and declarations[prerequisite].get("optional", false):
-					return _invalid_document(
-						(
-							objective.id
-							+ ": a required objective cannot depend on an optional objective."
-						)
+					return _document_error(
+						objective.id + ": a required objective cannot depend on an optional objective."
 					)
 				objective.requires.append(prerequisite)
 		elif objective.final:
@@ -282,18 +288,29 @@ func start_document_mission(level: Node3D) -> bool:
 					objective.requires.append(prerequisite.id)
 	var ordered := _order_document_objectives(objectives)
 	if ordered.size() != objectives.size():
-		return _invalid_document("Objective prerequisites contain a cycle.")
-	_begin_mission(
-		str(level.get_meta("mission_id", "document_mission")),
-		{"name": str(level.get("level_name")), "objectives": ordered, "ends_match": false},
-		level
-	)
-	return true
+		return _document_error("Objective prerequisites contain a cycle.")
+	var counts: Dictionary = {}
+	var totals: Dictionary = {}
+	for objective: Dictionary in ordered:
+		counts[objective.id] = 0
+		totals[objective.id] = int(objective.required_count)
+	return {
+		"success": true,
+		"error": "",
+		"state": {
+			"active_id": str(level.get_meta("mission_id", "document_mission")),
+			"completed_id": "",
+			"definition": {
+				"name": str(level.get("level_name")), "objectives": ordered, "ends_match": false
+			},
+			"state": counts,
+			"totals": totals
+		}
+	}
 
 
-func _invalid_document(message: String) -> bool:
-	document_error = message
-	return false
+func _document_error(message: String) -> Dictionary:
+	return {"success": false, "error": message, "state": {}}
 
 
 func _order_document_objectives(objectives: Array[Dictionary]) -> Array[Dictionary]:
