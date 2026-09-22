@@ -16,6 +16,7 @@ const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const ModuleAssemblyScript = preload("res://shared/editor_core/core/module_assembly.gd")
 const ModulePanelScript = preload("res://shared/editor_core/ui/module_authoring_panel.gd")
 const MapPrefabSystemScript = preload("res://game/scripts/map_generator/prefab_system.gd")
+const GenerationConfigScript = preload("res://game/scripts/map_generator/generation_config.gd")
 
 var editor_state: Node
 var asset_registry: Node
@@ -200,6 +201,12 @@ func _init_ui() -> void:
 	play_button.custom_minimum_size = Vector2(140, 48)
 	play_button.pressed.connect(begin_playtest)
 	toolbar_panel.add_child(play_button)
+
+	var generate_button := Button.new()
+	generate_button.text = "Generate Candidates"
+	generate_button.custom_minimum_size = Vector2(180, 48)
+	generate_button.pressed.connect(_on_generate_candidates_pressed)
+	toolbar_panel.add_child(generate_button)
 
 
 func _finish_ui() -> void:
@@ -633,6 +640,21 @@ func get_document_error() -> String:
 
 func is_playtesting() -> bool:
 	return _play_starting or is_instance_valid(_play_session)
+
+
+func generate_replacement_candidates(seed: String = "editor-preview") -> bool:
+	if _map_generator == null or not _map_generator.has_method("generate_map"):
+		return false
+	if _map_generator.get("is_generating"):
+		return false
+	var config := GenerationConfigScript.new()
+	config.map_seed = seed
+	_map_generator.generate_map(seed, config)
+	return true
+
+
+func _on_generate_candidates_pressed() -> void:
+	generate_replacement_candidates()
 
 
 func begin_playtest() -> bool:
