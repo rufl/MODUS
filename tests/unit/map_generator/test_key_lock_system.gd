@@ -110,6 +110,20 @@ func test_branching_graph_uses_a_real_route_to_extraction() -> void:
 	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
 
 
+func test_route_uses_player_start_and_stable_farthest_fallback() -> void:
+	_create_room_chain(context, 6)
+	context.rooms.reverse()
+	context.player_start_position = Vector2i(10 + 2 * 15, 10)
+	context.exit_position = Vector2i(-1, -1)
+	var manifest: Dictionary = (
+		key_lock_system.generate_key_lock_system(context).progression_manifest
+	)
+	assert_eq(manifest.start_room_id, 2)
+	assert_eq(manifest.goal_room_id, 5)
+	assert_eq(manifest.recovery_route, [2, 3, 4, 5])
+	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
+
+
 func test_manifest_rejects_forged_room_edge() -> void:
 	_create_room_chain(context, 6)
 	var manifest: Dictionary = (

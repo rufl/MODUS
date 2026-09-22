@@ -412,11 +412,17 @@ func _find_room_path(
 	context: GenerationContext, start_room_id: int, target_room_id: int
 ) -> Array[Room]:
 	var parents: Dictionary = {start_room_id: -1}
+	var distances: Dictionary = {start_room_id: 0}
 	var queue: Array[int] = [start_room_id]
-	var last_room_id := start_room_id
+	var farthest_room_id := start_room_id
 	while not queue.is_empty():
 		var room_id: int = queue.pop_front()
-		last_room_id = room_id
+		var room_distance: int = int(distances[room_id])
+		if (
+			room_distance > int(distances[farthest_room_id])
+			or (room_distance == int(distances[farthest_room_id]) and room_id < farthest_room_id)
+		):
+			farthest_room_id = room_id
 		if room_id == target_room_id:
 			break
 		var room := _find_room_by_id(context, room_id)
@@ -428,15 +434,16 @@ func _find_room_path(
 			if not connected_id is int or parents.has(connected_id):
 				continue
 			parents[connected_id] = room_id
+			distances[connected_id] = room_distance + 1
 			queue.append(connected_id)
 
 	if target_room_id >= 0:
 		if not parents.has(target_room_id):
 			return []
-		last_room_id = target_room_id
+		farthest_room_id = target_room_id
 	var room_path: Array[Room] = []
 	var path_ids: Array[int] = []
-	var current_id := last_room_id
+	var current_id := farthest_room_id
 	while current_id >= 0:
 		path_ids.push_front(current_id)
 		current_id = int(parents.get(current_id, -1))
@@ -448,12 +455,21 @@ func _find_room_path(
 	return room_path
 
 
-## Find the starting room (first room or closest to center)
+## Find the starting room from the configured player start cell.
 func _find_start_room(context: GenerationContext) -> Room:
 	if context.rooms.is_empty():
 		return null
-
-	# Use first room as start (typically placed near center)
+	var start := context.player_start_position
+	if (
+		start.x >= 0
+		and start.y >= 0
+		and start.y < context.grid.size()
+		and start.x < context.grid[start.y].size()
+	):
+		var room_id: int = context.grid[start.y][start.x].room_id
+		var room := _find_room_by_id(context, room_id)
+		if room:
+			return room
 	return context.rooms[0]
 
 
