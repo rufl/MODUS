@@ -40,6 +40,12 @@ The movement limiter now uses a monotonic microsecond token bucket instead of mi
 
 Real host/client CLI join/disconnect completed without engine/script errors; two movement burst-limit rejections remain in that run. The cap was retained rather than increased until warnings disappeared.
 
+### September 22 Capability and Generated Progression Contract
+
+Generated and authored content now carries a versioned capability manifest with runtime identity, required capabilities and explicit fallback diagnostics. Destination staging and network admission reject malformed, mismatched or unavailable capabilities before instantiation or peer spawn; common walk/CSG content remains available without Voxel Tools. Key/lock generation publishes deterministic key, lock, objective and recovery-route metadata transactionally; impossible placement/progression leaves no replacement state, and MissionMgr validates and retains generated manifests through runtime capture/restore.
+
+The focused capability/prefab/mission selection passes **43/43 tests with 299 assertions**; the deterministic generator selection passes **6/6 with 191 assertions**. This proves source and headless contracts only. Bundled native runtime parity, generated pickup/door actor realization, composed Breakwater production, graphical review and external acceptance remain open.
+
 ### September 13 Generator Correctness and World-Building Plan
 
 The [release and world-building plan](RELEASE_AND_WORLD_BUILDING_PLAN.md) separates implemented generator/module/editor contracts from release acceptance. The three-room gate and eleven-module **Breakwater Black Start** mission are implemented; the production pass adds room detail, power-driven presentation, original zoned ambience and finite-supply tuning. Native completion and isolated rendered review are proven below. A local Linux portable package now has a clean install/verify/uninstall lifecycle with save preservation. Human audiovisual/balance acceptance, signed/published installers, bundled native integrations and external-service proof remain open.

@@ -168,21 +168,38 @@ func travel_to(identity: String, spawn_id: String = "") -> bool:
 func stage_travel_offer(offer: Dictionary) -> Dictionary:
 	abort_staged_travel()
 	if not _initialize_session():
-		return {"success": false, "error": error_message}
+		return {"success": false, "error": error_message, "missing": [], "fallback": []}
 	if (
 		not offer.get("descriptor") is Dictionary
 		or not offer.get("spawn_id") is String
 		or not offer.get("runtime") is Dictionary
 	):
-		return {"success": false, "error": "Malformed destination offer."}
+		return {
+			"success": false, "error": "Malformed destination offer.", "missing": [], "fallback": []
+		}
 	var identity: Dictionary = offer.descriptor
 	if not identity.get("id") is String or not identity.get("path") is String:
-		return {"success": false, "error": "Malformed destination identity."}
+		return {
+			"success": false,
+			"error": "Malformed destination identity.",
+			"missing": [],
+			"fallback": []
+		}
 	if not destinations.has(identity.id) or destinations[identity.id].path != identity.path:
-		return {"success": false, "error": "Destination is not in the local campaign catalog."}
+		return {
+			"success": false,
+			"error": "Destination is not in the local campaign catalog.",
+			"missing": [],
+			"fallback": []
+		}
 	var state_manager: Node = GameManager.get_core_system("state_manager")
 	if not state_manager or not state_manager.validate_session_players(offer.get("players")):
-		return {"success": false, "error": "Invalid destination player state."}
+		return {
+			"success": false,
+			"error": "Invalid destination player state.",
+			"missing": [],
+			"fallback": []
+		}
 	var packed: PackedScene = _sources.get(identity.id)
 	if not packed and not identity.path.is_empty():
 		packed = (
@@ -190,14 +207,25 @@ func stage_travel_offer(offer: Dictionary) -> Dictionary:
 			as PackedScene
 		)
 	if not packed:
-		return {"success": false, "error": "Destination content is unavailable."}
+		return {
+			"success": false,
+			"error": "Destination content is unavailable.",
+			"missing": [],
+			"fallback": []
+		}
 	_stage = LevelDestination.new()
 	if not _stage.prepare(self, packed, identity, offer.spawn_id, offer.runtime):
 		var message := _stage.error
+		var capability_result := _stage.capability_validation
 		_stage = null
-		return {"success": false, "error": message}
+		return {
+			"success": false,
+			"error": message,
+			"missing": capability_result.get("missing", []),
+			"fallback": capability_result.get("fallback", [])
+		}
 	_staged_players = offer.players.duplicate(true)
-	return {"success": true, "error": ""}
+	return {"success": true, "error": "", "missing": [], "fallback": []}
 
 
 func commit_staged_travel() -> bool:

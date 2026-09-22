@@ -17,6 +17,9 @@ const ModuleAssemblyScript = preload("res://shared/editor_core/core/module_assem
 const ModulePanelScript = preload("res://shared/editor_core/ui/module_authoring_panel.gd")
 const MapPrefabSystemScript = preload("res://game/scripts/map_generator/prefab_system.gd")
 const GenerationConfigScript = preload("res://game/scripts/map_generator/generation_config.gd")
+const FeatureAvailabilityScript = preload(
+	"res://game/scripts/map_generator/feature_availability.gd"
+)
 
 var editor_state: Node
 var asset_registry: Node
@@ -26,7 +29,9 @@ var editor_features: Node  ## Unified features controller
 var generator_prefab_system: RefCounted
 var _generator_replacement_metadata: Array = []
 var _map_generator: Node
-var _replacement_capabilities: Array[String] = ["walk"]
+var _feature_availability: RefCounted = FeatureAvailabilityScript.new()
+var _replacement_capability_manifest: Dictionary
+var _replacement_capabilities: Array[String] = ["walk", "csg"]
 var _replacement_capabilities_configured := false
 var palette_panel: Control
 var toolbar_panel: Control
@@ -126,6 +131,10 @@ func _setup_layout() -> void:
 	_hotbar_container.custom_minimum_size.y = 64
 	_hotbar_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center_vbox.add_child(_hotbar_container)
+	_feature_availability.initialize()
+	_replacement_capability_manifest = _feature_availability.create_capability_manifest(
+		_replacement_capabilities
+	)
 
 
 func _init_systems() -> void:
@@ -300,10 +309,21 @@ func set_generator_replacement_metadata(entries: Array) -> void:
 
 
 func _on_generation_completed(_map_scene: PackedScene, metadata: Dictionary) -> void:
-	if not _replacement_capabilities_configured:
-		var replacement_capabilities: Variant = metadata.get("replacement_capabilities", [])
-		if replacement_capabilities is Array:
-			_replacement_capabilities = replacement_capabilities.duplicate()
+	var manifest: Variant = metadata.get("capability_manifest")
+	if manifest != null:
+		var negotiation := _feature_availability.validate_capability_manifest(manifest)
+		if not negotiation.success:
+			if module_panel:
+				module_panel.set_external_status(str(negotiation.error))
+			_generator_replacement_metadata.clear()
+			return
+		_replacement_capability_manifest = manifest.duplicate(true)
+		_replacement_capabilities = _feature_availability.get_available_capabilities()
+	elif not _replacement_capabilities_configured:
+		_replacement_capabilities = _feature_availability.get_available_capabilities()
+		_replacement_capability_manifest = _feature_availability.create_capability_manifest(
+			_replacement_capabilities
+		)
 	var replacement_catalog: Variant = metadata.get("replacement_catalog", [])
 	if replacement_catalog is Array:
 		set_generator_replacement_metadata(replacement_catalog)
@@ -319,12 +339,26 @@ func get_replacement_capabilities() -> Array[String]:
 		and _map_generator
 		and _map_generator.has_method("get_runtime_capabilities")
 	):
-		return _map_generator.get_runtime_capabilities()
+		_replacement_capabilities = _feature_availability.get_available_capabilities()
 	return _replacement_capabilities.duplicate()
 
 
+func get_replacement_capability_manifest() -> Dictionary:
+	if _replacement_capability_manifest.is_empty():
+		_replacement_capability_manifest = _feature_availability.create_capability_manifest(
+			get_replacement_capabilities()
+		)
+	return _replacement_capability_manifest.duplicate(true)
+
+
 func set_replacement_capabilities(capabilities: Array[String]) -> void:
-	_replacement_capabilities = capabilities.duplicate()
+	var negotiation := _feature_availability.negotiate_capabilities(capabilities)
+	if not negotiation.success:
+		if module_panel:
+			module_panel.set_external_status(str(negotiation.error))
+		return
+	_replacement_capabilities = _feature_availability.get_available_capabilities()
+	_replacement_capability_manifest = negotiation.manifest
 	_replacement_capabilities_configured = true
 	if module_panel:
 		module_panel.refresh_document()

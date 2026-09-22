@@ -1,6 +1,12 @@
 extends RefCounted
 class_name FeatureAvailability
 
+## Canonical runtime capability negotiation for generated and authored content.
+## This object is the only local source of truth for optional runtime features.
+const CAPABILITY_CONTRACT_VERSION := 1
+const RUNTIME_ID := "modus"
+const RUNTIME_VERSION := 1
+const COMMON_CAPABILITIES := ["walk", "csg"]
 ## FeatureAvailability
 ## Detects and manages graceful degradation for optional features
 ## Provides fallback mechanisms when optional dependencies are unavailable
@@ -80,12 +86,140 @@ func get_capability_snapshot() -> Dictionary:
 	}
 
 
-## Return replacement capabilities supported by this runtime.
 func get_available_capabilities() -> Array[String]:
-	var capabilities: Array[String] = ["walk"]
+	var capabilities: Array[String] = ["walk", "csg"]
 	if voxel_tools_available:
 		capabilities.append("voxel")
 	return capabilities
+
+
+## Build the versioned manifest embedded in generated/authored content.
+func create_capability_manifest(
+	required_capabilities: Variant = [], fallback_policy: Variant = {}
+) -> Dictionary:
+	var required := _normalize_capabilities(required_capabilities)
+	var policy: Dictionary = {}
+	if fallback_policy is Dictionary:
+		for capability: Variant in fallback_policy:
+			if capability is String and fallback_policy[capability] is String:
+				policy[capability] = fallback_policy[capability]
+	return {
+		"contract_version": CAPABILITY_CONTRACT_VERSION,
+		"runtime": {"id": RUNTIME_ID, "version": RUNTIME_VERSION},
+		"runtime_id": RUNTIME_ID,
+		"runtime_version": RUNTIME_VERSION,
+		"required_capabilities": required,
+		"available_capabilities": get_available_capabilities(),
+		"fallback_policy": policy
+	}
+
+
+func get_capability_manifest(
+	required_capabilities: Variant = [], fallback_policy: Variant = {}
+) -> Dictionary:
+	return create_capability_manifest(required_capabilities, fallback_policy)
+
+
+## Validate content or peer capabilities without mutating or partially loading it.
+## The result shape is stable for UI, session admission, and diagnostics.
+func validate_capability_manifest(manifest: Variant) -> Dictionary:
+	var result := {"success": false, "error": "", "missing": [], "fallback": []}
+	if not manifest is Dictionary:
+		result.error = "Capability manifest is malformed: expected an object."
+		return result
+	if manifest.get("contract_version") != CAPABILITY_CONTRACT_VERSION:
+		result.error = "Capability manifest is malformed: unsupported contract version."
+		return result
+	var runtime: Variant = manifest.get("runtime")
+	if (
+		not runtime is Dictionary
+		or not runtime.get("id") is String
+		or not runtime.get("version") is int
+	):
+		result.error = "Capability manifest is malformed: runtime identity is required."
+		return result
+	if (
+		manifest.get("runtime_id", RUNTIME_ID) != RUNTIME_ID
+		or manifest.get("runtime_version", RUNTIME_VERSION) != RUNTIME_VERSION
+		or runtime.id != RUNTIME_ID
+		or runtime.version != RUNTIME_VERSION
+	):
+		result.error = (
+			"Runtime capability mismatch: expected %s@%d, received %s@%s."
+			% [
+				RUNTIME_ID,
+				RUNTIME_VERSION,
+				str(manifest.get("runtime_id", runtime.get("id", ""))),
+				str(manifest.get("runtime_version", runtime.get("version", "")))
+			]
+		)
+		return result
+	var required: Variant = manifest.get("required_capabilities")
+	if not (required is Array or required is PackedStringArray):
+		result.error = "Capability manifest is malformed: required_capabilities must be an array."
+		return result
+	var normalized := _normalize_capabilities(required)
+	if normalized.size() != required.size():
+		result.error = "Capability manifest is malformed: capabilities must be non-empty strings."
+		return result
+	var policy: Variant = manifest.get("fallback_policy", {})
+	if not policy is Dictionary:
+		result.error = "Capability manifest is malformed: fallback_policy must be an object."
+		return result
+	for capability: Variant in policy:
+		if not capability is String or not policy[capability] is String:
+			result.error = "Capability manifest is malformed: fallback policy entries must be strings."
+			return result
+	var available := get_available_capabilities()
+	var missing: Array[String] = []
+	for capability: String in normalized:
+		if capability not in available and capability not in missing:
+			missing.append(capability)
+	missing.sort()
+	var fallback: Array[String] = []
+	for capability: String in missing:
+		# A voxel requirement is never downgraded to CSG. Keep the suggestion
+		# explicit so callers can explain the bounded alternative to users.
+		if capability == "voxel":
+			fallback.append("csg")
+		elif policy.has(capability) and str(policy[capability]) != "reject":
+			fallback.append(str(policy[capability]))
+	result.missing = missing
+	result.fallback = fallback
+	if not missing.is_empty():
+		result.error = (
+			"Missing required capabilities: %s. Suggested fallback: %s."
+			% [", ".join(missing), ", ".join(fallback) if not fallback.is_empty() else "none"]
+		)
+		return result
+	result.success = true
+	return result
+
+
+func validate_manifest(manifest: Variant) -> Dictionary:
+	return validate_capability_manifest(manifest)
+
+
+## Negotiate a required set against this runtime and return its full manifest.
+func negotiate_capabilities(
+	required_capabilities: Variant, fallback_policy: Variant = {}
+) -> Dictionary:
+	var manifest := create_capability_manifest(required_capabilities, fallback_policy)
+	var result := validate_capability_manifest(manifest)
+	result["manifest"] = manifest
+	return result
+
+
+func _normalize_capabilities(value: Variant) -> Array[String]:
+	var normalized: Array[String] = []
+	if not (value is Array or value is PackedStringArray):
+		return normalized
+	for capability: Variant in value:
+		if not capability is String or capability.is_empty() or capability in normalized:
+			continue
+		normalized.append(capability)
+	normalized.sort()
+	return normalized
 
 
 ## Get fallback method for a feature

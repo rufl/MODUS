@@ -10,39 +10,257 @@ const Room = preload("res://game/scripts/map_generator/room.gd")
 enum KeyColor { RED, BLUE, YELLOW }
 
 
-## Generate key-lock pairs for the map
-## Returns dictionary with keys and locked_doors arrays
+## Generate key-lock pairs for the map.
+## The returned pair records remain backwards-compatible; a successful result
+## also contains the canonical progression manifest. Placement and manifest
+## publication are transactional: a failed pair leaves no generated lock state.
 func generate_key_lock_system(context: GenerationContext) -> Dictionary:
+	context.progression_manifest.clear()
+	context.metadata.erase("mission_progression")
 	if not context.config.enable_key_locks:
 		return {"keys": [], "locked_doors": []}
 
-	# Determine number of key types based on map complexity
 	var key_count := _calculate_key_count(context)
-
-	# Analyze room progression to determine key placement order
 	var progression_order := _analyze_room_progression(context)
-
 	if progression_order.size() < 2:
 		push_warning("Not enough rooms for key-lock system")
 		return {"keys": [], "locked_doors": []}
-
-	# Small maps still need one valid pair when key locks are enabled.
-	if progression_order.size() < 4:
+	if progression_order.size() <= 4:
 		key_count = 1
 
-	# Place keys and locked doors in progression order
 	var keys: Array = []
 	var locked_doors: Array = []
-
 	for i in range(key_count):
-		var key_color: KeyColor = i as KeyColor
-		var key_lock_pair := _place_key_lock_pair(context, progression_order, key_color, i)
+		var key_lock_pair := _place_key_lock_pair(context, progression_order, i as KeyColor, i)
+		if key_lock_pair.is_empty():
+			_rollback_generated_progression(context, keys, locked_doors)
+			return {"keys": [], "locked_doors": []}
+		keys.append(key_lock_pair.key)
+		locked_doors.append(key_lock_pair.door)
 
-		if not key_lock_pair.is_empty():
-			keys.append(key_lock_pair.key)
-			locked_doors.append(key_lock_pair.door)
+	var manifest := build_progression_manifest(context, progression_order, keys, locked_doors)
+	var validation := validate_progression_manifest(context, manifest, false)
+	if not validation.is_valid:
+		_rollback_generated_progression(context, keys, locked_doors)
+		push_warning("Mission progression rejected: " + validation.error_message)
+		return {"keys": [], "locked_doors": []}
+	context.progression_manifest = manifest
+	context.metadata["mission_progression"] = manifest.duplicate(true)
+	return {
+		"keys": keys, "locked_doors": locked_doors, "progression_manifest": manifest.duplicate(true)
+	}
 
-	return {"keys": keys, "locked_doors": locked_doors}
+
+## Build the retained, deterministic mission progression contract.
+func build_progression_manifest(
+	context: GenerationContext, progression: Array[Room], keys: Array, locked_doors: Array
+) -> Dictionary:
+	var room_order: Array[int] = []
+	for room: Room in progression:
+		room_order.append(room.id)
+
+	var manifest_keys: Array[Dictionary] = []
+	var manifest_doors: Array[Dictionary] = []
+	var objectives: Array[Dictionary] = []
+	for index in range(keys.size()):
+		var key: Dictionary = keys[index]
+		var key_id := "KeyPickup_%d" % index
+		manifest_keys.append(
+			{
+				"id": key_id,
+				"color": str(key.get("color", "")),
+				"room_id": int(key.get("room_id", -1)),
+				"grid_position": key.get("grid_position", Vector2i(-1, -1))
+			}
+		)
+		objectives.append(
+			{
+				"id": key_id,
+				"type": "collect_key",
+				"order": index * 2,
+				"room_id": int(key.get("room_id", -1)),
+				"requires": []
+			}
+		)
+		if index >= locked_doors.size():
+			continue
+		var door: Dictionary = locked_doors[index]
+		var door_id := "LockedDoor_%d" % index
+		manifest_doors.append(
+			{
+				"id": door_id,
+				"color": str(door.get("color", "")),
+				"room_id": int(door.get("room_id", -1)),
+				"grid_position": door.get("grid_position", Vector2i(-1, -1)),
+				"key_id": key_id,
+				"from_room_id": int(key.get("room_id", -1)),
+				"to_room_id": int(door.get("room_id", -1))
+			}
+		)
+		objectives.append(
+			{
+				"id": door_id,
+				"type": "open_lock",
+				"order": index * 2 + 1,
+				"room_id": int(door.get("room_id", -1)),
+				"requires": [key_id]
+			}
+		)
+
+	var goal_room_id := -1
+	if (
+		context.exit_position.x >= 0
+		and context.exit_position.y >= 0
+		and context.exit_position.y < context.grid.size()
+		and context.exit_position.x < context.grid[context.exit_position.y].size()
+	):
+		goal_room_id = context.grid[context.exit_position.y][context.exit_position.x].room_id
+	if goal_room_id < 0 and not room_order.is_empty():
+		goal_room_id = room_order[-1]
+	return {
+		"version": 1,
+		"seed_hash": context.seed_hash,
+		"start_room_id": room_order[0] if not room_order.is_empty() else -1,
+		"goal_room_id": goal_room_id,
+		"objectives": objectives,
+		"keys": manifest_keys,
+		"locked_transitions": manifest_doors,
+		"recovery_route": room_order
+	}
+
+
+## Validate the manifest independently of publication.
+func validate_progression_manifest(
+	context: GenerationContext, manifest: Dictionary, check_reachability: bool = true
+) -> Dictionary:
+	for field: String in [
+		"version",
+		"seed_hash",
+		"start_room_id",
+		"goal_room_id",
+		"objectives",
+		"keys",
+		"locked_transitions",
+		"recovery_route"
+	]:
+		if not manifest.has(field):
+			return {"is_valid": false, "error_message": "Mission progression missing '%s'" % field}
+	for field: String in ["objectives", "keys", "locked_transitions", "recovery_route"]:
+		if not manifest.get(field) is Array:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression field '%s' must be an array" % field
+			}
+	var keys: Array = manifest.keys
+	var doors: Array = manifest.locked_transitions
+	var route: Array = manifest.recovery_route
+	if route.is_empty() or manifest.start_room_id != route[0]:
+		return {"is_valid": false, "error_message": "Mission progression has no valid start route"}
+	var colors: Dictionary = {}
+	var positions: Dictionary = {}
+	var key_ids: Dictionary = {}
+	for key: Dictionary in keys:
+		var key_id := str(key.get("id", ""))
+		var color := str(key.get("color", ""))
+		var pos: Variant = key.get("grid_position")
+		if (
+			key_id.is_empty()
+			or color.is_empty()
+			or not pos is Vector2i
+			or positions.has(pos)
+			or key_ids.has(key_id)
+		):
+			return {
+				"is_valid": false, "error_message": "Mission progression contains duplicate keys"
+			}
+		if colors.has(color):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression repeats key color '%s'" % color
+			}
+		key_ids[key_id] = true
+		colors[color] = true
+		positions[pos] = true
+	var door_positions: Dictionary = {}
+	var door_ids: Dictionary = {}
+	var objective_ids: Dictionary = {}
+	for objective: Dictionary in manifest.objectives:
+		var objective_id := str(objective.get("id", ""))
+		if objective_id.is_empty() or objective_ids.has(objective_id):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression contains duplicate objectives"
+			}
+		objective_ids[objective_id] = true
+	for index in range(doors.size()):
+		var door: Dictionary = doors[index]
+		var pos: Variant = door.get("grid_position")
+		var color := str(door.get("color", ""))
+		var door_id := str(door.get("id", ""))
+		if (
+			door_id.is_empty()
+			or color.is_empty()
+			or not pos is Vector2i
+			or door_positions.has(pos)
+			or door_ids.has(door_id)
+		):
+			return {
+				"is_valid": false, "error_message": "Mission progression contains duplicate doors"
+			}
+		if not colors.has(color):
+			return {"is_valid": false, "error_message": "Locked door '%s' has no key" % color}
+		door_positions[pos] = true
+		door_ids[door_id] = true
+		if (
+			str(door.get("key_id", "")) != "KeyPickup_%d" % index
+			or not key_ids.has(door.get("key_id", ""))
+		):
+			return {
+				"is_valid": false, "error_message": "Locked transition has no deterministic key"
+			}
+		if not objective_ids.has(door_id):
+			return {"is_valid": false, "error_message": "Locked transition has no objective"}
+		if (
+			int(door.get("from_room_id", -1)) not in route
+			or int(door.get("to_room_id", -1)) not in route
+		):
+			return {
+				"is_valid": false, "error_message": "Locked transition leaves the recovery route"
+			}
+		if route.find(int(door.from_room_id)) >= route.find(int(door.to_room_id)):
+			return {
+				"is_valid": false,
+				"error_message": "Locked transition is encountered before its key"
+			}
+	if check_reachability:
+		var lock_result := validate_key_lock_progression(context, keys, doors)
+		if not lock_result:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression is unreachable after lock acquisition"
+			}
+	return {"is_valid": true, "error_message": ""}
+
+
+func _rollback_generated_progression(
+	context: GenerationContext, keys: Array, locked_doors: Array
+) -> void:
+	for key: Dictionary in keys:
+		var pos: Variant = key.get("grid_position")
+		if pos is Vector2i and _is_in_bounds(context, pos):
+			var cell: Cell = context.grid[pos.y][pos.x]
+			cell.metadata.erase("has_key")
+			cell.metadata.erase("key_color")
+	for door: Dictionary in locked_doors:
+		var pos: Variant = door.get("grid_position")
+		if pos is Vector2i and _is_in_bounds(context, pos):
+			var cell: Cell = context.grid[pos.y][pos.x]
+			cell.metadata.erase("has_locked_door")
+			cell.metadata.erase("door_color")
+			cell.metadata.erase("blocks_progression")
+	context.key_placements.clear()
+	context.progression_manifest.clear()
+	context.metadata.erase("mission_progression")
 
 
 ## Calculate number of key types based on map complexity
@@ -237,15 +455,6 @@ func _find_door_position(context: GenerationContext, room: Room) -> Vector2i:
 				var neighbor_cell: Cell = context.grid[neighbor_pos.y][neighbor_pos.x]
 				if neighbor_cell.type == Cell.Type.HALLWAY:
 					return cell_pos
-
-	for cell_pos: Vector2i in room.cells:
-		if _is_in_bounds(context, cell_pos):
-			var fallback_cell: Cell = context.grid[cell_pos.y][cell_pos.x]
-			if (
-				fallback_cell.type != Cell.Type.EMPTY
-				and not fallback_cell.metadata.get("has_locked_door", false)
-			):
-				return cell_pos
 
 	return Vector2i(-1, -1)
 

@@ -25,6 +25,9 @@ var key_placements: Array = []  # Array of key placement dictionaries
 var secret_rooms: Array = []  # Array of secret room dictionaries
 var skipped_prefabs: Array = []  # Invalid prefab diagnostics
 var metadata: Dictionary = {}  # Optional phase and feature metadata
+## Canonical generated mission progression retained with the packed map.
+## It is populated only after key/lock placement has passed validation.
+var progression_manifest: Dictionary = {}
 var player_start_position: Vector2i = Vector2i(-1, -1)
 var exit_position: Vector2i = Vector2i(-1, -1)
 

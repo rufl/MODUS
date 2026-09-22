@@ -1032,6 +1032,23 @@ func _execute_validation_phase() -> bool:
 	if not validation_system or not generation_context:
 		push_error("Validation system or context not initialized")
 		return false
+	if generation_context.config and generation_context.config.enable_key_locks:
+		if generation_context.progression_manifest.is_empty():
+			push_error("Validation failed: key-lock progression manifest was not published.")
+			return false
+		var progression_validation := key_lock_system.validate_progression_manifest(
+			generation_context, generation_context.progression_manifest
+		)
+		if not progression_validation.get("is_valid", false):
+			push_error(
+				(
+					"Validation failed: %s"
+					% str(
+						progression_validation.get("error_message", "Invalid progression manifest.")
+					)
+				)
+			)
+			return false
 
 	var validations: Array[ValidationSystem.ValidationResult] = [
 		validation_system.validate_player_start(generation_context),
@@ -1212,12 +1229,23 @@ func _build_metadata(total_time: int) -> Dictionary:
 		"config": _build_config_metadata(),
 		"statistics": _build_statistics_metadata(),
 		"rule_modules_used": _get_rule_modules_used(),
+		"capability_manifest": get_capability_manifest(),
 		"replacement_capabilities": get_runtime_capabilities(),
 		"replacement_catalog": get_replacement_catalog_metadata(),
 		"phase_times": _build_phase_times_metadata(),
 		"gameplay": _build_gameplay_metadata()
 	}
 	return metadata
+
+
+func get_capability_manifest() -> Dictionary:
+	var required: Array[String] = ["walk", "csg"]
+	if generation_context and not generation_context.voxel_cave_geometry.is_empty():
+		required.append("voxel")
+	if feature_availability:
+		return feature_availability.create_capability_manifest(required, {"voxel": "reject"})
+	var availability := FeatureAvailability.new()
+	return availability.create_capability_manifest(required, {"voxel": "reject"})
 
 
 func get_replacement_catalog_metadata() -> Array:
@@ -1229,13 +1257,11 @@ func get_replacement_catalog_metadata() -> Array:
 func get_runtime_capabilities() -> Array[String]:
 	if feature_availability:
 		return feature_availability.get_available_capabilities()
-	return ["walk"]
+	return ["walk", "csg"]
 
 
 ## Variant records are retained in the PackedScene, not only transient signals.
 func _build_gameplay_metadata() -> Dictionary:
-	if not generation_context:
-		return {}
 	var gameplay := {
 		"player_start": generation_context.player_start_position,
 		"exit_position": generation_context.exit_position,
@@ -1245,6 +1271,9 @@ func _build_gameplay_metadata() -> Dictionary:
 		"locked_doors": generation_context.metadata.get("locked_doors", []).duplicate(true),
 		"secrets": generation_context.secret_rooms.duplicate(true)
 	}
+	var progression: Variant = generation_context.metadata.get("mission_progression")
+	if progression is Dictionary:
+		gameplay["mission_progression"] = progression.duplicate(true)
 	var extraction := _generated_extraction_record()
 	if not extraction.is_empty():
 		gameplay["extraction"] = extraction

@@ -4,6 +4,7 @@ extends Node
 signal travel_finished(success: bool, error: String)
 signal join_finished(success: bool, error: String)
 
+const FeatureAvailability := preload("res://game/scripts/map_generator/feature_availability.gd")
 const PREPARE_TIMEOUT_MS := 10000
 const JOIN_RETRY_MS := 1000
 const SNAPSHOT_INTERVAL := 0.2
@@ -15,8 +16,10 @@ const MAX_TOKEN := 0x7ffffffffffffffe
 var session: Node
 var pending: bool = false
 var last_error: String = ""
+var last_capability_diagnostics: Dictionary = {}
 var generation: int = 0
 var _network: MultiplayerAPI
+var _capability_availability := FeatureAvailability.new()
 var _token: int = 0
 var _active_token: int = 0
 var _last_received_token: int = 0
@@ -45,6 +48,7 @@ var _exiting: bool = false
 
 
 func _ready() -> void:
+	_capability_availability.initialize()
 	if not is_instance_valid(session):
 		session = get_parent()
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -312,6 +316,12 @@ func _prepare(
 	_last_received_token = transaction
 	var offer: Variant = _decode(packet)
 	if not offer is Dictionary or not _valid_offer(offer):
+		_ready_reply.rpc_id(1, transaction, offered_generation, false)
+		return
+	var capability_result := _validate_offer_capabilities(offer)
+	last_capability_diagnostics = capability_result
+	if not capability_result.get("success", false):
+		last_error = str(capability_result.get("error", "Capability negotiation failed.")).left(256)
 		_ready_reply.rpc_id(1, transaction, offered_generation, false)
 		return
 	var result: Dictionary = session.stage_travel_offer(offer)
@@ -656,8 +666,20 @@ func _on_connection_lost() -> void:
 
 func _valid_offer(offer: Dictionary) -> bool:
 	var descriptor: Variant = offer.get("descriptor")
+	if not descriptor is Dictionary:
+		return false
+	var capability_contract_present: bool = (
+		(descriptor.has("capability_manifest") and descriptor.capability_manifest is Dictionary)
+		or (
+			descriptor.has("required_capabilities")
+			and (
+				descriptor.required_capabilities is Array
+				or descriptor.required_capabilities is PackedStringArray
+			)
+		)
+	)
 	return (
-		descriptor is Dictionary
+		capability_contract_present
 		and descriptor.get("id") is String
 		and not descriptor.id.is_empty()
 		and descriptor.id.length() <= 256
@@ -665,12 +687,30 @@ func _valid_offer(offer: Dictionary) -> bool:
 		and descriptor.path.length() <= 2048
 		and descriptor.get("signature") is String
 		and descriptor.signature.length() <= 256
-		and descriptor.get("required_capabilities") is Array
 		and offer.get("spawn_id") is String
 		and offer.spawn_id.length() <= 256
 		and offer.get("runtime") is Dictionary
 		and offer.get("players") is Array
 	)
+
+
+func _validate_offer_capabilities(offer: Dictionary) -> Dictionary:
+	var descriptor: Dictionary = offer.get("descriptor", {})
+	var manifest: Variant = descriptor.get("capability_manifest")
+	if manifest == null:
+		var required: Variant = descriptor.get("required_capabilities", [])
+		if not (required is Array or required is PackedStringArray):
+			return {
+				"success": false,
+				"error":
+				"Capability manifest is malformed: required_capabilities must be an array.",
+				"missing": [],
+				"fallback": []
+			}
+		manifest = _capability_availability.create_capability_manifest(
+			required, {"voxel": "reject"}
+		)
+	return _capability_availability.validate_capability_manifest(manifest)
 
 
 func _encode(value: Variant) -> PackedByteArray:

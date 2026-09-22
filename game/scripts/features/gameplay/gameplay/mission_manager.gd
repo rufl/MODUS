@@ -232,6 +232,11 @@ func start_document_mission(level: Node3D) -> bool:
 func build_document_state(level: Node3D) -> Dictionary:
 	if not level or not level.has_method("get_actor_identity"):
 		return _document_error("Mission requires an authored level document.")
+	var progression_manifest := _get_generated_progression_manifest(level)
+	if not progression_manifest.is_empty():
+		var manifest_validation := validate_progression_manifest(progression_manifest)
+		if not manifest_validation.is_valid:
+			return _document_error(manifest_validation.error_message)
 	var objectives: Array[Dictionary] = []
 	var declarations: Dictionary = {}
 	for node: Node in level.find_children("*", "", true, false):
@@ -297,6 +302,11 @@ func build_document_state(level: Node3D) -> Dictionary:
 	for objective: Dictionary in ordered:
 		counts[objective.id] = 0
 		totals[objective.id] = int(objective.required_count)
+	var definition := {
+		"name": str(level.get("level_name")), "objectives": ordered, "ends_match": false
+	}
+	if not progression_manifest.is_empty():
+		definition["progression_manifest"] = progression_manifest.duplicate(true)
 	return {
 		"success": true,
 		"error": "",
@@ -304,12 +314,145 @@ func build_document_state(level: Node3D) -> Dictionary:
 		{
 			"active_id": str(level.get_meta("mission_id", "document_mission")),
 			"completed_id": "",
-			"definition":
-			{"name": str(level.get("level_name")), "objectives": ordered, "ends_match": false},
+			"definition": definition,
 			"state": counts,
 			"totals": totals
 		}
 	}
+
+
+## Validate generated mission metadata before it reaches runtime state.
+func validate_progression_manifest(manifest: Dictionary) -> Dictionary:
+	for field: String in [
+		"version",
+		"seed_hash",
+		"start_room_id",
+		"goal_room_id",
+		"objectives",
+		"keys",
+		"locked_transitions",
+		"recovery_route"
+	]:
+		if not manifest.has(field):
+			return {"is_valid": false, "error_message": "Mission progression missing '%s'." % field}
+	for field: String in ["objectives", "keys", "locked_transitions", "recovery_route"]:
+		if not manifest.get(field) is Array:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression field '%s' must be an array." % field
+			}
+	var route: Array = manifest.get("recovery_route", [])
+	if route.is_empty() or route[0] != manifest.start_room_id:
+		return {"is_valid": false, "error_message": "Mission progression has no valid start route."}
+	if manifest.goal_room_id not in route:
+		return {
+			"is_valid": false,
+			"error_message": "Mission progression goal is outside the recovery route."
+		}
+	var seen_route: Dictionary = {}
+	for room_id: Variant in route:
+		if seen_route.has(room_id):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression recovery route repeats a room."
+			}
+		seen_route[room_id] = true
+	var keys: Array = manifest.get("keys", [])
+	var key_ids: Dictionary = {}
+	var key_colors: Dictionary = {}
+	for key: Variant in keys:
+		if not key is Dictionary:
+			return {
+				"is_valid": false, "error_message": "Mission progression contains a malformed key."
+			}
+		var key_id := str(key.get("id", ""))
+		var color := str(key.get("color", ""))
+		if key_id.is_empty() or color.is_empty() or key_ids.has(key_id) or key_colors.has(color):
+			return {
+				"is_valid": false, "error_message": "Mission progression contains duplicate keys."
+			}
+		key_ids[key_id] = true
+		key_colors[color] = true
+	var door_ids: Dictionary = {}
+	for door: Variant in manifest.get("locked_transitions", []):
+		if not door is Dictionary:
+			return {
+				"is_valid": false, "error_message": "Mission progression contains a malformed lock."
+			}
+		var door_id := str(door.get("id", ""))
+		var key_id := str(door.get("key_id", ""))
+		if door_id.is_empty() or door_ids.has(door_id) or not key_ids.has(key_id):
+			return {
+				"is_valid": false, "error_message": "Mission progression lock has no unique key."
+			}
+		door_ids[door_id] = true
+	var objective_ids: Dictionary = {}
+	var objective_index: Dictionary = {}
+	var previous_order := -1
+	for index in range(manifest.objectives.size()):
+		var objective: Variant = manifest.objectives[index]
+		if not objective is Dictionary:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression contains a malformed objective."
+			}
+		var objective_id := str(objective.get("id", ""))
+		if objective_id.is_empty() or objective_ids.has(objective_id):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression contains duplicate objectives."
+			}
+		if not objective.get("order", 0) is int:
+			return {
+				"is_valid": false, "error_message": objective_id + ": order must be an integer."
+			}
+		if int(objective.order) < previous_order:
+			return {
+				"is_valid": false,
+				"error_message": objective_id + ": objective order is not deterministic."
+			}
+		if not objective.get("requires", []) is Array:
+			return {
+				"is_valid": false,
+				"error_message": objective_id + ": prerequisites must be an array."
+			}
+		previous_order = int(objective.order)
+		objective_ids[objective_id] = true
+		objective_index[objective_id] = index
+	for key_id: String in key_ids:
+		if not objective_ids.has(key_id):
+			return {"is_valid": false, "error_message": "Generated key has no mandatory objective."}
+	for door_id: String in door_ids:
+		if not objective_ids.has(door_id):
+			return {
+				"is_valid": false, "error_message": "Locked transition has no mandatory objective."
+			}
+	for index in range(manifest.objectives.size()):
+		var objective: Dictionary = manifest.objectives[index]
+		for required: Variant in objective.get("requires", []):
+			if not required is String or not objective_index.has(required):
+				return {
+					"is_valid": false, "error_message": objective.id + ": prerequisite is missing."
+				}
+			if objective_index[required] >= index:
+				return {
+					"is_valid": false,
+					"error_message": objective.id + ": prerequisite order is unreachable."
+				}
+	return {"is_valid": true, "error_message": ""}
+
+
+func _get_generated_progression_manifest(level: Node3D) -> Dictionary:
+	if not level.has_meta("generation"):
+		return {}
+	var generation: Variant = level.get_meta("generation")
+	if not generation is Dictionary:
+		return {}
+	var gameplay: Variant = generation.get("gameplay", {})
+	if not gameplay is Dictionary:
+		return {}
+	var manifest: Variant = gameplay.get("mission_progression", {})
+	return manifest.duplicate(true) if manifest is Dictionary else {}
 
 
 func _document_error(message: String) -> Dictionary:

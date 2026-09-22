@@ -210,3 +210,26 @@ func test_prerequisites_survive_restore_and_secrets_do_not_block_or_repeat_compl
 		"Secrets remain discoverable after the required route"
 	)
 	assert_signal_emit_count(_mission, "mission_completed", 1)
+
+
+func test_generated_progression_manifest_survives_runtime_roundtrip() -> void:
+	var document := _document(["extraction"])
+	var extraction: Node = document.get_node("extraction")
+	var extraction_id: String = str(document.get_actor_identity(extraction))
+	var manifest := {
+		"version": 1,
+		"seed_hash": 42,
+		"start_room_id": 0,
+		"goal_room_id": 0,
+		"objectives": [{"id": extraction_id, "order": 0, "requires": []}],
+		"keys": [],
+		"locked_transitions": [],
+		"recovery_route": [0]
+	}
+	document.set_meta("generation", {"gameplay": {"mission_progression": manifest}})
+	assert_true(_mission.start_document_mission(document))
+	assert_eq(_mission.active_mission_data.progression_manifest, manifest)
+	var checkpoint: Dictionary = JSON.parse_string(JSON.stringify(_mission.capture_runtime_state()))
+	assert_true(_mission.restore_runtime_state(checkpoint, document))
+	var expected_roundtrip: Dictionary = JSON.parse_string(JSON.stringify(manifest))
+	assert_eq(_mission.active_mission_data.progression_manifest, expected_roundtrip)

@@ -210,6 +210,38 @@ func test_feature_availability_exposes_replacement_capabilities() -> void:
 	assert_false(capabilities.has("voxel"))
 
 
+func test_capability_manifest_accepts_walk_and_csg_with_explicit_policy() -> void:
+	var availability := FeatureAvailability.new()
+	var manifest := availability.create_capability_manifest(["csg", "walk"], {"csg": "none"})
+	var result := availability.validate_capability_manifest(manifest)
+	assert_true(result.success)
+	assert_eq(result.missing, [])
+	assert_eq(result.fallback, [])
+
+
+func test_capability_manifest_rejects_required_voxel_without_downgrade() -> void:
+	var availability := FeatureAvailability.new()
+	var manifest := availability.create_capability_manifest(["walk", "voxel"], {"voxel": "reject"})
+	var result := availability.validate_capability_manifest(manifest)
+	assert_false(result.success)
+	assert_eq(result.missing, ["voxel"])
+	assert_eq(result.fallback, ["csg"])
+	assert_string_contains(result.error, "Missing required capabilities: voxel")
+
+
+func test_capability_manifest_rejects_malformed_and_peer_mismatch() -> void:
+	var availability := FeatureAvailability.new()
+	var malformed := availability.validate_capability_manifest({"required_capabilities": ["walk"]})
+	assert_false(malformed.success)
+	assert_string_contains(malformed.error, "malformed")
+	var mismatch := availability.create_capability_manifest(["walk"])
+	mismatch.runtime.version = 99
+	var result := availability.validate_capability_manifest(mismatch)
+	assert_false(result.success)
+	assert_eq(result.missing, [])
+	assert_string_contains(result.error, "Runtime capability mismatch")
+
+
 func test_module_json_roundtrip_retains_attachable_socket_geometry() -> void:
 	var original := PrefabMetadata.new()
 	original.module_id = "rotated_room"

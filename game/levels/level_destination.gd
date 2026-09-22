@@ -2,6 +2,7 @@ class_name LevelDestination
 extends RefCounted
 
 const Assembly := preload("res://shared/editor_core/core/module_assembly.gd")
+const FeatureAvailability := preload("res://game/scripts/map_generator/feature_availability.gd")
 
 var viewport: SubViewport
 var document: Node3D
@@ -12,6 +13,7 @@ var baseline: Dictionary
 var spawn_id: String
 var spawn_transform: Transform3D
 var error: String = ""
+var capability_validation: Dictionary = {}
 
 
 func prepare(
@@ -19,6 +21,30 @@ func prepare(
 ) -> bool:
 	descriptor = identity.duplicate(true)
 	spawn_id = arrival
+	var availability := FeatureAvailability.new()
+	availability.initialize()
+	var manifest_authoritative := (
+		descriptor.has("capability_manifest") or descriptor.has("required_capabilities")
+	)
+	var manifest: Variant = descriptor.get("capability_manifest")
+	if descriptor.has("capability_manifest"):
+		capability_validation = availability.validate_capability_manifest(manifest)
+	else:
+		var required_legacy: Variant = descriptor.get("required_capabilities", [])
+		if not (required_legacy is Array or required_legacy is PackedStringArray):
+			capability_validation = {
+				"success": false,
+				"error":
+				"Capability manifest is malformed: required_capabilities must be an array.",
+				"missing": [],
+				"fallback": []
+			}
+		else:
+			manifest = availability.create_capability_manifest(required_legacy, {"voxel": "reject"})
+			capability_validation = availability.validate_capability_manifest(manifest)
+		descriptor.capability_manifest = manifest
+	if not capability_validation.get("success", false):
+		return _fail(str(capability_validation.get("error", "Capability negotiation failed.")))
 	var instance := packed.instantiate()
 	document = instance as Node3D
 	if not document:
@@ -83,11 +109,24 @@ func prepare(
 			if capability not in required:
 				required.append(capability)
 	required.sort()
+	if manifest_authoritative:
+		var manifest_required: Variant = descriptor.capability_manifest.get(
+			"required_capabilities", []
+		)
+		if Array(manifest_required) != required:
+			return _fail("Destination capability manifest differs from local content.")
+	else:
+		descriptor.capability_manifest = availability.create_capability_manifest(
+			required, {"voxel": "reject"}
+		)
+	var canonical_manifest: Dictionary = descriptor.capability_manifest.duplicate(true)
+	canonical_manifest["required_capabilities"] = required
+	descriptor.capability_manifest = canonical_manifest
 	var layout := {"modules": modules, "connections": document.module_connections.duplicate(true)}
 	if identity.has("layout") and not LevelRuntimeState._same_json_value(identity.layout, layout):
 		return _fail("Destination canonical layout differs from the checkpoint.")
 	descriptor.layout = layout
-	if identity.has("required_capabilities") and identity.required_capabilities != required:
+	if identity.has("required_capabilities") and Array(identity.required_capabilities) != required:
 		return _fail("Destination capability manifest differs from local content.")
 	descriptor.required_capabilities = required
 	runtime = (

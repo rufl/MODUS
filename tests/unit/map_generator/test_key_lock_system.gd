@@ -65,12 +65,69 @@ func test_no_keys_when_disabled() -> void:
 
 	# Generate key-lock system
 	var result: Dictionary = key_lock_system.generate_key_lock_system(context)
-
 	var keys: Array = result.get("keys", [])
 	var locked_doors: Array = result.get("locked_doors", [])
-
 	assert_eq(keys.size(), 0, "Should not generate keys when disabled")
 	assert_eq(locked_doors.size(), 0, "Should not generate locked doors when disabled")
+
+
+func test_manifest_retains_reachable_mandatory_order_and_unique_records() -> void:
+	_create_room_chain(context, 6)
+	var result: Dictionary = key_lock_system.generate_key_lock_system(context)
+	var manifest: Dictionary = result.get("progression_manifest", {})
+	assert_true(manifest.has("recovery_route"))
+	assert_eq(manifest.objectives[0].id, "KeyPickup_0")
+	assert_eq(manifest.objectives[1].id, "LockedDoor_0")
+	assert_eq(manifest.objectives[1].requires, ["KeyPickup_0"])
+	assert_eq(manifest.keys.size(), manifest.locked_transitions.size())
+	assert_eq(manifest.keys.size(), 2)
+	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
+
+
+func test_manifest_is_deterministic_for_same_seed() -> void:
+	var first := context
+	_create_room_chain(first, 6)
+	var first_manifest: Dictionary = (
+		key_lock_system.generate_key_lock_system(first).progression_manifest
+	)
+	var second := GenerationContext.new()
+	second.config = GenerationConfig.new()
+	second.config.enable_key_locks = true
+	second.grid_size = context.grid_size
+	second.rng.seed = 54321
+	second.seed_hash = context.seed_hash
+	second.grid = []
+	for y in range(second.grid_size.y):
+		var row: Array[Cell] = []
+		row.resize(second.grid_size.x)
+		for x in range(second.grid_size.x):
+			row[x] = Cell.new(Cell.Type.EMPTY)
+		second.grid.append(row)
+	_create_room_chain(second, 6)
+	var second_manifest: Dictionary = (
+		key_lock_system.generate_key_lock_system(second).progression_manifest
+	)
+	assert_eq(first_manifest, second_manifest)
+
+
+func test_impossible_manifest_is_rejected_without_publication() -> void:
+	_create_room_chain(context, 6)
+	var result: Dictionary = key_lock_system.generate_key_lock_system(context)
+	var manifest: Dictionary = result.progression_manifest.duplicate(true)
+	manifest.locked_transitions[0].from_room_id = manifest.locked_transitions[0].to_room_id
+	var validation := key_lock_system.validate_progression_manifest(context, manifest)
+	assert_false(validation.is_valid)
+	assert_true(
+		context.progression_manifest != manifest,
+		"Rejected graph must not replace published manifest"
+	)
+	assert_true(
+		(
+			key_lock_system
+			. validate_progression_manifest(context, context.progression_manifest)
+			. is_valid
+		)
+	)
 
 
 ## Helper function to create a chain of connected rooms
