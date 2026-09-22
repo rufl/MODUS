@@ -48,7 +48,7 @@ func _ready() -> void:
 			var logger: Node = gm.get_core_system("logger")
 			if logger and logger.has_method("info"):
 				logger.info("[DedicatedServer] Running in dedicated server mode", "DedicatedServer")
-		_initialize_server()
+		call_deferred("_initialize_server")
 	else:
 		# Still load config for potential hosting
 		_load_config()
@@ -56,6 +56,9 @@ func _ready() -> void:
 
 func _initialize_server() -> void:
 	_load_config()
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree:
+		await tree.process_frame
 	_load_mods()
 	_start_hosting()
 	_start_steam_game_server()
@@ -371,7 +374,9 @@ func _start_hosting() -> void:
 	# an autoload's _ready callback races the scene tree's child bookkeeping.
 	var map_path: String = config.get("map", "res://game/world.tscn")
 	if ResourceLoader.exists(map_path):
-		get_tree().call_deferred("change_scene_to_file", map_path)
+		var tree: SceneTree = Engine.get_main_loop() as SceneTree
+		if tree:
+			tree.call_deferred("change_scene_to_file", map_path)
 
 	server_started.emit()
 
