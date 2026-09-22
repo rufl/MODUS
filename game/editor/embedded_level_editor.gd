@@ -311,7 +311,7 @@ func set_generator_replacement_metadata(entries: Array) -> void:
 func _on_generation_completed(_map_scene: PackedScene, metadata: Dictionary) -> void:
 	var manifest: Variant = metadata.get("capability_manifest")
 	if manifest != null:
-		var negotiation := _feature_availability.validate_capability_manifest(manifest)
+		var negotiation: Dictionary = _feature_availability.validate_capability_manifest(manifest)
 		if not negotiation.success:
 			if module_panel:
 				module_panel.set_external_status(str(negotiation.error))
@@ -352,7 +352,7 @@ func get_replacement_capability_manifest() -> Dictionary:
 
 
 func set_replacement_capabilities(capabilities: Array[String]) -> void:
-	var negotiation := _feature_availability.negotiate_capabilities(capabilities)
+	var negotiation: Dictionary = _feature_availability.negotiate_capabilities(capabilities)
 	if not negotiation.success:
 		if module_panel:
 			module_panel.set_external_status(str(negotiation.error))

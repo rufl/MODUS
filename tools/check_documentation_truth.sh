@@ -112,7 +112,7 @@ for path in "${maintained_docs[@]}"; do
     if [[ ! -e "$local_path" ]]; then
       fail "$path references missing resource path: $reference"
     fi
-  done < <(rg -o 'res://[A-Za-z0-9_./-]+' "$path" | sort -u || true)
+  done < <(grep -oE 'res://[A-Za-z0-9_./-]+' "$path" | sort -u || true)
 
   while IFS= read -r markdown_link; do
     [[ -z "$markdown_link" ]] && continue

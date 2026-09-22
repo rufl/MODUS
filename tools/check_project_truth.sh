@@ -35,7 +35,7 @@ reject_stale_config_claims() {
   local stale_claims='game/cfg/|game/data/cfg/|game/config/balance/|game/config/gameplay\.json5'
   local roots=(docs README.md standalone game/data game/world game/core game/scripts)
   local stale_files
-  stale_files=$(rg -l "$stale_claims" "${roots[@]}" -g '!*.import' || true)
+  stale_files=$(grep -RIlE --exclude='*.import' "$stale_claims" "${roots[@]}" || true)
   if [[ -n "$stale_files" ]]; then
     while IFS= read -r stale_file; do
       [[ -z "$stale_file" ]] && continue

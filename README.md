@@ -124,7 +124,7 @@ python3 tools/validate_release_artifacts.py \
   --verify build/release/MODUS-0.9.5-beta-linux-x86_64/manifest.json
 ```
 
-Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. CI now assembles this Linux candidate on `develop`; the changed hosted workflow has not been exercised locally. Public publication, signing, a native-dependency lock and target acceptance remain open.
+Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. CI assembles this Linux candidate on `develop`; run the focused release-contract checks locally before labeling a candidate. Public publication, signing, a native-dependency lock and target acceptance remain open.
 
 ## OVERZEER dogfood deployment and telemetry
 

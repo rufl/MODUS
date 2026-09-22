@@ -86,7 +86,7 @@ else
     child_pid=""
     set -e
 
-    if rg -n "SCRIPT ERROR|Parse Error|service lookup failed|unknown feature|Active profile .* not found" \
+    if grep -nE "SCRIPT ERROR|Parse Error|service lookup failed|unknown feature|Active profile .* not found" \
       "$log_path" >/dev/null 2>&1; then
       status="FAIL"
       note="multiplayer_demo launch emitted profile or service errors."

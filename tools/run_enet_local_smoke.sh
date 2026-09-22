@@ -157,12 +157,12 @@ if [[ "$status" == "BLOCKED" && "$port" != "-" && -n "$port" ]]; then
     set -e
 
     if [[ "$client_exit" == "0" ]] &&
-      rg -q "ENET_CLIENT_CONNECTED" "$client_log" 2>/dev/null &&
+      grep -Fq "ENET_CLIENT_CONNECTED" "$client_log" 2>/dev/null &&
       [[ "$server_exit" == "0" ]] &&
-      rg -q "ENET_SERVER_PEER_CONNECTED" "$server_log" 2>/dev/null; then
+      grep -Fq "ENET_SERVER_PEER_CONNECTED" "$server_log" 2>/dev/null; then
       status="PASS"
       note="Separate Godot server and client connected over localhost ENet."
-    elif rg -q "ERR_CANT_CREATE|ERR_UNCONFIGURED|_sock == -1|socket|address already in use|permission denied" \
+    elif grep -Eq "ERR_CANT_CREATE|ERR_UNCONFIGURED|_sock == -1|socket|address already in use|permission denied" \
       "$server_log" "$client_log" 2>/dev/null; then
       status="BLOCKED"
       note="The environment denied localhost socket creation or binding."
