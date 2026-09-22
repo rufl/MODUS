@@ -8,6 +8,7 @@ const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const FeatureAvailability = preload("res://game/scripts/map_generator/feature_availability.gd")
 
 var prefab_system: MapPrefabSystem
+var _regeneration_scene_paths: Array[String] = []
 
 
 func before_each() -> void:
@@ -16,6 +17,9 @@ func before_each() -> void:
 
 func after_each() -> void:
 	prefab_system = null
+	for path in _regeneration_scene_paths:
+		DirAccess.remove_absolute(path)
+	_regeneration_scene_paths.clear()
 
 
 ## Test PrefabMetadata parsing from dictionary
@@ -376,8 +380,8 @@ func test_module_ghost_preview_tracks_external_transform_and_clears() -> void:
 	add_child(preview)
 	preview.start_preview(BoxMesh.new())
 	assert_true(preview.is_active)
-	assert_true(preview._get_preview_aabb().size.x > 0.0)
-	assert_true(preview._get_preview_aabb().size.z > 0.0)
+	var pose := Transform3D(Basis(Vector3.UP, PI / 2.0), Vector3(4, 0, -8))
+	preview.set_preview_transform(pose, false)
 	assert_true(preview.preview_node.global_transform.is_equal_approx(pose))
 	assert_false(preview.is_valid_placement)
 	preview.clear_preview()
@@ -404,127 +408,272 @@ func test_free_socket_ray_query_selects_nearest_open_socket() -> void:
 	root.free()
 
 
-func test_regenerate_unpinned_preserves_pins_and_is_undoable() -> void:
-	var saved_history := EditorGlobals._runtime_undo_redo
-	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+func _regeneration_definition(
+	id: String, marker: String, blocked: bool = false, include_actor: bool = true
+) -> PrefabMetadata:
+	var content := Node3D.new()
+	content.name = "Content"
+	var marker_node := Marker3D.new()
+	marker_node.name = marker
+	content.add_child(marker_node)
+	marker_node.owner = content
+	if include_actor:
+		var actor := ActorBase.new()
+		actor.name = "Objective"
+		actor.actor_id = "switch"
+		actor.set_meta("mission_objective", {"description": "Use switch"})
+		content.add_child(actor)
+		actor.owner = content
+	if blocked:
+		var collision := CSGBox3D.new()
+		collision.size = Vector3(20, 1, 1)
+		collision.position.y = 1
+		collision.use_collision = true
+		content.add_child(collision)
+		collision.owner = content
+	var packed := PackedScene.new()
+	assert_eq(packed.pack(content), OK)
+	content.free()
+	var path := "user://regeneration_" + id + ".tscn"
+	assert_eq(ResourceSaver.save(packed, path), OK)
+	_regeneration_scene_paths.append(path)
+	var definition := PrefabMetadata.new()
+	definition.module_id = id
+	definition.scene_path = path
+	definition.dimensions = Vector3(8, 4, 8)
+	for socket_id: String in ["north", "east", "south", "west"]:
+		var turn: int = ["north", "west", "south", "east"].find(socket_id)
+		var basis := Basis(Vector3.UP, turn * PI / 2.0)
+		var position := -basis.z * 4.0
+		var clearance := AABB(Vector3(-1, 0, -4), Vector3(2, 3, 2))
+		definition.sockets.append(
+			{
+				"id": socket_id,
+				"kind": "walk",
+				"local_transform": Transform3D(basis, position),
+				"opening": Vector2(2, 3),
+				"clearance": Transform3D(basis, Vector3.ZERO) * clearance
+			}
+		)
+	return definition
+
+
+func _regeneration_ring(definition: PrefabMetadata) -> Node3D:
 	var root: Node3D = LevelRootScript.new()
 	root.authoring_mode = true
-	add_child(root)
-	var catalog := ModuleAssembly.get_catalog()
-	assert_true(ModuleAssembly.place_module(root, catalog[0]).success)
-	var pinned := ModuleAssembly.get_instances(root)[0]
-	var pin_result := ModuleAssembly.set_pinned(root, pinned.instance_id, true)
-	assert_true(pin_result.success)
-	var initial := ModuleAssembly.place_module(root, catalog[1], "airlock", "out", "in")
-	assert_true(initial.success)
-	var original_unpinned: ModuleInstance = initial.instance
-	var captured := ModuleAssembly.build_regeneration_plans(root)
-	assert_true(captured.success, "Connected layouts must produce regeneration plans")
-	assert_eq(captured.plans.size(), 1)
-	var selected := ModuleAssembly.build_regeneration_plans(root, [catalog[1]])
-	assert_true(selected.success, "Compatible selected definitions must produce plans")
-	assert_eq(selected.plans[0].definition.module_id, catalog[1].module_id)
-	assert_eq(selected.plans[0].target_instance_id, "airlock")
-	var capability_definition := catalog[1].duplicate(true) as PrefabMetadata
-	capability_definition.module_id = "teleport_replacement"
-	capability_definition.required_capabilities = PackedStringArray(["teleport"])
-	var capability_plan := ModuleAssembly.build_regeneration_plans(
-		root, [capability_definition], ["walk", "teleport"]
-	)
-	assert_true(capability_plan.success)
-	assert_eq(selected.plans[0].target_socket_id, "out")
-	var zeta := catalog[1].duplicate(true) as PrefabMetadata
-	zeta.module_id = "zeta_replacement"
-	var alpha := catalog[1].duplicate(true) as PrefabMetadata
-	alpha.module_id = "alpha_replacement"
-	var ranked := ModuleAssembly.build_regeneration_plans(root, [zeta, alpha])
-	assert_true(ranked.success)
-	assert_eq(ranked.plans[0].definition.module_id, "alpha_replacement")
-	var compatible := ModuleAssembly.get_compatible_replacement_catalog(root)
-	assert_true(
-		compatible.any(
-			func(definition: PrefabMetadata) -> bool:
-				return definition.module_id == catalog[1].module_id
-		)
-	)
-	var diagnostics := ModuleAssembly.get_replacement_diagnostics(root)
-	assert_true(
-		diagnostics.compatible.any(
-			func(definition: PrefabMetadata) -> bool:
-				return definition.module_id == catalog[1].module_id
-		)
-	)
-	var incompatible := catalog[1].duplicate(true) as PrefabMetadata
-	for socket in incompatible.sockets:
-		socket.kind = "vent"
-	incompatible.required_capabilities.append("teleport")
-	var rejected := ModuleAssembly.build_regeneration_plans(root, [incompatible])
-	assert_false(rejected.success, "Incompatible replacement definitions must be rejected")
-	var custom_diagnostics := ModuleAssembly.get_replacement_diagnostics(root, [incompatible])
-	assert_eq(custom_diagnostics.compatible.size(), 0)
-	assert_eq(custom_diagnostics.rejected.size(), 1)
-	assert_true(custom_diagnostics.rejected[0].unsupported_capabilities.has("teleport"))
-	assert_true(custom_diagnostics.rejected[0].has("target_instance_ids"))
-	assert_true(custom_diagnostics.rejected[0].target_instance_ids.has("airlock"))
-	var preview := ModuleAssembly.preview_regeneration(root, captured.plans)
-	var generated_entry := MapPrefabSystem.PrefabEntry.new(
-		null, catalog[1], "generated/pump_hall.tscn"
-	)
-	var generated_catalog := ModuleAssembly.catalog_from_prefab_entries([generated_entry])
-	assert_eq(generated_catalog.size(), 1)
-	assert_eq(generated_catalog[0].module_id, catalog[1].module_id)
-	var metadata_catalog := ModuleAssembly.catalog_from_metadata_dicts([catalog[1].to_dict()])
-	assert_eq(metadata_catalog.size(), 1)
-	assert_eq(metadata_catalog[0].module_id, catalog[1].module_id)
-	var metadata_diagnostics := ModuleAssembly.get_replacement_diagnostics_from_metadata(
-		root, [catalog[1].to_dict()]
-	)
-	assert_true(
-		metadata_diagnostics.compatible.any(
-			func(definition: PrefabMetadata) -> bool:
-				return definition.module_id == catalog[1].module_id
-		)
-	)
-	assert_eq(
-		(
-			ModuleAssembly
-			. catalog_from_metadata_dicts(
-				[{"module_id": "invalid", "dimensions": [0.0, 0.0, 0.0]}, "ignored"]
-			)
-			. size()
-		),
-		0
-	)
-	assert_true(preview.success, "Regeneration preview must stage valid plans")
-	assert_eq(preview.transforms.size(), 1)
-	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
-	assert_eq(ModuleAssembly.get_instances(root)[1], original_unpinned)
-	var invalid_preview := ModuleAssembly.preview_regeneration(
-		root,
+	var positions := [Vector3.ZERO, Vector3(8, 0, 0), Vector3(8, 0, 8), Vector3(0, 0, 8)]
+	for index in 4:
+		var instance := ModuleInstance.new()
+		instance.instance_id = ["a", "b", "c", "d"][index]
+		instance.name = instance.instance_id.to_upper()
+		instance.definition = definition
+		instance.position = positions[index]
+		instance.pinned = index % 2 == 0
+		instance.add_child((load(definition.scene_path) as PackedScene).instantiate())
+		root.add_child(instance)
+	root.module_connections.assign(
 		[
+			{"from_instance": "a", "from_socket": "east", "to_instance": "b", "to_socket": "west"},
 			{
-				"definition": catalog[1],
-				"target_instance_id": "missing",
-				"target_socket_id": "out",
-				"source_socket_id": "in"
-			}
+				"from_instance": "b",
+				"from_socket": "south",
+				"to_instance": "c",
+				"to_socket": "north"
+			},
+			{"from_instance": "c", "from_socket": "west", "to_instance": "d", "to_socket": "east"},
+			{"from_instance": "d", "from_socket": "north", "to_instance": "a", "to_socket": "south"}
 		]
 	)
-	assert_false(invalid_preview.success)
-	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
-	assert_eq(ModuleAssembly.get_instances(root)[1], original_unpinned)
-	var regenerated := ModuleAssembly.regenerate_unpinned(root, captured.plans)
-	assert_true(regenerated.success, "A valid replacement plan must commit")
-	assert_true(pinned.pinned, "Pinned modules must survive regeneration")
-	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
-	assert_ne(ModuleAssembly.get_instances(root)[1], original_unpinned)
-	EditorGlobals.get_undo_redo().undo()
-	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
-	assert_eq(ModuleAssembly.get_instances(root)[1], original_unpinned)
-	EditorGlobals.get_undo_redo().redo()
-	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
-	assert_ne(ModuleAssembly.get_instances(root)[1], original_unpinned)
-	EditorGlobals._runtime_undo_redo.clear_history()
+	add_child(root)
+	root.prepare_for_save()
+	return root
+
+
+func test_regeneration_preserves_multiple_pinned_boundaries_loop_and_undo_identities() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var original := _regeneration_definition("original", "Original")
+	var replacement := _regeneration_definition("replacement", "Replacement")
+	var root := _regeneration_ring(original)
+	var old_nodes := ModuleAssembly.get_instances(root)
+	var graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	var current := ModuleAssembly.build_regeneration_plans(root)
+	assert_true(current.success, current.error)
+	var selected := ModuleAssembly.build_regeneration_plans(root, [replacement])
+	assert_true(selected.success, selected.error)
+	if selected.success:
+		var result := ModuleAssembly.regenerate_unpinned(root, selected.plans)
+		assert_true(result.success, result.error)
+		var new_nodes := ModuleAssembly.get_instances(root)
+		assert_eq(root.module_connections, graph, "Every edge of the loop must survive")
+		assert_eq(new_nodes[0], old_nodes[0])
+		assert_eq(new_nodes[2], old_nodes[2])
+		for index in [1, 3]:
+			assert_ne(new_nodes[index], old_nodes[index])
+			assert_eq(new_nodes[index].instance_id, old_nodes[index].instance_id)
+			assert_eq(new_nodes[index].transform, old_nodes[index].transform)
+			assert_not_null(new_nodes[index].find_child("Replacement", true, false))
+			assert_null(new_nodes[index].find_child("Original", true, false))
+			assert_eq(root.find_actor(new_nodes[index].instance_id + "/switch").actor_id, "switch")
+		EditorGlobals.get_undo_redo().undo()
+		assert_eq(ModuleAssembly.get_instances(root), old_nodes)
+		assert_eq(root.module_connections, graph)
+		assert_eq(root.find_actor("b/switch"), old_nodes[1].find_child("Objective", true, false))
+		EditorGlobals.get_undo_redo().redo()
+		assert_eq(ModuleAssembly.get_instances(root), new_nodes)
+		assert_eq(root.module_connections, graph)
+		assert_eq(root.find_actor("b/switch"), new_nodes[1].find_child("Objective", true, false))
+	EditorGlobals.get_undo_redo().clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
+func test_regeneration_preview_and_stale_failure_never_notify_live_tree_or_change_owners() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root := _regeneration_ring(_regeneration_definition("preview", "Original"))
+	var captured := ModuleAssembly.build_regeneration_plans(root)
+	assert_true(captured.success, captured.error)
+	var nodes := root.get_children()
+	var owners: Dictionary = {}
+	var notifications: Array[String] = []
+	for node in root.find_children("*", "", true, false):
+		owners[node] = node.owner
+		node.tree_exiting.connect(func() -> void: notifications.append("exit"))
+		node.tree_entered.connect(func() -> void: notifications.append("enter"))
+	root.child_order_changed.connect(func() -> void: notifications.append("order"))
+	var graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	var channel_data: Dictionary = root.channel_data.duplicate(true)
+	var version: int = EditorGlobals.get_undo_redo().get_version()
+	if captured.success:
+		var preview := ModuleAssembly.preview_regeneration(root, captured.plans)
+		assert_true(preview.success, preview.error)
+		for index in captured.plans.size():
+			assert_eq(preview.transforms[index], captured.plans[index].transform)
+		var malformed: Array[Dictionary] = captured.plans.duplicate(true)
+		malformed[0].transform.origin.x += 1
+		assert_false(ModuleAssembly.preview_regeneration(root, malformed).success)
+		var target: ModuleInstance = root.get_node("B")
+		target.pinned = true
+		assert_false(ModuleAssembly.regenerate_unpinned(root, captured.plans).success)
+		target.pinned = false
+	assert_eq(root.get_children(), nodes)
+	assert_eq(root.module_connections, graph)
+	assert_eq(root.channel_data, channel_data)
+	assert_eq(EditorGlobals.get_undo_redo().get_version(), version)
+	assert_eq(notifications, [], "Preview and rejection must not detach even temporarily")
+	for node: Node in owners:
+		assert_eq(node.owner, owners[node])
+	EditorGlobals.get_undo_redo().clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
+func test_regeneration_backtracks_authored_content_with_bounded_exhaustion() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root := _regeneration_ring(_regeneration_definition("search_original", "Original"))
+	var blocked := _regeneration_definition("a_blocked", "Blocked", true)
+	var valid := _regeneration_definition("z_valid", "Valid")
+	var old_nodes := ModuleAssembly.get_instances(root)
+	var graph: Array[Dictionary] = root.module_connections.duplicate(true)
+	var exhausted := ModuleAssembly.build_regeneration_plans(root, [valid, blocked], ["walk"], 2)
+	assert_false(exhausted.success)
+	assert_true(exhausted.error.contains("exhausted"), exhausted.error)
+	assert_true(exhausted.attempts <= 2)
+	assert_eq(ModuleAssembly.get_instances(root), old_nodes)
+	assert_eq(root.module_connections, graph)
+	assert_false(EditorGlobals.get_undo_redo().has_undo())
+	var recovered := ModuleAssembly.build_regeneration_plans(root, [valid, blocked])
+	assert_true(recovered.success, recovered.error)
+	if recovered.success:
+		assert_true(recovered.attempts > 2)
+		for plan: Dictionary in recovered.plans:
+			assert_eq(
+				plan.definition, valid, "Reject authored collision, not just metadata mismatches"
+			)
+		var reverse := ModuleAssembly.build_regeneration_plans(root, [blocked, valid])
+		assert_true(reverse.success, reverse.error)
+		assert_eq(reverse.plans, recovered.plans, "Catalog input order must not change selection")
+		var invalid: Array[Dictionary] = recovered.plans.duplicate(true)
+		invalid[-1].definition = blocked
+		var failed_commit := ModuleAssembly.regenerate_unpinned(root, invalid)
+		assert_false(failed_commit.success)
+		assert_eq(ModuleAssembly.get_instances(root), old_nodes)
+		assert_eq(root.module_connections, graph)
+		assert_false(EditorGlobals.get_undo_redo().has_undo())
+		assert_true(ModuleAssembly.regenerate_unpinned(root, recovered.plans).success)
+	EditorGlobals.get_undo_redo().clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
+func test_regeneration_rejects_every_boundary_and_unresolved_gameplay_reference_atomically(
+) -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var original := _regeneration_definition("identity_original", "Original")
+	var root := _regeneration_ring(original)
+	var old_nodes := ModuleAssembly.get_instances(root)
+	var bad_boundary := original.duplicate(true) as PrefabMetadata
+	bad_boundary.module_id = "bad_boundary"
+	bad_boundary.sockets[2].kind = "vent"
+	var rejected := ModuleAssembly.build_regeneration_plans(root, [bad_boundary])
+	assert_false(rejected.success)
+	assert_true(rejected.error.contains("b"), rejected.error)
+	assert_true(rejected.error.contains("south"), rejected.error)
+	var captured := ModuleAssembly.build_regeneration_plans(root)
+	assert_true(captured.success, captured.error)
+	var missing_actor := _regeneration_definition("missing_actor", "Replacement", false, false)
+	if captured.success:
+		var plans: Array[Dictionary] = captured.plans
+		plans[0].definition = missing_actor
+		root.channel_data = {"required_switch": {"sources": ["b/switch"], "targets": ["a/switch"]}}
+		var invalid_channel := ModuleAssembly.regenerate_unpinned(root, plans)
+		assert_false(invalid_channel.success)
+		assert_true(invalid_channel.error.contains("b/switch"), invalid_channel.error)
+		root.channel_data = {}
+		old_nodes[0].find_child("Objective", true, false).set_meta(
+			"mission_objective", {"requires": ["b/switch"]}
+		)
+		var invalid_objective := ModuleAssembly.regenerate_unpinned(root, plans)
+		assert_false(invalid_objective.success)
+		assert_true(invalid_objective.error.contains("b/switch"), invalid_objective.error)
+	assert_eq(ModuleAssembly.get_instances(root), old_nodes)
+	assert_false(EditorGlobals.get_undo_redo().has_undo())
+	EditorGlobals.get_undo_redo().clear_history()
+	EditorGlobals._runtime_undo_redo = saved_history
+	root.free()
+
+
+func test_regeneration_without_pins_selects_content_and_checks_capabilities() -> void:
+	var saved_history := EditorGlobals._runtime_undo_redo
+	EditorGlobals._runtime_undo_redo = UndoRedo.new()
+	var root := _regeneration_ring(_regeneration_definition("unpinned_original", "Original"))
+	for instance in ModuleAssembly.get_instances(root):
+		instance.pinned = false
+	var replacement := _regeneration_definition("unpinned_replacement", "Replacement")
+	var unsupported := replacement.duplicate(true) as PrefabMetadata
+	unsupported.required_capabilities = PackedStringArray(["teleport"])
+	var diagnostics := ModuleAssembly.get_replacement_diagnostics(root, [unsupported])
+	assert_true(diagnostics.compatible.is_empty())
+	assert_true(diagnostics.rejected[0].unsupported_capabilities.has("teleport"))
+	assert_true(diagnostics.rejected[0].target_instance_ids.has("b"))
+	var authoring_supported := ModuleAssembly.build_regeneration_plans(
+		root, [unsupported], ["walk", "teleport"]
+	)
+	assert_true(authoring_supported.success, authoring_supported.error)
+	if authoring_supported.success:
+		assert_false(ModuleAssembly.regenerate_unpinned(root, authoring_supported.plans).success)
+	var selected := ModuleAssembly.build_regeneration_plans(root, [replacement])
+	assert_true(selected.success, selected.error)
+	if selected.success:
+		var result := ModuleAssembly.regenerate_unpinned(root, selected.plans)
+		assert_true(result.success, result.error)
+		for instance in ModuleAssembly.get_instances(root):
+			assert_not_null(instance.find_child("Replacement", true, false))
+			assert_null(instance.find_child("Original", true, false))
+	EditorGlobals.get_undo_redo().clear_history()
 	EditorGlobals._runtime_undo_redo = saved_history
 	root.free()
 

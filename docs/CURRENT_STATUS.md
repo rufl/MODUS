@@ -24,13 +24,19 @@ The Linux helper now validates archive ownership/bytes/modes before extraction a
 
 CI now builds Linux client and editor alongside its existing targets and assembles a versioned Linux candidate on `develop`. `actionlint` passes; hosted CI was not run. Native-runtime/dependency locking, signing/authentication, release publication, Windows runtime and manual acceptance remain open. No aggregate test result is refreshed.
 
+### September 22 Persistent Hub Travel
+
+Authored sessions preserve the host transport and player nodes across staged, validated destination commits. Revisit records retain actor/objective state and consumed rewards; encrypted campaign checkpoints restore into a fresh session. Late joiners validate content before receiving the current destination and party, with replication gated on acknowledgement.
+
+The completed delivery passes 40 focused tests/263 assertions and actual hub → mission → hub console interaction headlessly. This batch rechecked the three hub tests (**3/3, 45 assertions**) and the separate-process ENet scenario: content refusal, revisits, living/cleared encounters, late join and disconnect during preparation all pass. This is not host migration, cross-build save compatibility or graphical acceptance.
+
 ### September 13 Generator Correctness and World-Building Plan
 
 The [release and world-building plan](RELEASE_AND_WORLD_BUILDING_PLAN.md) separates implemented generator/module/editor contracts from release acceptance. The three-room gate and eleven-module **Breakwater Black Start** mission are implemented; the production pass adds room detail, power-driven presentation, original zoned ambience and finite-supply tuning. Native completion and isolated rendered review are proven below. A local Linux portable package now has a clean install/verify/uninstall lifecycle with save preservation. Human audiovisual/balance acceptance, signed/published installers, bundled native integrations and external-service proof remain open.
 
 The initial disposable Godot 4.7.2 probe reproduced key/secret nondeterminism at context seed `424242` under global seeds `111`/`999`. Generator revision **2** now isolates random choices, fixes double-offset room polygons and overwritten entrances, connects room components and organic areas, retains gameplay output, and bakes collision-backed navigation before packing. The nine-script focused selection passes **55/55 tests, 1,319 assertions**. Separate 64×64 and default 128×128 source-generation smokes pass; the latter produces 1,405 navigation polygons, 27 rooms, 28 hallways and one secret. Saved-scene tests exercise reachable room/key/monster destinations, player-floor collision, repeatable gameplay/navigation and cancellation/restart; no visual/manual gameplay or full matrix was run.
 
-The owner selected a **bundled full-feature runtime**; no Steamworks app exists yet. Remaining generator rule/voxel/module integration, automatic realization of generated gameplay records, mission presentation/balance acceptance, hubs, signed release packaging and external-service proof stay open.
+The owner selected a **bundled full-feature runtime**; no Steamworks app exists yet. Remaining generator rule/voxel/module integration, automatic realization of generated gameplay records, mission presentation/balance acceptance, signed release packaging and external-service proof stay open.
 
 The earlier embedded editor experiment reproduced **4 saved nodes becoming 1 after load/resave**. Transactional document replacement now preserves root names/metadata, nested ownership, transforms and collision; the unresolved `sync_cursor` dependency is repaired, and actors use one document-owned channel service. Editor/history regressions pass **36/36 with 204 assertions**; module/navigation regressions pass **25/25 with 105 assertions**, including moving doors not permanently severing navigation. Both focused runs report no GUT orphans; stock-engine ObjectDB exit warnings remain.
 

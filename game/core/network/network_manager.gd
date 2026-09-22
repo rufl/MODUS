@@ -419,13 +419,9 @@ func _setup_rate_limits() -> void:
 ## Add rate limit for an RPC method
 
 
-func add_rate_limit(
-	method_name: String, calls_per_second: float, burst_capacity: int = 1
-) -> void:
+func add_rate_limit(method_name: String, calls_per_second: float, burst_capacity: int = 1) -> void:
 	_rpc_rate_limits[method_name] = {
-		"calls_per_second": calls_per_second,
-		"burst_capacity": maxi(1, burst_capacity),
-		"peers": {}
+		"calls_per_second": calls_per_second, "burst_capacity": maxi(1, burst_capacity), "peers": {}
 	}
 
 

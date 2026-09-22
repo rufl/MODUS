@@ -17,7 +17,6 @@ class ReconnectProbe:
 		return OK
 
 
-
 class RateLimitProbe:
 	extends NetworkManager
 
@@ -28,6 +27,7 @@ class RateLimitProbe:
 
 	func _rpc_time_usec() -> int:
 		return now_usec
+
 
 func before_each():
 	await modus_setup()
@@ -65,8 +65,6 @@ func test_autoload_exists():
 	assert_not_null(_network_manager, "NetworkManager should be found via NetworkSvc.get_service()")
 
 
-
-
 func test_validate_rpc_server_trusted():
 	if not _network_manager:
 		var ns := NetworkSvc.get_service()
@@ -81,8 +79,6 @@ func test_validate_rpc_server_trusted():
 		assert_true(result, "Server peer should be trusted")
 
 
-
-
 func test_trusted_peer_still_obeys_rpc_rate_limits() -> void:
 	if not _network_manager:
 		var ns := NetworkSvc.get_service()
@@ -94,6 +90,7 @@ func test_trusted_peer_still_obeys_rpc_rate_limits() -> void:
 		return
 
 	var peer_id := 999
+	_network_manager.add_trusted_peer(peer_id)
 	var first: bool = _network_manager.validate_rpc(peer_id, "send_chat_message", ["hello"])
 	var second: bool = _network_manager.validate_rpc(peer_id, "send_chat_message", ["hello"])
 	_network_manager.remove_trusted_peer(peer_id)

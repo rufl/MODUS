@@ -24,6 +24,7 @@ var grid_system: Node
 var selection_manager: Node
 var editor_features: Node  ## Unified features controller
 var generator_prefab_system: RefCounted
+var _generator_replacement_metadata: Array = []
 var _map_generator: Node
 var _replacement_capabilities: Array[String] = ["walk"]
 var _replacement_capabilities_configured := false
@@ -381,7 +382,6 @@ func show_socket_highlights(
 			var highlight := CSGSphere3D.new()
 			highlight.name = "SocketHighlight"
 			highlight.radius = 0.22
-			highlight.height = 0.44
 			var material := StandardMaterial3D.new()
 			material.albedo_color = (
 				Color(0.2, 0.9, 0.3, 0.9) if valid else Color(0.95, 0.15, 0.1, 0.9)
@@ -683,6 +683,10 @@ func _on_generate_candidates_pressed() -> void:
 	generate_replacement_candidates()
 
 
+func is_playtesting() -> bool:
+	return _play_starting or is_instance_valid(_play_session)
+
+
 func begin_playtest() -> bool:
 	if is_instance_valid(_play_session) or _play_starting or not is_instance_valid(level_root):
 		return false
@@ -760,7 +764,8 @@ func _input(event: InputEvent) -> void:
 			_preview_keys_down.erase(event.keycode)
 		return
 	if (
-		module_panel and module_panel.is_module_preview_active()
+		module_panel
+		and module_panel.is_module_preview_active()
 		and event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE, KEY_R]
 		and not is_playtesting()
 	):

@@ -22,7 +22,8 @@ var snap_to_grid: bool = true
 
 
 func _ready() -> void:
-	_create_preview_material()
+	if preview_material == null:
+		_create_preview_material()
 
 
 func _create_preview_material() -> void:
@@ -128,12 +129,15 @@ func _create_scene_visuals(state: SceneState) -> Node3D:
 		root = _create_scene_visuals(base)
 	for index in state.get_node_count():
 		var path := state.get_node_path(index)
-		var node: Node3D = root.get_node_or_null(path) as Node3D if root else null
+		var node: Node3D = null
+		if root:
+			node = root.get_node_or_null(path) as Node3D
 		if node == null:
 			var scene := state.get_node_instance(index)
 			node = (
 				_create_scene_visuals(scene.get_state())
-				if scene else _create_visual_node(state.get_node_type(index))
+				if scene
+				else _create_visual_node(state.get_node_type(index))
 			)
 			node.name = state.get_node_name(index)
 			if root == null:
@@ -146,13 +150,16 @@ func _create_scene_visuals(state: SceneState) -> Node3D:
 				parent.add_child(node)
 		for property_index in state.get_node_property_count(index):
 			_set_visual_property(
-				node, state.get_node_property_name(index, property_index),
+				node,
+				state.get_node_property_name(index, property_index),
 				state.get_node_property_value(index, property_index)
 			)
 	return root
 
 
 func _create_visual_node(native_type: StringName) -> Node3D:
+	if native_type.is_empty():
+		return Node3D.new()
 	if (
 		native_type in [&"MeshInstance3D", &"MultiMeshInstance3D", &"Path3D"]
 		or ClassDB.is_parent_class(native_type, &"CSGShape3D")
@@ -180,9 +187,10 @@ func _set_visual_property(node: Node3D, property: StringName, value: Variant) ->
 
 
 func _is_visual_property(node: Node3D, property: StringName) -> bool:
-	if property in [
-		&"transform", &"position", &"rotation", &"rotation_degrees", &"scale", &"visible"
-	]:
+	if (
+		property
+		in [&"transform", &"position", &"rotation", &"rotation_degrees", &"scale", &"visible"]
+	):
 		return true
 	if node is MeshInstance3D:
 		return property == &"mesh"
@@ -192,14 +200,42 @@ func _is_visual_property(node: Node3D, property: StringName) -> bool:
 		return property == &"curve"
 	if node is CSGShape3D:
 		# Geometry only: deliberately exclude use_collision and collision layers.
-		return property in [
-			&"operation", &"snap", &"calculate_tangents", &"flip_faces", &"mesh",
-			&"size", &"radius", &"height", &"sides", &"cone", &"smooth_faces",
-			&"inner_radius", &"outer_radius", &"ring_sides", &"polygon", &"mode",
-			&"depth", &"spin_degrees", &"spin_sides", &"path_node", &"path_interval",
-			&"path_simplify_angle", &"path_rotation", &"path_local", &"path_continuous_u",
-			&"path_u_distance", &"path_joined",
-		]
+		return (
+			property
+			in [
+				&"operation",
+				&"snap",
+				&"calculate_tangents",
+				&"flip_faces",
+				&"mesh",
+				&"size",
+				&"radius",
+				&"height",
+				&"sides",
+				&"cone",
+				&"smooth_faces",
+				&"radial_segments",
+				&"rings",
+				&"inner_radius",
+				&"outer_radius",
+				&"ring_sides",
+				&"polygon",
+				&"mode",
+				&"depth",
+				&"spin_degrees",
+				&"spin_sides",
+				&"path_node",
+				&"path_interval",
+				&"path_simplify_angle",
+				&"path_rotation",
+				&"path_local",
+				&"path_continuous_u",
+				&"path_u_distance",
+				&"path_joined",
+				&"path_interval_type",
+				&"path_rotation_accurate",
+			]
+		)
 	return false
 
 
@@ -446,9 +482,7 @@ func cancel_preview() -> void:
 
 func clear_preview() -> void:
 	if preview_node:
-		preview_node.hide()
-		remove_child(preview_node)
-		preview_node.queue_free()
+		preview_node.free()
 		preview_node = null
 
 	is_active = false
