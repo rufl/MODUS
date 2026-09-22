@@ -248,6 +248,51 @@ jobs:
             --executable "build/$EXPORT_PLATFORM/$EXPORT_EXECUTABLE" \
             --log "build/$EXPORT_PLATFORM/export-launch.log"
 
+      - name: Generate artifact manifest
+        env:
+          EXPORT_PLATFORM: ${{ matrix.platform }}
+          EXPORT_PRESET: ${{ matrix.preset }}
+          EXPORT_EXECUTABLE: ${{ matrix.executable }}
+        run: |
+          artifact_dir="build/$EXPORT_PLATFORM"
+          manifest="$artifact_dir/manifest.json"
+          (
+            cd "$artifact_dir"
+            sha256sum "$EXPORT_EXECUTABLE" "${EXPORT_EXECUTABLE%.*}.pck"
+          ) > "$artifact_dir/SHA256SUMS"
+          python - "$manifest" "$EXPORT_PLATFORM" "$EXPORT_PRESET" "$EXPORT_EXECUTABLE" "$GITHUB_SHA" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          output, platform, preset, executable, commit = sys.argv[1:]
+          artifact_dir = Path(output).parent
+          sums = {}
+          for line in (artifact_dir / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
+              digest, path = line.split(maxsplit=1)
+              sums[Path(path).name] = digest
+          Path(output).write_text(
+              json.dumps(
+                  {
+                      "product": "MODUS",
+                      "platform": platform,
+                      "preset": preset,
+                      "commit": commit,
+                      "godot_version": "${{ env.GODOT_VERSION }}",
+                      "artifacts": sums,
+                  },
+                  indent=2,
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Verify artifact manifest
+        run: |
+          artifact_dir="build/${{ matrix.platform }}"
+          (cd "$artifact_dir" && sha256sum --check SHA256SUMS)
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v7
         with:
