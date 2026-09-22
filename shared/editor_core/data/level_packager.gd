@@ -195,6 +195,14 @@ static func package_level(
 		result.error_msg = "Manifest level_file and thumbnail must differ"
 		return result
 
+	var safe_name := manifest.name.to_snake_case().validate_filename()
+	if safe_name.is_empty():
+		safe_name = manifest.id.validate_filename()
+	var zip_path := output_dir.path_join(safe_name + "." + MDSL_EXTENSION)
+	if _output_path_exists_or_is_link(zip_path):
+		result.error_msg = "Package already exists: %s" % zip_path
+		return result
+
 	# Keep each staging directory unique so concurrent exports cannot overwrite one another.
 	var temp_dir := "user://temp_package_%s_%s/" % [_generate_id(), str(Time.get_ticks_usec())]
 	var root_err := _ensure_zip_directory(temp_dir)
@@ -360,15 +368,13 @@ static func package_level(
 			result, temp_dir, "Failed to save manifest: %s" % error_string(manifest_err)
 		)
 
-	var safe_name := manifest.name.to_snake_case().validate_filename()
-	if safe_name.is_empty():
-		safe_name = manifest.id.validate_filename()
+	if _output_path_exists_or_is_link(zip_path):
+		return _package_failure(result, temp_dir, "Package already exists: %s" % zip_path)
 	var output_dir_err := _ensure_zip_directory(output_dir)
 	if output_dir_err != OK:
 		return _package_failure(
 			result, temp_dir, "Failed to create output directory: %s" % error_string(output_dir_err)
 		)
-	var zip_path := output_dir.path_join(safe_name + "." + MDSL_EXTENSION)
 	var zip_err: Error = _create_zip(temp_dir, zip_path)
 	if zip_err != OK or not FileAccess.file_exists(zip_path):
 		if zip_err == OK:
@@ -954,6 +960,14 @@ static func _is_safe_zip_entry(entry_path: String, extraction_root: String) -> b
 		if parent_dir and parent_dir.is_link(current_path.get_file()):
 			return false
 	return true
+
+
+static func _output_path_exists_or_is_link(path: String) -> bool:
+	var absolute_path := ProjectSettings.globalize_path(path).simplify_path()
+	var parent_dir := DirAccess.open(absolute_path.get_base_dir())
+	if parent_dir and parent_dir.is_link(absolute_path.get_file()):
+		return true
+	return FileAccess.file_exists(absolute_path)
 
 
 static func _ensure_zip_directory(path: String) -> Error:

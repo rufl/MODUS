@@ -101,3 +101,51 @@ func test_archive_entry_validation_rejects_empty_and_ambiguous_paths() -> void:
 		LevelPackagerScript._is_valid_archive_entry("assets/texture.png"),
 		"Valid archive entries must remain supported"
 	)
+
+
+func test_package_preserves_existing_output_and_exports_fresh_package() -> void:
+	var output_dir := "user://level_packager_overwrite_regression/"
+	var output_path := output_dir.path_join("overwrite_guard.mdsl")
+	if FileAccess.file_exists(output_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(output_path))
+	if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(output_dir)):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(output_dir))
+	assert_eq(
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(output_dir)),
+		OK,
+		"Regression output directory should be creatable"
+	)
+
+	var sentinel := FileAccess.open(output_path, FileAccess.WRITE)
+	assert_not_null(sentinel, "Regression sentinel should be writable")
+	if not sentinel:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(output_dir))
+		return
+	sentinel.store_buffer(PackedByteArray([0x53, 0x45, 0x4E, 0x54, 0x49, 0x4E, 0x45, 0x4C]))
+	sentinel.close()
+	var sentinel_bytes := FileAccess.get_file_as_bytes(output_path)
+
+	var level := Node3D.new()
+	add_child_autofree(level)
+	var manifest := LevelPackagerScript.LevelManifest.new()
+	manifest.id = "overwrite_guard"
+	manifest.name = "Overwrite Guard"
+
+	var refused := LevelPackagerScript.package_level(level, output_dir, manifest)
+	assert_false(refused.success, "Packaging must refuse an existing output package")
+	assert_true(
+		"already exists" in refused.error_msg, "Refusal should explain the existing package"
+	)
+	assert_eq(
+		FileAccess.get_file_as_bytes(output_path),
+		sentinel_bytes,
+		"Refused packaging must preserve the existing package bytes"
+	)
+
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(output_path))
+	var fresh := LevelPackagerScript.package_level(level, output_dir, manifest)
+	assert_true(fresh.success, "Packaging should still succeed for a fresh output")
+	assert_eq(fresh.output_path, output_path)
+
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(output_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(output_dir))

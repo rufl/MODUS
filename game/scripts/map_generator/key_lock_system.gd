@@ -19,6 +19,9 @@ func generate_key_lock_system(context: GenerationContext) -> Dictionary:
 	context.metadata.erase("mission_progression")
 	if not context.config.enable_key_locks:
 		return {"keys": [], "locked_doors": []}
+	if not _room_graph_is_connected(context):
+		push_warning("Mission progression rejected: room graph is disconnected")
+		return {"keys": [], "locked_doors": []}
 
 	var key_count := _calculate_key_count(context)
 	var progression_order := _analyze_room_progression(context)
@@ -58,6 +61,17 @@ func build_progression_manifest(
 	var room_order: Array[int] = []
 	for room: Room in progression:
 		room_order.append(room.id)
+
+	var room_edges: Array[Dictionary] = []
+	for room: Room in context.rooms:
+		for connected_id: int in room.connections:
+			room_edges.append({"from_room_id": room.id, "to_room_id": connected_id})
+	room_edges.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			if a.from_room_id == b.from_room_id:
+				return a.to_room_id < b.to_room_id
+			return a.from_room_id < b.from_room_id
+	)
 
 	var manifest_keys: Array[Dictionary] = []
 	var manifest_doors: Array[Dictionary] = []
@@ -125,7 +139,8 @@ func build_progression_manifest(
 		"objectives": objectives,
 		"keys": manifest_keys,
 		"locked_transitions": manifest_doors,
-		"recovery_route": room_order
+		"recovery_route": room_order,
+		"room_edges": room_edges
 	}
 
 
@@ -151,22 +166,93 @@ func validate_progression_manifest(
 				"is_valid": false,
 				"error_message": "Mission progression field '%s' must be an array" % field
 			}
-	var keys: Array = manifest.keys
-	var doors: Array = manifest.locked_transitions
+	var room_ids: Dictionary = {}
+	var actual_edges: Dictionary = {}
+	for room: Room in context.rooms:
+		if room_ids.has(room.id):
+			return {"is_valid": false, "error_message": "Mission progression has duplicate rooms"}
+		room_ids[room.id] = true
+	for room: Room in context.rooms:
+		for connected_id: Variant in room.connections:
+			if not connected_id is int or not room_ids.has(connected_id):
+				return {
+					"is_valid": false,
+					"error_message": "Mission progression references an unknown room edge"
+				}
+			actual_edges["%d:%d" % [room.id, connected_id]] = true
+	var declared_edges := actual_edges
+	if manifest.has("room_edges"):
+		if not manifest.room_edges is Array:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression field 'room_edges' must be an array"
+			}
+		declared_edges = {}
+		for edge: Variant in manifest.room_edges:
+			if (
+				not edge is Dictionary
+				or not edge.get("from_room_id") is int
+				or not edge.get("to_room_id") is int
+			):
+				return {
+					"is_valid": false,
+					"error_message": "Mission progression contains a malformed room edge"
+				}
+			var edge_key := "%d:%d" % [edge.from_room_id, edge.to_room_id]
+			if (
+				not room_ids.has(edge.from_room_id)
+				or not room_ids.has(edge.to_room_id)
+				or declared_edges.has(edge_key)
+			):
+				return {
+					"is_valid": false,
+					"error_message": "Mission progression contains an invalid room edge"
+				}
+			declared_edges[edge_key] = true
+		if declared_edges != actual_edges:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression room edges do not match the generated graph"
+			}
 	var route: Array = manifest.recovery_route
 	if route.is_empty() or manifest.start_room_id != route[0]:
 		return {"is_valid": false, "error_message": "Mission progression has no valid start route"}
+	var seen_route: Dictionary = {}
+	for room_id: Variant in route:
+		if not room_id is int or not room_ids.has(room_id) or seen_route.has(room_id):
+			return {
+				"is_valid": false, "error_message": "Mission progression recovery route is invalid"
+			}
+		seen_route[room_id] = true
+	if manifest.goal_room_id not in seen_route:
+		return {
+			"is_valid": false,
+			"error_message": "Mission progression goal is outside the recovery route"
+		}
+	for index in range(route.size() - 1):
+		if not actual_edges.has("%d:%d" % [route[index], route[index + 1]]):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression recovery route leaves the room graph"
+			}
 	var colors: Dictionary = {}
 	var positions: Dictionary = {}
 	var key_ids: Dictionary = {}
-	for key: Dictionary in keys:
+	for key: Variant in manifest.keys:
+		if not key is Dictionary:
+			return {
+				"is_valid": false, "error_message": "Mission progression contains a malformed key"
+			}
 		var key_id := str(key.get("id", ""))
 		var color := str(key.get("color", ""))
 		var pos: Variant = key.get("grid_position")
+		var key_room_id: Variant = key.get("room_id")
 		if (
 			key_id.is_empty()
 			or color.is_empty()
 			or not pos is Vector2i
+			or not key_room_id is int
+			or not seen_route.has(key_room_id)
 			or positions.has(pos)
 			or key_ids.has(key_id)
 		):
@@ -184,7 +270,12 @@ func validate_progression_manifest(
 	var door_positions: Dictionary = {}
 	var door_ids: Dictionary = {}
 	var objective_ids: Dictionary = {}
-	for objective: Dictionary in manifest.objectives:
+	for objective: Variant in manifest.objectives:
+		if not objective is Dictionary:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression contains a malformed objective"
+			}
 		var objective_id := str(objective.get("id", ""))
 		if objective_id.is_empty() or objective_ids.has(objective_id):
 			return {
@@ -192,15 +283,23 @@ func validate_progression_manifest(
 				"error_message": "Mission progression contains duplicate objectives"
 			}
 		objective_ids[objective_id] = true
-	for index in range(doors.size()):
-		var door: Dictionary = doors[index]
+	for index in range(manifest.locked_transitions.size()):
+		var door: Variant = manifest.locked_transitions[index]
+		if not door is Dictionary:
+			return {
+				"is_valid": false, "error_message": "Mission progression contains a malformed lock"
+			}
 		var pos: Variant = door.get("grid_position")
 		var color := str(door.get("color", ""))
 		var door_id := str(door.get("id", ""))
+		var from_room_id: Variant = door.get("from_room_id")
+		var to_room_id: Variant = door.get("to_room_id")
 		if (
 			door_id.is_empty()
 			or color.is_empty()
 			or not pos is Vector2i
+			or not from_room_id is int
+			or not to_room_id is int
 			or door_positions.has(pos)
 			or door_ids.has(door_id)
 		):
@@ -214,26 +313,25 @@ func validate_progression_manifest(
 		if (
 			str(door.get("key_id", "")) != "KeyPickup_%d" % index
 			or not key_ids.has(door.get("key_id", ""))
+			or int(door.get("room_id", -1)) != to_room_id
+			or not seen_route.has(from_room_id)
+			or not seen_route.has(to_room_id)
+			or not actual_edges.has("%d:%d" % [from_room_id, to_room_id])
 		):
 			return {
-				"is_valid": false, "error_message": "Locked transition has no deterministic key"
+				"is_valid": false, "error_message": "Locked transition is not a valid room edge"
 			}
 		if not objective_ids.has(door_id):
 			return {"is_valid": false, "error_message": "Locked transition has no objective"}
-		if (
-			int(door.get("from_room_id", -1)) not in route
-			or int(door.get("to_room_id", -1)) not in route
-		):
-			return {
-				"is_valid": false, "error_message": "Locked transition leaves the recovery route"
-			}
-		if route.find(int(door.from_room_id)) >= route.find(int(door.to_room_id)):
+		if route.find(from_room_id) >= route.find(to_room_id):
 			return {
 				"is_valid": false,
 				"error_message": "Locked transition is encountered before its key"
 			}
 	if check_reachability:
-		var lock_result := validate_key_lock_progression(context, keys, doors)
+		var lock_result := validate_key_lock_progression(
+			context, manifest.keys, manifest.locked_transitions
+		)
 		if not lock_result:
 			return {
 				"is_valid": false,
@@ -375,7 +473,6 @@ func _place_key(context: GenerationContext, room: Room, key_color: KeyColor) -> 
 	# Mark cell metadata
 	cell.metadata["has_key"] = true
 	cell.metadata["key_color"] = KeyColor.keys()[key_color]
-
 	return key_data
 
 
@@ -462,6 +559,32 @@ func _find_door_position(context: GenerationContext, room: Room) -> Vector2i:
 ## Check if position is within grid bounds
 func _is_in_bounds(context: GenerationContext, pos: Vector2i) -> bool:
 	return pos.x >= 0 and pos.x < context.grid_size.x and pos.y >= 0 and pos.y < context.grid_size.y
+
+
+func _room_graph_is_connected(context: GenerationContext) -> bool:
+	if context.rooms.is_empty():
+		return false
+	var rooms_by_id: Dictionary = {}
+	for room: Room in context.rooms:
+		if rooms_by_id.has(room.id):
+			return false
+		rooms_by_id[room.id] = room
+	for room: Room in context.rooms:
+		for connected_id: Variant in room.connections:
+			if not connected_id is int or not rooms_by_id.has(connected_id):
+				return false
+	var visited: Dictionary = {}
+	var queue: Array[int] = [context.rooms[0].id]
+	while not queue.is_empty():
+		var room_id: int = queue.pop_front()
+		if visited.has(room_id):
+			continue
+		visited[room_id] = true
+		var room: Room = rooms_by_id[room_id]
+		for connected_id: int in room.connections:
+			if not visited.has(connected_id):
+				queue.append(connected_id)
+	return visited.size() == rooms_by_id.size()
 
 
 ## Validate that all locked doors are reachable after key acquisition

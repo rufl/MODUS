@@ -410,6 +410,10 @@ Measure required-route failures/softlocks, repeated module and graph patterns, f
 
 Every completed slice updates its source/tests, README page, this plan's relevant state, Current Status/Known Limits and root changelog. Record artifact/build/seed, exact exercised behavior and remaining exclusions. Remove a README warning only after its corresponding acceptance gate is met; a new script, installer definition or generated screenshot is not closure by itself.
 
+### Generated graph and packaging hardening — September 22
+
+Generated key/lock manifests now publish deterministic room adjacency and reject disconnected graphs, forged edges, invalid recovery routes and locks without actual transitions before state replacement; `MissionManager` validates the retained edge contract while preserving legacy manifests without the optional field. Standalone `.mdsl` packaging refuses an existing output without changing its bytes. Focused graph, package and authored-mission proof passes 7/7, 6/6 and 5/5; generated actor production, graphical editor acceptance and audiovisual review remain open.
+
 ### Black Start authored mission delivery — September 13
 
 `game/levels/breakwater_mission.tscn` composes eleven modules: dock, hub, pump, intake, cavern, turbine, relay, return landing, lift, gallery and return elbow. Required progression combines bounded encounters cleared by actual enemy deaths, maintenance-key and power prerequisites, cooling, relay transmission and powered hub return. Optional shootable caches, finite supplies, timed hazards, station lighting and moving platforms share document-scoped runtime actors.

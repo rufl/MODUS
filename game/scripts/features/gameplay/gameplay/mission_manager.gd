@@ -351,15 +351,54 @@ func validate_progression_manifest(manifest: Dictionary) -> Dictionary:
 		}
 	var seen_route: Dictionary = {}
 	for room_id: Variant in route:
-		if seen_route.has(room_id):
+		if not room_id is int or seen_route.has(room_id):
 			return {
 				"is_valid": false,
-				"error_message": "Mission progression recovery route repeats a room."
+				"error_message": "Mission progression recovery route repeats or malforms a room."
 			}
 		seen_route[room_id] = true
+	var has_room_edges := manifest.has("room_edges")
+	var room_edges: Dictionary = {}
+	if has_room_edges:
+		if not manifest.room_edges is Array:
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression field 'room_edges' must be an array."
+			}
+		for edge: Variant in manifest.room_edges:
+			if (
+				not edge is Dictionary
+				or not edge.get("from_room_id") is int
+				or not edge.get("to_room_id") is int
+			):
+				return {
+					"is_valid": false,
+					"error_message": "Mission progression contains a malformed room edge."
+				}
+			var edge_key := "%d:%d" % [edge.from_room_id, edge.to_room_id]
+			if (
+				room_edges.has(edge_key)
+				or not seen_route.has(edge.from_room_id)
+				or not seen_route.has(edge.to_room_id)
+			):
+				return {
+					"is_valid": false,
+					"error_message": "Mission progression contains an invalid room edge."
+				}
+			room_edges[edge_key] = true
+	else:
+		for index in range(route.size() - 1):
+			room_edges["%d:%d" % [route[index], route[index + 1]]] = true
+	for index in range(route.size() - 1):
+		if not room_edges.has("%d:%d" % [route[index], route[index + 1]]):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression recovery route leaves the room graph."
+			}
 	var keys: Array = manifest.get("keys", [])
 	var key_ids: Dictionary = {}
 	var key_colors: Dictionary = {}
+	var key_records: Dictionary = {}
 	for key: Variant in keys:
 		if not key is Dictionary:
 			return {
@@ -373,6 +412,7 @@ func validate_progression_manifest(manifest: Dictionary) -> Dictionary:
 			}
 		key_ids[key_id] = true
 		key_colors[color] = true
+		key_records[key_id] = key
 	var door_ids: Dictionary = {}
 	for door: Variant in manifest.get("locked_transitions", []):
 		if not door is Dictionary:
@@ -381,9 +421,22 @@ func validate_progression_manifest(manifest: Dictionary) -> Dictionary:
 			}
 		var door_id := str(door.get("id", ""))
 		var key_id := str(door.get("key_id", ""))
-		if door_id.is_empty() or door_ids.has(door_id) or not key_ids.has(key_id):
+		var from_room_id: Variant = door.get("from_room_id")
+		var to_room_id: Variant = door.get("to_room_id")
+		var key: Dictionary = key_records.get(key_id, {})
+		if (
+			door_id.is_empty()
+			or door_ids.has(door_id)
+			or not key_ids.has(key_id)
+			or not from_room_id is int
+			or not to_room_id is int
+			or int(door.get("room_id", -1)) != to_room_id
+			or str(door.get("color", "")) != str(key.get("color", ""))
+			or (has_room_edges and not room_edges.has("%d:%d" % [from_room_id, to_room_id]))
+		):
 			return {
-				"is_valid": false, "error_message": "Mission progression lock has no unique key."
+				"is_valid": false,
+				"error_message": "Mission progression lock has an invalid room edge."
 			}
 		door_ids[door_id] = true
 	var objective_ids: Dictionary = {}

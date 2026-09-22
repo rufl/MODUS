@@ -81,7 +81,29 @@ func test_manifest_retains_reachable_mandatory_order_and_unique_records() -> voi
 	assert_eq(manifest.objectives[1].requires, ["KeyPickup_0"])
 	assert_eq(manifest.keys.size(), manifest.locked_transitions.size())
 	assert_eq(manifest.keys.size(), 2)
+	assert_eq(manifest.room_edges.size(), 10)
 	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
+
+
+func test_manifest_rejects_forged_room_edge() -> void:
+	_create_room_chain(context, 6)
+	var manifest: Dictionary = (
+		key_lock_system.generate_key_lock_system(context).progression_manifest
+	)
+	manifest.room_edges[0] = {"from_room_id": 0, "to_room_id": 99}
+	var validation := key_lock_system.validate_progression_manifest(context, manifest, false)
+	assert_false(validation.is_valid)
+	assert_true("room edge" in validation.error_message)
+
+
+func test_disconnected_room_graph_is_rejected_transactionally() -> void:
+	_create_room_chain(context, 4)
+	var detached := Room.new(99, Vector2i(100, 100), Room.RoomType.MEDIUM)
+	context.rooms.append(detached)
+	var result := key_lock_system.generate_key_lock_system(context)
+	assert_true(result.get("keys", []).is_empty())
+	assert_true(result.get("locked_doors", []).is_empty())
+	assert_true(context.progression_manifest.is_empty())
 
 
 func test_manifest_is_deterministic_for_same_seed() -> void:
