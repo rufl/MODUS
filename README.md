@@ -22,7 +22,7 @@ MODUS is a developer project, not a ready-to-play Steam game and not a one-click
 
 The parts most likely to frustrate you:
 
-- There is no installer, released build, configured Workshop item, or bundled GodotSteam extension. A reproducible Linux desktop export can be built locally, but it is not a signed, supported download.
+- There is no published release, signed installer, configured Workshop item, or bundled GodotSteam extension. Local Linux exports and an integrity-checked portable install/upgrade/uninstall helper are available; these are not a supported public download.
 - The expected environment is Godot 4.7 in the 4.7 line on a writable machine with Bash; the repository does not pin a portable editor binary.
 - First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
 - Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
@@ -95,6 +95,37 @@ The bounded export smoke passed on the current Linux/Godot 4.7.2 environment.
 This proves one local Linux artifact launches cleanly for the smoke interval; it
 does not make the artifact a release, installer, signed binary, Steam build, or
 target-Windows proof.
+
+### Local release candidates
+
+Python 3.10+ and Bash are required for the release helpers. To package an existing Linux client:
+
+```bash
+bash tools/package_linux_portable.sh package \
+  --artifact-dir standalone/client --version 0.9.5-beta --output /tmp/modus-linux.tar.gz
+bash tools/package_linux_portable.sh install --archive /tmp/modus-linux.tar.gz --prefix "$HOME/.local/opt"
+bash tools/package_linux_portable.sh verify --prefix "$HOME/.local/opt"
+bash tools/package_linux_portable.sh uninstall --prefix "$HOME/.local/opt"
+```
+
+Install again to upgrade. The helper checks the complete archive before changing an installation, rolls back failed replacements, and preserves unowned files and XDG saves/configuration. Changed owned payloads, unsafe archives and legacy installs without the checked inventory are rejected, not deleted or silently migrated. Back up and relocate a legacy install before choosing a clean prefix.
+
+For a client/server/editor candidate from one build revision, generate a portable manifest and stage it:
+
+```bash
+python3 tools/validate_release_artifacts.py --version 0.9.5-beta \
+  --commit "$(git rev-parse HEAD)" --godot-version "$(godot --version)" \
+  --root standalone --client standalone/client/modus.x86_64 \
+  --server standalone/server/server.x86_64 --editor standalone/editor/modus-editor.x86_64 \
+  --output standalone/release-manifest.json
+python3 tools/stage_release_artifacts.py --manifest standalone/release-manifest.json \
+  --output build/release/MODUS-0.9.5-beta-linux-x86_64
+python3 tools/validate_release_artifacts.py \
+  --verify build/release/MODUS-0.9.5-beta-linux-x86_64/manifest.json
+```
+
+Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. CI now assembles this Linux candidate on `develop`; the changed hosted workflow has not been exercised locally. Public publication, signing, a native-dependency lock and target acceptance remain open.
+
 ## OVERZEER dogfood deployment and telemetry
 
 MODUS is registered as the `modus` OVERZEER dogfood application. Its package

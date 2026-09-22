@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
-**Updated:** September 13, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
+**Updated:** September 22, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -15,6 +15,14 @@ MODUS contains broad FPS framework code plus focused and golden-demo runtime pro
 The canonical publication rules are in [Documentation Truth](DOCUMENTATION_TRUTH.md).
 
 Publication cleanup preserves old local evidence without refreshing it. Fresh clones retain this summary, maintained guides, licenses, and curated media—not raw `logs/`, historical session/archive files, or generated reports. See [local report regeneration](DOCUMENTATION_TRUTH.md#regenerating-local-reports) for commands and prerequisites. Missing local inputs must remain missing evidence; earlier PASS results below are dated observations, not checkout guarantees.
+
+### September 22 Release Engineering
+
+Portable schema-v1 manifests now cover all client/server/editor executable/PCK pairs with root-relative paths, SHA-256 hashes and optional commit/runtime identity. Verification rejects corrupted, missing, duplicated or escaping payloads. Candidate staging requires identity, verifies before and after copying, and refuses existing destinations. Detached-signature metadata is an integrity record, not signature authentication.
+
+The Linux helper now validates archive ownership/bytes/modes before extraction and replacement, supports rollback, and preserves unowned files and XDG data. The former upgrade path's deletion of an unowned file was reproduced. Three focused regression runners pass manifest relocation/tampering, staging failure isolation, malicious archives, failed-upgrade rollback and save preservation. A retained September 13 client executable passes package/install/verify/headless-launch/upgrade/verify/uninstall under a Unicode/space prefix; it was not rebuilt in this batch.
+
+CI now builds Linux client and editor alongside its existing targets and assembles a versioned Linux candidate on `develop`. `actionlint` passes; hosted CI was not run. Native-runtime/dependency locking, signing/authentication, release publication, Windows runtime and manual acceptance remain open. No aggregate test result is refreshed.
 
 ### September 13 Generator Correctness and World-Building Plan
 

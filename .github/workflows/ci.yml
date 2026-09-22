@@ -51,6 +51,12 @@ jobs:
       - name: Check Export Smoke Helper
         run: test -x tools/run_export_smoke.sh
 
+      - name: Check release engineering contracts
+        run: |
+          bash tests/runners/test_release_artifact_validator.sh
+          bash tests/runners/test_linux_portable_package.sh
+          bash tests/runners/test_release_staging.sh
+
   test:
     name: Run GUT Tests
     runs-on: ubuntu-latest
@@ -177,12 +183,23 @@ jobs:
           - platform: linux
             preset: Dedicated Server (Linux)
             executable: MODUS.x86_64
+            smoke_platform: linux
+          - platform: linux-client
+            preset: Linux Desktop
+            executable: modus.x86_64
+            smoke_platform: linux
+          - platform: linux-editor
+            preset: Standalone Editor Linux
+            executable: modus-editor.x86_64
+            smoke_platform: linux
           - platform: windows
             preset: Windows Desktop
             executable: MODUS.exe
+            smoke_platform: windows
           - platform: editor
             preset: Standalone Editor
             executable: MODUS-editor.exe
+            smoke_platform: editor
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -237,6 +254,7 @@ jobs:
           EXPORT_PLATFORM: ${{ matrix.platform }}
           EXPORT_PRESET: ${{ matrix.preset }}
           EXPORT_EXECUTABLE: ${{ matrix.executable }}
+          SMOKE_PLATFORM: ${{ matrix.smoke_platform }}
         run: |
           mkdir -p "build/$EXPORT_PLATFORM"
           godot --headless --verbose --path . --export-release "$EXPORT_PRESET" \
@@ -244,7 +262,7 @@ jobs:
           test -s "build/$EXPORT_PLATFORM/$EXPORT_EXECUTABLE"
           test -s "build/$EXPORT_PLATFORM/${EXPORT_EXECUTABLE%.*}.pck"
           bash tools/run_export_smoke.sh \
-            --platform "$EXPORT_PLATFORM" \
+            --platform "$SMOKE_PLATFORM" \
             --executable "build/$EXPORT_PLATFORM/$EXPORT_EXECUTABLE" \
             --log "build/$EXPORT_PLATFORM/export-launch.log"
 
@@ -332,7 +350,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, build, security-scan]
     if: github.ref == 'refs/heads/develop' && success()
+    timeout-minutes: 10
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -347,5 +369,45 @@ jobs:
           test -s "artifacts/windows-build-${{ github.run_number }}/MODUS.pck"
           test -s "artifacts/editor-build-${{ github.run_number }}/MODUS-editor.exe"
           test -s "artifacts/editor-build-${{ github.run_number }}/MODUS-editor.pck"
-          printf 'Supported release artifacts verified. No staging deployment target is configured.\n' \
+          for platform in linux-client linux-editor; do
+            artifact_dir="artifacts/$platform-build-${{ github.run_number }}"
+            (cd "$artifact_dir" && sha256sum --check SHA256SUMS)
+          done
+          for platform in linux windows editor; do
+            artifact_dir="artifacts/$platform-build-${{ github.run_number }}"
+            (cd "$artifact_dir" && sha256sum --check SHA256SUMS)
+          done
+          printf 'Downloaded artifact checksums verified; no public deployment is configured.\n' \
             >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Assemble versioned Linux release candidate
+        env:
+          BUILD_COMMIT: ${{ github.sha }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          version="$(python3 -c 'import re; from pathlib import Path; print(re.search(r"GAME_VERSION := \"([^\"]+)\"", Path("game/core/constants.gd").read_text())[1])')"
+          # Artifact upload/download does not preserve Linux executable permissions.
+          chmod +x "artifacts/linux-build-$BUILD_NUMBER/MODUS.x86_64" \
+            "artifacts/linux-client-build-$BUILD_NUMBER/modus.x86_64" \
+            "artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.x86_64"
+          python3 tools/validate_release_artifacts.py \
+            --version "$version" --commit "$BUILD_COMMIT" --godot-version "$GODOT_VERSION" \
+            --root artifacts --output artifacts/release-manifest.json \
+            --client "artifacts/linux-client-build-$BUILD_NUMBER/modus.x86_64" \
+            --server "artifacts/linux-build-$BUILD_NUMBER/MODUS.x86_64" \
+            --editor "artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.x86_64"
+          python3 tools/stage_release_artifacts.py --manifest artifacts/release-manifest.json \
+            --output "build/release/MODUS-$version-linux-x86_64"
+          bash tools/package_linux_portable.sh package \
+            --artifact-dir "artifacts/linux-client-build-$BUILD_NUMBER" --version "$version" \
+            --output "build/release/MODUS-$version-linux-portable.tar.gz"
+          printf 'Unsigned Linux candidate assembled. Native integration lock, signing, publication and target acceptance remain open.\n' \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Retain Linux release candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-release-candidate-${{ github.run_number }}
+          path: build/release/
+          if-no-files-found: error
+          retention-days: 14
