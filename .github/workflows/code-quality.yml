@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -16,6 +20,7 @@ defaults:
 jobs:
   formatting:
     name: Code Formatting Check
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,6 +48,7 @@ jobs:
           retention-days: 7
 
   linting:
+    timeout-minutes: 15
     name: GDScript Linting
     runs-on: ubuntu-latest
     steps:
@@ -73,6 +79,7 @@ jobs:
   static-analysis:
     name: Static Code Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -166,6 +173,7 @@ jobs:
           retention-days: 30
 
   security-scan:
+    timeout-minutes: 15
     name: Security Vulnerability Scan
     runs-on: ubuntu-latest
     permissions:
@@ -258,9 +266,10 @@ jobs:
   dependency-check:
     name: Dependency Configuration Review
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Check Godot Addons
         run: |

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -20,6 +24,7 @@ jobs:
   code-quality:
     name: Code Quality & Formatting
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -49,6 +54,7 @@ jobs:
   test:
     name: Run GUT Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: code-quality
     steps:
       - name: Checkout
@@ -163,6 +169,7 @@ jobs:
   build:
     name: Build Project (${{ matrix.platform }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: test
     strategy:
       matrix:
@@ -256,6 +263,7 @@ jobs:
       contents: read
       actions: read
       security-events: write
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v7
