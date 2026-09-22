@@ -38,6 +38,11 @@ func setup(editor: Control) -> void:
 	refresh_document()
 
 
+func set_external_status(message: String) -> void:
+	if _status:
+		_status.text = message
+
+
 func _build() -> void:
 	add_theme_constant_override("separation", 8)
 	_mode = _option(self, "Authoring mode")

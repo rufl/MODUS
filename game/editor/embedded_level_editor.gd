@@ -298,6 +298,10 @@ func _on_generation_completed(_map_scene: PackedScene, metadata: Dictionary) -> 
 	var replacement_catalog: Variant = metadata.get("replacement_catalog", [])
 	if replacement_catalog is Array:
 		set_generator_replacement_metadata(replacement_catalog)
+	if module_panel and replacement_catalog is Array:
+		module_panel.set_external_status(
+			"Generated " + str(replacement_catalog.size()) + " replacement candidate(s)."
+		)
 
 
 func get_replacement_capabilities() -> Array[String]:
@@ -638,17 +642,19 @@ func get_document_error() -> String:
 	return _document_error
 
 
-func is_playtesting() -> bool:
-	return _play_starting or is_instance_valid(_play_session)
-
-
 func generate_replacement_candidates(seed: String = "editor-preview") -> bool:
 	if _map_generator == null or not _map_generator.has_method("generate_map"):
+		if module_panel:
+			module_panel.set_external_status("Map generator is unavailable.")
 		return false
 	if _map_generator.get("is_generating"):
+		if module_panel:
+			module_panel.set_external_status("Generation is already in progress.")
 		return false
 	var config := GenerationConfigScript.new()
 	config.map_seed = seed
+	if module_panel:
+		module_panel.set_external_status("Generating replacement candidates...")
 	_map_generator.generate_map(seed, config)
 	return true
 
