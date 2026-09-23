@@ -17,6 +17,8 @@ func _init() -> void:
 
 func _on_actor_ready() -> void:
 	_body = StaticBody3D.new()
+	_body.collision_layer = CollisionLayers.LAYER_INTERACTABLES
+	_body.collision_mask = 0
 	_body.name = "KeyCard"
 	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()

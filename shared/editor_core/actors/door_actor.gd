@@ -57,9 +57,9 @@ func _create_visual() -> void:
 func _create_leaf(size: Vector3) -> AnimatableBody3D:
 	var body := AnimatableBody3D.new()
 	body.sync_to_physics = false
+	body.collision_layer = CollisionLayers.LAYER_WORLD | CollisionLayers.LAYER_INTERACTABLES
 	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	box.size = size
 	mesh.mesh = box
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.11, 0.21, 0.24)

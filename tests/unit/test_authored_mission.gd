@@ -139,6 +139,27 @@ func test_hud_resolves_generated_actor_parent_from_collision_child() -> void:
 	)
 
 
+func test_generated_actor_collision_layers_support_world_and_interaction_rays() -> void:
+	var key: KeyPickupActor = KeyPickupActorScript.new()
+	add_child_autofree(key)
+	var key_body: StaticBody3D = key.get_node("KeyCard")
+	assert_eq(key_body.collision_layer, CollisionLayers.LAYER_INTERACTABLES)
+	assert_eq(key_body.collision_mask, 0)
+
+	var door: DoorActor = DoorActorScript.new()
+	add_child_autofree(door)
+	var door_leaf: AnimatableBody3D = door.get_node("DoorLeaf")
+	assert_eq(
+		door_leaf.collision_layer, CollisionLayers.LAYER_WORLD | CollisionLayers.LAYER_INTERACTABLES
+	)
+
+	var switch_actor: SwitchActor = SwitchActorScript.new()
+	add_child_autofree(switch_actor)
+	var switch_body: StaticBody3D = switch_actor.get_node("SwitchBody")
+	assert_eq(switch_body.collision_layer, CollisionLayers.LAYER_INTERACTABLES)
+	assert_eq(switch_body.collision_mask, 0)
+
+
 func test_generated_manifest_accepts_branch_edges_outside_recovery_route() -> void:
 	var manifest: Dictionary = {
 		"version": 1,

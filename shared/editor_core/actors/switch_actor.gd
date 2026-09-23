@@ -25,6 +25,8 @@ func _on_actor_ready() -> void:
 
 func _create_visual() -> void:
 	var body := StaticBody3D.new()
+	body.collision_layer = CollisionLayers.LAYER_INTERACTABLES
+	body.collision_mask = 0
 	body.name = "SwitchBody"
 	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
