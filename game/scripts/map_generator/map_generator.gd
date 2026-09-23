@@ -1813,6 +1813,19 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	# Generated maps are editable level documents, not anonymous world roots.
 	var root := LevelRootScript.new()
 	root.name = "GeneratedMap"
+	var actor_realization := {
+		"enemy_records": generation_context.monster_spawns.size(),
+		"enemy_actors": 0,
+		"item_records": generation_context.item_spawns.size(),
+		"item_actors": 0,
+		"unsupported_item_records": [],
+		"key_records": generation_context.key_placements.size(),
+		"key_actors": 0,
+		"door_records": generation_context.metadata.get("locked_doors", []).size(),
+		"door_actors": 0,
+		"extraction_records": 0,
+		"extraction_actors": 0
+	}
 	var spatial_plan: Variant = metadata.get("spatial_plan", {})
 	if spatial_plan is Dictionary and bool(spatial_plan.get("is_valid", false)):
 		var spatial_result := ModuleAssemblyScript.attach_spatial_plan(root, spatial_plan)
@@ -1827,7 +1840,6 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 				)
 			)
 		metadata["spatial_plan"] = published_plan
-	root.set_meta("generation", metadata.duplicate(true))
 	theme_manager.apply_lighting_to_scene(root)
 
 	var player_spawn: LevelSpawnPoint = LevelSpawnPointScript.new()
@@ -1867,6 +1879,7 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		enemy_actor.set_meta("generation", record.duplicate(true))
 		_apply_generated_enemy_objective(enemy_actor, record, index)
 		root.add_child(enemy_actor)
+		actor_realization["enemy_actors"] += 1
 
 	for index in range(generation_context.item_spawns.size()):
 		var record: Dictionary = generation_context.item_spawns[index]
@@ -1875,6 +1888,14 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 		)
 		var item_config := _generated_item_config(record)
 		if not item_config["supported"]:
+			actor_realization["unsupported_item_records"].append(
+				{
+					"index": index,
+					"id": str(record.get("id", "")),
+					"type": str(record.get("type", "")),
+					"reason": "unsupported_item_type"
+				}
+			)
 			push_warning(
 				"[MapGenerator] Unsupported generated item type: %s" % str(record.get("type", ""))
 			)
@@ -1902,6 +1923,7 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 				}
 			)
 		root.add_child(item_actor)
+		actor_realization["item_actors"] += 1
 	for index in range(generation_context.key_placements.size()):
 		var record: Dictionary = generation_context.key_placements[index]
 		var color := str(record.get("color", "UNKNOWN"))
@@ -1919,6 +1941,7 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 			{"description": "Collect generated %s key" % color.to_lower(), "order": index * 2}
 		)
 		root.add_child(key_actor)
+		actor_realization["key_actors"] += 1
 
 	var locked_doors: Array = generation_context.metadata.get("locked_doors", [])
 	for index in range(locked_doors.size()):
@@ -1943,9 +1966,11 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 			}
 		)
 		root.add_child(door_actor)
+		actor_realization["door_actors"] += 1
 
 	var extraction_record := _generated_extraction_record()
 	if not extraction_record.is_empty():
+		actor_realization["extraction_records"] = 1
 		var extraction_actor: SwitchActor = SwitchActorScript.new()
 		extraction_actor.name = "GeneratedExtraction"
 		extraction_actor.actor_id = extraction_record.id
@@ -1962,6 +1987,7 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 			}
 		)
 		root.add_child(extraction_actor)
+		actor_realization["extraction_actors"] += 1
 
 	# Add CSG geometry
 
@@ -1978,6 +2004,8 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	# LevelRoot owns the document's runtime-only ChannelSystem and canonical
 	# ownership preparation. Its save preparation excludes that service from the
 	# PackedScene while assigning the document root to generated descendants.
+	metadata["actor_realization"] = actor_realization
+	root.set_meta("generation", metadata.duplicate(true))
 	root.prepare_for_save()
 	var pack_error := scene.pack(root)
 

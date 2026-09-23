@@ -210,6 +210,18 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 		gameplay.get("locked_doors", []).is_empty(), "Generation must emit locked-door records"
 	)
 	assert_false(gameplay.get("extraction", {}).is_empty(), "Generation must emit extraction data")
+	var actor_realization: Dictionary = metadata.get("actor_realization", {})
+	assert_eq(actor_realization.get("enemy_records", -1), gameplay.get("monsters", []).size())
+	assert_eq(actor_realization.get("enemy_actors", -1), gameplay.get("monsters", []).size())
+	assert_eq(actor_realization.get("item_records", -1), gameplay.get("items", []).size())
+	assert_eq(actor_realization.get("item_actors", -1), gameplay.get("items", []).size())
+	assert_eq(actor_realization.get("key_records", -1), gameplay.get("keys", []).size())
+	assert_eq(actor_realization.get("key_actors", -1), gameplay.get("keys", []).size())
+	assert_eq(actor_realization.get("door_records", -1), gameplay.get("locked_doors", []).size())
+	assert_eq(actor_realization.get("door_actors", -1), gameplay.get("locked_doors", []).size())
+	assert_eq(actor_realization.get("extraction_records", -1), 1)
+	assert_eq(actor_realization.get("extraction_actors", -1), 1)
+	assert_true(actor_realization.get("unsupported_item_records", []).is_empty())
 
 	var generated := result["scene"].instantiate() as Node3D
 	assert_not_null(generated, "Generated output must instantiate")
@@ -220,6 +232,11 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 		generated.get_script().resource_path,
 		LevelRootScript.resource_path,
 		"Generated output must be a LevelRoot"
+	)
+	assert_eq(
+		generated.get_meta("generation", {}).get("actor_realization", {}),
+		actor_realization,
+		"Packed generation metadata must preserve actor realization diagnostics"
 	)
 	var packed_plan: Dictionary = generated.get_meta("generation", {}).get("spatial_plan", {})
 	assert_eq(
@@ -356,6 +373,34 @@ func test_generated_high_value_reward_spawns_runtime_damage_powerup() -> void:
 		},
 		"Generated secret reward must expose optional objective metadata"
 	)
+
+
+func test_unsupported_generated_item_retains_nonrealization_diagnostic() -> void:
+	var record := {"id": "unknown_reward", "position": Vector3(2.0, 0.0, 2.0), "type": "unknown"}
+	var context: GenerationContext = GenerationContextScript.new()
+	var cell: Cell = CellScript.new(Cell.Type.ROOM)
+	context.grid = [[cell]]
+	context.grid_size = Vector2i.ONE
+	context.player_start_position = Vector2i.ZERO
+	context.item_spawns = [record]
+	map_generator.generation_context = context
+	var metadata := {"seed": "unsupported-item", "gameplay": {"items": [record]}}
+	var generated_scene: PackedScene = map_generator._build_map_scene(metadata)
+	assert_not_null(generated_scene, "Unsupported item records must not abort scene packing")
+	assert_eq(metadata.get("actor_realization", {}).get("item_records", -1), 1)
+	assert_eq(metadata.get("actor_realization", {}).get("item_actors", -1), 0)
+	assert_eq(
+		metadata.get("actor_realization", {}).get("unsupported_item_records", []),
+		[{"index": 0, "id": "unknown_reward", "type": "unknown", "reason": "unsupported_item_type"}]
+	)
+	if not generated_scene:
+		return
+	var generated := generated_scene.instantiate() as Node3D
+	assert_not_null(generated)
+	if not generated:
+		return
+	add_child_autofree(generated)
+	assert_null(generated.get_node_or_null("PickupSpawner_0"))
 
 
 func test_bounded_seeded_monster_generation_exposes_regular_objectives() -> void:
