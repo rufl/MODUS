@@ -32,8 +32,10 @@ func solve(
 	var start_room_id := int(graph_plan.get("start_room_id", room_ids[0]))
 	if not adjacency.has(start_room_id):
 		return _invalid("Spatial solver start room is not declared.")
-	var traversal := _build_tree(adjacency, start_room_id)
-	if traversal.order.size() != room_ids.size():
+	var traversals: Array[Dictionary] = [_build_tree(adjacency, start_room_id)]
+	if graph_profile == "cyclic":
+		traversals.append(_build_tree(adjacency, start_room_id, true))
+	if traversals[0].order.size() != room_ids.size():
 		return _invalid("Spatial solver requires a connected mission graph.").merged(
 			{
 				"graph_profile": graph_profile,
@@ -42,8 +44,6 @@ func solve(
 			},
 			true
 		)
-	var tree_adjacency := _build_tree_adjacency(room_ids, traversal.parents)
-	var loop_edges := _build_loop_edges(undirected_edges, traversal.parents)
 	var required_kind := str(graph_plan.get("required_socket_kind", ""))
 	var ordered_catalog: Array[PrefabMetadata] = []
 	for definition: PrefabMetadata in catalog:
@@ -58,20 +58,43 @@ func solve(
 			return left.scene_path < right.scene_path
 	)
 	var state := {"attempts": 0, "exhausted": false, "error": ""}
+	var traversal: Dictionary = traversals[0]
+	var tree_adjacency: Dictionary = {}
+	var loop_edges: Array[Dictionary] = []
 	var placements: Dictionary = {}
 	var connections: Array[Dictionary] = []
-	if not _search(
-		traversal.order,
-		traversal.parents,
-		tree_adjacency,
-		loop_edges,
-		ordered_catalog,
-		0,
-		placements,
-		connections,
-		state,
-		max_attempts
-	):
+	var strategy := "breadth_first"
+	var solved := false
+	for traversal_index: int in range(traversals.size()):
+		var candidate: Dictionary = traversals[traversal_index]
+		if candidate.order.size() != room_ids.size():
+			continue
+		var candidate_tree := _build_tree_adjacency(room_ids, candidate.parents)
+		var candidate_loops := _build_loop_edges(undirected_edges, candidate.parents)
+		loop_edges = candidate_loops
+		var candidate_placements: Dictionary = {}
+		var candidate_connections: Array[Dictionary] = []
+		if _search(
+			candidate.order,
+			candidate.parents,
+			candidate_tree,
+			candidate_loops,
+			ordered_catalog,
+			0,
+			candidate_placements,
+			candidate_connections,
+			state,
+			max_attempts
+		):
+			traversal = candidate
+			tree_adjacency = candidate_tree
+			loop_edges = candidate_loops
+			placements = candidate_placements
+			connections = candidate_connections
+			strategy = "depth_first" if traversal_index == 1 else "breadth_first"
+			solved = true
+			break
+	if not solved:
 		var reason := (
 			"Spatial solver attempt limit exhausted"
 			if state.exhausted
@@ -86,7 +109,8 @@ func solve(
 					"room_count": room_ids.size(),
 					"edge_count": edge_count,
 					"loop_edge_count": loop_edges.size(),
-					"closed_loop_count": 0
+					"closed_loop_count": 0,
+					"spanning_tree_strategy": "exhausted"
 				},
 				true
 			)
@@ -118,6 +142,7 @@ func solve(
 		"error_message": "",
 		"attempts": state.attempts,
 		"graph_profile": graph_profile,
+		"spanning_tree_strategy": strategy,
 		"room_count": room_ids.size(),
 		"edge_count": edge_count,
 		"loop_edge_count": loop_edges.size(),
@@ -406,13 +431,18 @@ func _undirected_edges(adjacency: Dictionary) -> Array[String]:
 	return result
 
 
-func _build_tree(adjacency: Dictionary, start_room_id: int) -> Dictionary:
+func _build_tree(
+	adjacency: Dictionary, start_room_id: int, depth_first: bool = false
+) -> Dictionary:
 	var parents: Dictionary = {start_room_id: -1}
 	var order: Array[int] = [start_room_id]
 	var queue: Array[int] = [start_room_id]
 	while not queue.is_empty():
-		var room_id: int = queue.pop_front()
-		for neighbor_id: int in adjacency[room_id]:
+		var room_id: int = queue.pop_back() if depth_first else queue.pop_front()
+		var neighbors: Array = adjacency[room_id].duplicate()
+		if depth_first:
+			neighbors.reverse()
+		for neighbor_id: int in neighbors:
 			if parents.has(neighbor_id):
 				continue
 			parents[neighbor_id] = room_id

@@ -65,10 +65,32 @@ func test_cycle_reports_bounded_loop_closure_failure() -> void:
 	assert_eq(result.get("room_count", 0), 3)
 	assert_eq(result.get("edge_count", 0), 3)
 	assert_true(int(result.get("attempts", 0)) > 0)
-	assert_true(int(result.get("attempts", 0)) <= 64)
+	assert_true(int(result.get("attempts", 0)) <= 128)
 	assert_eq(result.get("loop_edge_count", 0), 1)
 	assert_eq(result.get("closed_loop_count", 0), 0)
 	assert_true("loop closure" in str(result.get("error_message", "")).to_lower())
+	assert_eq(result.get("spanning_tree_strategy", ""), "exhausted")
+
+
+func test_authored_catalog_cycle_refusal_is_bounded_and_explicit() -> void:
+	var plan := _tree_plan(
+		[0, 1, 2],
+		[
+			{"from_room_id": 0, "to_room_id": 1},
+			{"from_room_id": 1, "to_room_id": 0},
+			{"from_room_id": 1, "to_room_id": 2},
+			{"from_room_id": 2, "to_room_id": 1},
+			{"from_room_id": 2, "to_room_id": 0},
+			{"from_room_id": 0, "to_room_id": 2}
+		]
+	)
+	var result := solver.solve(plan, ModuleAssembly.get_catalog(), 64)
+
+	assert_false(bool(result.get("is_valid", false)), str(result))
+	assert_eq(result.get("graph_profile", ""), "cyclic")
+	assert_eq(result.get("loop_edge_count", 0), 1)
+	assert_lte(int(result.get("attempts", 0)), 64)
+	assert_true("loop" in str(result.get("error_message", "")).to_lower(), str(result))
 
 
 func test_cycle_closes_when_socket_poses_form_a_ring() -> void:
@@ -91,6 +113,7 @@ func test_cycle_closes_when_socket_poses_form_a_ring() -> void:
 	assert_eq(result.get("loop_edge_count", 0), 1)
 	assert_eq(result.get("closed_loop_count", 0), 1)
 	assert_eq(result.get("connections", []).size(), 4)
+	assert_true(str(result.get("spanning_tree_strategy", "")) in ["breadth_first", "depth_first"])
 
 
 func test_full_authored_catalog_solves_and_attaches_eleven_room_chain() -> void:
