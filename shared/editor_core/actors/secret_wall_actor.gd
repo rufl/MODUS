@@ -61,7 +61,11 @@ func start_runtime() -> void:
 func _create_visual() -> void:
 	wall_body = WallBody.new()
 	wall_body.name = "WallBody"
-	wall_body.collision_layer = CollisionLayers.LAYER_WORLD | CollisionLayers.LAYER_DEBRIS
+	wall_body.collision_layer = CollisionLayers.LAYER_WORLD
+	if trigger_type == TriggerType.INTERACT:
+		wall_body.collision_layer |= CollisionLayers.LAYER_INTERACTABLES
+	else:
+		wall_body.collision_layer |= CollisionLayers.LAYER_DEBRIS
 	wall_body.set_meta("editor_runtime_only", true)
 	add_child(wall_body)
 	wall_mesh = MeshInstance3D.new()
@@ -203,6 +207,20 @@ func interact(player: Node = null) -> bool:
 		return false
 	open_wall(player)
 	return true
+
+
+func get_interaction_prompt() -> String:
+	if _is_open:
+		return "Open"
+	match trigger_type:
+		TriggerType.INTERACT:
+			return "Open Secret Wall"
+		TriggerType.SHOOTABLE:
+			return "Shoot Secret Wall"
+		TriggerType.PROXIMITY:
+			return "Approach Secret Wall"
+		_:
+			return "Secret Wall"
 
 
 func capture_runtime_state() -> Dictionary:

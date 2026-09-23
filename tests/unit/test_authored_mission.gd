@@ -5,6 +5,8 @@ const ActorScript := preload("res://shared/editor_core/actors/actor_base.gd")
 const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
 const SwitchActorScript := preload("res://shared/editor_core/actors/switch_actor.gd")
+const SecretWallActorScript := preload("res://shared/editor_core/actors/secret_wall_actor.gd")
+const TravelActorScript := preload("res://shared/editor_core/actors/travel_actor.gd")
 const PlayerHUDBridgeScript := preload("res://game/entities/player/components/player_hud_bridge.gd")
 var _mission: MissionMgr
 var _previous: Dictionary
@@ -158,6 +160,32 @@ func test_generated_actor_collision_layers_support_world_and_interaction_rays() 
 	var switch_body: StaticBody3D = switch_actor.get_node("SwitchBody")
 	assert_eq(switch_body.collision_layer, CollisionLayers.LAYER_INTERACTABLES)
 	assert_eq(switch_body.collision_mask, 0)
+
+
+func test_secret_and_travel_actor_prompts_and_collision_layers_are_discoverable() -> void:
+	var secret_wall: SecretWallActor = SecretWallActorScript.new()
+	secret_wall.trigger_type = SecretWallActor.TriggerType.INTERACT
+	add_child_autofree(secret_wall)
+	var secret_body: StaticBody3D = secret_wall.get_node("WallBody")
+	assert_eq(
+		secret_wall.get_interaction_prompt(),
+		"Open Secret Wall",
+		"Interact-triggered secrets expose an actionable prompt"
+	)
+	assert_eq(
+		secret_body.collision_layer,
+		CollisionLayers.LAYER_WORLD | CollisionLayers.LAYER_INTERACTABLES
+	)
+
+	var travel: TravelActor = TravelActorScript.new()
+	add_child_autofree(travel)
+	assert_eq(travel.get_interaction_prompt(), "Travel (Destination Unconfigured)")
+	travel.destination_id = "mission_hub"
+	assert_eq(travel.get_interaction_prompt(), "Travel to mission_hub")
+	assert_eq(
+		(travel.get_node("SwitchBody") as StaticBody3D).collision_layer,
+		CollisionLayers.LAYER_INTERACTABLES
+	)
 
 
 func test_generated_manifest_accepts_branch_edges_outside_recovery_route() -> void:

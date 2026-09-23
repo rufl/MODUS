@@ -11,6 +11,12 @@ func _init() -> void:
 	actor_description = "Travel with the current party; preserve this destination for a revisit"
 
 
+func get_interaction_prompt() -> String:
+	if destination_id.is_empty():
+		return "Travel (Destination Unconfigured)"
+	return "Travel to %s" % destination_id
+
+
 func _on_actor_ready() -> void:
 	super._on_actor_ready()
 	var label := Label3D.new()
