@@ -58,9 +58,36 @@ func _check_steam_available() -> bool:
 	return Engine.has_singleton("Steam") or ClassDB.class_exists("Steam")
 
 
+func _steam_has_any_method(steam: Object, method_names: Array[String]) -> bool:
+	if not steam:
+		return false
+	for method_name: String in method_names:
+		if steam.has_method(method_name):
+			return true
+	return false
+
+
+func _steam_call_first(steam: Object, method_names: Array[String], args: Array) -> Variant:
+	if not steam:
+		return null
+	for method_name: String in method_names:
+		if steam.has_method(method_name):
+			return steam.callv(method_name, args)
+	return null
+
+
+func _steam_result_succeeded(result: Variant) -> bool:
+	if result is Dictionary:
+		return int(result.get("status", 0)) == 1
+	if result is bool:
+		return result
+	if result is int:
+		return result == 1 or result == OK
+	# GodotSteam setters/logon methods commonly return void.
+	return result == null
+
+
 ## Initialize Steam for a Client
-
-
 func _initialize_steam_client() -> void:
 	if not _steam_available:
 		return
@@ -89,52 +116,98 @@ func _initialize_steam_client() -> void:
 
 
 ## Initialize Steam for a Dedicated Server
-
-
-func initialize_steam_server(data: Dictionary) -> void:
-	if not _steam_available:
-		return
-	_is_server = true
+##
+## Returns true when the Steam Game Server API was initialized and the
+## configured login/heartbeat calls were dispatched. Authentication completion
+## remains asynchronous and is reported by the GodotSteam callbacks.
+func initialize_steam_server(data: Dictionary) -> bool:
+	_is_server = false
+	if not _steam_available or not Engine.has_singleton("Steam"):
+		return false
 
 	var steam: Object = Engine.get_singleton("Steam")
-
-	# Extract server config
 	var ip: String = data.get("ip", "0.0.0.0")
 	var game_port: int = data.get("steam_game_port", 27015)
 	var query_port: int = data.get("steam_query_port", 27016)
 	var server_mode: int = data.get("server_mode", 1)  # 1 = Auth, 2 = NoAuth, 3 = Password
 	var version: String = data.get("version", Constants.GAME_VERSION)
+	var init_methods: Array[String] = ["initGameServer", "gameServerInit"]
+	if not _steam_has_any_method(steam, init_methods):
+		push_error("[SteamManager] GodotSteam has no Game Server initialization method")
+		return false
 
-	# Init Game Server
-	var init_success: bool = steam.gameServerInit(ip, game_port, query_port, server_mode, version)
-
-	if not init_success:
+	var init_result: Variant = _steam_call_first(
+		steam, init_methods, [ip, game_port, query_port, server_mode, version]
+	)
+	if not _steam_result_succeeded(init_result):
 		push_error("[SteamManager] Failed to initialize Steam Game Server")
-		return
+		return false
 
-	# Configure Server
-	steam.gameServer_SetModDir("modus")
-	steam.gameServer_SetProduct("modus")
-	steam.gameServer_SetGameDescription(data.get("description", "MODUS Server"))
-	steam.gameServer_SetServerName(data.get("name", "Unconfigured Server"))
-	steam.gameServer_SetMaxPlayerCount(data.get("max_players", 16))
-	steam.gameServer_SetPasswordProtected(false)
-	steam.gameServer_SetDedicatedServer(true)
+	_steam_call_first(
+		steam, ["setGameServerModDir", "gameServer_SetModDir", "gameServerSetModDir"], ["modus"]
+	)
+	_steam_call_first(
+		steam, ["setGameServerProduct", "gameServer_SetProduct", "gameServerSetProduct"], ["modus"]
+	)
+	_steam_call_first(
+		steam,
+		["setGameDescription", "gameServer_SetGameDescription", "gameServerSetGameDescription"],
+		[data.get("description", "MODUS Server")]
+	)
+	_steam_call_first(
+		steam,
+		["setServerName", "gameServer_SetServerName", "gameServerSetServerName"],
+		[data.get("name", "Unconfigured Server")]
+	)
+	_steam_call_first(
+		steam,
+		["setMaxPlayerCount", "gameServer_SetMaxPlayerCount", "gameServerSetMaxPlayerCount"],
+		[data.get("max_players", 16)]
+	)
+	_steam_call_first(steam, ["setPasswordProtected", "gameServer_SetPasswordProtected"], [false])
+	_steam_call_first(steam, ["setDedicatedServer", "gameServer_SetDedicatedServer"], [true])
 
-	# Login
 	var token: String = data.get("steam_server_token", "")
-	_connect_steam_signals()
-	if token != "":
-		steam.gameServer_LogOn(token)
-	else:
-		steam.gameServer_LogOnAnonymous()
+	var login_methods: Array[String] = (
+		["logOn", "gameServer_LogOn", "gameServerLogOn"]
+		if token != ""
+		else ["logOnAnonymous", "gameServer_LogOnAnonymous", "gameServerLogOnAnonymous"]
+	)
+	if not _steam_has_any_method(steam, login_methods):
+		push_error("[SteamManager] GodotSteam has no Game Server login method")
+		return false
+	_steam_call_first(steam, login_methods, [token] if token != "" else [])
 
-	# Enable Heartbeats
-	steam.gameServer_EnableHeartbeats(true)
+	var heartbeat_methods: Array[String] = [
+		"enableHeartbeats",
+		"gameServer_EnableHeartbeats",
+		"gameServerEnableHeartbeats",
+	]
+	if not _steam_has_any_method(steam, heartbeat_methods):
+		push_error("[SteamManager] GodotSteam has no Game Server heartbeat method")
+		return false
+	_steam_call_first(steam, heartbeat_methods, [true])
+	_is_server = true
 
 	_log_info(
 		"Steam Dedicated Server Initialized on ports %d/%d" % [game_port, query_port],
 		"SteamManager"
+	)
+	return true
+
+
+## Compatibility entrypoint used by DedicatedServer.
+func init_game_server(
+	game_port: int, max_players: int, server_name: String, description: String
+) -> bool:
+	return initialize_steam_server(
+		{
+			"steam_game_port": game_port,
+			"steam_query_port": game_port + 1,
+			"max_players": max_players,
+			"name": server_name,
+			"description": description,
+		}
 	)
 
 

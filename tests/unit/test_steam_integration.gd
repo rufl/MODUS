@@ -42,6 +42,8 @@ func test_steam_manager_has_required_methods() -> void:
 		"leave_lobby",
 		"request_lobby_list",
 		"get_multiplayer_peer",
+		"initialize_steam_server",
+		"init_game_server",
 	]
 
 	for method_name: String in required_methods:
@@ -107,6 +109,21 @@ func test_steam_available_check() -> void:
 		var _available: bool = steam.is_steam_available()
 		# Just verify it returns without crashing
 		assert_true(true, "is_steam_available() should not crash")
+
+
+func test_dedicated_server_contract_fails_closed_without_steam() -> void:
+	var steam := _get_steam_manager()
+	assert_not_null(steam, "SteamManager should be available")
+	if not steam:
+		return
+
+	var original_available: bool = steam._steam_available
+	steam._steam_available = false
+	assert_false(
+		steam.init_game_server(27015, 16, "Test Server", "Test Description"),
+		"Dedicated server startup must fail closed when Steam is unavailable"
+	)
+	steam._steam_available = original_available
 
 
 # =============================================================================
