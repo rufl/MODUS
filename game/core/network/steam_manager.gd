@@ -15,6 +15,8 @@ signal persona_state_changed(steam_id: int)
 signal achievement_unlocked(achievement_name: String)
 
 const AUTH_SESSION_UNAVAILABLE := -1
+const AUTH_SESSION_METHOD_UNAVAILABLE := -2
+const AUTH_SESSION_INVALID_TICKET := -3
 
 const LOBBY_TYPE_PRIVATE := 0
 const LOBBY_TYPE_FRIENDS := 1
@@ -224,9 +226,22 @@ func _connect_steam_signals() -> void:
 		steam.lobby_chat_update.connect(_on_lobby_chat_update)
 	if not steam.persona_state_change.is_connected(_on_persona_state_change):
 		steam.persona_state_change.connect(_on_persona_state_change)
-	if steam.has_signal("validate_auth_ticket_response"):
-		if not steam.validate_auth_ticket_response.is_connected(_on_validate_auth_ticket_response):
-			steam.validate_auth_ticket_response.connect(_on_validate_auth_ticket_response)
+	_connect_first_signal(
+		steam,
+		["validate_auth_ticket_response", "validate_auth_ticket_response_t"],
+		Callable(self, "_on_validate_auth_ticket_response")
+	)
+
+
+func _connect_first_signal(steam: Object, signal_names: Array[String], callback: Callable) -> bool:
+	if not steam:
+		return false
+	for signal_name: String in signal_names:
+		if steam.has_signal(signal_name):
+			if not steam.is_connected(signal_name, callback):
+				steam.connect(signal_name, callback)
+			return true
+	return false
 
 
 func _process(_delta: float) -> void:
@@ -416,52 +431,77 @@ func add_lobby_list_string_filter(key: String, value: String, comparison: int = 
 # PUBLIC API - Auth & Dedicated Server
 # ============================================================================
 
-## Get an Auth Ticket to send to the server
 
-
+## Get an Auth Ticket to send to the server.
+## The returned buffer is normalized to Array for RPC validation.
 func get_auth_ticket() -> Dictionary:
 	if not _steam_available:
 		return {}
 
 	var steam: Object = Engine.get_singleton("Steam")
-	# getAuthSessionTicket( identity_remote = 0 ) returning [id, ticket_buffer]
-	# Modern steam uses getAuthSessionTicket with SteamNetworkingIdentity
-	# But GodotSteam simply returns the dictionary with 'id' and 'buffer'
-	var ticket: Dictionary = steam.getAuthSessionTicket()
-	return ticket
+	var ticket_methods: Array[String] = ["getAuthSessionTicket", "get_auth_session_ticket"]
+	if not _steam_has_any_method(steam, ticket_methods):
+		return {}
+	return _normalize_auth_ticket(_steam_call_first(steam, ticket_methods, []))
 
 
-## Begin Auth Session (Server Side)
-## Returns k_EBeginAuthSessionResultOK only when Steam accepted the ticket.
-## A successful call still remains pending until validate_auth_ticket_response.
-## steam_id: The client's Steam ID
-## ticket: The auth ticket buffer
+func _normalize_auth_ticket(result: Variant) -> Dictionary:
+	if result is Dictionary:
+		var ticket_id: int = int(result.get("id", result.get("ticket_id", 0)))
+		var buffer: Array = _normalize_auth_ticket_buffer(
+			result.get("buffer", result.get("ticket", []))
+		)
+		if ticket_id > 0 and not buffer.is_empty():
+			return {"id": ticket_id, "buffer": buffer}
+		return {}
+
+	if result is Array and result.size() >= 2:
+		var array_id: int = int(result[0])
+		var array_buffer: Array = _normalize_auth_ticket_buffer(result[1])
+		if array_id > 0 and not array_buffer.is_empty():
+			return {"id": array_id, "buffer": array_buffer}
+	return {}
 
 
+func _normalize_auth_ticket_buffer(buffer: Variant) -> Array:
+	if buffer is Array:
+		return buffer
+	if buffer is PackedByteArray:
+		var normalized: Array = []
+		for byte: int in buffer:
+			normalized.append(byte)
+		return normalized
+	return []
+
+
+## Begin Auth Session (Server Side).
+## A zero result means asynchronous validation started successfully.
 func begin_auth_session(steam_id: int, ticket: Array) -> int:
 	if not _steam_available:
-		# Never report unavailable authentication as an accepted session.
 		return AUTH_SESSION_UNAVAILABLE
+	if steam_id <= 0 or ticket.is_empty():
+		return AUTH_SESSION_INVALID_TICKET
 
 	var steam: Object = Engine.get_singleton("Steam")
-	if not steam:
-		# The plugin class may exist while the runtime singleton is unavailable.
-		return AUTH_SESSION_UNAVAILABLE
-	# beginAuthSession( ticket_buffer, ticket_size, steam_id )
-	var result: int = steam.beginAuthSession(ticket, ticket.size(), steam_id)
-	return result  # 0 means the asynchronous validation started
+	var auth_methods: Array[String] = ["beginAuthSession", "begin_auth_session"]
+	if not _steam_has_any_method(steam, auth_methods):
+		return AUTH_SESSION_METHOD_UNAVAILABLE
+
+	var result: Variant = _steam_call_first(steam, auth_methods, [ticket, ticket.size(), steam_id])
+	if result is int:
+		return result
+	if result is bool:
+		return 0 if result else AUTH_SESSION_METHOD_UNAVAILABLE
+	return AUTH_SESSION_METHOD_UNAVAILABLE
 
 
-## End Auth Session
-
-
+## End Auth Session.
 func end_auth_session(steam_id: int) -> void:
-	if not _steam_available:
+	if not _steam_available or steam_id <= 0:
 		return
 
 	var steam: Object = Engine.get_singleton("Steam")
-	if steam:
-		steam.endAuthSession(steam_id)
+	_steam_call_first(steam, ["endAuthSession", "end_auth_session"], [steam_id])
 
 
 # ============================================================================

@@ -45,6 +45,9 @@ func test_steam_manager_has_required_methods() -> void:
 		"initialize_steam_server",
 		"init_game_server",
 		"pump_callbacks",
+		"get_auth_ticket",
+		"begin_auth_session",
+		"end_auth_session",
 	]
 
 	for method_name: String in required_methods:
@@ -138,6 +141,24 @@ func test_callback_pump_fails_closed_without_steam() -> void:
 	assert_false(
 		steam.pump_callbacks(), "Callback pumping must fail closed when Steam is unavailable"
 	)
+	steam._steam_available = original_available
+
+
+func test_auth_contract_fails_closed_without_steam() -> void:
+	var steam := _get_steam_manager()
+	assert_not_null(steam, "SteamManager should be available")
+	if not steam:
+		return
+
+	var original_available: bool = steam._steam_available
+	steam._steam_available = false
+	assert_eq(steam.get_auth_ticket(), {}, "Unavailable Steam must not emit an auth ticket")
+	assert_eq(
+		steam.begin_auth_session(123, [1, 2, 3]),
+		steam.AUTH_SESSION_UNAVAILABLE,
+		"Unavailable Steam must not accept auth sessions"
+	)
+	steam.end_auth_session(123)
 	steam._steam_available = original_available
 
 
