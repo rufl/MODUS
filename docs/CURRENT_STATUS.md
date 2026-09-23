@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
-**Updated:** September 22, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
+**Updated:** September 23, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -40,11 +40,11 @@ The movement limiter now uses a monotonic microsecond token bucket instead of mi
 
 Real host/client CLI join/disconnect completed without engine/script errors; two movement burst-limit rejections remain in that run. The cap was retained rather than increased until warnings disappeared.
 
-### September 22 Capability and Generated Progression Contract
+### September 23 Capability and Generated Progression Contract
 
-Generated and authored content now carries a versioned capability manifest with runtime identity, required capabilities and explicit fallback diagnostics. Destination staging and network admission reject malformed, mismatched or unavailable capabilities before instantiation or peer spawn; common walk/CSG content remains available without Voxel Tools. Key/lock generation publishes deterministic key, lock, objective, recovery-route, room-ID and room-edge metadata transactionally; recovery routes begin at the configured player room, choose a real deterministic path to extraction or the true farthest reachable room, disconnected graphs, forged edges and locks without actual room adjacency are rejected before publication, and MissionMgr accepts valid branching edges outside the recovery route, rejects disconnected declared graphs and preserves legacy manifests without room IDs.
+Generated and authored content now carries a versioned capability manifest with runtime identity, required capabilities and explicit fallback diagnostics. Destination staging and network admission reject malformed, mismatched or unavailable capabilities before instantiation or peer spawn; common walk/CSG content remains available without Voxel Tools. Key/lock generation publishes deterministic key, lock, objective, recovery-route, room-ID and room-edge metadata transactionally; recovery routes begin at the configured player room, choose a real deterministic path to extraction or the true farthest reachable room, disconnected graphs, forged edges and locks without actual room adjacency are rejected before publication, and MissionMgr accepts valid branching edges outside the recovery route, rejects disconnected declared graphs and preserves legacy manifests without room IDs. `MissionGraphPlanner` now owns topology validation, deterministic route selection and linear/branching/cyclic profile metadata before lock placement.
 
-The focused capability/prefab/mission selection passes **43/43 tests with 299 assertions**; the deterministic generator selection passes **6/6 with 191 assertions**. Graph route/rollback regressions pass **9/9 with 31 assertions**, generated actor realization/record refusal passes **9/9 with 464 assertions**, standalone package overwrite protection passes **6/6 with 17 assertions**, and authored mission validation passes **6/6 with 48 assertions**. This proves source and headless contracts only. Bundled native runtime parity, runtime key/door interaction feel, composed Breakwater production, graphical review and external acceptance remain open.
+The focused capability/prefab/mission selection passes **43/43 tests with 299 assertions**; the deterministic generator selection passes **6/6 with 191 assertions**. Planner/key-lock graph regressions pass **14/14 tests with 48 assertions**, generated actor realization/record refusal passes **9/9 with 464 assertions**, standalone package overwrite protection passes **6/6 with 17 assertions**, and authored mission validation passes **6/6 with 48 assertions**. This proves source and headless contracts only. Typed spatial solving, bundled native runtime parity, runtime key/door interaction feel, composed Breakwater production, graphical review and external acceptance remain open.
 
 ### September 13 Generator Correctness and World-Building Plan
 

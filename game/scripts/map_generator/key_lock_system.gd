@@ -7,6 +7,7 @@ extends RefCounted
 const Cell = preload("res://game/scripts/map_generator/cell.gd")
 const Room = preload("res://game/scripts/map_generator/room.gd")
 
+const MissionGraphPlanner = preload("res://game/scripts/map_generator/mission_graph_planner.gd")
 enum KeyColor { RED, BLUE, YELLOW }
 
 
@@ -17,16 +18,21 @@ enum KeyColor { RED, BLUE, YELLOW }
 func generate_key_lock_system(context: GenerationContext) -> Dictionary:
 	context.progression_manifest.clear()
 	context.metadata.erase("mission_progression")
+	context.metadata.erase("mission_graph")
 	if not context.config.enable_key_locks:
 		return {"keys": [], "locked_doors": []}
-	if not _room_graph_is_connected(context):
-		push_warning("Mission progression rejected: room graph is disconnected")
+
+	var graph_plan := MissionGraphPlanner.new().plan(context)
+	if not bool(graph_plan.get("is_valid", false)):
+		push_warning("Mission progression rejected: " + str(graph_plan.get("error_message", "")))
 		return {"keys": [], "locked_doors": []}
+	context.metadata["mission_graph"] = graph_plan.duplicate(true)
 
 	var key_count := _calculate_key_count(context)
-	var progression_order := _analyze_room_progression(context)
+	var progression_order := _rooms_for_plan(context, graph_plan)
 	if progression_order.size() < 2:
 		push_warning("Not enough rooms for key-lock system")
+		_rollback_generated_progression(context, [], [])
 		return {"keys": [], "locked_doors": []}
 	if progression_order.size() <= 4:
 		key_count = 1
@@ -75,6 +81,9 @@ func build_progression_manifest(
 				return a.to_room_id < b.to_room_id
 			return a.from_room_id < b.from_room_id
 	)
+	var graph_plan: Dictionary = context.metadata.get("mission_graph", {})
+	if graph_plan.is_empty():
+		graph_plan = MissionGraphPlanner.new().plan(context)
 
 	var manifest_keys: Array[Dictionary] = []
 	var manifest_doors: Array[Dictionary] = []
@@ -137,9 +146,11 @@ func build_progression_manifest(
 	return {
 		"version": 1,
 		"seed_hash": context.seed_hash,
-		"start_room_id": room_order[0] if not room_order.is_empty() else -1,
-		"goal_room_id": goal_room_id,
+		"start_room_id": int(graph_plan.get("start_room_id", -1)),
+		"goal_room_id": int(graph_plan.get("goal_room_id", goal_room_id)),
 		"room_ids": room_ids,
+		"graph_profile": str(graph_plan.get("graph_profile", "linear")),
+		"branch_room_ids": graph_plan.get("branch_room_ids", []),
 		"objectives": objectives,
 		"keys": manifest_keys,
 		"locked_transitions": manifest_doors,
@@ -382,6 +393,7 @@ func _rollback_generated_progression(
 	context.key_placements.clear()
 	context.progression_manifest.clear()
 	context.metadata.erase("mission_progression")
+	context.metadata.erase("mission_graph")
 
 
 ## Calculate number of key types based on map complexity
@@ -398,79 +410,12 @@ func _calculate_key_count(context: GenerationContext) -> int:
 	return 1
 
 
-## Analyze a deterministic, connected recovery route from the start room.
-## Prefer the room containing the configured extraction, otherwise use the
-## farthest reachable room. Every returned consecutive pair is a real edge.
-func _analyze_room_progression(context: GenerationContext) -> Array[Room]:
-	if context.rooms.is_empty():
-		return []
-
-	var start_room: Room = _find_start_room(context)
-	if not start_room:
-		return []
-	var goal_room := _find_goal_room(context)
-	if goal_room and goal_room.id != start_room.id:
-		var goal_path := _find_room_path(context, start_room.id, goal_room.id)
-		if not goal_path.is_empty():
-			return goal_path
-	return _find_room_path(context, start_room.id, -1)
-
-
-## Find the room containing the configured extraction position.
-func _find_goal_room(context: GenerationContext) -> Room:
-	var exit := context.exit_position
-	if (
-		exit.x < 0
-		or exit.y < 0
-		or exit.y >= context.grid.size()
-		or exit.x >= context.grid[exit.y].size()
-	):
-		return null
-	var room_id: int = context.grid[exit.y][exit.x].room_id
-	return _find_room_by_id(context, room_id) if room_id >= 0 else null
-
-
-## Find a shortest deterministic room path, or the farthest path when target=-1.
-func _find_room_path(
-	context: GenerationContext, start_room_id: int, target_room_id: int
-) -> Array[Room]:
-	var parents: Dictionary = {start_room_id: -1}
-	var distances: Dictionary = {start_room_id: 0}
-	var queue: Array[int] = [start_room_id]
-	var farthest_room_id := start_room_id
-	while not queue.is_empty():
-		var room_id: int = queue.pop_front()
-		var room_distance: int = int(distances[room_id])
-		if (
-			room_distance > int(distances[farthest_room_id])
-			or (room_distance == int(distances[farthest_room_id]) and room_id < farthest_room_id)
-		):
-			farthest_room_id = room_id
-		if room_id == target_room_id:
-			break
-		var room := _find_room_by_id(context, room_id)
-		if not room:
-			continue
-		var neighbors: Array = room.connections.duplicate()
-		neighbors.sort()
-		for connected_id: Variant in neighbors:
-			if not connected_id is int or parents.has(connected_id):
-				continue
-			parents[connected_id] = room_id
-			distances[connected_id] = room_distance + 1
-			queue.append(connected_id)
-
-	if target_room_id >= 0:
-		if not parents.has(target_room_id):
-			return []
-		farthest_room_id = target_room_id
+## Resolve the planner's stable route into room objects for lock placement.
+func _rooms_for_plan(context: GenerationContext, plan: Dictionary) -> Array[Room]:
 	var room_path: Array[Room] = []
-	var path_ids: Array[int] = []
-	var current_id := farthest_room_id
-	while current_id >= 0:
-		path_ids.push_front(current_id)
-		current_id = int(parents.get(current_id, -1))
-	for room_id: int in path_ids:
+	for room_id: Variant in plan.get("recovery_route", []):
+		if not room_id is int:
+			return []
 		var room := _find_room_by_id(context, room_id)
 		if not room:
 			return []
@@ -478,25 +423,7 @@ func _find_room_path(
 	return room_path
 
 
-## Find the starting room from the configured player start cell.
-func _find_start_room(context: GenerationContext) -> Room:
-	if context.rooms.is_empty():
-		return null
-	var start := context.player_start_position
-	if (
-		start.x >= 0
-		and start.y >= 0
-		and start.y < context.grid.size()
-		and start.x < context.grid[start.y].size()
-	):
-		var room_id: int = context.grid[start.y][start.x].room_id
-		var room := _find_room_by_id(context, room_id)
-		if room:
-			return room
-	return context.rooms[0]
-
-
-## Find room by ID
+## Find room by ID.
 func _find_room_by_id(context: GenerationContext, room_id: int) -> Room:
 	for room: Room in context.rooms:
 		if room.id == room_id:
