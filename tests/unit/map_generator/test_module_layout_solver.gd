@@ -1,5 +1,7 @@
 extends ModusGutTestBase
 
+const ModuleAssembly = preload("res://shared/editor_core/core/module_assembly.gd")
+const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const ModuleLayoutSolver = preload("res://game/scripts/map_generator/module_layout_solver.gd")
 const PrefabMetadata = preload("res://game/scripts/map_generator/prefab_metadata.gd")
 
@@ -58,8 +60,34 @@ func test_cycle_is_rejected_before_candidate_search() -> void:
 	)
 	var result := solver.solve(plan, [_module("hall", ["a", "b", "c"])])
 	assert_false(bool(result.get("is_valid", false)))
-	assert_true("tree-shaped" in str(result.get("error_message", "")))
+	assert_eq(result.get("graph_profile", ""), "cyclic", str(result))
+	assert_eq(result.get("graph_profile", ""), "cyclic")
+	assert_eq(result.get("room_count", 0), 3)
+	assert_eq(result.get("edge_count", 0), 3)
 	assert_eq(result.get("attempts", 0), 0)
+
+
+func test_valid_spatial_plan_attaches_authored_modules() -> void:
+	var definitions := ModuleAssembly.get_catalog()
+	assert_false(definitions.is_empty(), "Authored module catalog must be available")
+	if definitions.is_empty():
+		return
+	var definition: PrefabMetadata = definitions[0]
+	var plan := _tree_plan(
+		[0, 1], [{"from_room_id": 0, "to_room_id": 1}, {"from_room_id": 1, "to_room_id": 0}]
+	)
+	var solved := solver.solve(plan, [definition])
+	assert_true(bool(solved.get("is_valid", false)), str(solved.get("error_message", "")))
+	if not bool(solved.get("is_valid", false)):
+		return
+	var root := LevelRootScript.new()
+	root.name = "SpatialPlanRoot"
+	add_child_autofree(root)
+	var attached := ModuleAssembly.attach_spatial_plan(root, solved, [definition])
+	assert_true(bool(attached.get("success", false)), str(attached.get("error", "")))
+	assert_eq(ModuleAssembly.get_instances(root).size(), 2)
+	assert_eq(root.module_connections.size(), 1)
+	assert_eq(ModuleAssembly.get_instances(root)[0].instance_id, "generated_room_0")
 
 
 func test_incompatible_socket_kind_fails_with_bounded_attempts() -> void:

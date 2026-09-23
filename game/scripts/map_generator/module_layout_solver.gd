@@ -25,15 +25,33 @@ func solve(
 		return _invalid("Spatial solver requires declared room IDs.")
 	var adjacency := _build_adjacency(room_ids, graph_plan.get("room_edges", []))
 	if adjacency.is_empty():
-		return _invalid("Spatial solver requires graph edges.")
+		return _invalid("Spatial solver requires valid room edges.")
 	var undirected_edges := _undirected_edges(adjacency)
-	if undirected_edges.size() != room_ids.size() - 1:
-		return _invalid("Spatial solver currently requires a tree-shaped mission graph.")
+	var edge_count := undirected_edges.size()
+	var graph_profile := "cyclic" if edge_count > room_ids.size() - 1 else "linear"
+	if edge_count != room_ids.size() - 1:
+		return _invalid("Spatial solver currently requires a tree-shaped mission graph.").merged(
+			{
+				"graph_profile": graph_profile,
+				"room_count": room_ids.size(),
+				"edge_count": edge_count
+			},
+			true
+		)
 
 	var start_room_id := int(graph_plan.get("start_room_id", room_ids[0]))
 	if not adjacency.has(start_room_id):
 		return _invalid("Spatial solver start room is not declared.")
 	var traversal := _build_tree(adjacency, start_room_id)
+	if traversal.order.size() != room_ids.size():
+		return _invalid("Spatial solver requires a connected mission graph.").merged(
+			{
+				"graph_profile": graph_profile,
+				"room_count": room_ids.size(),
+				"edge_count": edge_count
+			},
+			true
+		)
 	var required_kind := str(graph_plan.get("required_socket_kind", ""))
 	var ordered_catalog: Array[PrefabMetadata] = []
 	for definition: PrefabMetadata in catalog:
@@ -68,9 +86,8 @@ func solve(
 		)
 		return (
 			_invalid(reason + (": " + str(state.error) if not str(state.error).is_empty() else ""))
-			. merged({"attempts": state.attempts})
+			. merged({"attempts": state.attempts}, true)
 		)
-
 	var ordered_placements: Array[Dictionary] = []
 	for room_id: int in traversal.order:
 		var placement: Dictionary = placements[room_id]
@@ -305,6 +322,9 @@ func _invalid(message: String) -> Dictionary:
 		"is_valid": false,
 		"error_message": message,
 		"attempts": 0,
+		"graph_profile": "invalid",
+		"room_count": 0,
+		"edge_count": 0,
 		"placements": [],
 		"connections": []
 	}

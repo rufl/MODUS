@@ -233,6 +233,108 @@ static func place_module(
 	return {"success": true, "error": "", "instance": candidate}
 
 
+static func attach_spatial_plan(
+	root: Node3D, spatial_plan: Dictionary, catalog: Array[PrefabMetadata] = []
+) -> Dictionary:
+	if root == null or not "module_connections" in root:
+		return _failure("Open a LevelRoot document before attaching a spatial plan.")
+	if not bool(spatial_plan.get("is_valid", false)):
+		return _failure("Cannot attach an invalid spatial plan.")
+	var definitions := {}
+	var candidates := catalog if not catalog.is_empty() else get_catalog()
+	for definition: PrefabMetadata in candidates:
+		definitions[definition.module_id] = definition
+		definitions[definition.scene_path] = definition
+	var instances: Array[ModuleInstance] = []
+	var room_instances := {}
+	for placement: Variant in spatial_plan.get("placements", []):
+		if not placement is Dictionary:
+			_free_instances(instances)
+			return _failure("Spatial plan contains an invalid placement record.")
+		var definition: PrefabMetadata = definitions.get(
+			str(placement.get("module_id", "")),
+			definitions.get(str(placement.get("scene_path", "")))
+		)
+		if definition == null:
+			_free_instances(instances)
+			return _failure("Spatial plan references an unknown module definition.")
+		var room_id := int(placement.get("room_id", -1))
+		var instance_id := "generated_room_%d" % room_id
+		var instance := _instantiate_spatial_instance(
+			definition, placement.get("transform", Transform3D.IDENTITY), instance_id
+		)
+		if instance == null:
+			_free_instances(instances)
+			return _failure(
+				"Spatial plan module could not be instantiated: " + definition.module_id
+			)
+		instances.append(instance)
+		room_instances[room_id] = instance_id
+	var graph: Array[Dictionary] = []
+	for connection: Variant in spatial_plan.get("connections", []):
+		if not connection is Dictionary:
+			_free_instances(instances)
+			return _failure("Spatial plan contains an invalid connection record.")
+		var from_room_id := int(connection.get("from_room_id", -1))
+		var to_room_id := int(connection.get("to_room_id", -1))
+		if not room_instances.has(from_room_id) or not room_instances.has(to_room_id):
+			_free_instances(instances)
+			return _failure("Spatial plan connection references an unplaced room.")
+		graph.append(
+			{
+				"from_instance": room_instances[from_room_id],
+				"from_socket": str(connection.get("from_socket_id", "")),
+				"to_instance": room_instances[to_room_id],
+				"to_socket": str(connection.get("to_socket_id", ""))
+			}
+		)
+	var errors := _validate(instances, graph)
+	if not errors.is_empty():
+		_free_instances(instances)
+		return _failure("; ".join(errors))
+	for instance: ModuleInstance in instances:
+		root.add_child(instance)
+		instance.owner = root
+		LevelRootScript.prepare_ownership(instance, root)
+	root.module_connections = graph
+	if root.has_method("restore_runtime_bindings"):
+		root.restore_runtime_bindings()
+	return {"success": true, "error": "", "instances": instances}
+
+
+static func _instantiate_spatial_instance(
+	definition: PrefabMetadata, transform: Transform3D, instance_id: String
+) -> ModuleInstance:
+	var scene := load(definition.scene_path) as PackedScene
+	if scene == null:
+		return null
+	var content_node := scene.instantiate()
+	var content := content_node as Node3D
+	if content == null or not content.transform.is_equal_approx(Transform3D.IDENTITY):
+		content_node.free()
+		return null
+	var instance: ModuleInstance
+	if content is ModuleInstance:
+		instance = content
+		var template_id := instance.instance_id
+		if not template_id.is_empty() and template_id != instance_id:
+			_remap_local_objectives(instance, template_id, instance_id)
+	else:
+		instance = ModuleInstance.new()
+		instance.add_child(content)
+	instance.name = instance_id.to_pascal_case()
+	instance.instance_id = instance_id
+	instance.definition = definition
+	instance.transform = transform
+	return instance
+
+
+static func _free_instances(instances: Array[ModuleInstance]) -> void:
+	for instance: ModuleInstance in instances:
+		if is_instance_valid(instance):
+			instance.free()
+
+
 static func build_regeneration_plans(
 	root: Node3D,
 	replacement_catalog: Array[PrefabMetadata] = [],

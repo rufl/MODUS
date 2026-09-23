@@ -1813,6 +1813,20 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 	# Generated maps are editable level documents, not anonymous world roots.
 	var root := LevelRootScript.new()
 	root.name = "GeneratedMap"
+	var spatial_plan: Variant = metadata.get("spatial_plan", {})
+	if spatial_plan is Dictionary and bool(spatial_plan.get("is_valid", false)):
+		var spatial_result := ModuleAssemblyScript.attach_spatial_plan(root, spatial_plan)
+		var published_plan: Dictionary = spatial_plan.duplicate(true)
+		published_plan["instantiated"] = bool(spatial_result.get("success", false))
+		if not bool(spatial_result.get("success", false)):
+			published_plan["instantiation_error"] = str(spatial_result.get("error", ""))
+			push_warning(
+				(
+					"[MapGenerator] Spatial plan was valid but could not be instantiated: "
+					+ str(spatial_result.get("error", ""))
+				)
+			)
+		metadata["spatial_plan"] = published_plan
 	root.set_meta("generation", metadata.duplicate(true))
 	theme_manager.apply_lighting_to_scene(root)
 
