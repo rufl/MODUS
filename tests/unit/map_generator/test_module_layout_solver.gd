@@ -108,6 +108,16 @@ func test_full_authored_catalog_solves_and_attaches_eleven_room_chain() -> void:
 	assert_eq(result.get("placements", []).size(), 11)
 	assert_eq(result.get("connections", []).size(), 10)
 	assert_lte(int(result.get("attempts", 0)), 512)
+	assert_gt(
+		int(result.get("catalog_diversity", 0)),
+		1,
+		"Full authored catalog solve must use more than one module definition"
+	)
+	var usage: Dictionary = result.get("catalog_usage", {})
+	var usage_total := 0
+	for count: Variant in usage.values():
+		usage_total += int(count)
+	assert_eq(usage_total, 11, "Catalog usage diagnostics must cover every placement")
 	assert_false(
 		result.get("placements", [])[0].get("module_id", "").is_empty(),
 		"Every generated room must retain an authored module identity"

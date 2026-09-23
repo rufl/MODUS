@@ -109,6 +109,10 @@ func solve(
 				return left.to_room_id < right.to_room_id
 			return left.from_room_id < right.from_room_id
 	)
+	var catalog_usage := {}
+	for placement: Dictionary in ordered_placements:
+		var module_id := str(placement.get("module_id", ""))
+		catalog_usage[module_id] = int(catalog_usage.get(module_id, 0)) + 1
 	return {
 		"is_valid": true,
 		"error_message": "",
@@ -118,6 +122,8 @@ func solve(
 		"edge_count": edge_count,
 		"loop_edge_count": loop_edges.size(),
 		"closed_loop_count": loop_edges.size(),
+		"catalog_usage": catalog_usage,
+		"catalog_diversity": catalog_usage.size(),
 		"placements": ordered_placements,
 		"connections": connections
 	}
@@ -128,6 +134,32 @@ func _has_socket_kind(definition: PrefabMetadata, required_kind: String) -> bool
 		if str(socket.get("kind", "walk")) == required_kind:
 			return true
 	return false
+
+
+func _ordered_catalog(
+	catalog: Array[PrefabMetadata], placements: Dictionary
+) -> Array[PrefabMetadata]:
+	var ordered: Array[PrefabMetadata] = []
+	ordered.assign(catalog)
+	ordered.sort_custom(
+		func(left: PrefabMetadata, right: PrefabMetadata) -> bool:
+			var left_usage := _catalog_usage_count(left.module_id, placements)
+			var right_usage := _catalog_usage_count(right.module_id, placements)
+			if left_usage != right_usage:
+				return left_usage < right_usage
+			if left.module_id != right.module_id:
+				return left.module_id < right.module_id
+			return left.scene_path < right.scene_path
+	)
+	return ordered
+
+
+func _catalog_usage_count(module_id: String, placements: Dictionary) -> int:
+	var count := 0
+	for placement: Variant in placements.values():
+		if placement is Dictionary and str(placement.get("module_id", "")) == module_id:
+			count += 1
+	return count
 
 
 func _search(
@@ -147,7 +179,7 @@ func _search(
 	var room_id: int = order[depth]
 	var parent_id: int = int(parents.get(room_id, -1))
 	var required_sockets: int = adjacency[room_id].size()
-	for definition: PrefabMetadata in catalog:
+	for definition: PrefabMetadata in _ordered_catalog(catalog, placements):
 		if definition.sockets.size() < required_sockets:
 			continue
 		if state.attempts >= max_attempts:
