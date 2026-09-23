@@ -1,10 +1,10 @@
 class_name ModuleLayoutSolver
 extends RefCounted
 
-## Deterministic bounded solver for tree-shaped mission graphs.
+## Deterministic bounded solver for mission graphs.
 ## It selects reusable authored modules, pairs typed sockets and rejects
-## clearance collisions before a spatial plan is published. Cyclic graph
-## realization remains a separate contract until loop socket search is added.
+## clearance collisions before a spatial plan is published. Cyclic graphs use
+## a spanning-tree placement followed by bounded loop-socket closure search.
 
 const PrefabMetadata = preload("res://game/scripts/map_generator/prefab_metadata.gd")
 const EPSILON := 0.001
@@ -29,16 +29,6 @@ func solve(
 	var undirected_edges := _undirected_edges(adjacency)
 	var edge_count := undirected_edges.size()
 	var graph_profile := "cyclic" if edge_count > room_ids.size() - 1 else "linear"
-	if edge_count != room_ids.size() - 1:
-		return _invalid("Spatial solver currently requires a tree-shaped mission graph.").merged(
-			{
-				"graph_profile": graph_profile,
-				"room_count": room_ids.size(),
-				"edge_count": edge_count
-			},
-			true
-		)
-
 	var start_room_id := int(graph_plan.get("start_room_id", room_ids[0]))
 	if not adjacency.has(start_room_id):
 		return _invalid("Spatial solver start room is not declared.")
@@ -52,6 +42,8 @@ func solve(
 			},
 			true
 		)
+	var tree_adjacency := _build_tree_adjacency(room_ids, traversal.parents)
+	var loop_edges := _build_loop_edges(undirected_edges, traversal.parents)
 	var required_kind := str(graph_plan.get("required_socket_kind", ""))
 	var ordered_catalog: Array[PrefabMetadata] = []
 	for definition: PrefabMetadata in catalog:
@@ -71,7 +63,8 @@ func solve(
 	if not _search(
 		traversal.order,
 		traversal.parents,
-		adjacency,
+		tree_adjacency,
+		loop_edges,
 		ordered_catalog,
 		0,
 		placements,
@@ -86,7 +79,17 @@ func solve(
 		)
 		return (
 			_invalid(reason + (": " + str(state.error) if not str(state.error).is_empty() else ""))
-			. merged({"attempts": state.attempts}, true)
+			. merged(
+				{
+					"attempts": state.attempts,
+					"graph_profile": graph_profile,
+					"room_count": room_ids.size(),
+					"edge_count": edge_count,
+					"loop_edge_count": loop_edges.size(),
+					"closed_loop_count": 0
+				},
+				true
+			)
 		)
 	var ordered_placements: Array[Dictionary] = []
 	for room_id: int in traversal.order:
@@ -110,6 +113,11 @@ func solve(
 		"is_valid": true,
 		"error_message": "",
 		"attempts": state.attempts,
+		"graph_profile": graph_profile,
+		"room_count": room_ids.size(),
+		"edge_count": edge_count,
+		"loop_edge_count": loop_edges.size(),
+		"closed_loop_count": loop_edges.size(),
 		"placements": ordered_placements,
 		"connections": connections
 	}
@@ -126,6 +134,7 @@ func _search(
 	order: Array[int],
 	parents: Dictionary,
 	adjacency: Dictionary,
+	loop_edges: Array[Dictionary],
 	catalog: Array[PrefabMetadata],
 	depth: int,
 	placements: Dictionary,
@@ -134,7 +143,7 @@ func _search(
 	max_attempts: int
 ) -> bool:
 	if depth >= order.size():
-		return true
+		return _close_loops(loop_edges, 0, placements, connections, state, max_attempts)
 	var room_id: int = order[depth]
 	var parent_id: int = int(parents.get(room_id, -1))
 	var required_sockets: int = adjacency[room_id].size()
@@ -154,6 +163,7 @@ func _search(
 				order,
 				parents,
 				adjacency,
+				loop_edges,
 				catalog,
 				depth + 1,
 				placements,
@@ -197,6 +207,7 @@ func _search(
 					order,
 					parents,
 					adjacency,
+					loop_edges,
 					catalog,
 					depth + 1,
 					placements,
@@ -209,6 +220,66 @@ func _search(
 				placements.erase(room_id)
 				parent_placement.used_socket_ids.pop_back()
 		return false
+	return false
+
+
+func _close_loops(
+	loop_edges: Array[Dictionary],
+	depth: int,
+	placements: Dictionary,
+	connections: Array[Dictionary],
+	state: Dictionary,
+	max_attempts: int
+) -> bool:
+	if depth >= loop_edges.size():
+		return true
+	var edge: Dictionary = loop_edges[depth]
+	var from_placement: Dictionary = placements.get(edge.from_room_id, {})
+	var to_placement: Dictionary = placements.get(edge.to_room_id, {})
+	if from_placement.is_empty() or to_placement.is_empty():
+		state.error = "Loop closure references an unplaced room."
+		return false
+	var from_definition: PrefabMetadata = from_placement.definition
+	var to_definition: PrefabMetadata = to_placement.definition
+	for from_socket: Dictionary in from_definition.sockets:
+		var from_socket_id := str(from_socket.get("id", ""))
+		if from_placement.used_socket_ids.has(from_socket_id):
+			continue
+		for to_socket: Dictionary in to_definition.sockets:
+			if state.attempts >= max_attempts:
+				state.exhausted = true
+				return false
+			state.attempts += 1
+			var to_socket_id := str(to_socket.get("id", ""))
+			if to_placement.used_socket_ids.has(to_socket_id):
+				continue
+			if from_socket.get("kind", "walk") != to_socket.get("kind", "walk"):
+				continue
+			var from_pose: Transform3D = from_placement.transform * from_socket.local_transform
+			var to_pose: Transform3D = to_placement.transform * to_socket.local_transform
+			if (
+				from_pose.origin.distance_to(to_pose.origin) > EPSILON
+				or not from_pose.basis.is_equal_approx(to_pose.basis * Basis(Vector3.UP, PI))
+			):
+				continue
+			from_placement.used_socket_ids.append(from_socket_id)
+			to_placement.used_socket_ids.append(to_socket_id)
+			connections.append(
+				{
+					"from_room_id": edge.from_room_id,
+					"to_room_id": edge.to_room_id,
+					"from_socket_id": from_socket_id,
+					"to_socket_id": to_socket_id
+				}
+			)
+			if _close_loops(loop_edges, depth + 1, placements, connections, state, max_attempts):
+				return true
+			connections.pop_back()
+			from_placement.used_socket_ids.pop_back()
+			to_placement.used_socket_ids.pop_back()
+	state.error = (
+		"No compatible loop closure for edge %d:%d." % [edge.from_room_id, edge.to_room_id]
+	)
 	return false
 
 
@@ -299,6 +370,7 @@ func _undirected_edges(adjacency: Dictionary) -> Array[String]:
 			var key := "%d:%d" % [mini(from_id, to_id), maxi(from_id, to_id)]
 			if not result.has(key):
 				result.append(key)
+	result.sort()
 	return result
 
 
@@ -317,6 +389,40 @@ func _build_tree(adjacency: Dictionary, start_room_id: int) -> Dictionary:
 	return {"parents": parents, "order": order}
 
 
+func _build_tree_adjacency(room_ids: Array[int], parents: Dictionary) -> Dictionary:
+	var adjacency: Dictionary = {}
+	for room_id: int in room_ids:
+		adjacency[room_id] = []
+	for room_id: int in room_ids:
+		var parent_id := int(parents.get(room_id, -1))
+		if parent_id < 0:
+			continue
+		adjacency[parent_id].append(room_id)
+		adjacency[room_id].append(parent_id)
+	for room_id: int in room_ids:
+		adjacency[room_id].sort()
+	return adjacency
+
+
+func _build_loop_edges(edge_keys: Array[String], parents: Dictionary) -> Array[Dictionary]:
+	var tree_edges: Dictionary = {}
+	for child_id: Variant in parents:
+		var parent_id := int(parents[child_id])
+		if parent_id >= 0:
+			tree_edges[_edge_key(parent_id, int(child_id))] = true
+	var result: Array[Dictionary] = []
+	for key: String in edge_keys:
+		if tree_edges.has(key):
+			continue
+		var endpoints := key.split(":")
+		result.append({"from_room_id": int(endpoints[0]), "to_room_id": int(endpoints[1])})
+	return result
+
+
+func _edge_key(left_id: int, right_id: int) -> String:
+	return "%d:%d" % [mini(left_id, right_id), maxi(left_id, right_id)]
+
+
 func _invalid(message: String) -> Dictionary:
 	return {
 		"is_valid": false,
@@ -325,6 +431,8 @@ func _invalid(message: String) -> Dictionary:
 		"graph_profile": "invalid",
 		"room_count": 0,
 		"edge_count": 0,
+		"loop_edge_count": 0,
+		"closed_loop_count": 0,
 		"placements": [],
 		"connections": []
 	}

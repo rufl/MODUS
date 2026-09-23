@@ -46,7 +46,7 @@ func test_branch_graph_requires_enough_socket_capacity() -> void:
 	assert_eq(result.get("placements", [])[0].get("module_id", ""), "hub")
 
 
-func test_cycle_is_rejected_before_candidate_search() -> void:
+func test_cycle_reports_bounded_loop_closure_failure() -> void:
 	var plan := _tree_plan(
 		[0, 1, 2],
 		[
@@ -64,7 +64,52 @@ func test_cycle_is_rejected_before_candidate_search() -> void:
 	assert_eq(result.get("graph_profile", ""), "cyclic")
 	assert_eq(result.get("room_count", 0), 3)
 	assert_eq(result.get("edge_count", 0), 3)
-	assert_eq(result.get("attempts", 0), 0)
+	assert_true(int(result.get("attempts", 0)) > 0)
+	assert_true(int(result.get("attempts", 0)) <= 64)
+	assert_eq(result.get("loop_edge_count", 0), 1)
+	assert_eq(result.get("closed_loop_count", 0), 0)
+	assert_true("loop closure" in str(result.get("error_message", "")).to_lower())
+
+
+func test_cycle_closes_when_socket_poses_form_a_ring() -> void:
+	var plan := _tree_plan(
+		[0, 1, 2, 3],
+		[
+			{"from_room_id": 0, "to_room_id": 1},
+			{"from_room_id": 1, "to_room_id": 0},
+			{"from_room_id": 1, "to_room_id": 2},
+			{"from_room_id": 2, "to_room_id": 1},
+			{"from_room_id": 2, "to_room_id": 3},
+			{"from_room_id": 3, "to_room_id": 2},
+			{"from_room_id": 3, "to_room_id": 0},
+			{"from_room_id": 0, "to_room_id": 3}
+		]
+	)
+	var result := solver.solve(plan, [_ring_module()], 256)
+	assert_true(bool(result.get("is_valid", false)), str(result))
+	assert_eq(result.get("graph_profile", ""), "cyclic")
+	assert_eq(result.get("loop_edge_count", 0), 1)
+	assert_eq(result.get("closed_loop_count", 0), 1)
+	assert_eq(result.get("connections", []).size(), 4)
+
+
+func _ring_module() -> PrefabMetadata:
+	var metadata := PrefabMetadata.new()
+	metadata.module_id = "ring"
+	metadata.scene_path = "res://ring.tscn"
+	metadata.dimensions = Vector3(0.5, 0.5, 0.5)
+	var positions := [Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(-1, 0, 0), Vector3(0, 0, -1)]
+	for index in range(positions.size()):
+		metadata.sockets.append(
+			{
+				"id": "socket_%d" % index,
+				"kind": "walk",
+				"local_transform": Transform3D(Basis.IDENTITY, positions[index]),
+				"opening": Vector2(1, 2),
+				"clearance": AABB(positions[index] - Vector3(0.1, 0, 0.1), Vector3(0.2, 2, 0.2))
+			}
+		)
+	return metadata
 
 
 func test_valid_spatial_plan_attaches_authored_modules() -> void:
