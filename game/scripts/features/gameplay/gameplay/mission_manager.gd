@@ -427,6 +427,23 @@ func validate_progression_manifest(manifest: Dictionary) -> Dictionary:
 				"is_valid": false,
 				"error_message": "Mission progression recovery route leaves the room graph."
 			}
+	if has_room_ids:
+		var reachable_room_ids: Dictionary = {manifest.start_room_id: true}
+		var pending_room_ids: Array[int] = [manifest.start_room_id]
+		while not pending_room_ids.is_empty():
+			var current_room_id: int = pending_room_ids.pop_front()
+			for edge: Dictionary in manifest.get("room_edges", []):
+				if (
+					edge.from_room_id == current_room_id
+					and not reachable_room_ids.has(edge.to_room_id)
+				):
+					reachable_room_ids[edge.to_room_id] = true
+					pending_room_ids.append(edge.to_room_id)
+		if reachable_room_ids.size() != known_room_ids.size():
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression room graph is disconnected."
+			}
 	var keys: Array = manifest.get("keys", [])
 	var key_ids: Dictionary = {}
 	var key_colors: Dictionary = {}

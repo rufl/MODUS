@@ -159,6 +159,9 @@ func test_generated_manifest_accepts_branch_edges_outside_recovery_route() -> vo
 	assert_true(_mission.validate_progression_manifest(manifest).is_valid)
 	manifest.room_edges.append({"from_room_id": 0, "to_room_id": 99})
 	assert_false(_mission.validate_progression_manifest(manifest).is_valid)
+	manifest.room_edges.pop_back()
+	manifest.room_ids.append(4)
+	assert_false(_mission.validate_progression_manifest(manifest).is_valid)
 
 
 func test_document_without_objectives_preserves_the_normal_mission() -> void:

@@ -84,6 +84,9 @@ func test_manifest_retains_reachable_mandatory_order_and_unique_records() -> voi
 	assert_eq(manifest.room_edges.size(), 10)
 	assert_eq(manifest.room_ids, [0, 1, 2, 3, 4, 5])
 	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
+	var legacy_manifest: Dictionary = manifest.duplicate(true)
+	legacy_manifest.erase("room_ids")
+	assert_true(key_lock_system.validate_progression_manifest(context, legacy_manifest).is_valid)
 
 
 func test_branching_graph_uses_a_real_route_to_extraction() -> void:
