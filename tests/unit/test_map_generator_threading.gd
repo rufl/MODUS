@@ -197,7 +197,8 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 	assert_eq(metadata.get("map_size"), [32, 32])
 	var spatial_plan: Dictionary = metadata.get("spatial_plan", {})
 	assert_true(
-		spatial_plan.has("is_valid"), "Generated metadata must retain spatial solver diagnostics"
+		bool(spatial_plan.get("is_valid", false)),
+		"Generated production graph must produce an attachable spatial plan: %s" % spatial_plan
 	)
 	assert_has(
 		metadata.get("rule_modules_used", []),
@@ -220,6 +221,22 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 		LevelRootScript.resource_path,
 		"Generated output must be a LevelRoot"
 	)
+	var packed_plan: Dictionary = generated.get_meta("generation", {}).get("spatial_plan", {})
+	assert_eq(
+		packed_plan.get("is_valid", false),
+		spatial_plan.get("is_valid", false),
+		"Packed generation metadata must preserve spatial validity"
+	)
+	if bool(spatial_plan.get("is_valid", false)):
+		assert_true(
+			packed_plan.get("instantiated", false),
+			"Valid generated spatial plans must instantiate authored modules"
+		)
+		assert_eq(
+			generated.module_connections.size(),
+			spatial_plan.get("connections", []).size(),
+			"Generated LevelRoot must retain every spatial connection"
+		)
 	var key := generated.get_node_or_null("KeyPickup_0")
 	assert_not_null(key, "Generated LevelRoot must contain the production key actor")
 	if key:

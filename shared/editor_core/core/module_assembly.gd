@@ -247,10 +247,19 @@ static func attach_spatial_plan(
 		definitions[definition.scene_path] = definition
 	var instances: Array[ModuleInstance] = []
 	var room_instances := {}
+	var seen_rooms := {}
 	for placement: Variant in spatial_plan.get("placements", []):
 		if not placement is Dictionary:
 			_free_instances(instances)
 			return _failure("Spatial plan contains an invalid placement record.")
+		var room_id := int(placement.get("room_id", -1))
+		if room_id < 0 or seen_rooms.has(room_id):
+			_free_instances(instances)
+			return _failure("Spatial plan room IDs must be nonnegative and unique.")
+		var transform: Variant = placement.get("transform", Transform3D.IDENTITY)
+		if not transform is Transform3D or not transform.is_finite():
+			_free_instances(instances)
+			return _failure("Spatial plan placement transforms must be finite Transform3D values.")
 		var definition: PrefabMetadata = definitions.get(
 			str(placement.get("module_id", "")),
 			definitions.get(str(placement.get("scene_path", "")))
@@ -258,18 +267,18 @@ static func attach_spatial_plan(
 		if definition == null:
 			_free_instances(instances)
 			return _failure("Spatial plan references an unknown module definition.")
-		var room_id := int(placement.get("room_id", -1))
 		var instance_id := "generated_room_%d" % room_id
-		var instance := _instantiate_spatial_instance(
-			definition, placement.get("transform", Transform3D.IDENTITY), instance_id
-		)
+		var instance := _instantiate_spatial_instance(definition, transform, instance_id)
 		if instance == null:
 			_free_instances(instances)
 			return _failure(
 				"Spatial plan module could not be instantiated: " + definition.module_id
 			)
+		seen_rooms[room_id] = true
 		instances.append(instance)
 		room_instances[room_id] = instance_id
+	if instances.is_empty():
+		return _failure("Spatial plan must contain at least one placement.")
 	var graph: Array[Dictionary] = []
 	for connection: Variant in spatial_plan.get("connections", []):
 		if not connection is Dictionary:
