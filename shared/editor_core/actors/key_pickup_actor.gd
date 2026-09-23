@@ -51,6 +51,10 @@ func interact(player: Node = null) -> bool:
 	return is_active
 
 
+func get_interaction_prompt() -> String:
+	return "Collected" if is_active else "Collect %s" % key_id
+
+
 func _on_activated(_data: Dictionary) -> void:
 	_update_visual()
 

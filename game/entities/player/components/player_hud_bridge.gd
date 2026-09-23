@@ -164,25 +164,38 @@ func update_interaction_tooltip() -> void:
 		CollisionLayers.LAYER_INTERACTABLES,
 		[_player.get_rid()]
 	)
-
 	var result: Dictionary = space.intersect_ray(query)
 	if result:
 		var collider: Object = result["collider"]
-		# Check for Interactable component
-		var interactable: Node = null
-		if collider is Node:
-			interactable = collider.get_node_or_null("Interactable")
-
-		if interactable and "prompt_text" in interactable:
-			_tooltip_label.text = "[E] " + interactable.prompt_text
-			_tooltip_label.visible = true
-			return
+		var interactable: Node = _find_interactable(collider as Node) if collider is Node else null
+		if interactable:
+			var prompt := ""
+			if interactable.has_method("get_interaction_prompt"):
+				prompt = str(interactable.get_interaction_prompt())
+			elif "prompt_text" in interactable:
+				prompt = str(interactable.prompt_text)
+			if not prompt.is_empty():
+				_tooltip_label.text = "[E] " + prompt
+				_tooltip_label.visible = true
+				return
 		if collider is RigidBody3D:
 			_tooltip_label.text = "[E] Pick Up"
 			_tooltip_label.visible = true
 			return
 
 	_tooltip_label.visible = false
+
+
+func _find_interactable(collider: Node) -> Node:
+	var node := collider
+	while node:
+		if node.has_method("interact"):
+			return node
+		var component := node.get_node_or_null("Interactable")
+		if component and component.has_method("interact"):
+			return component
+		node = node.get_parent()
+	return null
 
 
 func update_crosshair_target() -> void:

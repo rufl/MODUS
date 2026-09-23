@@ -5,6 +5,7 @@ const ActorScript := preload("res://shared/editor_core/actors/actor_base.gd")
 const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
 const SwitchActorScript := preload("res://shared/editor_core/actors/switch_actor.gd")
+const PlayerHUDBridgeScript := preload("res://game/entities/player/components/player_hud_bridge.gd")
 var _mission: MissionMgr
 var _previous: Dictionary
 var _previous_level: Node3D
@@ -89,6 +90,8 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 	assert_eq(objectives[1].get("requires"), ["KeyPickup_0"])
 	assert_eq(objectives[2].get("id"), "GeneratedExtraction")
 	assert_eq(objectives[2].get("requires"), ["LockedDoor_0"])
+	assert_eq(key.get_interaction_prompt(), "Collect key_red")
+	assert_eq(door.get_interaction_prompt(), "Locked (Requires key_red)")
 
 	var player := Node.new()
 	var player_script := GDScript.new()
@@ -106,9 +109,11 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 	key.trigger(player)
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["KeyPickup_0"], 1)
+	assert_eq(key.get_interaction_prompt(), "Collected")
 	door.trigger(player)
 	assert_eq(door.activation_count, 1, "Key completion unlocks the generated door")
 	assert_false(door.locked)
+	assert_eq(door.get_interaction_prompt(), "Close")
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["LockedDoor_0"], 1)
 	assert_true(
@@ -117,6 +122,21 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 	_mission._process(0.0)
 	assert_eq(_mission.objective_state["GeneratedExtraction"], 1)
 	assert_eq(_mission.completed_mission_id, "generated_dependency_regression")
+
+
+func test_hud_resolves_generated_actor_parent_from_collision_child() -> void:
+	var bridge: PlayerHUDBridge = PlayerHUDBridgeScript.new()
+	add_child_autofree(bridge)
+	var door := DoorActor.new()
+	var collision_body := StaticBody3D.new()
+	door.add_child(collision_body)
+	add_child_autofree(door)
+
+	assert_eq(
+		bridge._find_interactable(collision_body),
+		door,
+		"HUD should resolve generated actor parents, not only Interactable components"
+	)
 
 
 func test_generated_manifest_accepts_branch_edges_outside_recovery_route() -> void:

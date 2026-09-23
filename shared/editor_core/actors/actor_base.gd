@@ -99,6 +99,11 @@ func _process(delta: float) -> void:
 ## Override in subclasses for custom ready logic
 
 
+## Text shown by the player HUD when this actor is aimed at.
+func get_interaction_prompt() -> String:
+	return actor_name if not actor_name.is_empty() else "Interact"
+
+
 func _on_actor_ready() -> void:
 	pass
 

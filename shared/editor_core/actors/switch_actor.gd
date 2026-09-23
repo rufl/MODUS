@@ -75,6 +75,12 @@ func _update_visual() -> void:
 ## Called when player interacts
 
 
+func get_interaction_prompt() -> String:
+	if not require_key.is_empty() and not is_active:
+		return "Activate (Requires %s)" % require_key
+	return "Deactivate" if is_active else "Activate"
+
+
 func interact(player: Node = null) -> bool:
 	if not is_enabled or is_authoring() or (one_shot and activation_count > 0):
 		return false

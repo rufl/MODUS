@@ -185,6 +185,13 @@ func interact(player: Node = null) -> bool:
 	return is_active or not locked
 
 
+func get_interaction_prompt() -> String:
+	if locked:
+		var key_label := required_key if not required_key.is_empty() else "key"
+		return "Locked (Requires %s)" % key_label
+	return "Close" if is_active else "Open"
+
+
 func capture_runtime_state() -> Dictionary:
 	var state := super.capture_runtime_state()
 	state["locked"] = locked
