@@ -1545,8 +1545,8 @@ func host_game(port: int = -1, max_players: int = -1) -> Error:
 	var peer: MultiplayerPeer
 	var steam: Node = get_steam_manager()
 
-	# Try Steam if enabled
-	if _use_steam and steam and steam.is_steam_running():
+	# Try Steam only when both the service and peer implementation are usable.
+	if _use_steam and steam and is_steam_networking_available():
 		peer = steam.create_multiplayer_peer_host(port)
 		# FIXED: Null check to prevent crash if Steam peer creation returns null
 		if peer:
@@ -1556,7 +1556,10 @@ func host_game(port: int = -1, max_players: int = -1) -> Error:
 				if logger and logger.has_method("info"):
 					logger.info("[Network] Hosting via Steam", "Network")
 		else:
-			var error_msg: String = "Steam host failed - Steam may be offline or not running"
+			var error_msg: String = "Steam host failed"
+			if steam.has_method("get_transport_capabilities"):
+				var capabilities: Dictionary = steam.get_transport_capabilities()
+				error_msg += " (%s)" % str(capabilities.get("reason", "unknown"))
 			push_warning("[Network] " + error_msg)
 			if not _fallback_to_enet:
 				connection_failed.emit(error_msg)
@@ -1569,8 +1572,13 @@ func host_game(port: int = -1, max_players: int = -1) -> Error:
 			if gm2:
 				var logger2: Variant = gm2.get_core_system("logger")
 				if logger2 and logger2.has_method("info"):
+					var fallback_reason := "steam_transport_unavailable"
+					if steam and steam.has_method("get_transport_capabilities"):
+						var fallback_capabilities: Dictionary = steam.get_transport_capabilities()
+						fallback_reason = str(fallback_capabilities.get("reason", fallback_reason))
 					logger2.info(
-						"[Network] Steam unavailable/failed, falling back to ENet", "Network"
+						"[Network] Steam unavailable (%s), falling back to ENet" % fallback_reason,
+						"Network"
 					)
 
 		var enet_peer := ENetMultiplayerPeer.new()
@@ -1594,10 +1602,8 @@ func host_game(port: int = -1, max_players: int = -1) -> Error:
 	hosting_started.emit(bound_port)
 	connection_established.emit(true)
 
-	# Save info for validation/reconnect (though hosts don't reconnect to themselves usually)
-	_last_host_info = {
-		"host": "localhost", "port": bound_port, "is_steam": _use_steam and peer == steam
-	}
+	var using_steam_peer: bool = not peer is ENetMultiplayerPeer
+	_last_host_info = {"host": "localhost", "port": bound_port, "is_steam": using_steam_peer}
 
 	return OK
 
@@ -1615,7 +1621,7 @@ func join_game(host: String, port: int = -1) -> Error:
 	# Check if host is a Steam ID (all digits)
 	var is_steam_id: bool = host.is_valid_int() and _use_steam
 
-	if is_steam_id and steam and steam.is_steam_running():
+	if is_steam_id and steam and is_steam_networking_available():
 		peer = steam.create_multiplayer_peer_client(host, port)
 		# FIXED: Null check to prevent crash if Steam peer creation returns null
 		if peer:
@@ -1650,8 +1656,11 @@ func join_game(host: String, port: int = -1) -> Error:
 	_expected_server_disconnect = false
 	multiplayer.multiplayer_peer = peer
 
-	# Save before notifying listeners, which may explicitly disconnect.
-	_last_host_info = {"host": host, "port": port, "is_steam": is_steam_id}
+	_last_host_info = {
+		"host": host,
+		"port": port,
+		"is_steam": is_steam_id and not peer is ENetMultiplayerPeer,
+	}
 	connection_established.emit(false)
 
 	return OK
@@ -1684,7 +1693,12 @@ func disconnect_game() -> void:
 
 func is_steam_networking_available() -> bool:
 	var steam: Node = get_steam_manager()
-	return _use_steam and steam != null and steam.is_steam_running()
+	return (
+		_use_steam
+		and steam != null
+		and steam.has_method("is_steam_transport_available")
+		and steam.is_steam_transport_available()
+	)
 
 
 ## Get current network mode description

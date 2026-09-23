@@ -618,18 +618,37 @@ func _on_validate_auth_ticket_response(
 # NETWORKING INTEGRATION
 # ============================================================================
 
-## Get a multiplayer peer (Steam or ENet fallback)
+
+## Return the detected Steam/ENet transport capabilities.
+func get_transport_capabilities() -> Dictionary:
+	var steam_service := is_steam_running()
+	var peer_class := ClassDB.class_exists("SteamMultiplayerPeer")
+	var reason := "ready"
+	if not steam_service:
+		reason = "steam_service_unavailable"
+	elif not peer_class:
+		reason = "steam_peer_class_unavailable"
+	return {
+		"steam_service": steam_service,
+		"steam_peer_class": peer_class,
+		"steam_transport": steam_service and peer_class,
+		"enet_transport": true,
+		"reason": reason,
+	}
+
+
+## Return true only when Steam transport can be attempted safely.
+func is_steam_transport_available() -> bool:
+	return bool(get_transport_capabilities().get("steam_transport", false))
+
+
+## Get a multiplayer peer (Steam or ENet fallback).
 
 
 func create_multiplayer_peer_host(_port: int = 9999) -> MultiplayerPeer:
-	if not _steam_available:
-		push_warning("[SteamManager] Cannot create Steam host - Steam not available")
-		return null
-
-	if not ClassDB.class_exists("SteamMultiplayerPeer"):
-		push_warning(
-			"[SteamManager] Cannot create Steam host - SteamMultiplayerPeer class not found"
-		)
+	var capabilities: Dictionary = get_transport_capabilities()
+	if not capabilities.steam_transport:
+		push_warning("[SteamManager] Cannot create Steam host - %s" % capabilities.reason)
 		return null
 
 	# Use Steam networking
@@ -652,14 +671,9 @@ func create_multiplayer_peer_host(_port: int = 9999) -> MultiplayerPeer:
 
 
 func create_multiplayer_peer_client(host: String, _port: int = 9999) -> MultiplayerPeer:
-	if not _steam_available:
-		push_warning("[SteamManager] Cannot create Steam client - Steam not available")
-		return null
-
-	if not ClassDB.class_exists("SteamMultiplayerPeer"):
-		push_warning(
-			"[SteamManager] Cannot create Steam client - SteamMultiplayerPeer class not found"
-		)
+	var capabilities: Dictionary = get_transport_capabilities()
+	if not capabilities.steam_transport:
+		push_warning("[SteamManager] Cannot create Steam client - %s" % capabilities.reason)
 		return null
 
 	if not host.is_valid_int():
@@ -698,7 +712,7 @@ func create_multiplayer_peer_client(host: String, _port: int = 9999) -> Multipla
 
 
 func get_multiplayer_peer() -> MultiplayerPeer:
-	if _steam_available and ClassDB.class_exists("SteamMultiplayerPeer"):
+	if is_steam_transport_available():
 		var steam_peer: MultiplayerPeer = ClassDB.instantiate("SteamMultiplayerPeer")
 		if steam_peer:
 			return steam_peer

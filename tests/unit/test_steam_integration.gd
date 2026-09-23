@@ -48,6 +48,8 @@ func test_steam_manager_has_required_methods() -> void:
 		"get_auth_ticket",
 		"begin_auth_session",
 		"end_auth_session",
+		"get_transport_capabilities",
+		"is_steam_transport_available",
 	]
 
 	for method_name: String in required_methods:
@@ -93,12 +95,38 @@ func test_get_multiplayer_peer_returns_peer() -> void:
 
 	if not steam:
 		return
+	var peer: Variant = steam.get_multiplayer_peer()
 
-	# Should return ENetMultiplayerPeer when Steam is unavailable
-	var _peer: Variant = steam.get_multiplayer_peer()
+	assert_true(peer != null, "get_multiplayer_peer() should return a peer")
+	if not steam.is_steam_transport_available():
+		assert_true(
+			peer is ENetMultiplayerPeer,
+			"Unavailable Steam transport must return an ENet fallback peer"
+		)
 
-	# It's okay if this returns null (no Steam) - we just verify it doesn't crash
-	assert_true(true, "get_multiplayer_peer() should not crash")
+
+func test_transport_capabilities_are_explicit() -> void:
+	var steam := _get_steam_manager()
+	assert_not_null(steam, "SteamManager should be available")
+	if not steam:
+		return
+
+	var capabilities: Dictionary = steam.get_transport_capabilities()
+	for key: String in [
+		"steam_service",
+		"steam_peer_class",
+		"steam_transport",
+		"enet_transport",
+		"reason",
+	]:
+		assert_true(capabilities.has(key), "Transport capabilities should expose %s" % key)
+	assert_true(capabilities.enet_transport, "ENet must remain available as fallback")
+	assert_ne(str(capabilities.reason), "", "Transport capability reason should be explicit")
+	assert_eq(
+		capabilities.steam_transport,
+		steam.is_steam_transport_available(),
+		"Steam transport status must match the explicit capability contract"
+	)
 
 
 func test_steam_available_check() -> void:
