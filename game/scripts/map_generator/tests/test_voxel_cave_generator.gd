@@ -99,21 +99,24 @@ func test_classdb_detection() -> void:
 	var has_voxel_terrain := ClassDB.class_exists("VoxelTerrain")
 
 	gut.p("ClassDB.class_exists('VoxelTerrain'): %s" % has_voxel_terrain)
-
-	# Should be consistent with is_voxel_tools_available
 	var is_available := VoxelCaveGenerator.is_voxel_tools_available()
 
-	# If ClassDB finds it, is_available should be true
-	if has_voxel_terrain:
-		assert_true(is_available, "If ClassDB finds VoxelTerrain, should be available")
+	assert_eq(
+		is_available,
+		has_voxel_terrain,
+		"Voxel availability must match the instantiable native class"
+	)
 
 
 ## Test: ResourceLoader detection method
 func test_resource_loader_detection() -> void:
-	# Test if ResourceLoader can find voxel addon files
+	# A script file alone must not claim the native terrain runtime.
 	var has_voxel_script := ResourceLoader.exists("res://addons/voxel/voxel_terrain.gd")
+	var has_voxel_class := ClassDB.class_exists("VoxelTerrain")
 
-	gut.p("ResourceLoader.exists('res://addons/voxel/voxel_terrain.gd'): %s" % has_voxel_script)
-
-	# This is a fallback method, so it's okay if it returns false
-	# Just log the result for information
+	gut.p("ResourceLoader voxel script present: %s" % has_voxel_script)
+	assert_eq(
+		VoxelCaveGenerator.is_voxel_tools_available(),
+		has_voxel_class,
+		"Availability must follow the instantiable native class"
+	)

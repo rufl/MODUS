@@ -1,6 +1,8 @@
 class_name PlayerHUDBridge
 extends GameComponent
 
+const InteractionPromptScript := preload("res://game/ui/hud/interaction_prompt.gd")
+
 var _player: CharacterBody3D
 var _camera: Camera3D
 var _interaction_component: Node
@@ -9,7 +11,8 @@ var _hud_layer: CanvasLayer
 var _damage_indicator: Control
 var _flash_rect: ColorRect
 var _screen_effects_rect: ColorRect
-var _tooltip_label: Label
+var _interaction_prompt: InteractionPrompt
+var _tooltip_label: Control
 var _blood_overlay: Control
 var _target_info: Control
 var _current_target_node: Node = null
@@ -121,25 +124,10 @@ func setup_extended_hud() -> void:
 
 
 func _create_interaction_tooltip() -> void:
-	_tooltip_label = Label.new()
-	_tooltip_label.name = "InteractionTooltip"
-	_tooltip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_tooltip_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_tooltip_label.add_theme_font_size_override("font_size", 18)
-	_tooltip_label.add_theme_color_override("font_color", Color.WHITE)
-	_tooltip_label.add_theme_color_override("font_shadow_color", Color.BLACK)
-	_tooltip_label.add_theme_constant_override("shadow_offset_x", 2)
-	_tooltip_label.add_theme_constant_override("shadow_offset_y", 2)
-
-	# Position at bottom center of screen
-	_tooltip_label.anchor_left = 0.5
-	_tooltip_label.anchor_right = 0.5
-	_tooltip_label.anchor_top = 0.7
-	_tooltip_label.anchor_bottom = 0.7
-	_tooltip_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_tooltip_label.visible = false
-
-	_hud_layer.add_child(_tooltip_label)
+	_interaction_prompt = InteractionPromptScript.new()
+	_interaction_prompt.name = "InteractionPrompt"
+	_hud_layer.add_child(_interaction_prompt)
+	_tooltip_label = _interaction_prompt
 
 
 # === LOGIC ===
@@ -175,15 +163,13 @@ func update_interaction_tooltip() -> void:
 			elif "prompt_text" in interactable:
 				prompt = str(interactable.prompt_text)
 			if not prompt.is_empty():
-				_tooltip_label.text = "[E] " + prompt
-				_tooltip_label.visible = true
+				_interaction_prompt.show_prompt(prompt)
 				return
 		if collider is RigidBody3D:
-			_tooltip_label.text = "[E] Pick Up"
-			_tooltip_label.visible = true
+			_interaction_prompt.show_prompt("Pick Up")
 			return
 
-	_tooltip_label.visible = false
+	_interaction_prompt.hide_prompt()
 
 
 func _find_interactable(collider: Node) -> Node:

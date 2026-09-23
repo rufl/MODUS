@@ -9,17 +9,9 @@ const Cell = preload("res://game/scripts/map_generator/cell.gd")
 
 
 ## Check if Voxel Tools addon is available
-## Returns: true if the addon is installed and accessible
+## Returns true only when the native terrain API is instantiable.
 static func is_voxel_tools_available() -> bool:
-	# Check for VoxelTerrain class (core class from Voxel Tools)
-	if ClassDB.class_exists("VoxelTerrain"):
-		return true
-
-	# Fallback: Check for addon script files
-	if ResourceLoader.exists("res://addons/voxel/voxel_terrain.gd"):
-		return true
-
-	return false
+	return ClassDB.class_exists("VoxelTerrain")
 
 
 ## Generate voxel-based cave terrain

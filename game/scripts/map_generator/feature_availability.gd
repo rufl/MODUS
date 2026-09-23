@@ -24,19 +24,10 @@ func initialize() -> void:
 	_log_feature_availability()
 
 
-## Detect Voxel Tools addon availability
 func _detect_voxel_tools() -> void:
-	# Check for VoxelTerrain class (core class from Voxel Tools)
-	if ClassDB.class_exists("VoxelTerrain"):
-		voxel_tools_available = true
-		return
-
-	# Fallback: Check for addon script files
-	if ResourceLoader.exists("res://addons/voxel/voxel_terrain.gd"):
-		voxel_tools_available = true
-		return
-
-	voxel_tools_available = false
+	# A script file alone cannot provide the native VoxelTerrain API. Only
+	# advertise voxel support when the runtime can instantiate the class.
+	voxel_tools_available = ClassDB.class_exists("VoxelTerrain")
 
 
 ## Log feature availability status

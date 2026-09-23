@@ -19,7 +19,7 @@ extends RefCounted
 ## @param context: The current generation context containing grid, config, etc.
 ## @return: true if the rule can be applied, false otherwise
 func can_apply(_context: GenerationContext) -> bool:
-	push_error("RuleBase.can_apply() must be overridden by subclass")
+	# The base contract is deliberately inert; concrete rules opt in.
 	return false
 
 
@@ -32,7 +32,7 @@ func can_apply(_context: GenerationContext) -> bool:
 ## @param context: The generation context to modify
 ## @return: true if the rule was successfully applied, false otherwise
 func apply(_context: GenerationContext) -> bool:
-	push_error("RuleBase.apply() must be overridden by subclass")
+	# The base contract is deliberately inert; concrete rules opt in.
 	return false
 
 

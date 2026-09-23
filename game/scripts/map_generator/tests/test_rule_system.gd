@@ -88,6 +88,7 @@ func test_rule_priority_ordering() -> void:
 	loader.load_rules()
 
 	var grid_layout_rules := loader.get_rules_for_phase("grid_layout")
+	assert_gt(grid_layout_rules.size(), 0, "The loaded phase must contain a rule")
 
 	# Rules should be sorted by priority (highest first)
 	for i in range(grid_layout_rules.size() - 1):

@@ -1,6 +1,7 @@
 extends ModusGutTestBase
 
 const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
+const ModuleAssemblyScript := preload("res://shared/editor_core/core/module_assembly.gd")
 const ActorScript := preload("res://shared/editor_core/actors/actor_base.gd")
 const KeyPickupActorScript := preload("res://shared/editor_core/actors/key_pickup_actor.gd")
 const DoorActorScript := preload("res://shared/editor_core/actors/door_actor.gd")
@@ -347,3 +348,48 @@ func test_generated_progression_manifest_survives_runtime_roundtrip() -> void:
 	assert_true(_mission.restore_runtime_state(checkpoint, document))
 	var expected_roundtrip: Dictionary = JSON.parse_string(JSON.stringify(manifest))
 	assert_eq(_mission.active_mission_data.progression_manifest, expected_roundtrip)
+
+
+func test_breakwater_station_is_an_authored_multi_room_cycle() -> void:
+	var packed := load("res://game/levels/breakwater_mission.tscn") as PackedScene
+	assert_not_null(packed, "The authored Breakwater mission must remain loadable")
+	if packed == null:
+		return
+	var root := packed.instantiate() as Node3D
+	add_child_autofree(root)
+	var instances := ModuleAssemblyScript.get_instances(root)
+	assert_eq(instances.size(), 11, "Breakwater must retain its authored room count")
+	assert_eq(root.module_connections.size(), 12, "Breakwater must retain its authored route edges")
+	if instances.is_empty():
+		return
+
+	var ids: Dictionary = {}
+	for instance in instances:
+		ids[instance.instance_id] = true
+	var adjacency: Dictionary = {}
+	for instance_id: String in ids:
+		adjacency[instance_id] = []
+	for connection: Dictionary in root.module_connections:
+		var from_id := str(connection.get("from_instance", ""))
+		var to_id := str(connection.get("to_instance", ""))
+		assert_true(ids.has(from_id), "Every authored edge source must name a room")
+		assert_true(ids.has(to_id), "Every authored edge target must name a room")
+		if ids.has(from_id) and ids.has(to_id):
+			adjacency[from_id].append(to_id)
+
+	var reachable: Dictionary = {}
+	var pending: Array[String] = ["dock"]
+	while not pending.is_empty():
+		var current: String = pending.pop_front()
+		if reachable.has(current):
+			continue
+		reachable[current] = true
+		for next_id: String in adjacency.get(current, []):
+			if not reachable.has(next_id):
+				pending.append(next_id)
+	assert_eq(reachable.size(), instances.size(), "The authored route must reach every room")
+	assert_gte(
+		root.module_connections.size(),
+		instances.size(),
+		"A connected 11-room route needs a loop edge"
+	)
