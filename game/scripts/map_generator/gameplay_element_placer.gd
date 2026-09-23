@@ -215,18 +215,34 @@ func _find_monster_spawn_position(
 		if _has_line_of_sight(cell, player_start, context.grid):
 			continue  # Skip cells with direct line-of-sight
 
+		# Keep combat actors and pickups from occupying the same grid cell.
+		if _is_spawn_position_occupied(cell, context):
+			continue
+
 		# Check if cell is walkable (will have navigation mesh)
 		if not _is_walkable_cell(cell, context.grid):
 			continue
 
 		return cell
 
-	# If no ideal position found, return any walkable cell
+	# If no ideal position found, return any unoccupied walkable cell.
 	for cell in room.cells:
-		if _is_walkable_cell(cell, context.grid):
+		if not _is_spawn_position_occupied(cell, context) and _is_walkable_cell(cell, context.grid):
 			return cell
 
 	return Vector2i(-1, -1)
+
+
+func _is_spawn_position_occupied(position: Vector2i, context: GenerationContext) -> bool:
+	for spawn: Dictionary in context.monster_spawns:
+		var spawn_position: Variant = spawn.get("position")
+		if spawn_position is Vector2i and spawn_position == position:
+			return true
+	for spawn: Dictionary in context.item_spawns:
+		var spawn_position: Variant = spawn.get("position")
+		if spawn_position is Vector2i and spawn_position == position:
+			return true
+	return false
 
 
 ## Check if there's line-of-sight between two positions
@@ -575,16 +591,16 @@ func _find_item_spawn_position(room: Room, context: GenerationContext) -> Vector
 
 	for attempt in range(max_attempts):
 		var cell: Vector2i = room.cells[context.rng.randi() % room.cells.size()]
-		if _is_walkable_cell(cell, context.grid):
+		if not _is_spawn_position_occupied(cell, context) and _is_walkable_cell(cell, context.grid):
 			return cell
 
 	for cell in room.cells:
-		if _is_walkable_cell(cell, context.grid):
+		if not _is_spawn_position_occupied(cell, context) and _is_walkable_cell(cell, context.grid):
 			return cell
 
 	var fallback_room := _build_fallback_room(context, _find_player_start_position(context))
 	for cell in fallback_room.cells:
-		if _is_walkable_cell(cell, context.grid):
+		if not _is_spawn_position_occupied(cell, context) and _is_walkable_cell(cell, context.grid):
 			return cell
 	return Vector2i(-1, -1)
 
@@ -873,12 +889,46 @@ func build_encounter_manifest(context: GenerationContext) -> Dictionary:
 	if counts["health"] < expected["health"]:
 		errors.append("combat_requires_health")
 
+	var progression_bands := {
+		"early": {"monsters": 0, "items": 0},
+		"mid": {"monsters": 0, "items": 0},
+		"late": {"monsters": 0, "items": 0}
+	}
+	var spawn_positions := {}
+	var spawn_collisions := 0
+	for record: Dictionary in context.monster_spawns + context.item_spawns:
+		var band := _encounter_progression_band(float(record.get("progression", 0.0)))
+		var category := (
+			"monsters" if str(record.get("type", "")) in ["monster", "boss"] else "items"
+		)
+		progression_bands[band][category] += 1
+		if record.has("position"):
+			var position_key := str(record["position"])
+			if spawn_positions.has(position_key):
+				spawn_collisions += 1
+			else:
+				spawn_positions[position_key] = true
+
 	return {
 		"schema_version": 1,
-		"is_valid": errors.is_empty(),
+		"is_valid": errors.is_empty() and spawn_collisions == 0,
 		"errors": errors,
 		"counts": counts,
 		"expected": expected,
 		"requirements": requirements,
-		"room_distribution": room_distribution
+		"room_distribution": room_distribution,
+		"pacing":
+		{
+			"progression_bands": progression_bands,
+			"spawn_cells": spawn_positions.size(),
+			"spawn_collisions": spawn_collisions
+		}
 	}
+
+
+func _encounter_progression_band(progression: float) -> String:
+	if progression < 0.34:
+		return "early"
+	if progression < 0.67:
+		return "mid"
+	return "late"

@@ -286,6 +286,23 @@ func test_item_quality_scales_with_progression() -> void:
 	assert_true(has_low_quality or has_high_quality, "Should have items with varying quality")
 
 
+## Test: Encounter actors and resources never share a spawn cell
+func test_encounter_spawns_do_not_overlap() -> void:
+	placer.place_monster_spawns(context)
+	placer.place_weapons_and_ammo(context)
+	placer.place_health_pickups(context)
+
+	var occupied: Array[Vector2i] = []
+	for spawn: Dictionary in context.monster_spawns + context.item_spawns:
+		var position: Vector2i = spawn.get("position", Vector2i(-1, -1))
+		assert_false(occupied.has(position), "Spawn cell must be unique: %s" % position)
+		occupied.append(position)
+
+	var manifest := placer.build_encounter_manifest(context)
+	assert_eq(manifest.get("pacing", {}).get("spawn_collisions", -1), 0)
+	assert_eq(manifest.get("pacing", {}).get("spawn_cells", -1), occupied.size())
+
+
 ## Test: Zero density skips placement
 func test_zero_density_skips_placement() -> void:
 	# Arrange
