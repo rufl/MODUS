@@ -12,7 +12,7 @@ func _run() -> void:
 	root.size = Vector2(1280, 720)
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	get_root().add_child(root)
-	var prompt: InteractionPrompt = PromptScript.new()
+	var prompt = PromptScript.new()
 	root.add_child(prompt)
 	await process_frame
 	prompt.show_prompt("Restore auxiliary power", "E")
