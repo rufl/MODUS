@@ -133,6 +133,32 @@ func test_full_authored_catalog_solves_and_attaches_eleven_room_chain() -> void:
 	assert_eq(root.module_connections.size(), 10)
 
 
+func test_every_authored_catalog_definition_solves_and_attaches_alone() -> void:
+	var catalog := ModuleAssembly.get_catalog()
+	assert_eq(
+		catalog.size(),
+		ModuleAssembly.CATALOG.size(),
+		"Every authored catalog path must load as valid metadata"
+	)
+	for definition: PrefabMetadata in catalog:
+		var solved := solver.solve(_tree_plan([0], []), [definition])
+		assert_true(
+			bool(solved.get("is_valid", false)),
+			"Catalog module must solve alone: %s" % definition.module_id
+		)
+		if not bool(solved.get("is_valid", false)):
+			continue
+		var root := LevelRootScript.new()
+		root.name = "CatalogCoverage_" + definition.module_id
+		add_child_autofree(root)
+		var attached := ModuleAssembly.attach_spatial_plan(root, solved, [definition])
+		assert_true(
+			bool(attached.get("success", false)),
+			"Catalog module must attach alone: %s" % definition.module_id
+		)
+		assert_eq(ModuleAssembly.get_instances(root).size(), 1)
+
+
 func _ring_module() -> PrefabMetadata:
 	var metadata := PrefabMetadata.new()
 	metadata.module_id = "ring"
