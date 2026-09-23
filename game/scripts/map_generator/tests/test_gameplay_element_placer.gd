@@ -194,6 +194,48 @@ func test_ammo_proportional_to_monsters() -> void:
 	)
 
 
+func test_encounter_manifest_reports_counts_and_room_distribution() -> void:
+	context.monster_spawns = [
+		{"id": "monster_0", "type": "monster", "room_id": 1},
+		{"id": "boss_0", "type": "boss", "room_id": 2}
+	]
+	context.item_spawns = [
+		{"id": "weapon_0", "type": "weapon", "room_id": 1},
+		{"id": "ammo_0", "type": "ammo", "room_id": 1},
+		{"id": "health_0", "type": "health", "room_id": 2}
+	]
+
+	var manifest := placer.build_encounter_manifest(context)
+
+	assert_true(manifest.get("is_valid", false))
+	assert_eq(
+		manifest.get("counts", {}),
+		{
+			"monsters": 2,
+			"bosses": 1,
+			"weapons": 1,
+			"ammo": 1,
+			"health": 1,
+			"armor": 0,
+			"powerups": 0,
+			"other_items": 0
+		}
+	)
+	assert_eq(manifest.get("room_distribution", {}).get("1", {}), {"monsters": 1, "items": 2})
+	assert_eq(manifest.get("room_distribution", {}).get("2", {}), {"monsters": 1, "items": 1})
+
+
+func test_encounter_manifest_rejects_combat_without_resources() -> void:
+	context.monster_spawns = [{"id": "monster_0", "type": "monster", "room_id": 1}]
+	context.item_spawns.clear()
+
+	var manifest := placer.build_encounter_manifest(context)
+
+	assert_false(manifest.get("is_valid", true))
+	assert_true(manifest.get("errors", []).has("combat_requires_weapon"))
+	assert_true(manifest.get("errors", []).has("combat_requires_ammo"))
+
+
 ## Test: Health pickups placed in high-difficulty areas
 func test_health_pickups_in_high_difficulty_areas() -> void:
 	# Act

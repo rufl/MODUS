@@ -759,3 +759,68 @@ func _balance_health_distribution(context: GenerationContext, _player_start: Vec
 	# Remove clustered pickups
 	for pickup in to_remove:
 		context.item_spawns.erase(pickup)
+
+
+## Build the bounded encounter/resource contract retained with generated maps.
+## The contract is intentionally diagnostic: only impossible combat states fail
+## validation, while optional resources remain visible for pacing review.
+func build_encounter_manifest(context: GenerationContext) -> Dictionary:
+	var counts := {
+		"monsters": 0,
+		"bosses": 0,
+		"weapons": 0,
+		"ammo": 0,
+		"health": 0,
+		"armor": 0,
+		"powerups": 0,
+		"other_items": 0
+	}
+	var room_distribution := {}
+	for record: Dictionary in context.monster_spawns:
+		counts["monsters"] += 1
+		if str(record.get("type", "")) == "boss":
+			counts["bosses"] += 1
+		var room_key := str(record.get("room_id", "unassigned"))
+		if not room_distribution.has(room_key):
+			room_distribution[room_key] = {"monsters": 0, "items": 0}
+		room_distribution[room_key]["monsters"] += 1
+	for record: Dictionary in context.item_spawns:
+		var item_type := str(record.get("type", ""))
+		match item_type:
+			"weapon":
+				counts["weapons"] += 1
+			"ammo":
+				counts["ammo"] += 1
+			"health":
+				counts["health"] += 1
+			"armor":
+				counts["armor"] += 1
+			"powerup", "high_value":
+				counts["powerups"] += 1
+			_:
+				counts["other_items"] += 1
+		var room_key := str(record.get("room_id", "unassigned"))
+		if not room_distribution.has(room_key):
+			room_distribution[room_key] = {"monsters": 0, "items": 0}
+		room_distribution[room_key]["items"] += 1
+
+	var combat_enabled: bool = counts["monsters"] > 0
+	var resources_enabled: bool = context.config != null and context.config.item_density > 0.0
+	var requirements := {
+		"weapon_before_combat": combat_enabled and resources_enabled,
+		"ammo_for_combat": combat_enabled and resources_enabled
+	}
+	var errors: Array[String] = []
+	if requirements["weapon_before_combat"] and counts["weapons"] <= 0:
+		errors.append("combat_requires_weapon")
+	if requirements["ammo_for_combat"] and counts["ammo"] <= 0:
+		errors.append("combat_requires_ammo")
+
+	return {
+		"schema_version": 1,
+		"is_valid": errors.is_empty(),
+		"errors": errors,
+		"counts": counts,
+		"requirements": requirements,
+		"room_distribution": room_distribution
+	}

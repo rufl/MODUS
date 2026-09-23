@@ -1010,6 +1010,9 @@ func _execute_gameplay_placement_phase() -> bool:
 	gameplay_element_placer.place_boss_monsters(generation_context)
 	gameplay_element_placer.place_weapons_and_ammo(generation_context)
 	gameplay_element_placer.place_health_pickups(generation_context)
+	generation_context.metadata["encounter_manifest"] = (
+		gameplay_element_placer.build_encounter_manifest(generation_context)
+	)
 
 	return true
 
@@ -1058,6 +1061,15 @@ func _execute_validation_phase() -> bool:
 				)
 			)
 			return false
+	var encounter_manifest: Variant = generation_context.metadata.get("encounter_manifest")
+	if encounter_manifest is Dictionary and not bool(encounter_manifest.get("is_valid", false)):
+		push_error(
+			(
+				"Validation failed: encounter composition %s"
+				% str(encounter_manifest.get("errors", []))
+			)
+		)
+		return false
 
 	var validations: Array[ValidationSystem.ValidationResult] = [
 		validation_system.validate_player_start(generation_context),
@@ -1281,7 +1293,8 @@ func _build_gameplay_metadata() -> Dictionary:
 			"items": [],
 			"keys": [],
 			"locked_doors": [],
-			"secrets": []
+			"secrets": [],
+			"encounter_manifest": {}
 		}
 	var gameplay := {
 		"player_start": generation_context.player_start_position,
@@ -1291,7 +1304,9 @@ func _build_gameplay_metadata() -> Dictionary:
 		"keys": generation_context.key_placements.duplicate(true),
 		"locked_doors": generation_context.metadata.get("locked_doors", []).duplicate(true),
 		"secrets": generation_context.secret_rooms.duplicate(true),
-		"spatial_plan": generation_context.spatial_plan.duplicate(true)
+		"spatial_plan": generation_context.spatial_plan.duplicate(true),
+		"encounter_manifest":
+		generation_context.metadata.get("encounter_manifest", {}).duplicate(true)
 	}
 	var progression: Variant = generation_context.metadata.get("mission_progression")
 	if progression is Dictionary:

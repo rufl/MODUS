@@ -222,6 +222,18 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 	assert_eq(actor_realization.get("extraction_records", -1), 1)
 	assert_eq(actor_realization.get("extraction_actors", -1), 1)
 	assert_true(actor_realization.get("unsupported_item_records", []).is_empty())
+	var encounter_manifest: Dictionary = gameplay.get("encounter_manifest", {})
+	assert_true(
+		encounter_manifest.get("is_valid", false),
+		"Generated composition must retain a valid encounter manifest"
+	)
+	assert_eq(
+		encounter_manifest.get("counts", {}).get("monsters", -1),
+		gameplay.get("monsters", []).size()
+	)
+	assert_eq(encounter_manifest.get("counts", {}).get("weapons", -1), 0)
+	assert_eq(encounter_manifest.get("counts", {}).get("ammo", -1), 0)
+	assert_eq(encounter_manifest.get("room_distribution", {}).is_empty(), true)
 
 	var generated := result["scene"].instantiate() as Node3D
 	assert_not_null(generated, "Generated output must instantiate")
