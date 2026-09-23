@@ -39,6 +39,74 @@ class SteamQueryDouble:
 		return 480
 
 
+class SteamWorkshopDouble:
+	extends RefCounted
+
+	var calls: Array = []
+
+	func getAppID() -> int:
+		return 480
+
+	func downloadItem(file_id: int, high_priority: bool) -> bool:
+		calls.append(["downloadItem", file_id, high_priority])
+		return true
+
+	func startItemUpdate(_app_id: int, file_id: int) -> int:
+		calls.append(["startItemUpdate", file_id])
+		return 7
+
+	func setItemTitle(handle: int, title: String) -> void:
+		calls.append(["setItemTitle", handle, title])
+
+	func setItemDescription(handle: int, description: String) -> void:
+		calls.append(["setItemDescription", handle, description])
+
+	func setItemVisibility(handle: int, visibility: int) -> void:
+		calls.append(["setItemVisibility", handle, visibility])
+
+	func setItemTags(handle: int, tags: Array) -> void:
+		calls.append(["setItemTags", handle, tags])
+
+	func setItemContent(handle: int, path: String) -> void:
+		calls.append(["setItemContent", handle, path])
+
+	func submitItemUpdate(handle: int, change_note: String) -> bool:
+		calls.append(["submitItemUpdate", handle, change_note])
+		return true
+
+
+func test_steam_workshop_aliases_and_published_id_persist() -> void:
+	_remove_directory(WORKSHOP_DIR)
+
+	var manager := WorkshopManagerScript.new()
+	add_child_autofree(manager)
+	await get_tree().process_frame
+
+	var steam_double := SteamWorkshopDouble.new()
+	manager.steam = steam_double
+	manager.steam_available = true
+	manager.download_item("42")
+	assert_eq(steam_double.calls[0], ["downloadItem", 42, true])
+	assert_eq(manager.get_download_state("42"), manager.DOWNLOAD_STATE_DOWNLOADING)
+
+	manager.set_meta(
+		"pending_upload",
+		{"local_item_id": "local_fixture", "path": "", "title": "Fixture", "tags": []}
+	)
+	manager._on_ugc_item_created(1, 123, false)
+	assert_eq(manager.published_file_ids.get("local_fixture"), "123")
+	assert_true(FileAccess.file_exists(manager.PUBLISHED_FILE_IDS_PATH))
+	assert_true(["startItemUpdate", 123] in steam_double.calls)
+	assert_true(["submitItemUpdate", 7, "Initial upload"] in steam_double.calls)
+
+	var reloaded := WorkshopManagerScript.new()
+	add_child_autofree(reloaded)
+	await get_tree().process_frame
+	assert_eq(reloaded.published_file_ids.get("local_fixture"), "123")
+
+	_remove_directory(WORKSHOP_DIR)
+
+
 const LevelPackagerScript = preload("res://shared/editor_core/data/level_packager.gd")
 const WorkshopManagerScript = preload("res://shared/editor_core/data/workshop_manager.gd")
 

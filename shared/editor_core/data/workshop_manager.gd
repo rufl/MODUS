@@ -26,7 +26,7 @@ const WORKSHOP_CACHE := "user://workshop/"
 const WORKSHOP_DOWNLOADS := "user://workshop/downloads/"
 const WORKSHOP_UPLOADS := "user://workshop/uploads/"
 const DOWNLOAD_STATES_PATH := WORKSHOP_CACHE + "download_states.json"
-
+const PUBLISHED_FILE_IDS_PATH := WORKSHOP_CACHE + "published_file_ids.json"
 const DOWNLOAD_STATE_IDLE := "idle"
 const DOWNLOAD_STATE_DOWNLOADING := "downloading"
 const DOWNLOAD_STATE_INSTALLED := "installed"
@@ -40,6 +40,7 @@ var cached_items: Dictionary = {}  # item_id -> metadata
 var subscribed_items: Array[String] = []
 var download_states: Dictionary = {}  # item_id -> idle/downloading/installed/failed
 var download_paths: Dictionary = {}  # item_id -> authoritative installed path
+var published_file_ids: Dictionary = {}  # local item id -> Steam PublishedFileId
 var _active_browse_query_handle: int = 0
 var _active_browse_query_text: String = ""
 var _steam_ugc_unavailable_reason: String = ""
@@ -87,6 +88,8 @@ func _init_directories() -> void:
 func _init_steam() -> void:
 	# Check for GodotSteam singleton
 	if Engine.has_singleton("Steam"):
+		steam = Engine.get_singleton("Steam")
+		steam_available = steam != null
 		# Connect Steam signals
 		if steam.has_signal("ugc_item_created"):
 			steam.ugc_item_created.connect(_on_ugc_item_created)
@@ -156,6 +159,24 @@ func _steam_constant(name: String, fallback: int) -> int:
 	return fallback
 
 
+func _steam_has_any_method(method_names: Array[String]) -> bool:
+	if not steam:
+		return false
+	for method_name: String in method_names:
+		if steam.has_method(method_name):
+			return true
+	return false
+
+
+func _steam_call_first(method_names: Array[String], args: Array) -> Variant:
+	if not steam:
+		return null
+	for method_name: String in method_names:
+		if steam.has_method(method_name):
+			return steam.callv(method_name, args)
+	return null
+
+
 func _release_active_browse_query() -> void:
 	if _active_browse_query_handle != 0 and steam and steam.has_method("releaseQueryUGCRequest"):
 		steam.call("releaseQueryUGCRequest", _active_browse_query_handle)
@@ -211,30 +232,86 @@ func _steam_upload(
 	visibility: int,
 	local_item_id: String = ""
 ) -> void:
-	# Note: Actual implementation requires GodotSteam
-	# This is the structure for when it's available
+	# Store pending upload data before creating or updating the item so callbacks
+	# can report the local manifest ID and persist the remote PublishedFileId.
+	var pending := {
+		"path": mdsl_path,
+		"title": title,
+		"description": description,
+		"tags": tags,
+		"visibility": visibility,
+		"local_item_id": local_item_id
+	}
+	set_meta("pending_upload", pending)
 
-	# Store pending upload data before creating the item so the callback can
-	# report the original manifest ID even when item creation fails.
-	set_meta(
-		"pending_upload",
-		{
-			"path": mdsl_path,
-			"title": title,
-			"description": description,
-			"tags": tags,
-			"visibility": visibility,
-			"local_item_id": local_item_id
-		}
+	var published_id := str(published_file_ids.get(local_item_id, ""))
+	if (
+		not published_id.is_empty()
+		and _steam_has_any_method(["startItemUpdate", "start_item_update"])
+	):
+		pending["item_id"] = published_id
+		set_meta("pending_upload", pending)
+		_submit_steam_item_update(pending, int(published_id), "Workshop update")
+		return
+
+	if not _steam_has_any_method(["createItem", "create_item"]):
+		remove_meta("pending_upload")
+		if not local_item_id.is_empty():
+			upload_completed.emit(local_item_id, false)
+		return
+
+	# Create workshop item. The rest happens in callbacks.
+	_steam_call_first(["createItem", "create_item"], [_steam_get_app_id(), 0])
+
+
+func _submit_steam_item_update(pending: Dictionary, file_id: int, change_note: String) -> void:
+	var update_handle_variant: Variant = _steam_call_first(
+		["startItemUpdate", "start_item_update"], [_steam_get_app_id(), file_id]
+	)
+	if update_handle_variant == null:
+		_fail_pending_upload()
+		return
+
+	var update_handle := int(update_handle_variant)
+	if update_handle <= 0:
+		_fail_pending_upload()
+		return
+	_steam_call_first(["setItemTitle", "set_item_title"], [update_handle, pending.get("title", "")])
+	_steam_call_first(
+		["setItemDescription", "set_item_description"],
+		[update_handle, pending.get("description", "")]
+	)
+	_steam_call_first(
+		["setItemVisibility", "set_item_visibility"], [update_handle, pending.get("visibility", 0)]
+	)
+	_steam_call_first(["setItemTags", "set_item_tags"], [update_handle, pending.get("tags", [])])
+	_steam_call_first(
+		["setItemContent", "set_item_content"],
+		[update_handle, str(pending.get("path", "")).get_base_dir()]
 	)
 
-	# Get app ID
-	var app_id: int = steam.get_app_id() if steam else 0
+	var thumbnail: Image = null
+	var content_path := str(pending.get("path", ""))
+	if not content_path.is_empty() and FileAccess.file_exists(content_path):
+		thumbnail = LevelPackager.read_thumbnail(content_path)
+	if thumbnail:
+		var preview_path := WORKSHOP_CACHE + "preview_temp.png"
+		thumbnail.save_png(preview_path)
+		_steam_call_first(["setItemPreview", "set_item_preview"], [update_handle, preview_path])
 
-	# Create workshop item
-	steam.create_item(app_id, 0)  # 0 = k_EWorkshopFileTypeCommunity
+	var submit_result: Variant = _steam_call_first(
+		["submitItemUpdate", "submit_item_update"], [update_handle, change_note]
+	)
+	if submit_result is bool and not submit_result:
+		_fail_pending_upload()
 
-	# The rest happens in callbacks
+
+func _fail_pending_upload() -> void:
+	var pending: Dictionary = get_meta("pending_upload", {})
+	remove_meta("pending_upload")
+	var local_item_id := str(pending.get("local_item_id", ""))
+	if not local_item_id.is_empty():
+		upload_completed.emit(local_item_id, false)
 
 
 func _local_upload(
@@ -290,11 +367,11 @@ func download_item(item_id: String) -> void:
 
 func _steam_download(item_id: String) -> void:
 	# Note: Requires GodotSteam.
-	if not steam or not steam.has_method("download_item"):
+	if not _steam_has_any_method(["downloadItem", "download_item"]):
 		_complete_download(item_id, false, "")
 		return
 	var workshop_id: int = int(item_id)
-	var result: Variant = steam.call("download_item", workshop_id, true)
+	var result: Variant = _steam_call_first(["downloadItem", "download_item"], [workshop_id, true])
 	if result is bool and not result:
 		_complete_download(item_id, false, "")
 
@@ -355,8 +432,7 @@ func _steam_get_item_install_path(file_id: int) -> String:
 
 func subscribe(item_id: String) -> void:
 	if steam_available:
-		steam.subscribe_item(int(item_id))
-
+		_steam_call_first(["subscribeItem", "subscribe_item"], [int(item_id)])
 	if item_id not in subscribed_items:
 		subscribed_items.append(item_id)
 		_save_subscriptions()
@@ -367,12 +443,9 @@ func subscribe(item_id: String) -> void:
 	download_item(item_id)
 
 
-## Unsubscribe from a workshop item
-
-
 func unsubscribe(item_id: String) -> void:
-	if steam_available and steam and steam.has_method("unsubscribe_item"):
-		steam.unsubscribe_item(int(item_id))
+	if steam_available:
+		_steam_call_first(["unsubscribeItem", "unsubscribe_item"], [int(item_id)])
 
 	subscribed_items.erase(item_id)
 	_save_subscriptions()
@@ -675,33 +748,17 @@ func _on_ugc_item_created(result: int, file_id: int, needs_accept: bool) -> void
 
 	var local_item_id: String = str(pending.get("local_item_id", ""))
 	if result != 1:  # k_EResultOK
-		remove_meta("pending_upload")
-		if not local_item_id.is_empty():
-			upload_completed.emit(local_item_id, false)
+		_fail_pending_upload()
 		return
 
 	# Persist the Steam PublishedFileId before submitting the item update.
 	pending["item_id"] = str(file_id)
 	set_meta("pending_upload", pending)
+	if not local_item_id.is_empty():
+		published_file_ids[local_item_id] = str(file_id)
+		_save_published_file_ids()
 
-	# Item created, now update it with content
-	var update_handle: int = steam.start_item_update(steam.get_app_id(), file_id)
-	steam.set_item_title(update_handle, pending.get("title", ""))
-	steam.set_item_description(update_handle, pending.get("description", ""))
-	steam.set_item_visibility(update_handle, pending.get("visibility", 0))
-	steam.set_item_tags(update_handle, pending.get("tags", PackedStringArray()))
-	steam.set_item_content(update_handle, str(pending.get("path", "")).get_base_dir())
-
-	# Extract and set preview
-	var thumbnail: Image = LevelPackager.read_thumbnail(str(pending.get("path", "")))
-	if thumbnail:
-		var preview_path: String = WORKSHOP_CACHE + "preview_temp.png"
-		thumbnail.save_png(preview_path)
-		steam.set_item_preview(update_handle, preview_path)
-
-	# Submit update
-	steam.submit_item_update(update_handle, "Initial upload")
-
+	_submit_steam_item_update(pending, file_id, "Initial upload")
 	if needs_accept:
 		_log("[WorkshopManager] Item needs legal agreement acceptance", "Log")
 
@@ -744,6 +801,7 @@ func _load_cached_items() -> void:
 
 	_load_subscriptions()
 	_load_download_states()
+	_load_published_file_ids()
 
 
 func _save_cached_items() -> void:
@@ -751,6 +809,25 @@ func _save_cached_items() -> void:
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file:
 		file.store_string(JSONHelperClass.safe_stringify(cached_items, "\t"))
+		file.close()
+
+
+func _load_published_file_ids() -> void:
+	if not FileAccess.file_exists(PUBLISHED_FILE_IDS_PATH):
+		return
+	var file := FileAccess.open(PUBLISHED_FILE_IDS_PATH, FileAccess.READ)
+	if not file:
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if parsed is Dictionary:
+		published_file_ids = parsed
+
+
+func _save_published_file_ids() -> void:
+	var file := FileAccess.open(PUBLISHED_FILE_IDS_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSONHelperClass.safe_stringify(published_file_ids, "\t"))
 		file.close()
 
 
