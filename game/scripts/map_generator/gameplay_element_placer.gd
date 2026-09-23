@@ -398,8 +398,11 @@ func _place_weapons(context: GenerationContext, player_start: Vector2i) -> void:
 	var early_rooms := _get_early_rooms(context, player_start, 0.2)
 
 	if early_rooms.is_empty():
-		push_warning("No early rooms found for weapon placement")
-		return
+		var fallback_room := _build_fallback_room(context, player_start)
+		if fallback_room.cells.is_empty():
+			push_warning("No early rooms found for weapon placement")
+			return
+		early_rooms.append(fallback_room)
 
 	# Calculate weapon count based on item density
 	var weapon_count := maxi(int(3.0 * context.config.item_density), 1)
@@ -461,8 +464,11 @@ func _place_ammo(context: GenerationContext, player_start: Vector2i) -> void:
 	var eligible_rooms := _get_non_boss_rooms(context)
 
 	if eligible_rooms.is_empty():
-		push_warning("No eligible rooms for ammo placement")
-		return
+		var fallback_room := _build_fallback_room(context, player_start)
+		if fallback_room.cells.is_empty():
+			push_warning("No eligible rooms for ammo placement")
+			return
+		eligible_rooms.append(fallback_room)
 
 	# Place ammo across rooms
 	for i in range(ammo_count):
@@ -539,7 +545,21 @@ func _get_non_boss_rooms(context: GenerationContext) -> Array[Room]:
 		if room.type != Room.RoomType.BOSS_ARENA:
 			rooms.append(room)
 
+	if rooms.is_empty():
+		var fallback_room := _build_fallback_room(context, _find_player_start_position(context))
+		if not fallback_room.cells.is_empty():
+			rooms.append(fallback_room)
 	return rooms
+
+
+func _build_fallback_room(context: GenerationContext, center: Vector2i) -> Room:
+	var fallback := Room.new(-1, center, Room.RoomType.MEDIUM)
+	for y in range(context.grid.size()):
+		for x in range(context.grid[y].size()):
+			var cell := Vector2i(x, y)
+			if _is_walkable_cell(cell, context.grid):
+				fallback.cells.append(cell)
+	return fallback
 
 
 ## Find suitable item spawn position in room
@@ -547,21 +567,25 @@ func _get_non_boss_rooms(context: GenerationContext) -> Array[Room]:
 ## @param context: Generation context
 ## @return: Spawn position or Vector2i(-1, -1) if not found
 func _find_item_spawn_position(room: Room, context: GenerationContext) -> Vector2i:
+	if room == null:
+		room = _build_fallback_room(context, _find_player_start_position(context))
+	if room == null or room.cells.is_empty():
+		return Vector2i(-1, -1)
 	var max_attempts := 20
 
 	for attempt in range(max_attempts):
-		# Select random cell from room
 		var cell: Vector2i = room.cells[context.rng.randi() % room.cells.size()]
-
-		# Check if cell is walkable
 		if _is_walkable_cell(cell, context.grid):
 			return cell
 
-	# Fallback to first walkable cell
 	for cell in room.cells:
 		if _is_walkable_cell(cell, context.grid):
 			return cell
 
+	var fallback_room := _build_fallback_room(context, _find_player_start_position(context))
+	for cell in fallback_room.cells:
+		if _is_walkable_cell(cell, context.grid):
+			return cell
 	return Vector2i(-1, -1)
 
 
@@ -597,8 +621,11 @@ func place_health_pickups(context: GenerationContext) -> void:
 		high_difficulty_rooms = _get_non_boss_rooms(context)
 
 	if high_difficulty_rooms.is_empty():
-		push_warning("No eligible rooms for health pickup placement")
-		return
+		var fallback_room := _build_fallback_room(context, player_start)
+		if fallback_room.cells.is_empty():
+			push_warning("No eligible rooms for health pickup placement")
+			return
+		high_difficulty_rooms.append(fallback_room)
 
 	# Place health pickups
 	var _pickups_placed := 0
@@ -735,7 +762,17 @@ func _balance_health_distribution(context: GenerationContext, _player_start: Vec
 	if health_pickups.size() < 2:
 		return  # Nothing to balance
 
-	# Check for clusters (health pickups too close together)
+	# Preserve the proportional resource floor while removing clustered pickups.
+	var minimum_health := 0
+	if (
+		context.config
+		and context.config.item_density > 0.0
+		and not context.monster_spawns.is_empty()
+	):
+		minimum_health = maxi(
+			1, int(context.monster_spawns.size() * 0.25 * context.config.item_density)
+		)
+
 	var min_distance := 10  # Minimum distance between health pickups
 	var to_remove: Array[Dictionary] = []
 
@@ -747,6 +784,8 @@ func _balance_health_distribution(context: GenerationContext, _player_start: Vec
 			var distance := _manhattan_distance(pos_i, pos_j)
 
 			if distance < min_distance:
+				if health_pickups.size() - to_remove.size() <= minimum_health:
+					continue
 				# Remove the one with lower progression (keep the one in harder area)
 				var prog_i: float = health_pickups[i].get("progression", 0.0)
 				var prog_j: float = health_pickups[j].get("progression", 0.0)
@@ -806,21 +845,40 @@ func build_encounter_manifest(context: GenerationContext) -> Dictionary:
 
 	var combat_enabled: bool = counts["monsters"] > 0
 	var resources_enabled: bool = context.config != null and context.config.item_density > 0.0
+	var expected := {
+		"weapons": 1 if combat_enabled and resources_enabled else 0,
+		"ammo":
+		(
+			maxi(1, int(counts["monsters"] * 0.5 * context.config.item_density))
+			if combat_enabled and resources_enabled
+			else 0
+		),
+		"health":
+		(
+			maxi(1, int(counts["monsters"] * 0.25 * context.config.item_density))
+			if combat_enabled and resources_enabled
+			else 0
+		)
+	}
 	var requirements := {
-		"weapon_before_combat": combat_enabled and resources_enabled,
-		"ammo_for_combat": combat_enabled and resources_enabled
+		"weapon_before_combat": expected["weapons"] > 0,
+		"ammo_for_combat": expected["ammo"] > 0,
+		"health_for_combat": expected["health"] > 0
 	}
 	var errors: Array[String] = []
-	if requirements["weapon_before_combat"] and counts["weapons"] <= 0:
+	if counts["weapons"] < expected["weapons"]:
 		errors.append("combat_requires_weapon")
-	if requirements["ammo_for_combat"] and counts["ammo"] <= 0:
+	if counts["ammo"] < expected["ammo"]:
 		errors.append("combat_requires_ammo")
+	if counts["health"] < expected["health"]:
+		errors.append("combat_requires_health")
 
 	return {
 		"schema_version": 1,
 		"is_valid": errors.is_empty(),
 		"errors": errors,
 		"counts": counts,
+		"expected": expected,
 		"requirements": requirements,
 		"room_distribution": room_distribution
 	}

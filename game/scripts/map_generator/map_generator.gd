@@ -1065,8 +1065,12 @@ func _execute_validation_phase() -> bool:
 	if encounter_manifest is Dictionary and not bool(encounter_manifest.get("is_valid", false)):
 		push_error(
 			(
-				"Validation failed: encounter composition %s"
-				% str(encounter_manifest.get("errors", []))
+				"Validation failed: encounter composition %s counts=%s expected=%s"
+				% [
+					str(encounter_manifest.get("errors", [])),
+					str(encounter_manifest.get("counts", {})),
+					str(encounter_manifest.get("expected", {}))
+				]
 			)
 		)
 		return false

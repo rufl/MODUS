@@ -233,6 +233,7 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 	)
 	assert_eq(encounter_manifest.get("counts", {}).get("weapons", -1), 0)
 	assert_eq(encounter_manifest.get("counts", {}).get("ammo", -1), 0)
+	assert_eq(encounter_manifest.get("expected", {}), {"weapons": 0, "ammo": 0, "health": 0})
 	assert_eq(encounter_manifest.get("room_distribution", {}).is_empty(), true)
 
 	var generated := result["scene"].instantiate() as Node3D

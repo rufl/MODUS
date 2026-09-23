@@ -221,6 +221,7 @@ func test_encounter_manifest_reports_counts_and_room_distribution() -> void:
 			"other_items": 0
 		}
 	)
+	assert_eq(manifest.get("expected", {}), {"weapons": 1, "ammo": 1, "health": 1})
 	assert_eq(manifest.get("room_distribution", {}).get("1", {}), {"monsters": 1, "items": 2})
 	assert_eq(manifest.get("room_distribution", {}).get("2", {}), {"monsters": 1, "items": 1})
 
@@ -230,8 +231,9 @@ func test_encounter_manifest_rejects_combat_without_resources() -> void:
 	context.item_spawns.clear()
 
 	var manifest := placer.build_encounter_manifest(context)
-
+	assert_eq(manifest.get("expected", {}), {"weapons": 1, "ammo": 1, "health": 1})
 	assert_false(manifest.get("is_valid", true))
+	assert_true(manifest.get("errors", []).has("combat_requires_health"))
 	assert_true(manifest.get("errors", []).has("combat_requires_weapon"))
 	assert_true(manifest.get("errors", []).has("combat_requires_ammo"))
 
