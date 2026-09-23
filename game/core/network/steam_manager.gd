@@ -230,12 +230,27 @@ func _connect_steam_signals() -> void:
 
 
 func _process(_delta: float) -> void:
-	if _steam_available:
-		var steam: Object = Engine.get_singleton("Steam")
-		if _is_server:
-			steam.gameServer_RunCallbacks()
-		else:
-			steam.run_callbacks()
+	pump_callbacks()
+
+
+## Pump Steam callbacks for the active client or dedicated-server profile.
+## Returns false when Steam or the profile's callback API is unavailable.
+func pump_callbacks() -> bool:
+	if not _steam_available:
+		return false
+	var steam: Object = Engine.get_singleton("Steam")
+	if not steam:
+		return false
+
+	var callback_methods: Array[String] = (
+		["gameServerRunCallbacks", "gameServer_RunCallbacks", "game_server_run_callbacks"]
+		if _is_server
+		else ["runCallbacks", "run_callbacks"]
+	)
+	if not _steam_has_any_method(steam, callback_methods):
+		return false
+	_steam_call_first(steam, callback_methods, [])
+	return true
 
 
 # ============================================================================
