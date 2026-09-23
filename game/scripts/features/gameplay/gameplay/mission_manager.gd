@@ -357,6 +357,38 @@ func validate_progression_manifest(manifest: Dictionary) -> Dictionary:
 				"error_message": "Mission progression recovery route repeats or malforms a room."
 			}
 		seen_route[room_id] = true
+	var has_room_ids := manifest.has("room_ids")
+	var known_room_ids: Dictionary = {}
+	if has_room_ids:
+		if not manifest.room_ids is Array or manifest.room_ids.is_empty():
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression field 'room_ids' must be a non-empty array."
+			}
+		for room_id: Variant in manifest.room_ids:
+			if not room_id is int or known_room_ids.has(room_id):
+				return {
+					"is_valid": false,
+					"error_message": "Mission progression contains duplicate or malformed room IDs."
+				}
+			known_room_ids[room_id] = true
+		if (
+			not known_room_ids.has(manifest.start_room_id)
+			or not known_room_ids.has(manifest.goal_room_id)
+		):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression start or goal room is not declared."
+			}
+		for room_id: int in route:
+			if not known_room_ids.has(room_id):
+				return {
+					"is_valid": false,
+					"error_message": "Mission progression route references an undeclared room."
+				}
+	else:
+		for room_id: int in route:
+			known_room_ids[room_id] = true
 	var has_room_edges := manifest.has("room_edges")
 	var room_edges: Dictionary = {}
 	if has_room_edges:
@@ -378,8 +410,8 @@ func validate_progression_manifest(manifest: Dictionary) -> Dictionary:
 			var edge_key := "%d:%d" % [edge.from_room_id, edge.to_room_id]
 			if (
 				room_edges.has(edge_key)
-				or not seen_route.has(edge.from_room_id)
-				or not seen_route.has(edge.to_room_id)
+				or not known_room_ids.has(edge.from_room_id)
+				or not known_room_ids.has(edge.to_room_id)
 			):
 				return {
 					"is_valid": false,

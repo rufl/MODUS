@@ -119,6 +119,48 @@ func test_generated_progression_reaches_extraction_and_completes_mission() -> vo
 	assert_eq(_mission.completed_mission_id, "generated_dependency_regression")
 
 
+func test_generated_manifest_accepts_branch_edges_outside_recovery_route() -> void:
+	var manifest: Dictionary = {
+		"version": 1,
+		"seed_hash": 77,
+		"start_room_id": 0,
+		"goal_room_id": 3,
+		"room_ids": [0, 1, 2, 3],
+		"recovery_route": [0, 1, 3],
+		"room_edges":
+		[
+			{"from_room_id": 0, "to_room_id": 1},
+			{"from_room_id": 1, "to_room_id": 0},
+			{"from_room_id": 0, "to_room_id": 2},
+			{"from_room_id": 2, "to_room_id": 0},
+			{"from_room_id": 1, "to_room_id": 3},
+			{"from_room_id": 3, "to_room_id": 1},
+			{"from_room_id": 2, "to_room_id": 3},
+			{"from_room_id": 3, "to_room_id": 2}
+		],
+		"keys": [{"id": "KeyPickup_0", "color": "RED", "room_id": 1}],
+		"locked_transitions":
+		[
+			{
+				"id": "LockedDoor_0",
+				"color": "RED",
+				"room_id": 3,
+				"key_id": "KeyPickup_0",
+				"from_room_id": 1,
+				"to_room_id": 3
+			}
+		],
+		"objectives":
+		[
+			{"id": "KeyPickup_0", "order": 0, "requires": []},
+			{"id": "LockedDoor_0", "order": 1, "requires": ["KeyPickup_0"]}
+		]
+	}
+	assert_true(_mission.validate_progression_manifest(manifest).is_valid)
+	manifest.room_edges.append({"from_room_id": 0, "to_room_id": 99})
+	assert_false(_mission.validate_progression_manifest(manifest).is_valid)
+
+
 func test_document_without_objectives_preserves_the_normal_mission() -> void:
 	_mission._begin_mission(
 		"ordinary_authored",

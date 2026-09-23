@@ -62,10 +62,13 @@ func build_progression_manifest(
 	for room: Room in progression:
 		room_order.append(room.id)
 
+	var room_ids: Array[int] = []
 	var room_edges: Array[Dictionary] = []
 	for room: Room in context.rooms:
+		room_ids.append(room.id)
 		for connected_id: int in room.connections:
 			room_edges.append({"from_room_id": room.id, "to_room_id": connected_id})
+	room_ids.sort()
 	room_edges.sort_custom(
 		func(a: Dictionary, b: Dictionary) -> bool:
 			if a.from_room_id == b.from_room_id:
@@ -136,6 +139,7 @@ func build_progression_manifest(
 		"seed_hash": context.seed_hash,
 		"start_room_id": room_order[0] if not room_order.is_empty() else -1,
 		"goal_room_id": goal_room_id,
+		"room_ids": room_ids,
 		"objectives": objectives,
 		"keys": manifest_keys,
 		"locked_transitions": manifest_doors,
@@ -153,6 +157,7 @@ func validate_progression_manifest(
 		"seed_hash",
 		"start_room_id",
 		"goal_room_id",
+		"room_ids",
 		"objectives",
 		"keys",
 		"locked_transitions",
@@ -160,7 +165,7 @@ func validate_progression_manifest(
 	]:
 		if not manifest.has(field):
 			return {"is_valid": false, "error_message": "Mission progression missing '%s'" % field}
-	for field: String in ["objectives", "keys", "locked_transitions", "recovery_route"]:
+	for field: String in ["room_ids", "objectives", "keys", "locked_transitions", "recovery_route"]:
 		if not manifest.get(field) is Array:
 			return {
 				"is_valid": false,
@@ -180,6 +185,19 @@ func validate_progression_manifest(
 					"error_message": "Mission progression references an unknown room edge"
 				}
 			actual_edges["%d:%d" % [room.id, connected_id]] = true
+	var declared_room_ids: Dictionary = {}
+	for room_id: Variant in manifest.room_ids:
+		if not room_id is int or declared_room_ids.has(room_id) or not room_ids.has(room_id):
+			return {
+				"is_valid": false,
+				"error_message": "Mission progression contains an invalid room ID"
+			}
+		declared_room_ids[room_id] = true
+	if declared_room_ids.size() != room_ids.size():
+		return {
+			"is_valid": false,
+			"error_message": "Mission progression room IDs do not match the generated graph"
+		}
 	var declared_edges := actual_edges
 	if manifest.has("room_edges"):
 		if not manifest.room_edges is Array:

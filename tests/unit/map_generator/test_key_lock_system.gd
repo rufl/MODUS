@@ -82,6 +82,7 @@ func test_manifest_retains_reachable_mandatory_order_and_unique_records() -> voi
 	assert_eq(manifest.keys.size(), manifest.locked_transitions.size())
 	assert_eq(manifest.keys.size(), 2)
 	assert_eq(manifest.room_edges.size(), 10)
+	assert_eq(manifest.room_ids, [0, 1, 2, 3, 4, 5])
 	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
 
 
