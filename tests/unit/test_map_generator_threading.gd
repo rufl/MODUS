@@ -195,6 +195,10 @@ func test_small_seeded_generation_emits_level_root_and_objective_records() -> vo
 	var gameplay: Dictionary = metadata.get("gameplay", {})
 	assert_eq(metadata.get("seed"), "focused-procedural-session")
 	assert_eq(metadata.get("map_size"), [32, 32])
+	var spatial_plan: Dictionary = metadata.get("spatial_plan", {})
+	assert_true(
+		spatial_plan.has("is_valid"), "Generated metadata must retain spatial solver diagnostics"
+	)
 	assert_has(
 		metadata.get("rule_modules_used", []),
 		"ExampleGridInitRule",

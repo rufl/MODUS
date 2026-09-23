@@ -21,6 +21,8 @@ const FeatureAvailability = preload("res://game/scripts/map_generator/feature_av
 const MapExporter = preload("res://game/scripts/map_generator/map_exporter.gd")
 const BatchGenerator = preload("res://game/scripts/map_generator/batch_generator.gd")
 const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
+const ModuleLayoutSolverScript = preload("res://game/scripts/map_generator/module_layout_solver.gd")
+const ModuleAssemblyScript = preload("res://shared/editor_core/core/module_assembly.gd")
 const LevelSpawnPointScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 const EnemySpawnerActorScript = preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
 const PickupSpawnerActorScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
@@ -996,7 +998,14 @@ func _execute_gameplay_placement_phase() -> bool:
 		var locks: Dictionary = key_lock_system.generate_key_lock_system(generation_context)
 		generation_context.key_placements.assign(locks["keys"])
 		generation_context.metadata["locked_doors"] = locks["locked_doors"]
-
+		var graph_plan: Variant = generation_context.metadata.get("mission_graph", {})
+		if graph_plan is Dictionary and not graph_plan.is_empty():
+			generation_context.spatial_plan = ModuleLayoutSolverScript.new().solve(
+				graph_plan, ModuleAssemblyScript.get_catalog(), 128
+			)
+			generation_context.metadata["spatial_plan"] = generation_context.spatial_plan.duplicate(
+				true
+			)
 	gameplay_element_placer.place_monster_spawns(generation_context)
 	gameplay_element_placer.place_boss_monsters(generation_context)
 	gameplay_element_placer.place_weapons_and_ammo(generation_context)
@@ -1233,6 +1242,8 @@ func _build_metadata(total_time: int) -> Dictionary:
 		"replacement_capabilities": get_runtime_capabilities(),
 		"replacement_catalog": get_replacement_catalog_metadata(),
 		"phase_times": _build_phase_times_metadata(),
+		"spatial_plan":
+		generation_context.spatial_plan.duplicate(true) if generation_context else {},
 		"gameplay": _build_gameplay_metadata()
 	}
 	return metadata
@@ -1279,7 +1290,8 @@ func _build_gameplay_metadata() -> Dictionary:
 		"items": generation_context.item_spawns.duplicate(true),
 		"keys": generation_context.key_placements.duplicate(true),
 		"locked_doors": generation_context.metadata.get("locked_doors", []).duplicate(true),
-		"secrets": generation_context.secret_rooms.duplicate(true)
+		"secrets": generation_context.secret_rooms.duplicate(true),
+		"spatial_plan": generation_context.spatial_plan.duplicate(true)
 	}
 	var progression: Variant = generation_context.metadata.get("mission_progression")
 	if progression is Dictionary:
