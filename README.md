@@ -172,6 +172,16 @@ python3 tools/validate_overzeer_release.py \
   --root build/release --output build/release/overzeer-release.json
 ```
 
+To remove only obsolete package archives while preserving the selected
+version, preview first and then apply:
+
+```bash
+python3 tools/cleanup_overzeer_archives.py \
+  --root build/release --keep-version 0.9.5-beta
+python3 tools/cleanup_overzeer_archives.py \
+  --root build/release --keep-version 0.9.5-beta --apply
+```
+
 ## OVERZEER dogfood deployment and telemetry
 
 MODUS is registered as the `modus` OVERZEER dogfood application. Its package

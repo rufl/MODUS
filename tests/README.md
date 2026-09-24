@@ -44,7 +44,13 @@ GODOT_BIN=/path/to/patched/godot bash tests/runners/test_export_notices.sh
 bash tests/runners/test_release_artifact_validator.sh
 bash tests/runners/test_linux_portable_package.sh
 bash tests/runners/test_release_staging.sh
+# Preview/remove only obsolete OVERZEER package archives
+python3 tools/cleanup_overzeer_archives.py \
+  --root build/release --keep-version 0.9.5-beta
+python3 tools/cleanup_overzeer_archives.py \
+  --root build/release --keep-version 0.9.5-beta --apply
 ```
+
 
 Set `GODOT_BIN=/path/to/godot` when needed. The runners isolate Godot HOME, cache, and configuration directories under `/tmp` unless their `MODUS_GODOT_*` environment variables are overridden.
 
