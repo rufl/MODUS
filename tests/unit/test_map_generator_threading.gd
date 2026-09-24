@@ -6,6 +6,9 @@ const GenerationContextScript: GDScript = preload(
 	"res://game/scripts/map_generator/generation_context.gd"
 )
 const CellScript: GDScript = preload("res://game/scripts/map_generator/cell.gd")
+const GameplayElementPlacerScript: GDScript = preload(
+	"res://game/scripts/map_generator/gameplay_element_placer.gd"
+)
 const SpawnPointScript: GDScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 const EnemySpawnerScript: GDScript = preload(
 	"res://shared/editor_core/actors/enemy_spawner_actor.gd"
@@ -802,6 +805,34 @@ func test_cancelling_prepared_geometry_cannot_abort_replacement_generation() -> 
 	assert_true(state["cancelled"])
 	assert_eq(state["completed"], ["generator-correctness"], "Only the replacement may complete")
 	assert_eq(state["failed"], [], "A cancelled continuation cannot abort the replacement")
+
+
+func test_encounter_manifest_requires_weapon_before_first_combat() -> void:
+	var context: GenerationContext = GenerationContextScript.new()
+	context.config = GenerationConfig.new()
+	context.config.item_density = 1.0
+	context.monster_spawns = [
+		{"id": "monster_0", "type": "monster", "position": Vector2i(4, 0), "progression": 0.4}
+	]
+	context.item_spawns = [
+		{"id": "weapon_0", "type": "weapon", "position": Vector2i(6, 0), "progression": 0.6},
+		{"id": "ammo_0", "type": "ammo", "position": Vector2i(7, 0), "progression": 0.7},
+		{"id": "health_0", "type": "health", "position": Vector2i(8, 0), "progression": 0.8}
+	]
+
+	var placer: GameplayElementPlacer = GameplayElementPlacerScript.new()
+	var manifest: Dictionary = placer.build_encounter_manifest(context)
+	assert_false(manifest["is_valid"])
+	assert_has(manifest["errors"], "weapon_after_combat")
+	assert_false(manifest["pacing"]["weapon_before_combat"])
+	assert_eq(manifest["pacing"]["first_combat_progression"], 0.4)
+	assert_eq(manifest["pacing"]["first_weapon_progression"], 0.6)
+
+	context.item_spawns[0]["progression"] = 0.2
+	manifest = placer.build_encounter_manifest(context)
+	assert_true(manifest["is_valid"], "Early weapon placement must satisfy combat pacing")
+	assert_true(manifest["pacing"]["weapon_before_combat"])
+	assert_eq(manifest["pacing"]["first_weapon_progression"], 0.2)
 
 
 func _generate(map_seed: String, config: GenerationConfig) -> Dictionary:

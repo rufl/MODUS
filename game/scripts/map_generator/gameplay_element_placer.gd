@@ -896,6 +896,41 @@ func build_encounter_manifest(context: GenerationContext) -> Dictionary:
 	}
 	var spawn_positions := {}
 	var spawn_collisions := 0
+	var first_combat_progression := -1.0
+	var first_weapon_progression := -1.0
+	for record: Dictionary in context.monster_spawns + context.item_spawns:
+		var progression := float(record.get("progression", 0.0))
+		var record_type := str(record.get("type", ""))
+		if (
+			record_type in ["monster", "boss"]
+			and (first_combat_progression < 0.0 or progression < first_combat_progression)
+		):
+			first_combat_progression = progression
+		if (
+			record_type == "weapon"
+			and (first_weapon_progression < 0.0 or progression < first_weapon_progression)
+		):
+			first_weapon_progression = progression
+	if (
+		combat_enabled
+		and resources_enabled
+		and expected["weapons"] > 0
+		and (
+			first_weapon_progression < 0.0
+			or first_combat_progression < 0.0
+			or first_weapon_progression > first_combat_progression
+		)
+	):
+		errors.append("weapon_after_combat")
+	var weapon_before_combat := (
+		not combat_enabled
+		or not resources_enabled
+		or (
+			first_weapon_progression >= 0.0
+			and first_combat_progression >= 0.0
+			and first_weapon_progression <= first_combat_progression
+		)
+	)
 	for record: Dictionary in context.monster_spawns + context.item_spawns:
 		var band := _encounter_progression_band(float(record.get("progression", 0.0)))
 		var category := (
@@ -920,6 +955,9 @@ func build_encounter_manifest(context: GenerationContext) -> Dictionary:
 		"pacing":
 		{
 			"progression_bands": progression_bands,
+			"first_combat_progression": first_combat_progression,
+			"first_weapon_progression": first_weapon_progression,
+			"weapon_before_combat": weapon_before_combat,
 			"spawn_cells": spawn_positions.size(),
 			"spawn_collisions": spawn_collisions
 		}

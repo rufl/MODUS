@@ -7,16 +7,16 @@ var _test_path: String = ""
 
 
 func _init() -> void:
-	var args: PackedStringArray = OS.get_cmdline_args()
+	var args: PackedStringArray = OS.get_cmdline_user_args()
 
 	# Find test path argument
 	for i: int in range(args.size()):
-		if args[i] == "--test" and i + 1 < args.size():
+		if args[i] in ["--test-path", "--gut-test"] and i + 1 < args.size():
 			_test_path = args[i + 1]
 			break
 
 	if _test_path.is_empty():
-		print("Usage: godot --headless --script run_single_test.gd -- --test <test_path>")
+		print("Usage: godot --headless --script run_single_test.gd -- " + "--test-path <test_path>")
 		quit(1)
 		return
 
