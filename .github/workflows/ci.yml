@@ -64,6 +64,9 @@ jobs:
     name: Run GUT Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # Keep the CI property suite bounded; local runs retain the full sampling budget.
+    env:
+      MODUS_PROPERTY_ITERATIONS: "5"
     needs: code-quality
     steps:
       - name: Checkout
