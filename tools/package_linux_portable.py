@@ -11,10 +11,10 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import stat
+import subprocess
 import sys
 import tarfile
 import tempfile
-
 REPOSITORY = Path(__file__).resolve().parent.parent
 RECEIPT = ".modus-install-manifest"
 MAX_MANIFEST = 4 * 1024 * 1024
@@ -52,6 +52,59 @@ def version_value(value):
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+\-]{0,127}", value):
         fail("invalid version: use 1-128 ASCII letters, digits, dots, +, - or _")
     return value
+
+def zstd_archive(path):
+    return path.name.endswith((".tar.zst", ".tzst", ".zst"))
+
+
+def require_zstd():
+    if shutil.which("zstd") is None:
+        fail("zstd executable is required for .tar.zst archives")
+
+
+def compress_zstd(source, destination):
+    require_zstd()
+    with destination.open("wb") as output:
+        result = subprocess.run(
+            [
+                "zstd",
+                "--quiet",
+                "--no-progress",
+                "--no-check",
+                "--threads=1",
+                "-19",
+                "--stdout",
+                str(source),
+            ],
+            stdout=output,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    if result.returncode:
+        fail(result.stderr.decode("utf-8", errors="replace").strip() or "zstd failed")
+
+
+def decompress_zstd(source, destination):
+    require_zstd()
+    with destination.open("wb") as output:
+        result = subprocess.run(
+            [
+                "zstd",
+                "--quiet",
+                "--no-progress",
+                "--decompress",
+                "--stdout",
+                str(source),
+            ],
+            stdout=output,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    if result.returncode:
+        fail(
+            result.stderr.decode("utf-8", errors="replace").strip()
+            or "zstd decompression failed"
+        )
 
 
 def relative_path(value):
@@ -265,14 +318,16 @@ def package(args):
         inventory(manifest)
         output.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(
+            dir=output.parent, prefix=".modus-tar-", suffix=".tar", delete=False
+        ) as stream:
+            temporary_tar = Path(stream.name)
+        with tempfile.NamedTemporaryFile(
             dir=output.parent, prefix=".modus-archive-", delete=False
         ) as stream:
             temporary_output = Path(stream.name)
         try:
-            with temporary_output.open("wb") as raw, gzip.GzipFile(
-                filename="", mode="wb", fileobj=raw, mtime=0
-            ) as zipped, tarfile.open(
-                fileobj=zipped, mode="w", format=tarfile.USTAR_FORMAT
+            with temporary_tar.open("wb") as raw, tarfile.open(
+                fileobj=raw, mode="w", format=tarfile.USTAR_FORMAT
             ) as archive:
                 root = f"modus-linux-{version}"
                 add_member(
@@ -291,8 +346,18 @@ def package(args):
                             entry["bytes"],
                             entry["mode"],
                         )
+            if zstd_archive(output):
+                compress_zstd(temporary_tar, temporary_output)
+            else:
+                with temporary_tar.open("rb") as raw, temporary_output.open(
+                    "wb"
+                ) as output_stream, gzip.GzipFile(
+                    filename="", mode="wb", fileobj=output_stream, mtime=0
+                ) as zipped:
+                    shutil.copyfileobj(raw, zipped)
             os.replace(temporary_output, output)
         finally:
+            temporary_tar.unlink(missing_ok=True)
             temporary_output.unlink(missing_ok=True)
     print(f"PASS: portable archive {output}")
 
@@ -306,7 +371,16 @@ def add_member(archive, name, stream, size, mode):
 
 def unpack(archive_path, destination):
     regular(archive_path)
-    with tarfile.open(archive_path, mode="r:gz") as archive:
+    if zstd_archive(archive_path):
+        with tempfile.TemporaryDirectory(prefix="modus-unpack-") as temporary:
+            tar_path = Path(temporary) / "archive.tar"
+            decompress_zstd(archive_path, tar_path)
+            return _unpack_tar(tar_path, destination, "r:")
+    return _unpack_tar(archive_path, destination, "r:gz")
+
+
+def _unpack_tar(archive_path, destination, mode):
+    with tarfile.open(archive_path, mode=mode) as archive:
         members = {}
         total = 0
         roots = set()

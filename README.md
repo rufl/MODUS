@@ -102,13 +102,13 @@ Python 3.10+ and Bash are required for the release helpers. To package an existi
 
 ```bash
 bash tools/package_linux_portable.sh package \
-  --artifact-dir standalone/client --version 0.9.5-beta --output /tmp/modus-linux.tar.gz
-bash tools/package_linux_portable.sh install --archive /tmp/modus-linux.tar.gz --prefix "$HOME/.local/opt"
+  --artifact-dir standalone/client --version 0.9.5-beta --output /tmp/modus-linux.tar.zst
+bash tools/package_linux_portable.sh install --archive /tmp/modus-linux.tar.zst --prefix "$HOME/.local/opt"
 bash tools/package_linux_portable.sh verify --prefix "$HOME/.local/opt"
 bash tools/package_linux_portable.sh uninstall --prefix "$HOME/.local/opt"
 ```
 
-Install again to upgrade. The helper checks the complete archive before changing an installation, rolls back failed replacements, and preserves unowned files and XDG saves/configuration. Changed owned payloads, unsafe archives and legacy installs without the checked inventory are rejected, not deleted or silently migrated. Back up and relocate a legacy install before choosing a clean prefix.
+`.tar.zst` is the preferred transfer format for deployment; `.tar.gz` remains supported. The helper requires the `zstd` executable for `.tar.zst` archives. Install again to upgrade. The helper checks the complete archive before changing an installation, rolls back failed replacements, and preserves unowned files and XDG saves/configuration. Changed owned payloads, unsafe archives and legacy installs without the checked inventory are rejected, not deleted or silently migrated. Back up and relocate a legacy install before choosing a clean prefix.
 
 For a client/server/editor candidate from one build revision, generate a portable manifest and stage it:
 
@@ -124,7 +124,16 @@ python3 tools/validate_release_artifacts.py \
   --verify build/release/MODUS-0.9.5-beta-linux-x86_64/manifest.json
 ```
 
-Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. CI assembles this Linux candidate on `develop`; run the focused release-contract checks locally before labeling a candidate. Public publication, signing, a native-dependency lock and target acceptance remain open.
+Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. CI and local jobs assemble this Linux candidate; run the focused release-contract checks locally before labeling a candidate. Public publication, signing, a native-dependency lock and target acceptance remain open.
+
+The current local dogfood batch also produces unsigned transfer archives at
+`build/release/modus-0.9.5-beta-linux-x86_64.tar.zst` and
+`build/release/modus-0.9.5-beta-windows-x86_64.tar.zst`. Each archive uses the
+OVERZEER root naming contract and includes `README`, `LICENSE`, payload hashes,
+the Linux `modus` client/server/editor exports, or the Windows `modus.exe`
+client plus editor export. These are local candidates, not authenticated
+deployments; native Windows execution, signing, receiver authentication and
+target acceptance remain required.
 
 ## OVERZEER dogfood deployment and telemetry
 

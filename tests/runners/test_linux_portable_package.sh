@@ -69,6 +69,15 @@ with tempfile.TemporaryDirectory(prefix="modus portable régression ") as tempor
     identical = work / "identical.tar.gz"
     run("package", "--artifact-dir", artifact, "--output", identical, "--version", "1.2.3-test")
     assert archive.read_bytes() == identical.read_bytes(), "bundle is not reproducible"
+    zstd_archive = work / "first candidate.tar.zst"
+    run("package", "--artifact-dir", artifact, "--output", zstd_archive, "--version", "1.2.3-test")
+    zstd_identical = work / "identical.tar.zst"
+    run("package", "--artifact-dir", artifact, "--output", zstd_identical, "--version", "1.2.3-test")
+    assert zstd_archive.read_bytes() == zstd_identical.read_bytes(), "zstd bundle is not reproducible"
+    zstd_prefix = work / "zstd prefix"
+    run("install", "--archive", zstd_archive, "--prefix", zstd_prefix)
+    run("verify", "--prefix", zstd_prefix)
+    run("uninstall", "--prefix", zstd_prefix)
     run("package", "--artifact-dir", artifact, "--output", work / "invalid.tar.gz", "--version", "../../outside", success=False)
     run("install", "--archive", archive, "--prefix", work / "traversal/../escape", success=False)
     unmanaged = work / "unmanaged"

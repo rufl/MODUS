@@ -50,15 +50,15 @@ From the repository root, after building `standalone/client/modus.x86_64` and it
 ```bash
 tools/package_linux_portable.sh package \
   --artifact-dir standalone/client \
-  --output logs/modus-linux-0.9.5-beta.tar.gz
+  --output logs/modus-linux-0.9.5-beta.tar.zst
 tools/package_linux_portable.sh install \
-  --archive logs/modus-linux-0.9.5-beta.tar.gz \
+  --archive logs/modus-linux-0.9.5-beta.tar.zst \
   --prefix "$HOME/.local/opt/modus"
 tools/package_linux_portable.sh verify --prefix "$HOME/.local/opt/modus"
 tools/package_linux_portable.sh uninstall --prefix "$HOME/.local/opt/modus"
 ```
 
-The installer owns only `$prefix/modus` and its manifest. It preserves user save/config data in the XDG data and config directories. This is a local unsigned portable package, not installer, signing, target-Windows, Steam, manual-gameplay, or release-version proof.
+`.tar.zst` is preferred for transfer and requires the `zstd` executable; `.tar.gz` remains supported. The installer owns only `$prefix/modus` and its manifest. It preserves user save/config data in the XDG data and config directories. This is a local unsigned portable package, not installer, signing, target-Windows, Steam, manual-gameplay, or release-version proof.
 
 ## Verify the checkout
 
