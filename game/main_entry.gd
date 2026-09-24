@@ -48,6 +48,7 @@ func _ready() -> void:
 	else:
 		_launch_game()
 
+
 func _run_package_smoke() -> void:
 	var required_resources := PackedStringArray(
 		[
