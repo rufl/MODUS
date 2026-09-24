@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import os
 import re
@@ -13,6 +14,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import zipfile
 from pathlib import Path, PurePosixPath
 
 TARGET = re.compile(r"[a-z0-9][a-z0-9._-]*")
@@ -86,6 +88,49 @@ def compress_zstd(source: Path, destination_path: Path) -> None:
         fail(message or "zstd compression failed")
 
 
+def compress_gzip(source: Path, destination_path: Path) -> None:
+    with source.open("rb") as input_stream, destination_path.open("wb") as raw_output:
+        with gzip.GzipFile(fileobj=raw_output, mode="wb", filename="", mtime=0) as output:
+            shutil.copyfileobj(input_stream, output, length=1024 * 1024)
+
+
+def write_zip(
+    stage: Path,
+    root: str,
+    entries: list[tuple[str, int]],
+    output: Path,
+) -> None:
+    with zipfile.ZipFile(
+        output,
+        mode="w",
+        compression=zipfile.ZIP_DEFLATED,
+        compresslevel=9,
+    ) as archive:
+        for name, mode in [*entries, ("SHA256SUMS", 0o644)]:
+            info = zipfile.ZipInfo(
+                f"{root}/{name}",
+                date_time=(1980, 1, 1, 0, 0, 0),
+            )
+            info.create_system = 3
+            info.external_attr = (mode & 0xFFFF) << 16
+            info.compress_type = zipfile.ZIP_DEFLATED
+            with archive.open(info, mode="w") as target, (stage / name).open("rb") as source:
+                shutil.copyfileobj(source, target, length=1024 * 1024)
+
+
+def archive_format(output: Path, requested: str) -> str:
+    if requested != "auto":
+        return requested
+    if output.name.endswith(".tar.zst"):
+        return "tar.zst"
+    if output.name.endswith(".tar.gz"):
+        return "tar.gz"
+    if output.suffix == ".zip":
+        return "zip"
+    fail("output must end in .tar.zst, .tar.gz or .zip")
+    raise AssertionError("unreachable")
+
+
 def add_member(archive: tarfile.TarFile, name: str, source: Path, mode: int) -> None:
     member = tarfile.TarInfo(name)
     member.mode = mode
@@ -100,8 +145,14 @@ def package(args: argparse.Namespace) -> None:
     if TARGET.fullmatch(args.target) is None:
         fail("target must contain only lowercase letters, digits, '.', '_' or '-'")
     output = args.output.absolute()
-    if output.suffix != ".zst" or not output.name.endswith(".tar.zst"):
-        fail("output must end in .tar.zst")
+    format_name = archive_format(output, args.format)
+    required_suffix = {
+        "tar.zst": ".tar.zst",
+        "tar.gz": ".tar.gz",
+        "zip": ".zip",
+    }[format_name]
+    if not output.name.endswith(required_suffix):
+        fail(f"output must end in {required_suffix}")
     if output.exists() or output.is_symlink():
         fail(f"refusing to replace existing output: {output}")
 
@@ -140,12 +191,18 @@ def package(args: argparse.Namespace) -> None:
         )
         (stage / "SHA256SUMS").write_text(checksums, encoding="ascii")
 
-        temporary_tar = Path(temporary) / "archive.tar"
-        temporary_output = Path(temporary) / "archive.tar.zst"
-        with tarfile.open(temporary_tar, mode="w", format=tarfile.USTAR_FORMAT) as archive:
-            for name, mode in [*entries, ("SHA256SUMS", 0o644)]:
-                add_member(archive, f"{root}/{name}", stage / name, mode)
-        compress_zstd(temporary_tar, temporary_output)
+        temporary_output = Path(temporary) / f"archive{required_suffix}"
+        if format_name == "zip":
+            write_zip(stage, root, entries, temporary_output)
+        else:
+            temporary_tar = Path(temporary) / "archive.tar"
+            with tarfile.open(temporary_tar, mode="w", format=tarfile.USTAR_FORMAT) as archive:
+                for name, mode in [*entries, ("SHA256SUMS", 0o644)]:
+                    add_member(archive, f"{root}/{name}", stage / name, mode)
+            if format_name == "tar.zst":
+                compress_zstd(temporary_tar, temporary_output)
+            else:
+                compress_gzip(temporary_tar, temporary_output)
         os.replace(temporary_output, output)
     print(f"PASS: OVERZEER archive {output}")
 
@@ -161,6 +218,12 @@ def main() -> int:
     parser.add_argument("--license", type=Path, required=True)
     parser.add_argument("--extra", action="append", default=[])
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--format",
+        choices=("auto", "tar.zst", "tar.gz", "zip"),
+        default="auto",
+        help="archive format; inferred from --output by default",
+    )
     try:
         package(parser.parse_args())
     except (OSError, ValueError, tarfile.TarError) as error:

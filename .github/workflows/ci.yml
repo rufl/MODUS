@@ -413,6 +413,16 @@ jobs:
             --extra "modus-editor.pck=artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.pck" \
             --output "build/release/modus-$version-linux-x86_64.tar.zst"
           python3 tools/package_overzeer.py package \
+            --version "$version" --target linux-x86_64 \
+            --executable "artifacts/linux-client-build-$BUILD_NUMBER/modus.x86_64" \
+            --content "artifacts/linux-client-build-$BUILD_NUMBER/modus.pck" \
+            --readme README.md --license LICENSE \
+            --extra "server=artifacts/linux-build-$BUILD_NUMBER/MODUS.x86_64" \
+            --extra "server.pck=artifacts/linux-build-$BUILD_NUMBER/MODUS.pck" \
+            --extra "modus-editor=artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.x86_64" \
+            --extra "modus-editor.pck=artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.pck" \
+            --output "build/release/modus-$version-linux-x86_64.tar.gz"
+          python3 tools/package_overzeer.py package \
             --version "$version" --target windows-x86_64 \
             --executable "artifacts/windows-build-$BUILD_NUMBER/MODUS.exe" \
             --content "artifacts/windows-build-$BUILD_NUMBER/MODUS.pck" \
@@ -420,6 +430,14 @@ jobs:
             --extra "modus-editor.exe=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.exe" \
             --extra "modus-editor.pck=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.pck" \
             --output "build/release/modus-$version-windows-x86_64.tar.zst"
+          python3 tools/package_overzeer.py package \
+            --version "$version" --target windows-x86_64 \
+            --executable "artifacts/windows-build-$BUILD_NUMBER/MODUS.exe" \
+            --content "artifacts/windows-build-$BUILD_NUMBER/MODUS.pck" \
+            --readme README.md --license LICENSE \
+            --extra "modus-editor.exe=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.exe" \
+            --extra "modus-editor.pck=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.pck" \
+            --output "build/release/modus-$version-windows-x86_64.zip"
           printf 'Unsigned Linux and Windows candidates assembled. Native integration lock, signing, publication and target acceptance remain open.\n' \
             >> "$GITHUB_STEP_SUMMARY"
 

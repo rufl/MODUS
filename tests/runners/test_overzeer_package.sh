@@ -9,6 +9,7 @@ import hashlib
 import subprocess
 import sys
 import tarfile
+import zipfile
 from pathlib import Path
 
 root, temporary = map(Path, sys.argv[1:])
@@ -29,48 +30,76 @@ readme.write_text("dogfood candidate\n")
 license_path = source / "LICENSE"
 license_path.write_text("license\n")
 
-common = [
-    sys.executable,
-    str(root / "tools/package_overzeer.py"),
-    "package",
-    "--version", "0.9.5-beta",
-    "--target", "linux-x86_64",
-    "--executable", str(executable),
-    "--content", str(content),
-    "--readme", str(readme),
-    "--license", str(license_path),
-    "--extra", f"server={server}",
-    "--extra", f"server.pck={server_pck}",
-]
-first = temporary / "first.tar.zst"
-second = temporary / "second.tar.zst"
-subprocess.run([*common, "--output", str(first)], check=True)
-subprocess.run([*common, "--output", str(second)], check=True)
-assert first.read_bytes() == second.read_bytes(), "archive is not reproducible"
-extract = temporary / "extract"
-extract.mkdir()
-archive_tar = temporary / "archive.tar"
-with archive_tar.open("wb") as output:
-    subprocess.run(["zstd", "--quiet", "-dc", str(first)], stdout=output, check=True)
-with tarfile.open(archive_tar, mode="r:") as archive:
-    names = archive.getnames()
-    expected_root = "modus-0.9.5-beta-linux-x86_64"
-    assert set(names) == {
-        f"{expected_root}/LICENSE",
-        f"{expected_root}/README",
-        f"{expected_root}/SHA256SUMS",
-        f"{expected_root}/modus",
-        f"{expected_root}/modus.pck",
-        f"{expected_root}/server",
-        f"{expected_root}/server.pck",
-    }
-    archive.extractall(extract)
+def command(target, output):
+    return [
+        sys.executable,
+        str(root / "tools/package_overzeer.py"),
+        "package",
+        "--version", "0.9.5-beta",
+        "--target", target,
+        "--executable", str(executable),
+        "--content", str(content),
+        "--readme", str(readme),
+        "--license", str(license_path),
+        "--extra", f"server={server}",
+        "--extra", f"server.pck={server_pck}",
+        "--output", str(output),
+    ]
 
-payload = extract / "modus-0.9.5-beta-linux-x86_64"
-assert (payload / "modus").stat().st_mode & 0o111
-for name in ("LICENSE", "README", "modus", "modus.pck", "server", "server.pck"):
-    expected = hashlib.sha256((payload / name).read_bytes()).hexdigest()
-    recorded = next(line.split()[0] for line in (payload / "SHA256SUMS").read_text().splitlines() if line.endswith(f"  {name}"))
-    assert expected == recorded, name
-print("OVERZEER package reproducibility and manifest checks passed.")
+def expected_names(root_name, executable_name, include_server):
+    names = {
+        f"{root_name}/LICENSE",
+        f"{root_name}/README",
+        f"{root_name}/SHA256SUMS",
+        f"{root_name}/{executable_name}",
+        f"{root_name}/modus.pck",
+    }
+    if include_server:
+        names.update({f"{root_name}/server", f"{root_name}/server.pck"})
+    return names
+
+def inspect_archive(archive_path, format_name, root_name, executable_name, include_server):
+    expected = expected_names(root_name, executable_name, include_server)
+    if format_name == "zip":
+        with zipfile.ZipFile(archive_path) as archive:
+            assert set(archive.namelist()) == expected
+            info = archive.getinfo(f"{root_name}/{executable_name}")
+            assert (info.external_attr >> 16) & 0o111
+            payload = archive.read(f"{root_name}/{executable_name}")
+            checksums = archive.read(f"{root_name}/SHA256SUMS").decode()
+    else:
+        tar_path = temporary / f"{archive_path.name}.tar"
+        if format_name == "tar.zst":
+            with tar_path.open("wb") as output:
+                subprocess.run(["zstd", "--quiet", "-dc", str(archive_path)], stdout=output, check=True)
+            mode = "r:"
+        else:
+            mode = "r:gz"
+            tar_path = archive_path
+        with tarfile.open(tar_path, mode=mode) as archive:
+            assert set(archive.getnames()) == expected
+            info = archive.getmember(f"{root_name}/{executable_name}")
+            assert info.mode & 0o111
+            payload = archive.extractfile(info).read()
+            checksums = archive.extractfile(f"{root_name}/SHA256SUMS").read().decode()
+    assert payload
+    assert f"{hashlib.sha256(payload).hexdigest()}  {executable_name}\n" in checksums
+
+linux_root = "modus-0.9.5-beta-linux-x86_64"
+for format_name in ("tar.zst", "tar.gz"):
+    first = temporary / f"linux-first.{format_name}"
+    second = temporary / f"linux-second.{format_name}"
+    subprocess.run([*command("linux-x86_64", first)], check=True)
+    subprocess.run([*command("linux-x86_64", second)], check=True)
+    assert first.read_bytes() == second.read_bytes(), f"{format_name} archive is not reproducible"
+    inspect_archive(first, format_name, linux_root, "modus", True)
+
+windows_root = "modus-0.9.5-beta-windows-x86_64"
+windows_first = temporary / "windows-first.zip"
+windows_second = temporary / "windows-second.zip"
+subprocess.run([*command("windows-x86_64", windows_first)], check=True)
+subprocess.run([*command("windows-x86_64", windows_second)], check=True)
+assert windows_first.read_bytes() == windows_second.read_bytes(), "zip archive is not reproducible"
+inspect_archive(windows_first, "zip", windows_root, "modus.exe", True)
+print("OVERZEER tar.zst, tar.gz and zip reproducibility and manifest checks passed.")
 PY

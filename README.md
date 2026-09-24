@@ -126,14 +126,18 @@ python3 tools/validate_release_artifacts.py \
 
 Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. CI and local jobs assemble this Linux candidate; run the focused release-contract checks locally before labeling a candidate. Public publication, signing, a native-dependency lock and target acceptance remain open.
 
-The current local dogfood batch also produces unsigned transfer archives at
-`build/release/modus-0.9.5-beta-linux-x86_64.tar.zst` and
-`build/release/modus-0.9.5-beta-windows-x86_64.tar.zst`. Each archive uses the
+The current local dogfood batch produces unsigned transfer archives at
+`build/release/modus-0.9.5-beta-linux-x86_64.tar.zst`,
+`build/release/modus-0.9.5-beta-linux-x86_64.tar.gz`,
+`build/release/modus-0.9.5-beta-windows-x86_64.tar.zst`, and
+`build/release/modus-0.9.5-beta-windows-x86_64.zip`. Each archive uses the
 OVERZEER root naming contract and includes `README`, `LICENSE`, payload hashes,
 the Linux `modus` client/server/editor exports, or the Windows `modus.exe`
-client plus editor export. These are local candidates, not authenticated
-deployments; native Windows execution, signing, receiver authentication and
-target acceptance remain required.
+client plus editor export. `.tar.zst` is the compact local transfer format;
+OVERZEER receiver deployment currently accepts the Linux `.tar.gz` and Windows
+`.zip` variants. These are local candidates, not authenticated deployments;
+native Windows execution, signing, receiver authentication and target
+acceptance remain required.
 
 CI and local release jobs use `tools/package_overzeer.py` to build these
 archives from verified exports:
@@ -144,7 +148,20 @@ python3 tools/package_overzeer.py package \
   --executable standalone/client/modus.x86_64 \
   --content standalone/client/modus.pck \
   --readme README.md --license LICENSE \
-  --output build/release/modus-0.9.5-beta-linux-x86_64.tar.zst
+  --output build/release/modus-0.9.5-beta-linux-x86_64.tar.gz
+```
+
+The checked-in handoff wrapper prepares or previews the two receiver-bound
+packages without reading credential contents:
+
+```bash
+OVERZEER_DOWNLOAD_BASE_URL=https://packages.example.invalid/modus \
+tools/deploy_overzeer_fleet.sh preview
+```
+
+Use `deploy` only with an owner-approved HTTPS endpoint and
+`OVERZEER_CONFIRM=DEPLOY`; the wrapper delegates private token discovery to
+OVERZEER's canonical `oztok` root.
 ```
 
 ## OVERZEER dogfood deployment and telemetry
