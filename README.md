@@ -135,6 +135,18 @@ client plus editor export. These are local candidates, not authenticated
 deployments; native Windows execution, signing, receiver authentication and
 target acceptance remain required.
 
+CI and local release jobs use `tools/package_overzeer.py` to build these
+archives from verified exports:
+
+```bash
+python3 tools/package_overzeer.py package \
+  --version 0.9.5-beta --target linux-x86_64 \
+  --executable standalone/client/modus.x86_64 \
+  --content standalone/client/modus.pck \
+  --readme README.md --license LICENSE \
+  --output build/release/modus-0.9.5-beta-linux-x86_64.tar.zst
+```
+
 ## OVERZEER dogfood deployment and telemetry
 
 MODUS is registered as the `modus` OVERZEER dogfood application. Its package
