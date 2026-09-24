@@ -57,6 +57,7 @@ jobs:
           bash tests/runners/test_linux_portable_package.sh
           bash tests/runners/test_release_staging.sh
           bash tests/runners/test_overzeer_package.sh
+          bash tests/runners/test_overzeer_release_inventory.sh
 
   test:
     name: Run GUT Tests

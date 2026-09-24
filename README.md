@@ -162,6 +162,14 @@ tools/deploy_overzeer_fleet.sh preview
 Use `deploy` only with an owner-approved HTTPS endpoint and
 `OVERZEER_CONFIRM=DEPLOY`; the wrapper delegates private token discovery to
 OVERZEER's canonical `oztok` root.
+
+Before handoff, qualify the exact four archives and write deterministic local
+inventory metadata:
+
+```bash
+python3 tools/validate_overzeer_release.py \
+  --version 0.9.5-beta --build-id "$(git rev-parse HEAD)" \
+  --root build/release --output build/release/overzeer-release.json
 ```
 
 ## OVERZEER dogfood deployment and telemetry
