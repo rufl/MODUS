@@ -38,11 +38,11 @@ def archive_specs(version: str) -> list[tuple[str, str, str, set[str], str]]:
     linux_root = f"modus-{version}-linux-x86_64"
     windows_root = f"modus-{version}-windows-x86_64"
     linux_names = {
-        "LICENSE", "README.md", "SHA256SUMS", "modus", "modus.pck",
+        "LICENSE", "README.md", "SHA256SUMS", "modus", "modus.bin", "modus.pck",
         "server", "server.pck", "modus-editor", "modus-editor.pck",
     }
     windows_names = {
-        "LICENSE", "README.md", "SHA256SUMS", "modus.exe", "modus.pck",
+        "LICENSE", "README.md", "README.txt", "SHA256SUMS", "modus.exe", "modus.pck",
         "modus-editor.exe", "modus-editor.pck",
     }
     return [

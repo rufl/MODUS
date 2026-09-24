@@ -54,6 +54,10 @@ def expected_names(root_name, executable_name, include_server):
         f"{root_name}/{executable_name}",
         f"{root_name}/modus.pck",
     }
+    if executable_name == "modus":
+        names.add(f"{root_name}/modus.bin")
+    if executable_name.endswith(".exe"):
+        names.add(f"{root_name}/README.txt")
     if include_server:
         names.update({f"{root_name}/server", f"{root_name}/server.pck"})
     return names
@@ -84,6 +88,8 @@ def inspect_archive(archive_path, format_name, root_name, executable_name, inclu
             checksums = archive.extractfile(f"{root_name}/SHA256SUMS").read().decode()
     assert payload
     assert f"{hashlib.sha256(payload).hexdigest()}  {executable_name}\n" in checksums
+    if executable_name == "modus":
+        assert b"--headless" in payload
 
 linux_root = "modus-0.9.5-beta-linux-x86_64"
 for format_name in ("tar.zst", "tar.gz"):

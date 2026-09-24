@@ -159,9 +159,13 @@ def package(args: argparse.Namespace) -> None:
     inputs: dict[str, Path] = {
         "README.md": args.readme.absolute(),
         "LICENSE": args.license.absolute(),
-        "modus.exe" if args.target.startswith("windows-") else "modus": args.executable.absolute(),
+        "modus.exe" if args.target.startswith("windows-") else "modus.bin": args.executable.absolute(),
         "modus.pck": args.content.absolute(),
     }
+    # Older Windows receivers require README.txt; keep the canonical README.md
+    # and ship an identical compatibility name until every endpoint is upgraded.
+    if args.target.startswith("windows-"):
+        inputs["README.txt"] = args.readme.absolute()
     for value in args.extra:
         if "=" not in value:
             fail(f"extra must be DEST=SOURCE: {value}")
@@ -183,9 +187,23 @@ def package(args: argparse.Namespace) -> None:
             target = stage / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target, follow_symlinks=False)
-            mode = 0o755 if name in {"modus", "modus.exe"} else 0o644
+            mode = 0o755 if name in {"modus.bin", "modus.exe"} else 0o644
             target.chmod(mode)
             entries.append((name, mode))
+        if not args.target.startswith("windows-"):
+            launcher = stage / "modus"
+            launcher.write_text(
+                '#!/bin/sh\n'
+                'set -eu\n'
+                'base=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\n'
+                'if [ "${1-}" = "--package-smoke" ]; then\n'
+                '    exec "$base/modus.bin" --headless "$@"\n'
+                'fi\n'
+                'exec "$base/modus.bin" "$@"\n',
+                encoding="utf-8",
+            )
+            launcher.chmod(0o755)
+            entries.append(("modus", 0o755))
         checksums = "".join(
             f"{digest(stage / name)}  {name}\n" for name, _mode in entries
         )
