@@ -49,7 +49,7 @@ def command(target, output):
 def expected_names(root_name, executable_name, include_server):
     names = {
         f"{root_name}/LICENSE",
-        f"{root_name}/README",
+        f"{root_name}/README.md",
         f"{root_name}/SHA256SUMS",
         f"{root_name}/{executable_name}",
         f"{root_name}/modus.pck",

@@ -24,6 +24,8 @@ The Linux helper now validates archive ownership/bytes/modes before extraction a
 
 CI now builds Linux client and editor alongside its existing targets and assembles a versioned Linux candidate on `develop`. `actionlint` passes; hosted CI was not run. Native-runtime/dependency locking, signing/authentication, release publication, Windows runtime and manual acceptance remain open. No aggregate test result is refreshed.
 
+The OVERZEER package contract now emits `README.md` and the client has a bounded `--package-smoke` startup path that validates core packaged resources before exit. Source-side proof passes; regenerated native exports and authenticated target smoke remain open.
+
 ### September 22 Persistent Hub Travel
 
 Authored sessions preserve the host transport and player nodes across staged, validated destination commits. Revisit records retain actor/objective state and consumed rewards; encrypted campaign checkpoints restore into a fresh session. Late joiners validate content before receiving the current destination and party, with replication gated on acknowledgement.

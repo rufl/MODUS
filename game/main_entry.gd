@@ -4,8 +4,10 @@ const MAIN_MENU_SCREEN: String = "res://shared/ui_core/screens/main_menu_screen.
 
 
 func _ready() -> void:
+	if "--package-smoke" in OS.get_cmdline_args():
+		_run_package_smoke()
+		return
 	var logger: Node = GameManager.get_core_system("logger")
-	logger.info("[MainEntry] _ready() called", "MainEntry")
 	var current_scene_name: String = (
 		str(get_tree().current_scene.name) if get_tree().current_scene else "null"
 	)
@@ -45,6 +47,21 @@ func _ready() -> void:
 			_launch_game()
 	else:
 		_launch_game()
+
+func _run_package_smoke() -> void:
+	var required_resources := PackedStringArray(
+		[
+			"res://game/main_entry.tscn",
+			MAIN_MENU_SCREEN,
+			"res://game/world/maps/showcase.tscn",
+		]
+	)
+	for resource_path in required_resources:
+		if not ResourceLoader.exists(resource_path):
+			push_error("[MainEntry] Package smoke resource missing: %s" % resource_path)
+			get_tree().quit(1)
+			return
+	get_tree().quit(0)
 
 
 func _on_tree_changed() -> void:

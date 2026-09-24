@@ -157,7 +157,7 @@ def package(args: argparse.Namespace) -> None:
         fail(f"refusing to replace existing output: {output}")
 
     inputs: dict[str, Path] = {
-        "README": args.readme.absolute(),
+        "README.md": args.readme.absolute(),
         "LICENSE": args.license.absolute(),
         "modus.exe" if args.target.startswith("windows-") else "modus": args.executable.absolute(),
         "modus.pck": args.content.absolute(),
