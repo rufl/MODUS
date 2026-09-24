@@ -691,6 +691,13 @@ func test_regeneration_without_pins_selects_content_and_checks_capabilities() ->
 	assert_true(diagnostics.compatible.is_empty())
 	assert_true(diagnostics.rejected[0].unsupported_capabilities.has("teleport"))
 	assert_true(diagnostics.rejected[0].target_instance_ids.has("b"))
+	var csg_supported := replacement.duplicate(true) as PrefabMetadata
+	csg_supported.required_capabilities = PackedStringArray(["csg"])
+	var csg_diagnostics := ModuleAssembly.get_replacement_diagnostics(root, [csg_supported])
+	assert_true(
+		csg_diagnostics.rejected.is_empty(),
+		"Common runtime capabilities must be accepted by default module validation"
+	)
 	var authoring_supported := ModuleAssembly.build_regeneration_plans(
 		root, [unsupported], ["walk", "teleport"]
 	)

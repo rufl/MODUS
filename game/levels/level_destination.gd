@@ -68,7 +68,9 @@ func prepare(
 	var channels: Array[String] = document.get_channel_system().validate_data(document.channel_data)
 	if not channels.is_empty():
 		return _fail("\n".join(channels))
-	var validation: Dictionary = Assembly.validate_level(document)
+	var validation: Dictionary = Assembly.validate_level(
+		document, availability.get_available_capabilities()
+	)
 	if not validation.valid:
 		return _fail("\n".join(PackedStringArray(validation.errors)))
 	var points: Array[Node3D] = document.get_spawn_points("player")

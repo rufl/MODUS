@@ -20,7 +20,10 @@ const CATALOG := [
 ]
 const EPSILON := 0.01
 const LevelRootScript := preload("res://shared/editor_core/nodes/level_root.gd")
-const SUPPORTED_CAPABILITIES: Array[String] = ["walk"]
+const FeatureAvailabilityScript := preload(
+	"res://game/scripts/map_generator/feature_availability.gd"
+)
+const SUPPORTED_CAPABILITIES: Array[String] = FeatureAvailabilityScript.COMMON_CAPABILITIES
 
 
 static func _unsupported_capabilities(
@@ -938,10 +941,12 @@ static func set_pinned(root: Node3D, instance_id: String, pinned: bool) -> Dicti
 	return {"success": true, "error": "", "pinned": pinned}
 
 
-static func validate_level(root: Node3D) -> Dictionary:
+static func validate_level(
+	root: Node3D, supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+) -> Dictionary:
 	if root == null or not "module_connections" in root:
 		return {"valid": false, "errors": ["Document must be a LevelRoot."]}
-	var errors := _validate(get_instances(root), root.module_connections)
+	var errors := _validate(get_instances(root), root.module_connections, supported_capabilities)
 	return {"valid": errors.is_empty(), "errors": errors}
 
 

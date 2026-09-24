@@ -6,7 +6,7 @@ class_name FeatureAvailability
 const CAPABILITY_CONTRACT_VERSION := 1
 const RUNTIME_ID := "modus"
 const RUNTIME_VERSION := 1
-const COMMON_CAPABILITIES := ["walk", "csg"]
+const COMMON_CAPABILITIES: Array[String] = ["walk", "csg"]
 ## FeatureAvailability
 ## Detects and manages graceful degradation for optional features
 ## Provides fallback mechanisms when optional dependencies are unavailable
