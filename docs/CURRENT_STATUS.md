@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
-**Updated:** September 23, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
+**Updated:** September 25, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -10,7 +10,7 @@
 
 ## Summary
 
-MODUS contains broad FPS framework code plus focused and golden-demo runtime proof, but reviewed manual gameplay evidence is absent and the release-version gate is blocked. September 9 closes six engineering repair groups with 67 focused tests/612 assertions, an eleven-step actual gameplay smoke, isolated native asset rendering, and a compiled Godot audio-shutdown patch. September 10 refreshed headless aggregate passes 1,568/1,568 tests with 21,718 assertions across 135 scripts; two GUI-required files remain skipped. Fresh September 10 package and multiplayer proof passes resource-notice checks for all three presets, local separate-process ENet client connection, reconnect/lag/network focused suites, and the multiplayer profile smoke. Platform executable exports remain blocked by missing Godot export templates.
+MODUS contains broad FPS framework code plus focused and golden-demo runtime proof, but reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 25 strict headless aggregate passes 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped. Focused runtime, package, multiplayer, editor, and generator proof remains bounded by its named evidence lanes. Platform executable exports, signed release packaging, manual gameplay, performance evidence, target-Windows runtime, and external-service proof remain open.
 
 The canonical publication rules are in [Documentation Truth](DOCUMENTATION_TRUTH.md).
 
@@ -22,9 +22,9 @@ Portable schema-v1 manifests now cover all client/server/editor executable/PCK p
 
 The Linux helper now validates archive ownership/bytes/modes before extraction and replacement, supports rollback, and preserves unowned files and XDG data. The former upgrade path's deletion of an unowned file was reproduced. Three focused regression runners pass manifest relocation/tampering, staging failure isolation, malicious archives, failed-upgrade rollback and save preservation. A retained September 13 client executable passes package/install/verify/headless-launch/upgrade/verify/uninstall under a Unicode/space prefix; it was not rebuilt in this batch.
 
-CI now builds Linux client and editor alongside its existing targets and assembles a versioned Linux candidate on `develop`. `actionlint` passes; hosted CI was not run. Native-runtime/dependency locking, signing/authentication, release publication, Windows runtime and manual acceptance remain open. No aggregate test result is refreshed.
+CI builds Linux client and editor alongside its existing targets and assembles versioned Linux and OVERZEER candidates. The September 25 strict aggregate passed 1,665/1,665 tests with 22,767 assertions in 812.984 seconds. Native-runtime/dependency locking, signing/authentication, release publication, Windows runtime and manual acceptance remain open.
 
-The OVERZEER package contract now emits `README.md` and the client has a bounded `--package-smoke` startup path that validates core packaged resources before exit. Source-side proof passes; regenerated native exports and authenticated target smoke remain open.
+The OVERZEER package contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory validation passed, and the extracted Linux `--package-smoke` path exited cleanly. Authenticated receiver publication, signing, and native target smoke remain open.
 
 ### September 22 Persistent Hub Travel
 
