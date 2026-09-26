@@ -325,6 +325,43 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  windows-native-qualification:
+    name: Native Windows Client Qualification
+    runs-on: windows-latest
+    timeout-minutes: 15
+    needs: [build]
+    if: ${{ success() }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download Windows client artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build-${{ github.run_number }}
+          path: artifacts/windows/
+
+      - name: Run native qualification
+        id: qualification
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          & .\tools\qualify_windows_client.ps1 `
+            -Executable "${{ github.workspace }}\artifacts\windows\MODUS.exe" `
+            -Report "${{ github.workspace }}\windows-client-qualification.json"
+
+      - name: Upload native qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-client-qualification-${{ github.run_number }}
+          path: |
+            windows-client-qualification.json
+            artifacts/windows/manifest.json
+            artifacts/windows/SHA256SUMS
+          if-no-files-found: warn
+          retention-days: 30
+
   security-scan:
     name: Security Vulnerability Scan
     runs-on: ubuntu-latest

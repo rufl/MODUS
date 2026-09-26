@@ -1,9 +1,14 @@
 extends Node
 
 const MAIN_MENU_SCREEN: String = "res://shared/ui_core/screens/main_menu_screen.tscn"
+const WINDOWS_QUALIFICATION_SCRIPT: GDScript = preload("res://game/windows_client_qualification.gd")
 
 
 func _ready() -> void:
+	var user_args := OS.get_cmdline_user_args()
+	if "--windows-qualification" in OS.get_cmdline_args() or "--windows-qualification" in user_args:
+		await _run_windows_qualification()
+		return
 	if "--package-smoke" in OS.get_cmdline_args():
 		_run_package_smoke()
 		return
@@ -63,6 +68,12 @@ func _run_package_smoke() -> void:
 			get_tree().quit(1)
 			return
 	get_tree().quit(0)
+
+
+func _run_windows_qualification() -> void:
+	var qualification: Variant = WINDOWS_QUALIFICATION_SCRIPT.new()
+	var report: Dictionary = await qualification.run(self)
+	get_tree().quit(0 if report.get("status") == "pass" else 1)
 
 
 func _on_tree_changed() -> void:
