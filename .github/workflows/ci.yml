@@ -443,7 +443,15 @@ jobs:
             --extra "modus-editor.exe=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.exe" \
             --extra "modus-editor.pck=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.pck" \
             --output "build/release/modus-$version-windows-x86_64.zip"
-          printf 'Unsigned Linux and Windows candidates assembled. Native integration lock, signing, publication and target acceptance remain open.\n' \
+          python3 tools/validate_overzeer_release.py \
+            --version "$version" --build-id "$BUILD_COMMIT" \
+            --root build/release \
+            --output build/release/overzeer-release.json \
+            --ztash-output build/release/ztash-source-release.json
+          python3 tools/prepare_ztash_release.py \
+            --version "$version" --build-id "$BUILD_COMMIT" \
+            --root build/release --output build/release/ztash
+          printf 'Unsigned Linux and Windows candidates plus lean ZTASH receiver packages assembled. Native integration lock, signing, publication and target acceptance remain open.\n' \
             >> "$GITHUB_STEP_SUMMARY"
 
       - name: Retain Linux release candidate
