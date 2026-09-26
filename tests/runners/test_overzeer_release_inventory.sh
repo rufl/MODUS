@@ -60,9 +60,11 @@ package("windows-x86_64", release / "modus-0.9.5-beta-windows-x86_64.zip",
 
 validator = root / "tools/validate_overzeer_release.py"
 inventory = temporary / "inventory.json"
+ztash = temporary / "ztash-release.json"
 subprocess.run([
     sys.executable, str(validator), "--version", "0.9.5-beta",
     "--build-id", "a" * 40, "--root", str(release), "--output", str(inventory),
+    "--ztash-output", str(ztash),
 ], check=True)
 data = json.loads(inventory.read_text())
 assert data["schema"] == "modus.overzeer-release/v1"
@@ -72,7 +74,10 @@ assert {item["format"] for item in data["artifacts"]} == {"tar.zst", "tar.gz", "
 assert all(item["signing"] == "unsigned" and item["bytes"] > 0 for item in data["artifacts"])
 for item in data["artifacts"]:
     assert hashlib.sha256((release / item["archive"]).read_bytes()).hexdigest() == item["sha256"]
-
+ztash_data = json.loads(ztash.read_text())
+assert ztash_data["schema"] == "ztash-release-v1"
+assert {item["target"] for item in ztash_data["artifacts"]} == {"x86_64-linux", "x86_64-windows-gnu"}
+assert all(item["size"] > 0 and len(item["sha256"]) == 64 for item in ztash_data["artifacts"])
 bad = temporary / "bad.json"
 corrupt = release / "modus-0.9.5-beta-linux-x86_64.tar.gz"
 raw = gzip.decompress(corrupt.read_bytes()).replace(b"server payload", b"tampered payload")

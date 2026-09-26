@@ -133,10 +133,13 @@ def validate(args: argparse.Namespace) -> None:
         fail("build-id must be 40 lowercase hexadecimal characters")
     root = args.root.absolute()
     output = args.output.absolute()
-    if not root.is_dir():
-        fail(f"release root is missing: {root}")
+    ztash_output = args.ztash_output.absolute() if args.ztash_output else None
     if output.exists() or output.is_symlink():
         fail(f"refusing to replace existing inventory: {output}")
+    if ztash_output is not None and (ztash_output.exists() or ztash_output.is_symlink()):
+        fail(f"refusing to replace existing ZTASH manifest: {ztash_output}")
+    if not root.is_dir():
+        fail(f"release root is missing: {root}")
 
     artifacts = []
     for filename, target, archive_root, names, format_name in archive_specs(args.version):
@@ -161,7 +164,38 @@ def validate(args: argparse.Namespace) -> None:
         "version": args.version,
     }
     output.write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if ztash_output is not None:
+        receiver_formats = {"linux-x86_64": "tar.gz", "windows-x86_64": "zip"}
+        selected = {
+            (item["target"]): item
+            for item in artifacts
+            if item["format"] == receiver_formats[item["target"]]
+        }
+        ztash = {
+            "application": "modus",
+            "artifacts": [
+                {
+                    "name": selected["linux-x86_64"]["archive"],
+                    "sha256": selected["linux-x86_64"]["sha256"],
+                    "size": selected["linux-x86_64"]["bytes"],
+                    "target": "x86_64-linux",
+                },
+                {
+                    "name": selected["windows-x86_64"]["archive"],
+                    "sha256": selected["windows-x86_64"]["sha256"],
+                    "size": selected["windows-x86_64"]["bytes"],
+                    "target": "x86_64-windows-gnu",
+                },
+            ],
+            "build_id": args.build_id,
+            "schema": "ztash-release-v1",
+            "version": args.version,
+        }
+        ztash_output.parent.mkdir(parents=True, exist_ok=True)
+        ztash_output.write_text(json.dumps(ztash, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"PASS: OVERZEER release inventory {output}")
+    if ztash_output is not None:
+        print(f"PASS: ZTASH release manifest {ztash_output}")
 
 
 def main() -> int:
@@ -170,6 +204,7 @@ def main() -> int:
     parser.add_argument("--build-id", required=True)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--ztash-output", type=Path)
     try:
         validate(parser.parse_args())
     except (OSError, ValueError, tarfile.TarError, zipfile.BadZipFile) as error:
