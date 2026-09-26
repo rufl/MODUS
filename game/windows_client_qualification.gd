@@ -26,6 +26,9 @@ func run(root: Node) -> Dictionary:
 	_checks.clear()
 	_failures.clear()
 
+	if GameManager and not GameManager.is_initialized():
+		await GameManager.ready
+
 	var platform := OS.get_name()
 	_record(
 		"platform",
@@ -41,7 +44,13 @@ func run(root: Node) -> Dictionary:
 		"configured actions plus synthetic event path",
 		input_result,
 	)
-	_record("save", _save_check(), "user-data write/read/delete", _save_details())
+	var save_result: Dictionary = _save_check()
+	_record(
+		"save",
+		bool(save_result.get("passed", false)),
+		"SaveService encrypted slot roundtrip",
+		save_result,
+	)
 	var network_result: Dictionary = await _network_check()
 	_record(
 		"network",
@@ -126,26 +135,37 @@ func _input_check() -> Dictionary:
 	}
 
 
-func _save_check() -> bool:
-	var path := "user://windows-client-qualification.json"
-	var payload := {"marker": "windows-client-qualification", "value": 17}
-	var writer := FileAccess.open(path, FileAccess.WRITE)
-	if writer == null:
-		return false
-	writer.store_string(JSON.stringify(payload))
-	writer.close()
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	var passed: bool = (
-		parsed is Dictionary
-		and parsed.get("marker") == payload["marker"]
-		and parsed.get("value") == 17
+func _save_check() -> Dictionary:
+	var slot := "windows-client-qualification"
+	var expected := {"marker": slot, "value": 17}
+	var save_service: Node = (
+		GameManager.get_core_system("save")
+		if GameManager and GameManager.has_method("get_core_system")
+		else null
 	)
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-	return passed
+	var saved: bool = (
+		save_service != null
+		and save_service.has_method("save_data")
+		and save_service.save_data(slot, expected.duplicate(true), {"qualification": true})
+	)
+	var loaded: Dictionary = save_service.load_data(slot) if saved else {}
+	var loaded_matches: bool = (
+		str(loaded.get("marker", "")) == slot and int(loaded.get("value", -1)) == 17
+	)
+	_cleanup_save_slot(slot)
+	return {
+		"loaded_matches": loaded_matches,
+		"passed": saved and loaded_matches,
+		"save_service_available": save_service != null,
+		"slot": slot,
+	}
 
 
-func _save_details() -> Dictionary:
-	return {"path": "user://windows-client-qualification.json"}
+func _cleanup_save_slot(slot: String) -> void:
+	for suffix in [".sav", ".meta", ".sav.staging", ".meta.staging", ".sav.backup", ".meta.backup"]:
+		var path := ProjectSettings.globalize_path("user://saves/" + slot + suffix)
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
 
 
 func _network_check() -> Dictionary:

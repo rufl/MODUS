@@ -1,7 +1,6 @@
 extends Node
 
 const MAIN_MENU_SCREEN: String = "res://shared/ui_core/screens/main_menu_screen.tscn"
-const WINDOWS_QUALIFICATION_SCRIPT: GDScript = preload("res://game/windows_client_qualification.gd")
 
 
 func _ready() -> void:
@@ -71,7 +70,8 @@ func _run_package_smoke() -> void:
 
 
 func _run_windows_qualification() -> void:
-	var qualification: Variant = WINDOWS_QUALIFICATION_SCRIPT.new()
+	var qualification: Variant = RefCounted.new()
+	qualification.set_script(load("res://game/windows_client_qualification.gd"))
 	var report: Dictionary = await qualification.run(self)
 	get_tree().quit(0 if report.get("status") == "pass" else 1)
 

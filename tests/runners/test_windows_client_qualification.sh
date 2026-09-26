@@ -30,6 +30,8 @@ assert set(report["checks"]) == {"platform", "renderer", "input", "save", "netwo
 assert report["checks"]["platform"]["status"] == "fail"
 assert report["checks"]["renderer"]["status"] == "fail"
 assert report["checks"]["save"]["status"] == "pass"
+assert report["checks"]["save"]["details"]["save_service_available"]
+assert report["checks"]["save"]["details"]["loaded_matches"]
 assert report["checks"]["network"]["status"] == "pass"
 print("Windows qualification native-boundary regression passed.")
 PY
