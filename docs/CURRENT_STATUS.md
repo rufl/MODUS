@@ -85,7 +85,7 @@ September 13 production proof: the exported Linux client completes the `.mdsl` m
 | Latest batched Integration lane | **PASS** | September 10: 227/227 passing; 2 GUI-required files skipped |
 | Latest batched Property lane | **PASS** | September 10: 175/175 passing, 2,804 assertions |
 | Manual evidence | **BLOCKED / RECORDER READY** | Responsive 20-item F8 workflow and strict CSV validation pass; 0 reviewed CSV files and 0.00 validated hours |
-| Performance evidence | **PASS** | 2026-09-27 bounded headless Showcase capture: 81.00 seconds/133 samples; measured evidence shape only, not a production FPS claim |
+| Performance evidence | **PASS** | 2026-09-27 warmed bounded headless Showcase capture: 69.90 seconds/66 samples, 7.00 FPS minimum and 7.58ms maximum frame time; measured evidence shape only, not a production FPS claim |
 | Release-version evidence | **BLOCKED** | Project remains `0.9.5-beta` |
 | Production readiness | **NOT READY** | 3 validator-tracked blockers: filtered full suite, manual evidence and release version; provenance clearance is outside that count |
 | Release evidence bundle | **INDEX COMPLETE / RELEASE BLOCKED** | Hashed menu/welcome/mod/golden-demo captures, short automated video, bounded benchmark table, native Windows acceptance harness, known-limits matrix, provenance ledger, fresh three-preset notice checks, local Linux desktop export smoke, executable exports, local ENet/reconnect/host-loss/rate-limit proof, and authenticated Steam API initialization are retained; manual marketing review, installer, two-account Steam/Workshop, target-Windows runtime, independent WAN and rights clearance remain open |

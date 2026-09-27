@@ -37,6 +37,9 @@ tools/run_manual_showcase_session.sh --tester NAME --input DEVICES
 # Deterministic validator semantics (metadata, overhead, strict exits)
 tests/runners/test_manual_evidence_validator.sh
 
+# Performance CSV shape and monotonic-timestamp regression
+tests/runners/test_performance_evidence_validator.sh
+
 # Real resource-package notice regression; no platform export templates required
 GODOT_BIN=/path/to/patched/godot bash tests/runners/test_export_notices.sh
 

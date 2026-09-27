@@ -23,7 +23,12 @@ godot --path . --script tools/run_performance_evidence_capture.gd
 tools/validate_performance_evidence.sh --strict
 ```
 
-The capture writes local CSV evidence under `logs/performance_logs/`; the validator writes ignored local output `docs/PERFORMANCE_EVIDENCE_REPORT.md`. Missing captures remain missing evidence. Review the actual new result rather than assuming the recorded baseline still applies.
+The capture warms the Showcase scene for 10 seconds, then records a 65-second
+measurement through PerformanceLogger's one-second process sampler. It writes
+local CSV evidence under `logs/performance_logs/`; the validator writes ignored
+local output `docs/PERFORMANCE_EVIDENCE_REPORT.md` and rejects non-increasing
+sample timestamps. Missing captures remain missing evidence. Review the actual
+new result rather than assuming the recorded baseline still applies.
 
 For publishable evidence, record:
 

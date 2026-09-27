@@ -132,13 +132,18 @@ for file in "${csv_files[@]}"; do
     $5 !~ /^[0-9]+$/ ||
     $6 !~ /^[0-9]+$/ { bad += 1; next }
     {
+      if (has_last_time && ($1 + 0) <= (last_time + 0)) {
+        bad += 1
+        next
+      }
+      has_last_time = 1
       samples += 1
       fps_sum += $2
       if (min_fps == "" || $2 < min_fps) min_fps = $2
       if (max_fps == "" || $2 > max_fps) max_fps = $2
       if ($3 > max_frame_time) max_frame_time = $3
       if ($4 > max_memory) max_memory = $4
-      if ($1 > last_time) last_time = $1
+      last_time = $1
     }
     END {
       duration = stats_duration
@@ -218,7 +223,7 @@ mkdir -p "$(dirname "$report_path")"
   printf '**Minimum Duration Required:** %ss\n\n' "$min_duration_seconds"
 
   printf '## Scope\n\n'
-  printf 'This report validates imported `PerformanceLogger` CSV logs. It records measured benchmark evidence but does not run Godot, exercise gameplay, or prove performance quality by itself.\n\n'
+  printf 'This report validates imported `PerformanceLogger` CSV logs, including numeric fields and strictly increasing sample timestamps. It records measured benchmark evidence but does not run Godot, exercise gameplay, or prove performance quality by itself.\n\n'
 
   printf '## Result\n\n'
   printf '%s\n' "- Status: ${status}"
