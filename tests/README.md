@@ -49,6 +49,8 @@ bash tests/runners/test_linux_portable_package.sh
 bash tests/runners/test_release_staging.sh
 bash tests/runners/test_toolchain_lock.sh
 bash tests/runners/test_windows_acceptance_metadata.sh
+bash tests/runners/test_package_smoke.sh
+bash tests/runners/test_ci_artifact_manifest.sh
 # Preview/remove only obsolete OVERZEER package archives
 python3 tools/cleanup_overzeer_archives.py \
   --root build/release --keep-version 0.9.5-beta

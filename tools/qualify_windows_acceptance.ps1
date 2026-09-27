@@ -87,6 +87,15 @@ if ($null -eq $toolchainLockSource) {
 $toolchainLockHash = (Get-FileHash -LiteralPath $toolchainLockSource -Algorithm SHA256).Hash.ToLowerInvariant()
 $manifestObject = if ($null -ne $manifestSource) { Read-JsonFile $manifestSource } else { $null }
 $executableHash = (Get-FileHash -LiteralPath $resolvedExecutable -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($null -ne $manifestObject) {
+    $manifestLockProperty = $manifestObject.PSObject.Properties["toolchain_lock_sha256"]
+    if (
+        $null -eq $manifestLockProperty -or
+        [string]$manifestLockProperty.Value -ne $toolchainLockHash
+    ) {
+        throw "Build manifest toolchain lock hash does not match the checked-in lock."
+    }
+}
 if ($null -ne $manifestObject -and $null -ne $manifestObject.artifacts) {
     $artifactName = [IO.Path]::GetFileName($resolvedExecutable)
     $manifestHashProperty = $manifestObject.artifacts.PSObject.Properties[$artifactName]

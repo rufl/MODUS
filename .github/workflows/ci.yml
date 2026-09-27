@@ -66,6 +66,7 @@ jobs:
           bash tests/runners/test_performance_evidence_validator.sh
           bash tests/runners/test_toolchain_lock.sh
           bash tests/runners/test_windows_acceptance_metadata.sh
+          bash tests/runners/test_ci_artifact_manifest.sh
 
   test:
     name: Run GUT Tests
@@ -119,6 +120,8 @@ jobs:
             printf 'Godot import diagnostics reported above.\n' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+      - name: Run packaged startup smoke
+        run: bash tests/runners/test_package_smoke.sh
 
       - name: Run qualification network regression
         run: bash tests/runners/test_windows_network_qualification.sh
@@ -297,33 +300,15 @@ jobs:
             cd "$artifact_dir"
             sha256sum "$EXPORT_EXECUTABLE" "${EXPORT_EXECUTABLE%.*}.pck"
           ) > "$artifact_dir/SHA256SUMS"
-          python - "$manifest" "$EXPORT_PLATFORM" "$EXPORT_PRESET" "$EXPORT_EXECUTABLE" "$GITHUB_SHA" <<'PY'
-          import json
-          import sys
-          from pathlib import Path
-
-          output, platform, preset, executable, commit = sys.argv[1:]
-          artifact_dir = Path(output).parent
-          sums = {}
-          for line in (artifact_dir / "SHA256SUMS").read_text(encoding="utf-8").splitlines():
-              digest, path = line.split(maxsplit=1)
-              sums[Path(path).name] = digest
-          Path(output).write_text(
-              json.dumps(
-                  {
-                      "product": "MODUS",
-                      "platform": platform,
-                      "preset": preset,
-                      "commit": commit,
-                      "godot_version": "${{ env.GODOT_VERSION }}",
-                      "artifacts": sums,
-                  },
-                  indent=2,
-              )
-              + "\n",
-              encoding="utf-8",
-          )
-          PY
+          python3 tools/generate_ci_artifact_manifest.py \
+            --root "$artifact_dir" \
+            --output "$manifest" \
+            --platform "$EXPORT_PLATFORM" \
+            --preset "$EXPORT_PRESET" \
+            --executable "$EXPORT_EXECUTABLE" \
+            --commit "$GITHUB_SHA" \
+            --godot-version "$GODOT_VERSION" \
+            --toolchain-lock tools/toolchain.lock.json
 
       - name: Verify artifact manifest
         run: |

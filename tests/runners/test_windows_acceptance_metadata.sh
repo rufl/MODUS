@@ -25,6 +25,10 @@ lock_hash = hashlib.sha256(lock.read_bytes()).hexdigest()
     json.dumps({"toolchain_lock": "toolchain.lock.json", "toolchain_lock_sha256": lock_hash}),
     encoding="utf-8",
 )
+(evidence / "build-manifest.json").write_text(
+    json.dumps({"toolchain_lock_sha256": lock_hash}),
+    encoding="utf-8",
+)
 (evidence / "native-windows-acceptance.json").write_text(
     json.dumps(
         {
@@ -55,5 +59,16 @@ metadata.write_text(
 )
 failed = invoke(False)
 assert "Build metadata toolchain lock hash" in failed.stderr
+metadata.write_text(
+    metadata.read_text(encoding="utf-8").replace("0" * 64, lock_hash),
+    encoding="utf-8",
+)
+build_manifest = evidence / "build-manifest.json"
+build_manifest.write_text(
+    build_manifest.read_text(encoding="utf-8").replace(lock_hash, "0" * 64),
+    encoding="utf-8",
+)
+failed = invoke(False)
+assert "Build manifest toolchain lock hash" in failed.stderr
 print("Windows acceptance metadata binding regression passed.")
 PY

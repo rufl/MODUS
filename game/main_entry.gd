@@ -14,7 +14,7 @@ func _ready() -> void:
 	if "--windows-qualification" in OS.get_cmdline_args() or "--windows-qualification" in user_args:
 		await _run_windows_qualification()
 		return
-	if "--package-smoke" in OS.get_cmdline_args():
+	if _has_qualification_arg("--package-smoke"):
 		_run_package_smoke()
 		return
 	var logger: Node = GameManager.get_core_system("logger")

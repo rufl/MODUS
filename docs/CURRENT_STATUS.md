@@ -26,7 +26,7 @@ CI builds Linux client and editor alongside its existing targets and assembles v
 
 The Windows acceptance harness now records actual W movement, Space jump and E interaction outcomes, reliable application-level ENet probes, reconnect/soak and controlled host-loss evidence, renderer/viewport/window/GPU/API/OS metadata, plus same-build manifest/commit/hash metadata, the copied toolchain lock and its SHA-256 digest, and retained logs. Linux boundary regressions pass; no native Windows execution, independent WAN session, or authenticated Steam session is claimed.
 
-The OVERZEER package contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory validation passed, and the extracted Linux `--package-smoke` path exited cleanly. Authenticated receiver publication, signing, and native target smoke remain open.
+The OVERZEER package contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory validation passed, and the extracted Linux `--package-smoke` path exited cleanly. The source/package-smoke regression now covers user-argument dispatch without script errors; CI export manifests will record the toolchain-lock digest and native acceptance verifies that binding. Authenticated receiver publication, signing, and native target smoke remain open.
 
 ### September 22 Persistent Hub Travel
 
