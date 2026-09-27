@@ -723,7 +723,8 @@ func run_network_role(
 	port: int,
 	address: String = "127.0.0.1",
 	soak_seconds: int = 0,
-	require_reconnect: bool = false
+	require_reconnect: bool = false,
+	require_host_loss: bool = false
 ) -> Dictionary:
 	_root = root
 	if GameManager and not GameManager.is_initialized():
@@ -741,8 +742,11 @@ func run_network_role(
 	var listening := peer_error == OK
 	var connection_count := 0
 	var disconnect_observed := false
+	var host_loss_observed := false
+	var host_loss_triggered := false
 	var reconnect_started := false
 	var session_deadline_msec := 0
+	var host_loss_trigger_deadline_msec := 0
 	var next_probe_msec := 0
 	var probe_settle_deadline_msec := 0
 	var peer_count := 0
@@ -782,6 +786,8 @@ func run_network_role(
 								next_probe_msec = 0
 							else:
 								break
+						elif require_host_loss:
+							pass
 						elif not require_reconnect or connection_count >= 2:
 							if soak_seconds > 0 and session_deadline_msec == 0:
 								session_deadline_msec = now_msec + soak_seconds * 1000
@@ -790,6 +796,9 @@ func run_network_role(
 				elif connected:
 					disconnect_observed = true
 					connected = false
+					if require_host_loss:
+						host_loss_observed = true
+						break
 			else:
 				connected = _network_probe_received_count > 0
 				if connected:
@@ -800,11 +809,17 @@ func run_network_role(
 						and (not require_reconnect or _network_probe_received_count >= 2)
 					):
 						session_deadline_msec = now_msec + soak_seconds * 1000
-					elif soak_seconds == 0 and not require_reconnect:
+					elif soak_seconds == 0 and not require_reconnect and not require_host_loss:
 						if probe_settle_deadline_msec == 0:
 							probe_settle_deadline_msec = now_msec + 500
 						elif now_msec >= probe_settle_deadline_msec:
 							break
+				if require_host_loss and _network_probe_received_count > 0:
+					if host_loss_trigger_deadline_msec == 0:
+						host_loss_trigger_deadline_msec = now_msec + 500
+					elif now_msec >= host_loss_trigger_deadline_msec:
+						host_loss_triggered = true
+						break
 				if require_reconnect and _network_probe_received_count >= 2 and soak_seconds == 0:
 					break
 			if session_deadline_msec > 0 and now_msec >= session_deadline_msec:
@@ -838,14 +853,21 @@ func run_network_role(
 	)
 	if require_reconnect:
 		role_passed = role_passed and reconnected
+	if require_host_loss:
+		role_passed = (
+			role_passed and (host_loss_triggered if role == "server" else host_loss_observed)
+		)
 	if soak_seconds > 0:
 		role_passed = role_passed and soak_completed
 	var report := {
 		"address": address,
-		"connection_established": connection_established,
 		"application_probe_passed": application_probe_passed,
 		"connected": connected,
+		"connection_established": connection_established,
 		"disconnect_observed": disconnect_observed,
+		"host_loss_observed": host_loss_observed,
+		"host_loss_required": require_host_loss,
+		"host_loss_triggered": host_loss_triggered,
 		"listening": listening,
 		"peer_count": peer_count,
 		"port": port,

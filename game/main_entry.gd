@@ -90,7 +90,8 @@ func _run_windows_network(role: String) -> void:
 		_qualification_port(),
 		_qualification_address(),
 		_qualification_network_soak_seconds(),
-		_has_qualification_arg("--windows-qualification-network-reconnect")
+		_has_qualification_arg("--windows-qualification-network-reconnect"),
+		_has_qualification_arg("--windows-qualification-network-host-loss")
 	)
 	qualification.queue_free()
 	get_tree().quit(0 if report.get("status") == "pass" else 1)

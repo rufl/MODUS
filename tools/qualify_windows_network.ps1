@@ -12,7 +12,8 @@ param(
     [string]$ServerAddress = "127.0.0.1",
     [ValidateRange(0, 600)]
     [int]$SoakSeconds = 0,
-    [switch]$RequireReconnect
+    [switch]$RequireReconnect,
+    [switch]$RequireHostLoss
 )
 
 $ErrorActionPreference = "Stop"
@@ -21,6 +22,15 @@ if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
 }
 if ($Role -ne "Pair" -and $Port -eq 0) {
     throw "-Port is required for -Role $Role so the other machine can reach the session."
+}
+if ($RequireHostLoss -and $Role -eq "Server") {
+    throw "-RequireHostLoss requires a client or paired role."
+}
+if ($RequireHostLoss -and $SoakSeconds -gt 0) {
+    throw "-RequireHostLoss cannot be combined with -SoakSeconds."
+}
+if ($RequireHostLoss -and $RequireReconnect) {
+    throw "-RequireHostLoss cannot be combined with -RequireReconnect."
 }
 
 $resolvedExecutable = (Resolve-Path -LiteralPath $Executable -ErrorAction Stop).Path
@@ -64,6 +74,10 @@ if ($SoakSeconds -gt 0) {
 if ($RequireReconnect) {
     $serverArguments += "--windows-qualification-network-reconnect"
     $clientArguments += "--windows-qualification-network-reconnect"
+}
+if ($RequireHostLoss) {
+    $serverArguments += "--windows-qualification-network-host-loss"
+    $clientArguments += "--windows-qualification-network-host-loss"
 }
 Remove-Item -LiteralPath $serverOut, $serverErr, $clientOut, $clientErr -Force -ErrorAction SilentlyContinue
 $server = $null
@@ -172,8 +186,18 @@ try {
             $status = $status -and $clientReport.reconnected
         }
     }
+    if ($RequireHostLoss) {
+        if ($null -ne $serverReport) {
+            $status = $status -and $serverReport.host_loss_triggered
+        }
+        if ($null -ne $clientReport) {
+            $status = $status `
+                -and $clientReport.host_loss_observed `
+                -and $clientReport.disconnect_observed
+        }
+    }
     $reportObject = [ordered]@{
-        require_reconnect = [bool]$RequireReconnect
+        require_host_loss = [bool]$RequireHostLoss
         client = $clientReport
         logs = [ordered]@{
             client_stderr = [IO.Path]::GetFileName($clientErr)

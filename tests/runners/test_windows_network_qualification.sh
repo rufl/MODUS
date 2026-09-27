@@ -126,6 +126,17 @@ for report in (client, server):
     assert report["connection_established"]
     assert report["reconnected"]
     assert report["soak_completed"]
+client, server = run_pair(["--windows-qualification-network-host-loss"])
+assert client["status"] == "pass", client
+assert client["connection_established"]
+assert client["application_probe_passed"]
+assert client["disconnect_observed"]
+assert client["host_loss_observed"]
+assert server["status"] == "pass", server
+assert server["connection_established"]
+assert server["application_probe_passed"]
+assert server["host_loss_triggered"]
+
 
 print("Windows network qualification application/reconnect regression passed.")
 PY

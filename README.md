@@ -14,7 +14,7 @@ It combines fast FPS combat, movement, weapons, loot, enemy AI, procedural map g
 
 **Readiness:** **NOT READY**
 
-MODUS is not presented as a shipped game or production-ready SDK. Manual gameplay evidence, release packaging, Workshop publication, and broader external runtime validation remain open. The project keeps those boundaries visible while the underlying systems are developed and tested.
+MODUS is not presented as a shipped game or production-ready SDK. Manual gameplay evidence, release packaging, Workshop publication, and broader external runtime validation remain open. The project keeps those boundaries visible while the underlying systems are developed and tested; bounded performance evidence and a native-Windows acceptance harness exist without closing those gates.
 
 ## Read This Before Cloning
 
@@ -27,7 +27,7 @@ The parts most likely to frustrate you:
 - First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
 - Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
 - The Showcase route is an automated smoke path, not proof that the game feels good. Manual gameplay evidence is still zero reviewed hours.
-- Multiplayer proof is strongest on local ENet and focused authority contracts. WAN sessions, Steam, Workshop, target-Windows, graphical exported-editor acceptance, and long-session proof remain open.
+- Multiplayer proof is strongest on local ENet and focused authority contracts. The qualification harness now records application delivery, reconnect/soak and controlled host-loss outcomes; independently routed WAN sessions, Steam, Workshop, target-Windows execution, graphical exported-editor acceptance, and long-session proof remain open.
 - The current release line is `0.9.5-beta`; production readiness is explicitly **NOT READY**.
 
 If you want a polished game to play immediately, MODUS is the wrong download. If you want an inspectable FPS systems lab that you can bend, profile, test, and extend, it is the right kind of unfinished.
@@ -136,8 +136,9 @@ the Linux `modus` client/server/editor exports, or the Windows `modus.exe`
 client plus editor export. `.tar.zst` is the compact local transfer format;
 OVERZEER receiver deployment currently accepts the Linux `.tar.gz` and Windows
 `.zip` variants. These are local candidates, not authenticated deployments;
-native Windows execution, signing, receiver authentication and target
-acceptance remain required.
+the native-Windows acceptance harness retains same-build metadata and logs, but
+native Windows execution, signing, receiver authentication and target acceptance
+remain required.
 
 CI and local release jobs use `tools/package_overzeer.py` to build these
 archives from verified exports:

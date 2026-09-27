@@ -14,6 +14,7 @@ param(
     [ValidateRange(0, 600)]
     [int]$NetworkSoakSeconds = 0,
     [switch]$RequireReconnect,
+    [switch]$RequireHostLoss,
     [string]$Manifest = "",
     [string]$Hashes = ""
 )
@@ -24,6 +25,15 @@ if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
 }
 if ($NetworkMode -ne "Pair" -and $NetworkMode -ne "Skip" -and $NetworkPort -eq 0) {
     throw "-NetworkPort is required for -NetworkMode $NetworkMode."
+}
+if ($RequireHostLoss -and $NetworkMode -eq "Server") {
+    throw "-RequireHostLoss requires a paired or client network mode."
+}
+if ($RequireHostLoss -and $NetworkSoakSeconds -gt 0) {
+    throw "-RequireHostLoss cannot be combined with -NetworkSoakSeconds."
+}
+if ($RequireHostLoss -and $RequireReconnect) {
+    throw "-RequireHostLoss cannot be combined with -RequireReconnect."
 }
 
 $resolvedExecutable = (Resolve-Path -LiteralPath $Executable -ErrorAction Stop).Path
@@ -134,6 +144,9 @@ if ($NetworkMode -ne "Skip") {
         if ($RequireReconnect) {
             $networkArguments.RequireReconnect = $true
         }
+        if ($RequireHostLoss) {
+            $networkArguments.RequireHostLoss = $true
+        }
         & $networkScript @networkArguments
         $networkRun.status = "pass"
     } catch {
@@ -169,6 +182,7 @@ $report = [ordered]@{
     network = $networkReport
     network_launcher = $networkRun
     network_mode = $NetworkMode
+    host_loss_required = [bool]$RequireHostLoss
     remaining_gates = $remaining
     schema = "modus.windows-native-acceptance/v1"
     status = if ($clientPassed -and $networkPassed) { "pass" } else { "fail" }

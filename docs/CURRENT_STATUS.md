@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
-**Updated:** September 25, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
+**Updated:** September 27, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -10,7 +10,7 @@
 
 ## Summary
 
-MODUS contains broad FPS framework code plus focused and golden-demo runtime proof, but reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 25 strict headless aggregate passes 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped. Focused runtime, package, multiplayer, editor, and generator proof remains bounded by its named evidence lanes. Platform executable exports, signed release packaging, manual gameplay, performance evidence, target-Windows runtime, and external-service proof remain open.
+MODUS contains broad FPS framework code plus focused and golden-demo runtime proof, but reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 25 strict headless aggregate passes 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped. Focused runtime, package, multiplayer, editor, generator and bounded performance evidence are retained by named lanes. Platform executable exports, signed release packaging, manual gameplay, target-Windows runtime and external-service proof remain open.
 
 The canonical publication rules are in [Documentation Truth](DOCUMENTATION_TRUTH.md).
 
@@ -23,6 +23,8 @@ Portable schema-v1 manifests now cover all client/server/editor executable/PCK p
 The Linux helper now validates archive ownership/bytes/modes before extraction and replacement, supports rollback, and preserves unowned files and XDG data. The former upgrade path's deletion of an unowned file was reproduced. Three focused regression runners pass manifest relocation/tampering, staging failure isolation, malicious archives, failed-upgrade rollback and save preservation. A retained September 13 client executable passes package/install/verify/headless-launch/upgrade/verify/uninstall under a Unicode/space prefix; it was not rebuilt in this batch.
 
 CI builds Linux client and editor alongside its existing targets and assembles versioned Linux and OVERZEER candidates. The September 25 strict aggregate passed 1,665/1,665 tests with 22,767 assertions in 812.984 seconds. Native-runtime/dependency locking, signing/authentication, release publication, Windows runtime and manual acceptance remain open.
+
+The Windows acceptance harness now records actual W movement, Space jump and E interaction outcomes, reliable application-level ENet probes, reconnect/soak and controlled host-loss evidence, plus same-build manifest/commit/hash metadata and retained logs. Linux boundary regressions pass; no native Windows execution, independent WAN session, or authenticated Steam session is claimed.
 
 The OVERZEER package contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory validation passed, and the extracted Linux `--package-smoke` path exited cleanly. Authenticated receiver publication, signing, and native target smoke remain open.
 
@@ -83,10 +85,10 @@ September 13 production proof: the exported Linux client completes the `.mdsl` m
 | Latest batched Integration lane | **PASS** | September 10: 227/227 passing; 2 GUI-required files skipped |
 | Latest batched Property lane | **PASS** | September 10: 175/175 passing, 2,804 assertions |
 | Manual evidence | **BLOCKED / RECORDER READY** | Responsive 20-item F8 workflow and strict CSV validation pass; 0 reviewed CSV files and 0.00 validated hours |
-| Performance evidence | **PASS** | One bounded 66.4-second/130-sample showcase capture; not a production FPS claim |
+| Performance evidence | **PASS** | 2026-09-27 bounded headless Showcase capture: 81.00 seconds/133 samples; measured evidence shape only, not a production FPS claim |
 | Release-version evidence | **BLOCKED** | Project remains `0.9.5-beta` |
-| Production readiness | **NOT READY** | 2 validator-tracked blockers: manual evidence and release version; provenance clearance is outside that count |
-| Release evidence bundle | **INDEX COMPLETE / RELEASE BLOCKED** | Hashed menu/welcome/mod/golden-demo captures, short automated video, bounded benchmark table, known-limits matrix, provenance ledger, fresh three-preset notice checks, local Linux desktop export smoke, executable exports, local ENet/reconnect/latency/rate-limit proof, and authenticated Steam API initialization are retained; manual marketing review, installer, two-account Steam/Workshop, target-Windows runtime, and rights clearance remain open |
+| Production readiness | **NOT READY** | 3 validator-tracked blockers: filtered full suite, manual evidence and release version; provenance clearance is outside that count |
+| Release evidence bundle | **INDEX COMPLETE / RELEASE BLOCKED** | Hashed menu/welcome/mod/golden-demo captures, short automated video, bounded benchmark table, native Windows acceptance harness, known-limits matrix, provenance ledger, fresh three-preset notice checks, local Linux desktop export smoke, executable exports, local ENet/reconnect/host-loss/rate-limit proof, and authenticated Steam API initialization are retained; manual marketing review, installer, two-account Steam/Workshop, target-Windows runtime, independent WAN and rights clearance remain open |
 
 ## Current Focused Automated Proof
 
@@ -100,7 +102,7 @@ These results are narrower than the aggregate suite and must not be summed into 
 | Reconnect | 2/2; focused token preservation and reconnect cancellation proof |
 | Combat latency | 10/10; controlled 100 ms rewind/reconciliation proof; representative WAN sessions remain open |
 | Network rate validation | 13/13 focused network-manager proof; real abusive-client soak remains open |
-| ENet host/join | PASS; separate Godot server/client process, client connected over localhost; server is intentionally terminated by harness after client success |
+| ENet host/join | PASS; separate Godot server/client processes now prove readiness, reliable application delivery, reconnect/1-second soak and controlled host-loss observation; independent WAN and Steam transport remain external |
 | Package notices | 6/6 required notices match for Windows Desktop, Dedicated Server (Linux), and Standalone Editor resource exports; Windows client, Windows editor, and Linux server executables export successfully with installed Godot 4.7.2 templates |
 | Linux desktop export | PASS; `Linux Desktop` preset builds and the bounded exported artifact smoke launches cleanly on the current Linux/Godot 4.7.2 environment; this is not a published release or target-Windows proof |
 | RPC whitelist | 9/9 |
