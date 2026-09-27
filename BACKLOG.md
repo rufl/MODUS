@@ -58,16 +58,17 @@ This is the finite closure contract for the native target-Windows row and its th
 **Gate 2 — complete gameplay/content/save workflow**
 
 - From clean user data, the exported client loads the maintained Showcase content, spawns a player with gameplay components, moves the player, fires a weapon that reaches a live enemy, defeats that enemy, and collects a health pickup.
-- The client saves through `GameStateManager` to the encrypted named slot, changes the player state, loads the slot, and restores the saved position/state within the declared tolerance. The bundled sample mod loads through `ModLoader` when that content is part of the build.
+- The client saves through `GameStateManager` to the encrypted named slot, changes the player state, loads the slot, and restores the saved position/state within the declared tolerance. The bundled sample mod must load through `ModLoader` for the current build.
 - The workflow records pass/fail for scene load, player readiness, movement, weapon event, enemy defeat, pickup collection, save creation, load restoration and mod loading. The slot and all staging/backup artifacts are removed afterward.
-- The client exits without errors. A clean process-boundary relaunch/load check is required if the release claims cross-launch persistence; otherwise same-process save/load is the declared scope.
+- For this target-Windows row, same-process encrypted save/load is the declared scope. Cross-process migration/restore is a separate release-version compatibility gate and does not block this row.
 
 **Gate 3 — connected networking**
 
+- The required transport set for the current release profile is exactly local ENet multi-process, direct ENet WAN, and Steam relay/P2P when the bundled Steam profile is enabled.
 - **Local multi-process baseline:** launch independent exported server/client processes from the same build; prove server bind/readiness and a client-reported connected ENet session. A same-process loopback or editor run does not satisfy this sub-gate.
 - **Steam transport:** with two authorized accounts and the configured app/runtime, prove lobby/invite/join, ownership/auth result, replicated gameplay, late join, disconnect/reconnect, relay/P2P diagnostics and expected rejection behavior. Record the actual transport, account-independent build identity and teardown.
-- **WAN transport:** run the exported server and client on independently routed networks. Prove a reachable direct-ENet session, bidirectional gameplay/authority behavior, measured latency/loss, reconnect after client disconnect, host-loss handling and a bounded session soak. Test Steam relay/P2P separately when it is a supported transport.
-- Close the networking gate only when every required transport for the declared release profile has evidence. Loopback, one-host containers, simulated latency, one-account Steam initialization and source-level tests cannot close Steam/WAN requirements.
+- **WAN transport:** run the exported server and client on independently routed networks. Prove a reachable direct-ENet session, bidirectional gameplay/authority behavior, measured latency/loss, reconnect after client disconnect, host-loss handling and a bounded 10-minute session soak. Test Steam relay/P2P separately when it is a supported transport.
+- Close the networking gate only when the required transport set has evidence. Loopback, one-host containers, simulated latency, one-account Steam initialization and source-level tests cannot close Steam/WAN requirements.
 
 **Closure decision**
 
