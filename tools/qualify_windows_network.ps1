@@ -6,12 +6,18 @@ param(
     [ValidateRange(10, 600)]
     [int]$TimeoutSeconds = 90,
     [ValidateRange(0, 65535)]
-    [int]$Port = 0
+    [int]$Port = 0,
+    [ValidateSet("Pair", "Server", "Client")]
+    [string]$Role = "Pair",
+    [string]$ServerAddress = "127.0.0.1"
 )
 
 $ErrorActionPreference = "Stop"
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
     throw "Native Windows networking qualification must run on Windows."
+}
+if ($Role -ne "Pair" -and $Port -eq 0) {
+    throw "-Port is required for -Role $Role so the other machine can reach the session."
 }
 
 $resolvedExecutable = (Resolve-Path -LiteralPath $Executable -ErrorAction Stop).Path
@@ -26,10 +32,15 @@ if ($Port -eq 0) {
     $listener.Stop()
 }
 
-$serverOut = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-network-{0}.server.out" -f [Guid]::NewGuid())
-$serverErr = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-network-{0}.server.err" -f [Guid]::NewGuid())
-$clientOut = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-network-{0}.client.out" -f [Guid]::NewGuid())
-$clientErr = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-network-{0}.client.err" -f [Guid]::NewGuid())
+$resolvedReport = [IO.Path]::GetFullPath($Report)
+$reportDirectory = Split-Path -Parent $resolvedReport
+New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
+$reportStem = [IO.Path]::GetFileNameWithoutExtension($resolvedReport)
+$serverOut = Join-Path $reportDirectory ("{0}.server.stdout.log" -f $reportStem)
+$serverErr = Join-Path $reportDirectory ("{0}.server.stderr.log" -f $reportStem)
+$clientOut = Join-Path $reportDirectory ("{0}.client.stdout.log" -f $reportStem)
+$clientErr = Join-Path $reportDirectory ("{0}.client.stderr.log" -f $reportStem)
+Remove-Item -LiteralPath $serverOut, $serverErr, $clientOut, $clientErr -Force -ErrorAction SilentlyContinue
 $server = $null
 $client = $null
 
@@ -43,73 +54,109 @@ function Read-NetworkReport([string]$Path) {
     return $match.Matches[0].Groups[1].Value | ConvertFrom-Json
 }
 
-try {
-    $server = Start-Process -FilePath $resolvedExecutable `
-        -ArgumentList @(
-            "--headless",
-            "--windows-qualification-network-server",
-            "--windows-qualification-network-port",
-            "$Port"
-        ) `
-        -RedirectStandardOutput $serverOut `
-        -RedirectStandardError $serverErr `
-        -PassThru
-
-    $ready = $false
-    $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+function Wait-ServerReady([System.Diagnostics.Process]$Process, [string]$OutputPath, [string]$ErrorPath, [int]$ExpectedPort, [int]$Timeout) {
+    $deadline = [DateTime]::UtcNow.AddSeconds($Timeout)
     while ([DateTime]::UtcNow -lt $deadline) {
-        if ($server.HasExited) {
-            throw "Native Windows network server exited before readiness. stderr: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue)"
+        if ($Process.HasExited) {
+            throw "Native Windows network server exited before readiness. stderr: $(Get-Content $ErrorPath -Raw -ErrorAction SilentlyContinue)"
         }
-        if (Select-String -LiteralPath $serverOut -Pattern ("^MODUS_WINDOWS_NETWORK_READY={0}$" -f $Port)) {
-            $ready = $true
-            break
+        if (Select-String -LiteralPath $OutputPath -Pattern ("^MODUS_WINDOWS_NETWORK_READY={0}$" -f $ExpectedPort)) {
+            return
         }
         Start-Sleep -Milliseconds 250
     }
-    if (-not $ready) {
-        throw "Native Windows network server did not become ready within ${TimeoutSeconds}s"
+    throw "Native Windows network server did not become ready within ${Timeout}s"
+}
+
+try {
+    if ($Role -eq "Pair" -or $Role -eq "Server") {
+        $server = Start-Process -FilePath $resolvedExecutable `
+            -ArgumentList @(
+                "--headless",
+                "--windows-qualification-network-server",
+                "--windows-qualification-network-port",
+                "$Port"
+            ) `
+            -RedirectStandardOutput $serverOut `
+            -RedirectStandardError $serverErr `
+            -PassThru
+        Wait-ServerReady $server $serverOut $serverErr $Port $TimeoutSeconds
     }
 
-    $client = Start-Process -FilePath $resolvedExecutable `
-        -ArgumentList @(
-            "--headless",
-            "--windows-qualification-network-client",
-            "--windows-qualification-network-port",
-            "$Port"
-        ) `
-        -RedirectStandardOutput $clientOut `
-        -RedirectStandardError $clientErr `
-        -PassThru
+    if ($Role -eq "Pair" -or $Role -eq "Client") {
+        $client = Start-Process -FilePath $resolvedExecutable `
+            -ArgumentList @(
+                "--headless",
+                "--windows-qualification-network-client",
+                "--windows-qualification-network-address",
+                $ServerAddress,
+                "--windows-qualification-network-port",
+                "$Port"
+            ) `
+            -RedirectStandardOutput $clientOut `
+            -RedirectStandardError $clientErr `
+            -PassThru
+    }
 
-    if (-not $client.WaitForExit($TimeoutSeconds * 1000)) {
+    if ($null -ne $client -and -not $client.WaitForExit($TimeoutSeconds * 1000)) {
         throw "Native Windows network client exceeded ${TimeoutSeconds}s"
     }
-    $client.Refresh()
-    if (-not $server.WaitForExit($TimeoutSeconds * 1000)) {
+    if ($null -ne $server -and -not $server.WaitForExit($TimeoutSeconds * 1000)) {
         throw "Native Windows network server did not finish within ${TimeoutSeconds}s"
     }
-    $server.Refresh()
-
-    $serverReport = Read-NetworkReport $serverOut
-    $clientReport = Read-NetworkReport $clientOut
-    if ($null -eq $serverReport -or $null -eq $clientReport) {
-        throw "Native Windows network reports were not emitted. server stderr: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue); client stderr: $(Get-Content $clientErr -Raw -ErrorAction SilentlyContinue)"
+    if ($null -ne $client) {
+        $client.Refresh()
+        if ($client.ExitCode -ne 0) {
+            throw "Native Windows network client exited with code $($client.ExitCode). stderr: $(Get-Content $clientErr -Raw -ErrorAction SilentlyContinue)"
+        }
+    }
+    if ($null -ne $server) {
+        $server.Refresh()
+        if ($server.ExitCode -ne 0) {
+            throw "Native Windows network server exited with code $($server.ExitCode). stderr: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue)"
+        }
     }
 
+    $serverReport = if ($null -ne $server) { Read-NetworkReport $serverOut } else { $null }
+    $clientReport = if ($null -ne $client) { Read-NetworkReport $clientOut } else { $null }
+    if ($Role -eq "Pair" -and ($null -eq $serverReport -or $null -eq $clientReport)) {
+        throw "Native Windows network reports were not emitted. server stderr: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue); client stderr: $(Get-Content $clientErr -Raw -ErrorAction SilentlyContinue)"
+    }
+    if ($Role -eq "Server" -and $null -eq $serverReport) {
+        throw "Native Windows network server report was not emitted. stderr: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue)"
+    }
+    if ($Role -eq "Client" -and $null -eq $clientReport) {
+        throw "Native Windows network client report was not emitted. stderr: $(Get-Content $clientErr -Raw -ErrorAction SilentlyContinue)"
+    }
+
+    $status = if ($Role -eq "Pair") {
+        $serverReport.status -eq "pass" -and $serverReport.listening -and $clientReport.status -eq "pass" -and $clientReport.connected
+    } elseif ($Role -eq "Server") {
+        $serverReport.status -eq "pass" -and $serverReport.listening
+    } else {
+        $clientReport.status -eq "pass" -and $clientReport.connected
+    }
     $reportObject = [ordered]@{
         client = $clientReport
+        logs = [ordered]@{
+            client_stderr = [IO.Path]::GetFileName($clientErr)
+            client_stdout = [IO.Path]::GetFileName($clientOut)
+            server_stderr = [IO.Path]::GetFileName($serverErr)
+            server_stdout = [IO.Path]::GetFileName($serverOut)
+        }
+        mode = $Role
         port = $Port
         schema = "modus.windows-native-network-qualification/v1"
         server = $serverReport
-        status = if ($serverReport.status -eq "pass" -and $serverReport.listening -and $clientReport.status -eq "pass" -and $clientReport.connected) { "pass" } else { "fail" }
-        transport = "ENet native multi-process loopback"
+        server_address = $ServerAddress
+        status = if ($status) { "pass" } else { "fail" }
+        transport = "ENet native multi-process"
     }
-    $reportObject | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $Report -Encoding UTF8
+    $reportObject | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $resolvedReport -Encoding UTF8
     if ($reportObject.status -ne "pass") {
         throw "Native Windows network qualification failed; report: $Report"
     }
-    Write-Output "PASS: native Windows multi-process network report $Report"
+    Write-Output "PASS: native Windows network report $Report"
 }
 finally {
     foreach ($process in @($client, $server)) {
@@ -117,5 +164,4 @@ finally {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
         }
     }
-    Remove-Item -LiteralPath $serverOut, $serverErr, $clientOut, $clientErr -Force -ErrorAction SilentlyContinue
 }

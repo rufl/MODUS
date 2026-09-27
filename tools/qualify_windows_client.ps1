@@ -18,8 +18,13 @@ if (-not (Test-Path -LiteralPath $resolvedExecutable -PathType Leaf)) {
     throw "Windows client executable is not a regular file: $resolvedExecutable"
 }
 
-$stdoutPath = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-qualification-{0}.out" -f [Guid]::NewGuid())
-$stderrPath = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-qualification-{0}.err" -f [Guid]::NewGuid())
+$resolvedReport = [IO.Path]::GetFullPath($Report)
+$reportDirectory = Split-Path -Parent $resolvedReport
+New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
+$reportStem = [IO.Path]::GetFileNameWithoutExtension($resolvedReport)
+$stdoutPath = Join-Path $reportDirectory ("{0}.stdout.log" -f $reportStem)
+$stderrPath = Join-Path $reportDirectory ("{0}.stderr.log" -f $reportStem)
+Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
 $process = $null
 $arguments = @("--windows-qualification")
 if ($RequirePhysicalInput) {
@@ -48,9 +53,13 @@ try {
         $stderr = Get-Content -LiteralPath $stderrPath -Raw -ErrorAction SilentlyContinue
         throw "Qualification report was not emitted. stderr: $stderr"
     }
-
     $reportObject = $match.Matches[0].Groups[1].Value | ConvertFrom-Json
-    $reportObject | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $Report -Encoding UTF8
+
+    $reportObject | Add-Member -NotePropertyName logs -NotePropertyValue ([ordered]@{
+        stdout = [IO.Path]::GetFileName($stdoutPath)
+        stderr = [IO.Path]::GetFileName($stderrPath)
+    }) -Force
+    $reportObject | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $resolvedReport -Encoding UTF8
     if ($process.ExitCode -ne 0 -or $reportObject.status -ne "pass") {
         throw "Windows client qualification failed; report: $Report"
     }
@@ -63,5 +72,7 @@ try {
     Write-Output "PASS: native Windows client qualification report $Report"
 }
 finally {
-    Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+    if ($null -ne $process -and -not $process.HasExited) {
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+    }
 }

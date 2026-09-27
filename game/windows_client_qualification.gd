@@ -3,6 +3,11 @@ class_name WindowsClientQualification
 
 const REPORT_SCHEMA := "modus.windows-client-qualification/v1"
 const REPORT_PREFIX := "MODUS_WINDOWS_QUALIFICATION_JSON="
+const SHOWCASE_SCENE := "res://game/world/maps/showcase.tscn"
+const ENEMY_SCENE := "res://game/entities/enemies/enemy.tscn"
+const PICKUP_SCENE := "res://game/scenes/items/pickups/health_pickup.tscn"
+const SAMPLE_MOD_ID := "modus_sdk_sample"
+const SAMPLE_MOD_NAME := "MODUS SDK Sample"
 const REQUIRED_INPUT_ACTIONS = [
 	"up",
 	"down",
@@ -19,14 +24,60 @@ const REQUIRED_INPUT_ACTIONS = [
 var _root: Node
 var _checks: Dictionary = {}
 var _failures: Array[String] = []
-var _physical_input_seen := PackedStringArray()
+var _physical_input_events := {
+	"E":
+	{
+		"action": "interact",
+		"pressed": 0,
+		"released": 0,
+		"action_pressed": false,
+		"action_released": false
+	},
+	"SPACE":
+	{
+		"action": "jump",
+		"pressed": 0,
+		"released": 0,
+		"action_pressed": false,
+		"action_released": false
+	},
+	"W":
+	{
+		"action": "up",
+		"pressed": 0,
+		"released": 0,
+		"action_pressed": false,
+		"action_released": false
+	},
+}
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		var keycode := int(event.physical_keycode)
-		if keycode in [32, 69, 87]:
-			_physical_input_seen.append(str(keycode))
+	if not event is InputEventKey or event.echo:
+		return
+	var key_name := _physical_key_name(event as InputEventKey)
+	if key_name.is_empty():
+		return
+	var state: Dictionary = _physical_input_events[key_name]
+	var action := str(state.get("action", ""))
+	if event.pressed:
+		state["pressed"] = int(state.get("pressed", 0)) + 1
+		state["action_pressed"] = Input.is_action_pressed(action)
+	else:
+		state["released"] = int(state.get("released", 0)) + 1
+		state["action_released"] = not Input.is_action_pressed(action)
+	_physical_input_events[key_name] = state
+
+
+func _physical_key_name(event: InputEventKey) -> String:
+	match int(event.physical_keycode if event.physical_keycode != 0 else event.keycode):
+		69:
+			return "E"
+		32:
+			return "SPACE"
+		87:
+			return "W"
+	return ""
 
 
 func _has_argument(argument: String) -> bool:
@@ -149,18 +200,29 @@ func _input_check() -> Dictionary:
 		synthetic_released = not Input.is_action_pressed("up")
 
 	var physical_required := _has_argument("--windows-qualification-physical-input")
-	var physical_passed := not physical_required
+	var missing_physical: Array[String] = []
 	if physical_required:
-		print("Windows qualification: press W, E, or Space in the client window.")
+		print("Windows qualification: press and release W, E, and Space in the client window.")
 		for _attempt in range(1200):
-			if not _physical_input_seen.is_empty():
-				physical_passed = true
+			missing_physical.clear()
+			for key_name: String in _physical_input_events:
+				var state: Dictionary = _physical_input_events[key_name]
+				if (
+					int(state.get("pressed", 0)) < 1
+					or int(state.get("released", 0)) < 1
+					or not bool(state.get("action_pressed", false))
+					or not bool(state.get("action_released", false))
+				):
+					missing_physical.append(key_name)
+			if missing_physical.is_empty():
 				break
 			await _root.get_tree().process_frame
 
+	var physical_passed := not physical_required or missing_physical.is_empty()
 	return {
 		"empty_actions": empty,
 		"missing_actions": missing,
+		"missing_physical_keys": missing_physical,
 		"passed":
 		(
 			missing.is_empty()
@@ -169,7 +231,7 @@ func _input_check() -> Dictionary:
 			and synthetic_released
 			and physical_passed
 		),
-		"physical_input_events": _physical_input_seen,
+		"physical_input_events": _physical_input_events,
 		"physical_input_passed": physical_passed,
 		"physical_input_requested": physical_required,
 		"synthetic_pressed": synthetic_pressed,
@@ -211,7 +273,7 @@ func _content_check() -> Dictionary:
 		tree_root.add_child(self)
 		_root = tree_root
 
-	var scene_error := tree.change_scene_to_file("res://game/world/maps/showcase.tscn")
+	var scene_error := tree.change_scene_to_file(SHOWCASE_SCENE)
 	if scene_error != OK:
 		return {
 			"passed": false,
@@ -222,9 +284,7 @@ func _content_check() -> Dictionary:
 	await tree.scene_changed
 	await _wait_frames(30)
 	var world: Node = tree.current_scene
-	var scene_loaded := (
-		world != null and world.scene_file_path == "res://game/world/maps/showcase.tscn"
-	)
+	var scene_loaded := world != null and world.scene_file_path == SHOWCASE_SCENE
 	if not scene_loaded or not world.has_method("spawn_player_node"):
 		return {
 			"passed": false,
@@ -235,10 +295,16 @@ func _content_check() -> Dictionary:
 
 	world.spawn_player_node(1, "windows_qualification")
 	var player: Node3D = await _wait_for_player()
-	var player_spawned := player != null
+	var player_ready := (
+		player != null and "weapon_manager" in player and player.get("weapon_manager") != null
+	)
 	var moved := false
+	var weapon_fired := false
+	var enemy_defeated := false
+	var pickup_collected := false
 	var save_loaded := false
-	if player_spawned:
+	var mod_loaded := false
+	if player_ready:
 		player.global_position = Vector3(0, 2, 14)
 		await _wait_frames(5)
 		var start_position := player.global_position
@@ -248,15 +314,56 @@ func _content_check() -> Dictionary:
 		await _wait_frames(5)
 		moved = start_position.distance_to(player.global_position) >= 0.5
 
-		var pickup_scene := (
-			load("res://game/scenes/items/pickups/health_pickup.tscn") as PackedScene
-		)
+		var stats_before: Dictionary = world.get("match_stats")
+		var enemy: Node3D
+		var enemy_scene := load(ENEMY_SCENE) as PackedScene
+		if enemy_scene:
+			enemy = enemy_scene.instantiate() as Node3D
+			enemy.name = "WindowsQualificationEnemy"
+			world.add_child(enemy)
+			await _wait_frames(60)
+			enemy.set_process(false)
+			enemy.set_physics_process(false)
+			var camera: Camera3D = player.get("camera") as Camera3D
+			if camera:
+				enemy.global_position = (
+					player.global_position + (-camera.global_transform.basis.z * 5.0)
+				)
+				camera.look_at(enemy.global_position + Vector3(0, 0.9, 0), Vector3.UP)
+			var health_component: Node = enemy.get("health_component") as Node
+			if health_component:
+				health_component.set("max_health", 1.0)
+				health_component.set("current_health", 1.0)
+			await _wait_frames(5)
+			var shots_before := int(stats_before.get("shots_fired", 0))
+			var kills_before := int(stats_before.get("enemies_killed", 0))
+			var weapon_manager: Node = player.get("weapon_manager") as Node
+			if weapon_manager and weapon_manager.has_method("fire"):
+				weapon_manager.fire(true, true)
+				await _wait_frames(120)
+				var stats_after: Dictionary = world.get("match_stats")
+				weapon_fired = int(stats_after.get("shots_fired", 0)) > shots_before
+				enemy_defeated = (
+					int(stats_after.get("enemies_killed", 0)) > kills_before
+					or not is_instance_valid(enemy)
+					or bool(enemy.get("is_dead"))
+				)
+
+		var health_before := 50.0
+		player.set("health", health_before)
+		var pickups_before := int(stats_before.get("items_collected", 0))
+		var pickup_scene := load(PICKUP_SCENE) as PackedScene
 		if pickup_scene:
 			var pickup := pickup_scene.instantiate() as Node3D
+			pickup.name = "WindowsQualificationPickup"
 			world.add_child(pickup)
 			pickup.global_position = player.global_position
 			await _wait_frames(60)
-
+			var pickup_stats: Dictionary = world.get("match_stats")
+			pickup_collected = (
+				float(player.get("health")) > health_before
+				and int(pickup_stats.get("items_collected", 0)) > pickups_before
+			)
 		var state_manager: Node = GameManager.get_core_system("state_manager")
 		if state_manager:
 			var slot := "windows-client-content-qualification"
@@ -270,13 +377,42 @@ func _content_check() -> Dictionary:
 				await _wait_frames(10)
 				save_loaded = player.global_position.distance_to(saved_position) < 0.25
 			state_manager.delete_save(slot)
+
+		var mod_loader: Node = GameManager.get_core_system("mod_loader")
+		if mod_loader:
+			var original_enabled := false
+			for mod_info: Dictionary in mod_loader.get_installed_mods():
+				if mod_info.get("id", "") == SAMPLE_MOD_ID:
+					original_enabled = bool(mod_info.get("enabled", false))
+					break
+			mod_loader.set_mod_enabled(SAMPLE_MOD_ID, true)
+			mod_loader.reload_mods()
+			await _wait_frames(10)
+			mod_loaded = mod_loader.is_mod_loaded(SAMPLE_MOD_NAME)
+			mod_loader.set_mod_enabled(SAMPLE_MOD_ID, original_enabled)
+			mod_loader.reload_mods()
 	return {
+		"enemy_defeated": enemy_defeated,
+		"mod_loaded": mod_loaded,
 		"moved": moved,
-		"passed": scene_loaded and player_spawned and moved and save_loaded,
-		"player_spawned": player_spawned,
+		"passed":
+		(
+			scene_loaded
+			and player_ready
+			and moved
+			and weapon_fired
+			and enemy_defeated
+			and pickup_collected
+			and save_loaded
+			and mod_loaded
+		),
+		"player_ready": player_ready,
+		"player_spawned": player != null,
+		"pickup_collected": pickup_collected,
 		"requested": true,
 		"save_loaded": save_loaded,
 		"scene_loaded": scene_loaded,
+		"weapon_fired": weapon_fired,
 	}
 
 
@@ -355,14 +491,16 @@ func _network_check() -> Dictionary:
 	}
 
 
-func run_network_role(root: Node, role: String, port: int) -> Dictionary:
+func run_network_role(
+	root: Node, role: String, port: int, address: String = "127.0.0.1"
+) -> Dictionary:
 	_root = root
 	if GameManager and not GameManager.is_initialized():
 		await GameManager.ready
 
 	var peer := ENetMultiplayerPeer.new()
 	var peer_error := (
-		peer.create_server(port, 2) if role == "server" else peer.create_client("127.0.0.1", port)
+		peer.create_server(port, 2) if role == "server" else peer.create_client(address, port)
 	)
 	var connected := false
 	var listening := peer_error == OK
@@ -379,8 +517,8 @@ func run_network_role(root: Node, role: String, port: int) -> Dictionary:
 			await _root.get_tree().process_frame
 		_root.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	peer.close()
-
 	var report := {
+		"address": address,
 		"connected": connected,
 		"listening": listening,
 		"peer_count": 0,
@@ -388,7 +526,7 @@ func run_network_role(root: Node, role: String, port: int) -> Dictionary:
 		"role": role,
 		"schema": REPORT_SCHEMA,
 		"status": "pass" if listening and (role == "server" or connected) else "fail",
-		"transport": "ENet native multi-process loopback",
+		"transport": "ENet native multi-process",
 	}
 	print("MODUS_WINDOWS_NETWORK_JSON=" + JSON.stringify(report))
 	return report

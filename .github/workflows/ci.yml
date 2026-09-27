@@ -365,7 +365,13 @@ jobs:
         with:
           path: |
             windows-client-qualification.json
+            windows-client-qualification.stdout.log
+            windows-client-qualification.stderr.log
             windows-network-qualification.json
+            windows-network-qualification.server.stdout.log
+            windows-network-qualification.server.stderr.log
+            windows-network-qualification.client.stdout.log
+            windows-network-qualification.client.stderr.log
             artifacts/windows/manifest.json
             artifacts/windows/SHA256SUMS
           if-no-files-found: warn

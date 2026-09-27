@@ -50,9 +50,14 @@ assert content_status != 0
 assert content_report["status"] == "fail"
 assert content_report["checks"]["content_workflow"]["status"] == "pass"
 assert content_report["checks"]["content_workflow"]["details"]["scene_loaded"]
+assert content_report["checks"]["content_workflow"]["details"]["player_ready"]
 assert content_report["checks"]["content_workflow"]["details"]["player_spawned"]
 assert content_report["checks"]["content_workflow"]["details"]["moved"]
+assert content_report["checks"]["content_workflow"]["details"]["weapon_fired"]
+assert content_report["checks"]["content_workflow"]["details"]["enemy_defeated"]
+assert content_report["checks"]["content_workflow"]["details"]["pickup_collected"]
 assert content_report["checks"]["content_workflow"]["details"]["save_loaded"]
+assert content_report["checks"]["content_workflow"]["details"]["mod_loaded"]
 assert report["checks"]["content_workflow"]["status"] == "pass"
 assert report["checks"]["content_workflow"]["details"]["status"] == "not_requested"
 assert report["checks"]["network"]["status"] == "pass"
