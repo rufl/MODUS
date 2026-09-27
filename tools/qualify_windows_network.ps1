@@ -9,7 +9,10 @@ param(
     [int]$Port = 0,
     [ValidateSet("Pair", "Server", "Client")]
     [string]$Role = "Pair",
-    [string]$ServerAddress = "127.0.0.1"
+    [string]$ServerAddress = "127.0.0.1",
+    [ValidateRange(0, 600)]
+    [int]$SoakSeconds = 0,
+    [switch]$RequireReconnect
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,6 +43,28 @@ $serverOut = Join-Path $reportDirectory ("{0}.server.stdout.log" -f $reportStem)
 $serverErr = Join-Path $reportDirectory ("{0}.server.stderr.log" -f $reportStem)
 $clientOut = Join-Path $reportDirectory ("{0}.client.stdout.log" -f $reportStem)
 $clientErr = Join-Path $reportDirectory ("{0}.client.stderr.log" -f $reportStem)
+$serverArguments = @(
+    "--headless",
+    "--windows-qualification-network-server",
+    "--windows-qualification-network-port",
+    "$Port"
+)
+$clientArguments = @(
+    "--headless",
+    "--windows-qualification-network-client",
+    "--windows-qualification-network-address",
+    $ServerAddress,
+    "--windows-qualification-network-port",
+    "$Port"
+)
+if ($SoakSeconds -gt 0) {
+    $serverArguments += @("--windows-qualification-network-soak-seconds", "$SoakSeconds")
+    $clientArguments += @("--windows-qualification-network-soak-seconds", "$SoakSeconds")
+}
+if ($RequireReconnect) {
+    $serverArguments += "--windows-qualification-network-reconnect"
+    $clientArguments += "--windows-qualification-network-reconnect"
+}
 Remove-Item -LiteralPath $serverOut, $serverErr, $clientOut, $clientErr -Force -ErrorAction SilentlyContinue
 $server = $null
 $client = $null
@@ -71,12 +96,7 @@ function Wait-ServerReady([System.Diagnostics.Process]$Process, [string]$OutputP
 try {
     if ($Role -eq "Pair" -or $Role -eq "Server") {
         $server = Start-Process -FilePath $resolvedExecutable `
-            -ArgumentList @(
-                "--headless",
-                "--windows-qualification-network-server",
-                "--windows-qualification-network-port",
-                "$Port"
-            ) `
+            -ArgumentList $serverArguments `
             -RedirectStandardOutput $serverOut `
             -RedirectStandardError $serverErr `
             -PassThru
@@ -85,14 +105,7 @@ try {
 
     if ($Role -eq "Pair" -or $Role -eq "Client") {
         $client = Start-Process -FilePath $resolvedExecutable `
-            -ArgumentList @(
-                "--headless",
-                "--windows-qualification-network-client",
-                "--windows-qualification-network-address",
-                $ServerAddress,
-                "--windows-qualification-network-port",
-                "$Port"
-            ) `
+            -ArgumentList $clientArguments `
             -RedirectStandardOutput $clientOut `
             -RedirectStandardError $clientErr `
             -PassThru
@@ -130,13 +143,37 @@ try {
     }
 
     $status = if ($Role -eq "Pair") {
-        $serverReport.status -eq "pass" -and $serverReport.listening -and $clientReport.status -eq "pass" -and $clientReport.connected
+        $serverReport.status -eq "pass" `
+            -and $serverReport.listening `
+            -and $serverReport.application_probe_passed `
+            -and $clientReport.status -eq "pass" `
+            -and $clientReport.connection_established `
+            -and $clientReport.application_probe_passed
     } elseif ($Role -eq "Server") {
         $serverReport.status -eq "pass" -and $serverReport.listening
     } else {
-        $clientReport.status -eq "pass" -and $clientReport.connected
+        $clientReport.status -eq "pass" `
+            -and $clientReport.connection_established `
+            -and $clientReport.application_probe_passed
+    }
+    if ($SoakSeconds -gt 0) {
+        if ($null -ne $serverReport) {
+            $status = $status -and $serverReport.soak_completed
+        }
+        if ($null -ne $clientReport) {
+            $status = $status -and $clientReport.soak_completed
+        }
+    }
+    if ($RequireReconnect) {
+        if ($null -ne $serverReport) {
+            $status = $status -and $serverReport.reconnected
+        }
+        if ($null -ne $clientReport) {
+            $status = $status -and $clientReport.reconnected
+        }
     }
     $reportObject = [ordered]@{
+        require_reconnect = [bool]$RequireReconnect
         client = $clientReport
         logs = [ordered]@{
             client_stderr = [IO.Path]::GetFileName($clientErr)
@@ -144,6 +181,7 @@ try {
             server_stderr = [IO.Path]::GetFileName($serverErr)
             server_stdout = [IO.Path]::GetFileName($serverOut)
         }
+        soak_seconds = $SoakSeconds
         mode = $Role
         port = $Port
         schema = "modus.windows-native-network-qualification/v1"

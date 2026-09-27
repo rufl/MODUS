@@ -12,9 +12,12 @@ status=$?
 "$GODOT_BIN" --headless --path "$ROOT" -- --windows-qualification --windows-qualification-content \
 	>"$TMP/content-output.log" 2>&1
 content_status=$?
+timeout 90s "$GODOT_BIN" --headless --path "$ROOT" -- --windows-qualification --windows-qualification-physical-input \
+	>"$TMP/physical-output.log" 2>&1
+physical_status=$?
 set -e
 
-python3 - "$TMP/output.log" "$status" "$TMP/content-output.log" "$content_status" <<'PY'
+python3 - "$TMP/output.log" "$status" "$TMP/content-output.log" "$content_status" "$TMP/physical-output.log" "$physical_status" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -61,5 +64,24 @@ assert content_report["checks"]["content_workflow"]["details"]["mod_loaded"]
 assert report["checks"]["content_workflow"]["status"] == "pass"
 assert report["checks"]["content_workflow"]["details"]["status"] == "not_requested"
 assert report["checks"]["network"]["status"] == "pass"
+physical_output = Path(sys.argv[5]).read_text(encoding="utf-8")
+physical_status = int(sys.argv[6])
+physical_reports = [
+	line.removeprefix(prefix)
+	for line in physical_output.splitlines()
+	if line.startswith(prefix)
+]
+assert physical_reports, physical_output
+physical_report = json.loads(physical_reports[-1])
+assert physical_status != 0
+assert physical_report["checks"]["input"]["status"] == "fail"
+physical_details = physical_report["checks"]["input"]["details"]
+assert physical_details["physical_input_requested"]
+assert set(physical_details["physical_input_outcomes"]) == {
+	"interaction_e",
+	"jump_space",
+	"movement_w",
+}
+assert set(physical_details["missing_physical_keys"]) == {"E", "SPACE", "W"}
 print("Windows qualification native-boundary regression passed.")
 PY

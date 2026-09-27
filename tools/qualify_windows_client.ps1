@@ -28,7 +28,7 @@ Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyCo
 $process = $null
 $arguments = @("--windows-qualification")
 if ($RequirePhysicalInput) {
-    Write-Output "Press W, E, or Space in the MODUS client window when prompted."
+    Write-Output "Follow the MODUS window prompts: press and release W, Space, and E."
     $arguments += "--windows-qualification-physical-input"
 }
 if ($RequireContentWorkflow) {

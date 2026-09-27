@@ -411,16 +411,16 @@ func _load_from_disk(peer_id: int) -> Dictionary:
 	var persistent_id := _get_persistent_player_id(peer_id)
 	var path := DATA_DIR + persistent_id + ".json"
 	if FileAccess.file_exists(path):
-		var data: Dictionary = JSON5Loader.load_file(path)
-		if data:
+		var data: Variant = JSON5Loader.load_file(path, false)
+		if data is Dictionary:
 			return data
 
 	# Preserve the host profile compatibility path.
 	if peer_id == 1:
 		var host_path := DATA_DIR + "host_profile.json"
 		if FileAccess.file_exists(host_path):
-			var host_data: Dictionary = JSON5Loader.load_file(host_path)
-			if host_data:
+			var host_data: Variant = JSON5Loader.load_file(host_path, false)
+			if host_data is Dictionary:
 				return host_data
 	return {}
 

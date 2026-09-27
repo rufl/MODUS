@@ -85,7 +85,12 @@ func _run_windows_qualification() -> void:
 func _run_windows_network(role: String) -> void:
 	var qualification: Variant = _new_windows_qualification()
 	var report: Dictionary = await qualification.run_network_role(
-		self, role, _qualification_port(), _qualification_address()
+		self,
+		role,
+		_qualification_port(),
+		_qualification_address(),
+		_qualification_network_soak_seconds(),
+		_has_qualification_arg("--windows-qualification-network-reconnect")
 	)
 	qualification.queue_free()
 	get_tree().quit(0 if report.get("status") == "pass" else 1)
@@ -116,6 +121,14 @@ func _qualification_address() -> String:
 	if index >= 0 and index + 1 < arguments.size():
 		return str(arguments[index + 1])
 	return "127.0.0.1"
+
+
+func _qualification_network_soak_seconds() -> int:
+	var arguments := OS.get_cmdline_args() + OS.get_cmdline_user_args()
+	var index := arguments.find("--windows-qualification-network-soak-seconds")
+	if index >= 0 and index + 1 < arguments.size():
+		return maxi(int(arguments[index + 1]), 0)
+	return 0
 
 
 func _on_tree_changed() -> void:

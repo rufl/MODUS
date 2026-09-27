@@ -4,21 +4,22 @@ extends RefCounted
 const JSONHelperClass = preload("res://game/core/json_helper.gd")
 
 
-static func load_file(path: String) -> Variant:
+static func load_file(path: String, report_errors: bool = true) -> Variant:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if not file:
-		push_error("[JSON5] Failed to open: %s - %s" % [path, FileAccess.get_open_error()])
+		if report_errors:
+			push_error("[JSON5] Failed to open: %s - %s" % [path, FileAccess.get_open_error()])
 		return null
 
 	var content := file.get_as_text()
 	file.close()
-	return parse_string(content)
+	return parse_string(content, report_errors)
 
 
 ## Parse a JSON5 string into a Variant (Dictionary, Array, etc.)
 
 
-static func parse_string(text: String) -> Variant:
+static func parse_string(text: String, report_errors: bool = true) -> Variant:
 	# Strip comments first
 	text = _strip_comments(text)
 	# Fix trailing commas
@@ -28,7 +29,8 @@ static func parse_string(text: String) -> Variant:
 	var parser := JSON.new()
 	var parse_error := parser.parse(text)
 	if parse_error != OK:
-		push_error("[JSON5] Parse error - check for syntax errors")
+		if report_errors:
+			push_error("[JSON5] Parse error - check for syntax errors")
 		return null
 	return parser.data
 
