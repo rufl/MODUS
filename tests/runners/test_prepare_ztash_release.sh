@@ -5,13 +5,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP="$(mktemp -d "${TMPDIR:-/tmp}/modus-ztash-preparer.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT
 
-python3 - "$TMP" <<'PY'
+python3 - "$TMP" "$ROOT" <<'PY'
 from pathlib import Path
 import sys
 import tarfile
 import zipfile
 
 root = Path(sys.argv[1])
+project_root = Path(sys.argv[2])
 release = root / "release"
 release.mkdir()
 version = "0.1.0"
@@ -46,7 +47,7 @@ python3 "$ROOT/tools/prepare_ztash_release.py" \
   --root "$TMP/release" \
   --output "$TMP/ztash"
 
-python3 - "$TMP/ztash" <<'PY'
+python3 - "$TMP/ztash" "$ROOT" <<'PY'
 import hashlib
 import json
 import sys
@@ -56,9 +57,12 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 manifest = json.loads((root / "ztash-release.json").read_text())
+project_root = Path(sys.argv[2])
 assert manifest["schema"] == "ztash-release-v1"
 assert manifest["build_id"] == "0123456789abcdef0123456789abcdef01234567"
+expected_lock_hash = hashlib.sha256((project_root / "tools/toolchain.lock.json").read_bytes()).hexdigest()
 assert {item["target"] for item in manifest["artifacts"]} == {"x86_64-linux", "x86_64-windows-gnu"}
+assert manifest["toolchain_lock_sha256"] == expected_lock_hash
 for item in manifest["artifacts"]:
     archive = root / item["name"]
     assert archive.stat().st_size == item["size"]

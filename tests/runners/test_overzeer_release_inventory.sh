@@ -67,8 +67,10 @@ subprocess.run([
     "--ztash-output", str(ztash),
 ], check=True)
 data = json.loads(inventory.read_text())
+lock_hash = hashlib.sha256((root / "tools/toolchain.lock.json").read_bytes()).hexdigest()
 assert data["schema"] == "modus.overzeer-release/v1"
 assert data["build_id"] == "a" * 40
+assert data["toolchain_lock_sha256"] == lock_hash
 assert len(data["artifacts"]) == 4
 assert {item["format"] for item in data["artifacts"]} == {"tar.zst", "tar.gz", "zip"}
 assert all(item["signing"] == "unsigned" and item["bytes"] > 0 for item in data["artifacts"])
@@ -76,6 +78,7 @@ for item in data["artifacts"]:
     assert hashlib.sha256((release / item["archive"]).read_bytes()).hexdigest() == item["sha256"]
 ztash_data = json.loads(ztash.read_text())
 assert ztash_data["schema"] == "ztash-release-v1"
+assert ztash_data["toolchain_lock_sha256"] == lock_hash
 assert {item["target"] for item in ztash_data["artifacts"]} == {"x86_64-linux", "x86_64-windows-gnu"}
 assert all(item["size"] > 0 and len(item["sha256"]) == 64 for item in ztash_data["artifacts"])
 bad = temporary / "bad.json"
@@ -88,5 +91,14 @@ result = subprocess.run([
 ], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 assert result.returncode != 0
 assert not bad.exists()
+missing_lock = temporary / "missing-toolchain.lock.json"
+missing_output = temporary / "missing-lock-inventory.json"
+result = subprocess.run([
+    sys.executable, str(validator), "--version", "0.9.5-beta",
+    "--build-id", "a" * 40, "--root", str(release), "--output", str(missing_output),
+    "--toolchain-lock", str(missing_lock),
+], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+assert result.returncode != 0
+assert not missing_output.exists()
 print("OVERZEER release inventory, target-root, digest and tamper checks passed.")
 PY

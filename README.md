@@ -171,8 +171,11 @@ inventory metadata:
 ```bash
 python3 tools/validate_overzeer_release.py \
   --version 0.9.5-beta --build-id "$(git rev-parse HEAD)" \
-  --root build/release --output build/release/overzeer-release.json
+  --root build/release \
+  --toolchain-lock tools/toolchain.lock.json \
+  --output build/release/overzeer-release.json
 ```
+The inventory and derived ZTASH manifest carry the SHA-256 digest of the toolchain lock used for the qualification run. This binds metadata to recorded inputs; it does not authenticate unsigned archives or prove target capability.
 
 To remove only obsolete package archives while preserving the selected
 version, preview first and then apply:

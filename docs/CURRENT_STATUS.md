@@ -18,7 +18,7 @@ Publication cleanup preserves old local evidence without refreshing it. Fresh cl
 
 ### September 22 Release Engineering
 
-Portable schema-v1 manifests now cover all client/server/editor executable/PCK pairs with root-relative paths, SHA-256 hashes and optional commit/runtime identity. Verification rejects corrupted, missing, duplicated or escaping payloads. Candidate staging requires identity, verifies before and after copying, and refuses existing destinations. Detached-signature metadata is an integrity record, not signature authentication.
+Portable schema-v1 manifests now cover all client/server/editor executable/PCK pairs with root-relative paths, SHA-256 hashes and optional commit/runtime identity. Verification rejects corrupted, missing, duplicated or escaping payloads. Candidate staging requires identity, verifies before and after copying, and refuses existing destinations. Detached-signature metadata is an integrity record, not signature authentication. OVERZEER and ZTASH release inventories now also record the SHA-256 digest of the checked-in toolchain lock used for assembly.
 
 The Linux helper now validates archive ownership/bytes/modes before extraction and replacement, supports rollback, and preserves unowned files and XDG data. The former upgrade path's deletion of an unowned file was reproduced. Three focused regression runners pass manifest relocation/tampering, staging failure isolation, malicious archives, failed-upgrade rollback and save preservation. A retained September 13 client executable passes package/install/verify/headless-launch/upgrade/verify/uninstall under a Unicode/space prefix; it was not rebuilt in this batch.
 

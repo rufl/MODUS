@@ -496,11 +496,14 @@ jobs:
           python3 tools/validate_overzeer_release.py \
             --version "$version" --build-id "$BUILD_COMMIT" \
             --root build/release \
+            --toolchain-lock tools/toolchain.lock.json \
             --output build/release/overzeer-release.json \
             --ztash-output build/release/ztash-source-release.json
           python3 tools/prepare_ztash_release.py \
             --version "$version" --build-id "$BUILD_COMMIT" \
-            --root build/release --output build/release/ztash
+            --root build/release \
+            --toolchain-lock tools/toolchain.lock.json \
+            --output build/release/ztash
           printf 'Unsigned Linux and Windows candidates plus lean ZTASH receiver packages assembled. Native integration lock, signing, publication and target acceptance remain open.\n' \
             >> "$GITHUB_STEP_SUMMARY"
 

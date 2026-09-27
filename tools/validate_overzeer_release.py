@@ -33,6 +33,10 @@ def digest(path: Path) -> str:
             value.update(chunk)
     return value.hexdigest()
 
+def required_digest(path: Path, description: str) -> str:
+    if not path.is_file() or path.is_symlink():
+        fail(f"{description} must be a regular file: {path}")
+    return digest(path)
 
 def archive_specs(version: str) -> list[tuple[str, str, str, set[str], str]]:
     linux_root = f"modus-{version}-linux-x86_64"
@@ -134,6 +138,8 @@ def validate(args: argparse.Namespace) -> None:
     root = args.root.absolute()
     output = args.output.absolute()
     ztash_output = args.ztash_output.absolute() if args.ztash_output else None
+    toolchain_lock = args.toolchain_lock.absolute()
+    toolchain_lock_sha256 = required_digest(toolchain_lock, "toolchain lock")
     if output.exists() or output.is_symlink():
         fail(f"refusing to replace existing inventory: {output}")
     if ztash_output is not None and (ztash_output.exists() or ztash_output.is_symlink()):
@@ -162,6 +168,7 @@ def validate(args: argparse.Namespace) -> None:
         "build_id": args.build_id,
         "schema": "modus.overzeer-release/v1",
         "version": args.version,
+        "toolchain_lock_sha256": toolchain_lock_sha256,
     }
     output.write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if ztash_output is not None:
@@ -190,6 +197,7 @@ def validate(args: argparse.Namespace) -> None:
             "build_id": args.build_id,
             "schema": "ztash-release-v1",
             "version": args.version,
+            "toolchain_lock_sha256": toolchain_lock_sha256,
         }
         ztash_output.parent.mkdir(parents=True, exist_ok=True)
         ztash_output.write_text(json.dumps(ztash, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -205,6 +213,12 @@ def main() -> int:
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--ztash-output", type=Path)
+    parser.add_argument(
+        "--toolchain-lock",
+        type=Path,
+        default=Path(__file__).with_name("toolchain.lock.json"),
+        help="checked-in toolchain lock bound to the release metadata",
+    )
     try:
         validate(parser.parse_args())
     except (OSError, ValueError, tarfile.TarError, zipfile.BadZipFile) as error:

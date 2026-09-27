@@ -34,6 +34,10 @@ def digest(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             hasher.update(chunk)
     return hasher.hexdigest()
+def required_digest(path: Path, description: str) -> str:
+    if not path.is_file() or path.is_symlink():
+        raise Failure(f"{description} must be a regular file: {path}")
+    return digest(path)
 
 
 def safe_member(name: str) -> PurePosixPath:
@@ -133,6 +137,8 @@ def prepare(args: argparse.Namespace) -> None:
     root = args.root.absolute()
     output = args.output.absolute()
     icons = args.icons.absolute()
+    toolchain_lock = args.toolchain_lock.absolute()
+    toolchain_lock_sha256 = required_digest(toolchain_lock, "toolchain lock")
     tool = args.package_tool.absolute()
     if not root.is_dir() or root.is_symlink():
         raise Failure(f"invalid release root: {root}")
@@ -194,6 +200,7 @@ def prepare(args: argparse.Namespace) -> None:
             "build_id": args.build_id,
             "schema": "ztash-release-v1",
             "version": args.version,
+            "toolchain_lock_sha256": toolchain_lock_sha256,
         }
         (package_root / "ztash-release.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -210,6 +217,12 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--icons", type=Path, default=Path(__file__).parents[3] / "OVERZEER" / "packaging")
     parser.add_argument("--package-tool", type=Path, default=Path(__file__).with_name("package_overzeer.py"))
+    parser.add_argument(
+        "--toolchain-lock",
+        type=Path,
+        default=Path(__file__).with_name("toolchain.lock.json"),
+        help="checked-in toolchain lock bound to the release metadata",
+    )
     try:
         prepare(parser.parse_args())
     except (OSError, ValueError, tarfile.TarError, zipfile.BadZipFile, subprocess.CalledProcessError) as error:
