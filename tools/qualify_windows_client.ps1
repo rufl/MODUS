@@ -4,9 +4,10 @@ param(
     [string]$Executable,
     [string]$Report = "windows-client-qualification.json",
     [ValidateRange(10, 600)]
-    [int]$TimeoutSeconds = 90
+    [int]$TimeoutSeconds = 90,
+    [switch]$RequirePhysicalInput,
+    [switch]$RequireContentWorkflow
 )
-
 $ErrorActionPreference = "Stop"
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
     throw "Native Windows qualification must run on Windows; Wine and cross-export are supplementary only."
@@ -20,9 +21,17 @@ if (-not (Test-Path -LiteralPath $resolvedExecutable -PathType Leaf)) {
 $stdoutPath = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-qualification-{0}.out" -f [Guid]::NewGuid())
 $stderrPath = Join-Path ([IO.Path]::GetTempPath()) ("modus-windows-qualification-{0}.err" -f [Guid]::NewGuid())
 $process = $null
+$arguments = @("--windows-qualification")
+if ($RequirePhysicalInput) {
+    Write-Output "Press W, E, or Space in the MODUS client window when prompted."
+    $arguments += "--windows-qualification-physical-input"
+}
+if ($RequireContentWorkflow) {
+    $arguments += "--windows-qualification-content"
+}
 try {
     $process = Start-Process -FilePath $resolvedExecutable `
-        -ArgumentList @("--windows-qualification") `
+        -ArgumentList $arguments `
         -RedirectStandardOutput $stdoutPath `
         -RedirectStandardError $stderrPath `
         -PassThru
@@ -46,7 +55,7 @@ try {
         throw "Windows client qualification failed; report: $Report"
     }
 
-    foreach ($check in @("platform", "renderer", "input", "save", "network")) {
+    foreach ($check in @("platform", "renderer", "input", "save", "network", "content_workflow")) {
         if ($reportObject.checks.$check.status -ne "pass") {
             throw "Windows client qualification check failed: $check"
         }

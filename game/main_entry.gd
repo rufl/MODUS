@@ -5,6 +5,12 @@ const MAIN_MENU_SCREEN: String = "res://shared/ui_core/screens/main_menu_screen.
 
 func _ready() -> void:
 	var user_args := OS.get_cmdline_user_args()
+	if _has_qualification_arg("--windows-qualification-network-server"):
+		await _run_windows_network("server")
+		return
+	if _has_qualification_arg("--windows-qualification-network-client"):
+		await _run_windows_network("client")
+		return
 	if "--windows-qualification" in OS.get_cmdline_args() or "--windows-qualification" in user_args:
 		await _run_windows_qualification()
 		return
@@ -70,10 +76,36 @@ func _run_package_smoke() -> void:
 
 
 func _run_windows_qualification() -> void:
-	var qualification: Variant = RefCounted.new()
-	qualification.set_script(load("res://game/windows_client_qualification.gd"))
+	var qualification: Variant = _new_windows_qualification()
 	var report: Dictionary = await qualification.run(self)
+	qualification.queue_free()
 	get_tree().quit(0 if report.get("status") == "pass" else 1)
+
+
+func _run_windows_network(role: String) -> void:
+	var qualification: Variant = _new_windows_qualification()
+	var report: Dictionary = await qualification.run_network_role(self, role, _qualification_port())
+	qualification.queue_free()
+	get_tree().quit(0 if report.get("status") == "pass" else 1)
+
+
+func _new_windows_qualification() -> Variant:
+	var qualification: Variant = Node.new()
+	qualification.set_script(load("res://game/windows_client_qualification.gd"))
+	add_child(qualification)
+	return qualification
+
+
+func _has_qualification_arg(argument: String) -> bool:
+	return argument in OS.get_cmdline_args() or argument in OS.get_cmdline_user_args()
+
+
+func _qualification_port() -> int:
+	var arguments := OS.get_cmdline_args() + OS.get_cmdline_user_args()
+	var index := arguments.find("--windows-qualification-network-port")
+	if index >= 0 and index + 1 < arguments.size():
+		return int(arguments[index + 1])
+	return 29876
 
 
 func _on_tree_changed() -> void:
