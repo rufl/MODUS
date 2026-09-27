@@ -37,6 +37,42 @@ Treat generated entries as proposals until they are promoted into the active que
 Report paths and `logs/` are ignored local outputs. See [report regeneration and evidence prerequisites](docs/DOCUMENTATION_TRUTH.md#regenerating-local-reports); their absence on a fresh clone does not invalidate historical summaries or establish a current PASS.
 
 The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts using Godot 4.7.2; the filtered run completed in 812.984 seconds. Manual, performance-evidence, release-version, provenance, GUI-required, target-native, signing, publication, and external proof remain open. `[truth:test]`
+
+### Native Windows acceptance contract (definition of done)
+
+This is the finite closure contract for the native target-Windows row and its three remaining gates. One approved Windows machine, one immutable exported build, and one retained evidence bundle are sufficient. Additional GPUs, Windows versions, longer soak periods, or extra transport permutations are compatibility follow-ups, not blockers for this row unless the supported-release matrix changes.
+
+**Common evidence requirements**
+
+- Use the same exported Windows client/server build for every gate. Record commit SHA, `manifest.json`, `SHA256SUMS`, export preset, Godot/runtime version, Windows version, GPU/driver, renderer, display mode, input devices and UTC timestamps.
+- Launch the installed/exported executable, never the Godot editor, Linux binary, Wine prefix or a source-only script. Linux and loopback probes remain regression evidence, not target acceptance.
+- Every automated report exits zero, contains `status: pass`, has no skipped required step, and includes raw stdout/stderr. No uncaught script error, missing-resource error or unexplained crash is accepted.
+- Retain the JSON report, logs and one screenshot or short recording showing the native window for the target run. Redact account tokens, private IPs and credentials; do not commit secrets.
+
+**Gate 1 — renderer and physical hardware input**
+
+- The native window launches on the named target machine with a non-headless display server, non-empty renderer, positive viewport dimensions and the declared GPU/driver/settings.
+- With the window focused, an operator presses and releases W, Space and E once. The report records all three physical key events; synthetic input may supplement the report but cannot satisfy this gate.
+- The observed actions produce their mapped outcomes (movement, jump and interaction) and the client exits cleanly. A second machine or a larger input-device matrix is not required for closure.
+
+**Gate 2 — complete gameplay/content/save workflow**
+
+- From clean user data, the exported client loads the maintained Showcase content, spawns a player with gameplay components, moves the player, fires a weapon that reaches a live enemy, defeats that enemy, and collects a health pickup.
+- The client saves through `GameStateManager` to the encrypted named slot, changes the player state, loads the slot, and restores the saved position/state within the declared tolerance. The bundled sample mod loads through `ModLoader` when that content is part of the build.
+- The workflow records pass/fail for scene load, player readiness, movement, weapon event, enemy defeat, pickup collection, save creation, load restoration and mod loading. The slot and all staging/backup artifacts are removed afterward.
+- The client exits without errors. A clean process-boundary relaunch/load check is required if the release claims cross-launch persistence; otherwise same-process save/load is the declared scope.
+
+**Gate 3 — connected networking**
+
+- **Local multi-process baseline:** launch independent exported server/client processes from the same build; prove server bind/readiness and a client-reported connected ENet session. A same-process loopback or editor run does not satisfy this sub-gate.
+- **Steam transport:** with two authorized accounts and the configured app/runtime, prove lobby/invite/join, ownership/auth result, replicated gameplay, late join, disconnect/reconnect, relay/P2P diagnostics and expected rejection behavior. Record the actual transport, account-independent build identity and teardown.
+- **WAN transport:** run the exported server and client on independently routed networks. Prove a reachable direct-ENet session, bidirectional gameplay/authority behavior, measured latency/loss, reconnect after client disconnect, host-loss handling and a bounded session soak. Test Steam relay/P2P separately when it is a supported transport.
+- Close the networking gate only when every required transport for the declared release profile has evidence. Loopback, one-host containers, simulated latency, one-account Steam initialization and source-level tests cannot close Steam/WAN requirements.
+
+**Closure decision**
+
+- The native Windows row closes only when Gates 1–3 all have passing evidence in the same build bundle. If Steam credentials, an app ID, two accounts or independently routed hosts are unavailable, mark the exact gate `blocked` with that prerequisite; do not create more local substitutes or claim completion.
+- After closure, reopen this contract only for a changed supported hardware/OS/transport matrix or a reproducible regression. Workshop publication, signing, installer behavior, exported-editor UX and long-session/performance campaigns remain separate backlog rows.
 - Progress 2026-09-12 dedicated-server export repair: deferred the configured map scene change until autoload initialization completes, eliminating the exported Linux server's `Parent node is busy adding/removing children` runtime error. `tools/run_export_smoke.sh --platform linux` passes against the rebuilt dedicated-server artifact. `[truth:runtime]` `[truth:test]`
 - Progress 2026-09-12 save/load repair: accepted integer-valued JSON floats for persisted peer/ownership fields, reset CharacterBody3D velocity during player restoration, and replaced the missing `enemies.max_count` lookup with a bounded fallback. Golden-demo smoke passes all 8 framework-loop steps. `[truth:runtime]` `[truth:test]`
 - Progress 2026-09-12 UI input integration repair: matched runtime player discovery to the canonical `player` group and deferred one frame when player setup had not completed. Golden-demo smoke passes without the previous missing-local-player warning. `[truth:runtime]` `[truth:test]`
