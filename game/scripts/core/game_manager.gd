@@ -267,9 +267,12 @@ func _create_always_on_services() -> void:
 
 
 func _ready() -> void:
+	if "--package-smoke" in OS.get_cmdline_args() or "--package-smoke" in OS.get_cmdline_user_args():
+		_initialized = true
+		_current_state = State.READY
+		return
 	if not _initialized:
 		initialize()
-
 
 func _exit_tree() -> void:
 	## === SIGNAL HYGIENE: Cleanup all event listeners and prevent memory leaks ===
