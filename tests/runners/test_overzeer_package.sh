@@ -29,6 +29,9 @@ readme = source / "README"
 readme.write_text("dogfood candidate\n")
 license_path = source / "LICENSE"
 license_path.write_text("license\n")
+launcher = source / "launcher.exe"
+launcher.write_text("launcher payload")
+launcher.chmod(0o755)
 
 def command(target, output):
     return [
@@ -107,5 +110,28 @@ subprocess.run([*command("windows-x86_64", windows_first)], check=True)
 subprocess.run([*command("windows-x86_64", windows_second)], check=True)
 assert windows_first.read_bytes() == windows_second.read_bytes(), "zip archive is not reproducible"
 inspect_archive(windows_first, "zip", windows_root, "modus.exe", True)
-print("OVERZEER tar.zst, tar.gz and zip reproducibility and manifest checks passed.")
+wrapped = temporary / "windows-wrapped.zip"
+subprocess.run(
+    [*command("windows-x86_64", wrapped), "--windows-launcher", str(launcher)],
+    check=True,
+)
+with zipfile.ZipFile(wrapped) as archive:
+    wrapped_names = set(archive.namelist())
+    assert wrapped_names == {
+        f"{windows_root}/LICENSE",
+        f"{windows_root}/README.md",
+        f"{windows_root}/README.txt",
+        f"{windows_root}/SHA256SUMS",
+        f"{windows_root}/modus-real.exe",
+        f"{windows_root}/modus-real.pck",
+        f"{windows_root}/modus.exe",
+        f"{windows_root}/modus.pck",
+        f"{windows_root}/server",
+        f"{windows_root}/server.pck",
+    }
+    checksums = archive.read(f"{windows_root}/SHA256SUMS").decode()
+    for name in ("modus.exe", "modus-real.exe", "modus.pck", "modus-real.pck"):
+        payload = archive.read(f"{windows_root}/{name}")
+        assert f"{hashlib.sha256(payload).hexdigest()}  {name}\n" in checksums
+print("OVERZEER tar.zst, tar.gz and zip reproducibility and launcher manifest checks passed.")
 PY

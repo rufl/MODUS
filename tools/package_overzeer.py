@@ -155,13 +155,31 @@ def package(args: argparse.Namespace) -> None:
         fail(f"output must end in {required_suffix}")
     if output.exists() or output.is_symlink():
         fail(f"refusing to replace existing output: {output}")
+    if args.windows_launcher is not None and not args.target.startswith("windows-"):
+        fail("--windows-launcher requires a Windows target")
 
+    executable = args.executable.absolute()
     inputs: dict[str, Path] = {
         "README.md": args.readme.absolute(),
         "LICENSE": args.license.absolute(),
-        "modus.exe" if args.target.startswith("windows-") else "modus.bin": args.executable.absolute(),
-        "modus.pck": args.content.absolute(),
     }
+    if args.target.startswith("windows-") and args.windows_launcher is not None:
+        launcher = args.windows_launcher.absolute()
+        inputs.update(
+            {
+                "modus.exe": launcher,
+                "modus-real.exe": executable,
+                "modus.pck": args.content.absolute(),
+                "modus-real.pck": args.content.absolute(),
+            }
+        )
+    else:
+        inputs.update(
+            {
+                "modus.exe" if args.target.startswith("windows-") else "modus.bin": executable,
+                "modus.pck": args.content.absolute(),
+            }
+        )
     # Older Windows receivers require README.txt; keep the canonical README.md
     # and ship an identical compatibility name until every endpoint is upgraded.
     if args.target.startswith("windows-"):
@@ -187,7 +205,7 @@ def package(args: argparse.Namespace) -> None:
             target = stage / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target, follow_symlinks=False)
-            mode = 0o755 if name in {"modus.bin", "modus.exe"} else 0o644
+            mode = 0o755 if name in {"modus.bin", "modus.exe", "modus-real.exe"} else 0o644
             target.chmod(mode)
             entries.append((name, mode))
         if not args.target.startswith("windows-"):
@@ -232,6 +250,7 @@ def main() -> int:
     parser.add_argument("--target", required=True)
     parser.add_argument("--executable", type=Path, required=True)
     parser.add_argument("--content", type=Path, required=True)
+    parser.add_argument("--windows-launcher", type=Path, help="Windows wrapper that adds --headless for package smoke")
     parser.add_argument("--readme", type=Path, required=True)
     parser.add_argument("--license", type=Path, required=True)
     parser.add_argument("--extra", action="append", default=[])

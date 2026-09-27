@@ -422,6 +422,18 @@ jobs:
           printf 'Downloaded artifact checksums verified; no public deployment is configured.\n' \
             >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Install Zig for Windows package launcher
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Build Windows package smoke launcher
+        run: |
+          mkdir -p build/ztash
+          zig build-exe tools/ztash_windows_launcher.zig \
+            -target x86_64-windows-gnu -O ReleaseSafe -fstrip \
+            -femit-bin=build/ztash/modus.exe
+
       - name: Assemble versioned Linux release candidate
         env:
           BUILD_COMMIT: ${{ github.sha }}
@@ -489,6 +501,7 @@ jobs:
             --version "$version" --build-id "$BUILD_COMMIT" \
             --root build/release \
             --toolchain-lock tools/toolchain.lock.json \
+            --windows-launcher build/ztash/modus.exe \
             --output build/release/ztash
           printf 'Unsigned Linux and Windows candidates plus lean ZTASH receiver packages assembled. Native integration lock, signing, publication and target acceptance remain open.\n' \
             >> "$GITHUB_STEP_SUMMARY"

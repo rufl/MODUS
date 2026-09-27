@@ -103,6 +103,7 @@ def run_package_tool(
     source: Path,
     icons: Path,
     output: Path,
+    windows_launcher: Path | None = None,
 ) -> None:
     executable = source / ("modus.exe" if target.startswith("windows-") else "modus.bin")
     command = [
@@ -126,6 +127,8 @@ def run_package_tool(
         "--output",
         str(output),
     ]
+    if target.startswith("windows-") and windows_launcher is not None:
+        command.extend(("--windows-launcher", str(windows_launcher.absolute())))
     subprocess.run(command, check=True)
 
 
@@ -135,6 +138,9 @@ def prepare(args: argparse.Namespace) -> None:
     if BUILD_ID.fullmatch(args.build_id) is None:
         raise Failure("build-id must be 40 lowercase hexadecimal characters")
     root = args.root.absolute()
+    windows_launcher = args.windows_launcher.absolute() if args.windows_launcher is not None else None
+    if windows_launcher is not None and (not windows_launcher.is_file() or windows_launcher.is_symlink()):
+        raise Failure(f"missing regular Windows launcher: {windows_launcher}")
     output = args.output.absolute()
     icons = args.icons.absolute()
     toolchain_lock = args.toolchain_lock.absolute()
@@ -179,7 +185,7 @@ def prepare(args: argparse.Namespace) -> None:
         linux_output = package_root / linux_archive.name
         windows_output = package_root / windows_archive.name
         run_package_tool(tool, args.version, "linux-x86_64", linux_source, icons, linux_output)
-        run_package_tool(tool, args.version, "windows-x86_64", windows_source, icons, windows_output)
+        run_package_tool(tool, args.version, "windows-x86_64", windows_source, icons, windows_output, windows_launcher)
 
         manifest = {
             "application": "modus",
@@ -217,6 +223,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--icons", type=Path, default=Path(__file__).parents[3] / "OVERZEER" / "packaging")
     parser.add_argument("--package-tool", type=Path, default=Path(__file__).with_name("package_overzeer.py"))
+    parser.add_argument("--windows-launcher", type=Path, help="optional Windows wrapper for package smoke")
     parser.add_argument(
         "--toolchain-lock",
         type=Path,

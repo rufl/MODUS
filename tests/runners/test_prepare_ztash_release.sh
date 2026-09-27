@@ -40,12 +40,14 @@ with zipfile.ZipFile(release / f"modus-{version}-windows-x86_64.zip", "w") as ar
     for name, content in windows_files.items():
         archive.writestr(f"{windows_root}/{name}", content)
 PY
+printf 'Windows launcher fixture\n' > "$TMP/windows-launcher.exe"
 
 python3 "$ROOT/tools/prepare_ztash_release.py" \
   --version 0.1.0 \
   --build-id 0123456789abcdef0123456789abcdef01234567 \
   --root "$TMP/release" \
-  --output "$TMP/ztash"
+  --output "$TMP/ztash" \
+  --windows-launcher "$TMP/windows-launcher.exe"
 
 python3 - "$TMP/ztash" "$ROOT" <<'PY'
 import hashlib
@@ -70,6 +72,8 @@ for item in manifest["artifacts"]:
     if archive.suffix == ".zip":
         names = set(zipfile.ZipFile(archive).namelist())
         assert any(name.endswith("/modus.exe") for name in names)
+        assert any(name.endswith("/modus-real.exe") for name in names)
+        assert any(name.endswith("/modus-real.pck") for name in names)
         assert any(name.endswith("/ztash.ico") for name in names)
     else:
         names = set(tarfile.open(archive, "r:gz").getnames())
