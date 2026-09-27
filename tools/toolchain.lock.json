@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "python": {
+    "version": "3.11"
+  },
+  "godot": {
+    "version": "4.7.2",
+    "release": "4.7.2-stable",
+    "patched_source_revision": "ed1daf0bf001b61586d9930840f2f1394092c079",
+    "linux_x86_64_archive": {
+      "name": "Godot_v4.7.2-stable_linux.x86_64.zip",
+      "sha256": "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4"
+    },
+    "export_templates_archive": {
+      "name": "Godot_v4.7.2-stable_export_templates.tpz",
+      "sha256": "f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011"
+    }
+  },
+  "gut": {
+    "version": "9.7.1",
+    "archive_sha256": "6da99c4e9228d9bec3fb4bd1730a487770a989f0f511dac82a2897a964613385"
+  },
+  "gdtoolkit": {
+    "version": "4.5.0"
+  },
+  "scons": {
+    "version": "4.9.1",
+    "sha256": [
+      "d2db1a22eb6039e97cbbb0106f18f435af033d0aad190299c9688378e2810a5e",
+      "bacac880ba2e86d6a156c116e2f8f2bfa82b257046f3ac2666c85c53c615c338"
+    ]
+  }
+}

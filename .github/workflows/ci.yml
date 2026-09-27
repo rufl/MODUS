@@ -19,6 +19,8 @@ defaults:
 
 env:
   GODOT_VERSION: "4.7.2"
+  GODOT_LINUX_ARCHIVE_SHA256: "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4"
+  GODOT_EXPORT_TEMPLATES_SHA256: "f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011"
 
 jobs:
   code-quality:
@@ -33,6 +35,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      - name: Validate release toolchain lock
+        run: python3 tools/validate_toolchain_lock.py
 
       - name: Install GDScript Toolkit
         run: python -m pip install gdtoolkit==4.5.0
@@ -60,6 +64,7 @@ jobs:
           bash tests/runners/test_overzeer_release_inventory.sh
           bash tests/runners/test_cleanup_overzeer_archives.sh
           bash tests/runners/test_performance_evidence_validator.sh
+          bash tests/runners/test_toolchain_lock.sh
 
   test:
     name: Run GUT Tests
@@ -83,6 +88,7 @@ jobs:
           archive="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           curl --fail --location --output "$RUNNER_TEMP/$archive" \
             "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable/$archive"
+          printf '%s  %s\n' "$GODOT_LINUX_ARCHIVE_SHA256" "$RUNNER_TEMP/$archive" | sha256sum --check --status
           unzip -q "$RUNNER_TEMP/$archive" -d "$RUNNER_TEMP/godot"
           chmod +x "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
           ln -s "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$RUNNER_TEMP/godot/godot"
@@ -224,12 +230,14 @@ jobs:
           archive="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           release_url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
           curl --fail --location --output "$RUNNER_TEMP/$archive" "$release_url/$archive"
+          printf '%s  %s\n' "$GODOT_LINUX_ARCHIVE_SHA256" "$RUNNER_TEMP/$archive" | sha256sum --check --status
           unzip -q "$RUNNER_TEMP/$archive" -d "$RUNNER_TEMP/godot"
           chmod +x "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
           ln -s "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$RUNNER_TEMP/godot/godot"
           echo "$RUNNER_TEMP/godot" >> "$GITHUB_PATH"
           curl --fail --location --output "$RUNNER_TEMP/export_templates.tpz" \
             "$release_url/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          printf '%s  %s\n' "$GODOT_EXPORT_TEMPLATES_SHA256" "$RUNNER_TEMP/export_templates.tpz" | sha256sum --check --status
           unzip -q "$RUNNER_TEMP/export_templates.tpz" -d "$RUNNER_TEMP/godot-templates"
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
           cp -a "$RUNNER_TEMP/godot-templates/templates/." \

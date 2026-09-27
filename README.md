@@ -124,7 +124,7 @@ python3 tools/validate_release_artifacts.py \
   --verify build/release/MODUS-0.9.5-beta-linux-x86_64/manifest.json
 ```
 
-Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. CI and local jobs assemble this Linux candidate; run the focused release-contract checks locally before labeling a candidate. Public publication, signing, a native-dependency lock and target acceptance remain open.
+Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. `tools/toolchain.lock.json` pins the recorded Godot/GUT/GDScript Toolkit/SCons inputs and archive hashes; run `python3 tools/validate_toolchain_lock.py` before candidate assembly. Public publication, signing, native runtime/dependency bundling and target acceptance remain open.
 
 The current local dogfood batch produces unsigned transfer archives at
 `build/release/modus-0.9.5-beta-linux-x86_64.tar.zst`,

@@ -47,6 +47,7 @@ GODOT_BIN=/path/to/patched/godot bash tests/runners/test_export_notices.sh
 bash tests/runners/test_release_artifact_validator.sh
 bash tests/runners/test_linux_portable_package.sh
 bash tests/runners/test_release_staging.sh
+bash tests/runners/test_toolchain_lock.sh
 # Preview/remove only obsolete OVERZEER package archives
 python3 tools/cleanup_overzeer_archives.py \
   --root build/release --keep-version 0.9.5-beta
@@ -66,6 +67,8 @@ bash tools/scripts/install-gut.sh
 ```
 
 This replaces `addons/gut`; preserve any local modifications first. The shared installer removes an unused malformed scene shipped in GUT 9.7.1 and is safe to repeat without nesting the bundle. A different local GUT version can report errors differently and is not CI-equivalent proof.
+
+`tools/toolchain.lock.json` records the CI Godot/GUT/GDScript Toolkit/SCons pins, archive hashes and patched source revision. The lock validator rejects drift; the GUT installer and CI Godot download steps verify the recorded SHA-256 values. This is dependency-integrity evidence, not native runtime, signing, publication or target acceptance.
 
 September 9 focused CI repair: 95 tests/633 assertions pass in a fresh dependency-matched checkout and one shared GUT process. The cases include the 21 previously failing CI tests, transport teardown followed by offline inventory operations, real rehosting, and saved-player restoration. This does not refresh a full-suite result.
 

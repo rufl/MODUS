@@ -96,6 +96,9 @@ require_file "tests/manual/manual_showcase_session.gd"
 require_file "tests/runners/test_manual_evidence_validator.sh"
 require_file "tests/runners/test_performance_evidence_validator.sh"
 require_file "tools/validate_performance_evidence.sh"
+require_file "tools/toolchain.lock.json"
+require_file "tools/validate_toolchain_lock.py"
+require_file "tests/runners/test_toolchain_lock.sh"
 require_file "tools/validate_release_readiness.sh"
 require_file "tools/validate_production_readiness.sh"
 require_file "game/data/weapons.json5"
@@ -131,9 +134,14 @@ require_text "tools/run_manual_showcase_session.sh" "MODUS_MANUAL_EVIDENCE_DIR"
 require_text "tests/manual/manual_evidence_overlay.gd" "JOY_BUTTON_BACK"
 require_text "tools/validate_performance_evidence.sh" "Performance evidence report"
 require_text "tools/validate_release_readiness.sh" "Release readiness report"
+require_text "tools/validate_toolchain_lock.py" "Toolchain lock passed"
 
 if ! tools/generate_provenance_ledger.py --check; then
   fail "provenance ledger is stale"
+fi
+
+if ! python3 tools/validate_toolchain_lock.py; then
+  fail "release toolchain lock check failed"
 fi
 
 reject_text "README.md" "res://tests/run_tests.gd"
