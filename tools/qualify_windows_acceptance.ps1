@@ -78,6 +78,13 @@ $hashesSource = Resolve-OptionalFile $Hashes @(
     (Join-Path $executableDirectory "SHA256SUMS"),
     (Join-Path (Split-Path -Parent $executableDirectory) "SHA256SUMS")
 )
+$toolchainLockSource = Resolve-OptionalFile "" @(
+    (Join-Path $PSScriptRoot "toolchain.lock.json")
+)
+if ($null -eq $toolchainLockSource) {
+    throw "Checked-in toolchain lock is required for native acceptance evidence."
+}
+$toolchainLockHash = (Get-FileHash -LiteralPath $toolchainLockSource -Algorithm SHA256).Hash.ToLowerInvariant()
 $manifestObject = if ($null -ne $manifestSource) { Read-JsonFile $manifestSource } else { $null }
 $executableHash = (Get-FileHash -LiteralPath $resolvedExecutable -Algorithm SHA256).Hash.ToLowerInvariant()
 if ($null -ne $manifestObject -and $null -ne $manifestObject.artifacts) {
@@ -93,6 +100,7 @@ if ($null -ne $manifestSource) {
 if ($null -ne $hashesSource) {
     Copy-Item -LiteralPath $hashesSource -Destination (Join-Path $resolvedEvidenceDirectory "SHA256SUMS") -Force
 }
+Copy-Item -LiteralPath $toolchainLockSource -Destination (Join-Path $resolvedEvidenceDirectory "toolchain.lock.json") -Force
 function Get-NativeGpuMetadata {
     try {
         return @(
@@ -124,6 +132,8 @@ $metadata = [ordered]@{
     preset = if ($null -ne $manifestObject) { $manifestObject.preset } else { $null }
     runtime = [Environment]::Version.ToString()
     gpu = $gpuMetadata
+    toolchain_lock = "toolchain.lock.json"
+    toolchain_lock_sha256 = $toolchainLockHash
 }
 $metadata | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $metadataPath -Encoding UTF8
 
@@ -203,10 +213,14 @@ $report = [ordered]@{
     network_mode = $NetworkMode
     host_loss_required = [bool]$RequireHostLoss
     remaining_gates = $remaining
+    toolchain_lock = "toolchain.lock.json"
+    toolchain_lock_sha256 = $toolchainLockHash
     schema = "modus.windows-native-acceptance/v1"
     status = if ($clientPassed -and $networkPassed) { "pass" } else { "fail" }
 }
 $report | ConvertTo-Json -Depth 16 | Set-Content -LiteralPath $acceptanceReportPath -Encoding UTF8
+& (Join-Path $PSScriptRoot "validate_windows_acceptance_metadata.ps1") `
+    -EvidenceDirectory $resolvedEvidenceDirectory
 
 if ($report.status -ne "pass") {
     throw "Native Windows acceptance execution failed; report: $acceptanceReportPath"

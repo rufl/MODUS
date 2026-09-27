@@ -65,6 +65,7 @@ jobs:
           bash tests/runners/test_cleanup_overzeer_archives.sh
           bash tests/runners/test_performance_evidence_validator.sh
           bash tests/runners/test_toolchain_lock.sh
+          bash tests/runners/test_windows_acceptance_metadata.sh
 
   test:
     name: Run GUT Tests
