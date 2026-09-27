@@ -93,6 +93,24 @@ if ($null -ne $manifestSource) {
 if ($null -ne $hashesSource) {
     Copy-Item -LiteralPath $hashesSource -Destination (Join-Path $resolvedEvidenceDirectory "SHA256SUMS") -Force
 }
+function Get-NativeGpuMetadata {
+    try {
+        return @(
+            Get-CimInstance -ClassName Win32_VideoController -ErrorAction Stop |
+                ForEach-Object {
+                    [ordered]@{
+                        driver_date = [string]$_.DriverDate
+                        driver_version = [string]$_.DriverVersion
+                        name = [string]$_.Name
+                    }
+                }
+        )
+    } catch {
+        return @()
+    }
+}
+
+$gpuMetadata = @(Get-NativeGpuMetadata)
 
 $metadata = [ordered]@{
     commit = if ($null -ne $manifestObject) { $manifestObject.commit } else { $null }
@@ -105,6 +123,7 @@ $metadata = [ordered]@{
     os = [Environment]::OSVersion.VersionString
     preset = if ($null -ne $manifestObject) { $manifestObject.preset } else { $null }
     runtime = [Environment]::Version.ToString()
+    gpu = $gpuMetadata
 }
 $metadata | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $metadataPath -Encoding UTF8
 

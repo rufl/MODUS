@@ -35,6 +35,19 @@ assert status != 0
 assert set(report["checks"]) == {"platform", "renderer", "input", "save", "content_workflow", "network"}
 assert report["checks"]["platform"]["status"] == "fail"
 assert report["checks"]["renderer"]["status"] == "fail"
+renderer_details = report["checks"]["renderer"]["details"]
+assert {
+	"engine_version",
+	"gpu_api_version",
+	"gpu_name",
+	"gpu_type",
+	"gpu_vendor",
+	"os_version",
+	"screen_height",
+	"screen_width",
+	"window_mode",
+}.issubset(renderer_details)
+assert renderer_details["engine_version"]["major"] == 4
 assert report["checks"]["input"]["status"] == "pass"
 assert not report["checks"]["input"]["details"]["physical_input_requested"]
 assert report["checks"]["save"]["status"] == "pass"

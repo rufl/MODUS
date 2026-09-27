@@ -24,7 +24,7 @@ The Linux helper now validates archive ownership/bytes/modes before extraction a
 
 CI builds Linux client and editor alongside its existing targets and assembles versioned Linux and OVERZEER candidates. The September 25 strict aggregate passed 1,665/1,665 tests with 22,767 assertions in 812.984 seconds. Native-runtime/dependency locking, signing/authentication, release publication, Windows runtime and manual acceptance remain open.
 
-The Windows acceptance harness now records actual W movement, Space jump and E interaction outcomes, reliable application-level ENet probes, reconnect/soak and controlled host-loss evidence, plus same-build manifest/commit/hash metadata and retained logs. Linux boundary regressions pass; no native Windows execution, independent WAN session, or authenticated Steam session is claimed.
+The Windows acceptance harness now records actual W movement, Space jump and E interaction outcomes, reliable application-level ENet probes, reconnect/soak and controlled host-loss evidence, renderer/viewport/window/GPU/API/OS metadata, plus same-build manifest/commit/hash metadata and retained logs. Linux boundary regressions pass; no native Windows execution, independent WAN session, or authenticated Steam session is claimed.
 
 The OVERZEER package contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory validation passed, and the extracted Linux `--package-smoke` path exited cleanly. Authenticated receiver publication, signing, and native target smoke remain open.
 

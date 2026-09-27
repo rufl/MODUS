@@ -188,11 +188,21 @@ func _renderer_check() -> bool:
 func _renderer_details() -> Dictionary:
 	var viewport := _root.get_viewport()
 	var size := viewport.get_visible_rect().size if viewport else Vector2.ZERO
+	var screen_size := DisplayServer.screen_get_size()
 	return {
 		"display_server": DisplayServer.get_name(),
+		"engine_version": Engine.get_version_info(),
+		"gpu_api_version": RenderingServer.get_video_adapter_api_version(),
+		"gpu_name": RenderingServer.get_video_adapter_name(),
+		"gpu_type": RenderingServer.get_video_adapter_type(),
+		"gpu_vendor": RenderingServer.get_video_adapter_vendor(),
+		"os_version": OS.get_version(),
 		"rendering_method": str(RenderingServer.get_current_rendering_method()),
+		"screen_height": int(screen_size.y),
+		"screen_width": int(screen_size.x),
 		"viewport_height": int(size.y),
 		"viewport_width": int(size.x),
+		"window_mode": DisplayServer.window_get_mode()
 	}
 
 

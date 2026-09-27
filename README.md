@@ -136,9 +136,10 @@ the Linux `modus` client/server/editor exports, or the Windows `modus.exe`
 client plus editor export. `.tar.zst` is the compact local transfer format;
 OVERZEER receiver deployment currently accepts the Linux `.tar.gz` and Windows
 `.zip` variants. These are local candidates, not authenticated deployments;
-the native-Windows acceptance harness retains same-build metadata and logs, but
-native Windows execution, signing, receiver authentication and target acceptance
-remain required.
+the native-Windows acceptance harness retains same-build manifest/hash metadata,
+renderer/viewport/window/GPU/OS evidence and logs when the target is run, but
+native Windows execution, driver review, signing, receiver authentication and
+target acceptance remain required.
 
 CI and local release jobs use `tools/package_overzeer.py` to build these
 archives from verified exports:
