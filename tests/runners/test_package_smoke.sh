@@ -33,5 +33,9 @@ assert report["status"] == "pass", report
 assert report["contract_version"] == 1, report
 assert report["native_classes"]["csg"] == "CSGShape3D", report
 assert "walk" in report["capabilities"], report
+assert "native_dependencies" in report, report
+assert "godotsteam" in report["native_dependencies"], report
+assert "steam_multiplayer_peer" in report["native_dependencies"], report
+assert report["native_dependencies"]["voxel_tools"]["fallback"] == "csg", report
 print("Package smoke user-argument regression passed. Runtime capability-report regression passed.")
 PY

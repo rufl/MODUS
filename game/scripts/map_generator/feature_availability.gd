@@ -12,6 +12,9 @@ const NATIVE_CAPABILITY_CLASSES := {
 	"occlusion_culling": "OccluderInstance3D",
 	"voxel": "VoxelTerrain"
 }
+const NATIVE_DEPENDENCY_CLASSES := {"steam_multiplayer_peer": "SteamMultiplayerPeer"}
+const NATIVE_DEPENDENCY_SINGLETONS := {"godotsteam": "Steam"}
+
 ## Capabilities guaranteed by the stock offline path. Optional native features
 ## are added only when the current runtime exposes their native classes.
 const COMMON_CAPABILITIES: Array[String] = ["walk", "csg"]
@@ -114,6 +117,7 @@ func get_capability_snapshot() -> Dictionary:
 		"multimesh": multimesh_available,
 		"occlusion_culling": occlusion_culling_available,
 		"native_classes": get_native_capability_classes(),
+		"native_dependencies": get_native_dependency_report(),
 		"available_capabilities": get_available_capabilities()
 	}
 
@@ -124,6 +128,7 @@ func get_runtime_contract() -> Dictionary:
 		"contract_version": CAPABILITY_CONTRACT_VERSION,
 		"runtime": {"id": RUNTIME_ID, "version": RUNTIME_VERSION},
 		"native_classes": get_native_capability_classes(),
+		"native_dependencies": get_native_dependency_report(),
 		"capabilities": get_available_capabilities()
 	}
 
@@ -133,6 +138,34 @@ func get_native_capability_classes() -> Dictionary:
 	for capability: String in NATIVE_CAPABILITY_CLASSES:
 		classes[capability] = NATIVE_CAPABILITY_CLASSES[capability]
 	return classes
+
+
+## Report native integrations separately from stock engine capabilities.
+func get_native_dependency_report() -> Dictionary:
+	var steam_singleton := Engine.has_singleton(NATIVE_DEPENDENCY_SINGLETONS["godotsteam"])
+	var steam_class := ClassDB.class_exists(NATIVE_DEPENDENCY_SINGLETONS["godotsteam"])
+	var steam_peer := ClassDB.class_exists(NATIVE_DEPENDENCY_CLASSES["steam_multiplayer_peer"])
+	return {
+		"godotsteam":
+		{
+			"available": steam_singleton or steam_class,
+			"singleton": steam_singleton,
+			"class": steam_class,
+			"fallback": "enet"
+		},
+		"steam_multiplayer_peer":
+		{
+			"available": steam_peer,
+			"class": NATIVE_DEPENDENCY_CLASSES["steam_multiplayer_peer"],
+			"fallback": "enet"
+		},
+		"voxel_tools":
+		{
+			"available": voxel_tools_available,
+			"class": NATIVE_CAPABILITY_CLASSES["voxel"],
+			"fallback": "csg"
+		}
+	}
 
 
 func get_available_capabilities() -> Array[String]:
@@ -458,6 +491,7 @@ func create_availability_report() -> Dictionary:
 		"runtime": {"id": RUNTIME_ID, "version": RUNTIME_VERSION},
 		"capabilities": get_available_capabilities(),
 		"native_classes": get_native_capability_classes(),
+		"native_dependencies": get_native_dependency_report(),
 		"voxel_tools":
 		{
 			"available": voxel_tools_available,

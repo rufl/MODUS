@@ -234,6 +234,26 @@ func test_feature_availability_runtime_contract_reports_native_classes() -> void
 	assert_eq(contract.get("capabilities"), availability.get_available_capabilities())
 
 
+func test_feature_availability_runtime_contract_reports_native_dependencies() -> void:
+	var availability := FeatureAvailability.new()
+	availability.initialize(false)
+	var dependencies: Dictionary = availability.get_native_dependency_report()
+	assert_true(dependencies.has("godotsteam"))
+	assert_true(dependencies.has("steam_multiplayer_peer"))
+	assert_true(dependencies.has("voxel_tools"))
+	var godotsteam: Dictionary = dependencies["godotsteam"]
+	assert_eq(
+		godotsteam.get("available"), Engine.has_singleton("Steam") or ClassDB.class_exists("Steam")
+	)
+	assert_eq(godotsteam.get("fallback"), "enet")
+	var steam_peer: Dictionary = dependencies["steam_multiplayer_peer"]
+	assert_eq(steam_peer.get("class"), "SteamMultiplayerPeer")
+	assert_eq(steam_peer.get("available"), ClassDB.class_exists("SteamMultiplayerPeer"))
+	var voxel_tools: Dictionary = dependencies["voxel_tools"]
+	assert_eq(voxel_tools.get("available"), availability.voxel_tools_available)
+	assert_eq(voxel_tools.get("fallback"), "csg")
+
+
 func test_feature_availability_exposes_replacement_capabilities() -> void:
 	var availability := FeatureAvailability.new()
 	var capabilities := availability.get_available_capabilities()
