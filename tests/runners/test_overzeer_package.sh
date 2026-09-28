@@ -128,6 +128,9 @@ with zipfile.ZipFile(wrapped) as archive:
         f"{windows_root}/server",
         f"{windows_root}/server.pck",
     }
+    for info in archive.infolist():
+        assert info.create_system == 3
+        assert (info.external_attr >> 16) & 0o170000 == 0o100000
     checksums = archive.read(f"{windows_root}/SHA256SUMS").decode()
     for name in ("modus.exe", "modus-real.exe", "modus.pck"):
         payload = archive.read(f"{windows_root}/{name}")

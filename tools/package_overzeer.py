@@ -112,7 +112,7 @@ def write_zip(
                 date_time=(1980, 1, 1, 0, 0, 0),
             )
             info.create_system = 3
-            info.external_attr = (mode & 0xFFFF) << 16
+            info.external_attr = (stat.S_IFREG | (mode & 0xFFFF)) << 16
             source = stage / name
             info.compress_type = zipfile.ZIP_DEFLATED
             with archive.open(info, mode="w") as target, source.open("rb") as input_stream:
