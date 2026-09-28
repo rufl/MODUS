@@ -139,7 +139,7 @@ position = Vector3(42, 4, -65)
 position = Vector3(30, 4, -18)
 
 [node name="AssetDressing" type="Node3D" parent="."]
-position = Vector3(0, 0, -18)
+position = Vector3(40, 0, -40)
 scale = Vector3(0.72, 0.72, 0.72)
 script = ExtResource("27_asset_dressing")
 

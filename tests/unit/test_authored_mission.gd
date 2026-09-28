@@ -466,6 +466,41 @@ func test_authored_levels_use_imported_asset_families() -> void:
 		assert_gte(contract.get("spawned_materials", 0), 6)
 		assert_gte(contract.get("spawned_vfx", 0), 4)
 		assert_not_null(
+			dressing.get_node_or_null("AssetDisplayPlatform"),
+			"Asset dressing must provide a grounded material display platform",
+		)
+		var platform := dressing.get_node_or_null("AssetDisplayPlatform") as MeshInstance3D
+		assert_not_null(platform)
+		if platform != null:
+			var platform_mesh := platform.mesh as BoxMesh
+			assert_not_null(platform_mesh)
+			if platform_mesh != null:
+				var platform_material := platform_mesh.material as Material
+				assert_eq(
+					platform_material.resource_path,
+					"res://game/art/materials/retro_urban/cleanpavement_cleanpavement_04.tres",
+					"Asset display platform must use the authored RetroUrban pavement",
+				)
+		if level_path == "res://game/levels/breakwater_mission.tscn":
+			var dressing_3d := dressing as Node3D
+			assert_not_null(dressing_3d)
+			if dressing_3d != null:
+				assert_gt(
+					absf(dressing_3d.position.x),
+					28.0,
+					"Breakwater asset dressing must remain outside module footprints",
+				)
+		else:
+			var hub_floor := root.get_node_or_null("NavigationRegion3D/HubFloor") as CSGBox3D
+			assert_not_null(hub_floor, "Showcase must expose its hub floor")
+			if hub_floor != null:
+				var floor_material := hub_floor.material as Material
+				assert_eq(
+					floor_material.resource_path,
+					"res://game/art/materials/retro_urban/cleanpavement_cleanpavement_04.tres",
+					"Showcase hub floor must use the authored RetroUrban pavement",
+				)
+		assert_not_null(
 			dressing.get_node_or_null("Asset_metal_fence_security"),
 			"Imported fence models must be present",
 		)

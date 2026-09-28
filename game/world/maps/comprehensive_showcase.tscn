@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://game/world/maps/projectile_range.tscn" id="7_range"]
 [ext_resource type="PackedScene" path="res://game/world/maps/visual_tweaking_lab.tscn" id="8_vizlab"]
 [ext_resource type="Script" path="res://game/levels/asset_dressing.gd" id="9_asset_dressing"]
+[ext_resource type="Material" path="res://game/art/materials/retro_urban/cleanpavement_cleanpavement_04.tres" id="10_retro_floor"]
 
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
@@ -55,6 +56,7 @@ navigation_mesh = SubResource("NavigationMesh_main")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 use_collision = true
 size = Vector3(150, 1, 150)
+material = ExtResource("10_retro_floor")
 
 [node name="WeatherController" parent="." instance=ExtResource("2_weather")]
 

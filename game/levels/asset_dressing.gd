@@ -8,6 +8,9 @@ extends Node3D
 ## entries. Models are visual-only: dressing must never change gameplay collision.
 
 const CONTRACT_VERSION := 1
+const DISPLAY_PLATFORM_SIZE := Vector3(24.0, 0.4, 18.0)
+const DISPLAY_PLATFORM_POSITION := Vector3(0.0, -0.28, 2.0)
+const DISPLAY_PLATFORM_MATERIAL_PATH := "res://game/art/materials/retro_urban/cleanpavement_cleanpavement_04.tres"
 
 const MODEL_ASSETS: Array[Dictionary] = [
 	{
@@ -241,6 +244,7 @@ func _build() -> void:
 	if _built:
 		return
 	_built = true
+	_spawn_display_platform()
 	for entry: Dictionary in MODEL_ASSETS:
 		_spawn_model(entry)
 	for entry: Dictionary in MATERIAL_ASSETS:
@@ -248,6 +252,27 @@ func _build() -> void:
 	for entry: Dictionary in VFX_ASSETS:
 		_spawn_vfx(entry)
 	set_meta("asset_usage_contract", get_asset_usage_contract())
+
+
+func _spawn_display_platform() -> void:
+	var material := ResourceLoader.load(DISPLAY_PLATFORM_MATERIAL_PATH) as Material
+	if material == null:
+		load_errors.append(
+			"Display platform material failed to load: %s" % DISPLAY_PLATFORM_MATERIAL_PATH
+		)
+		return
+	var platform := MeshInstance3D.new()
+	platform.name = "AssetDisplayPlatform"
+	platform.position = DISPLAY_PLATFORM_POSITION
+	platform.set_meta("asset_id", "asset_display_platform")
+	platform.set_meta("asset_path", DISPLAY_PLATFORM_MATERIAL_PATH)
+	platform.set_meta("asset_family", "material")
+	var mesh := BoxMesh.new()
+	mesh.size = DISPLAY_PLATFORM_SIZE
+	mesh.material = material
+	platform.mesh = mesh
+	add_child(platform)
+	platform.add_to_group("level_asset_material")
 
 
 func get_asset_usage_contract() -> Dictionary:
