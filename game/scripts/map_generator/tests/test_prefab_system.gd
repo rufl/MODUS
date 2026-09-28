@@ -220,6 +220,20 @@ func test_feature_availability_exposes_detected_runtime_capabilities() -> void:
 	assert_true(availability.validate_capability_manifest(manifest).success)
 
 
+func test_feature_availability_runtime_contract_reports_native_classes() -> void:
+	var availability := FeatureAvailability.new()
+	availability.initialize(false)
+	var contract := availability.get_runtime_contract()
+	assert_eq(contract.get("contract_version"), FeatureAvailability.CAPABILITY_CONTRACT_VERSION)
+	assert_eq(contract.get("runtime", {}).get("id"), FeatureAvailability.RUNTIME_ID)
+	assert_eq(contract.get("runtime", {}).get("version"), FeatureAvailability.RUNTIME_VERSION)
+	assert_eq(contract.get("native_classes", {}).get("csg"), "CSGShape3D")
+	assert_eq(contract.get("native_classes", {}).get("multimesh"), "MultiMesh")
+	assert_eq(contract.get("native_classes", {}).get("occlusion_culling"), "OccluderInstance3D")
+	assert_eq(contract.get("native_classes", {}).get("voxel"), "VoxelTerrain")
+	assert_eq(contract.get("capabilities"), availability.get_available_capabilities())
+
+
 func test_feature_availability_exposes_replacement_capabilities() -> void:
 	var availability := FeatureAvailability.new()
 	var capabilities := availability.get_available_capabilities()

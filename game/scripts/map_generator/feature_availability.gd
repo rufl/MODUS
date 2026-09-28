@@ -6,6 +6,12 @@ class_name FeatureAvailability
 const CAPABILITY_CONTRACT_VERSION := 1
 const RUNTIME_ID := "modus"
 const RUNTIME_VERSION := 1
+const NATIVE_CAPABILITY_CLASSES := {
+	"csg": "CSGShape3D",
+	"multimesh": "MultiMesh",
+	"occlusion_culling": "OccluderInstance3D",
+	"voxel": "VoxelTerrain"
+}
 ## Capabilities guaranteed by the stock offline path. Optional native features
 ## are added only when the current runtime exposes their native classes.
 const COMMON_CAPABILITIES: Array[String] = ["walk", "csg"]
@@ -107,8 +113,26 @@ func get_capability_snapshot() -> Dictionary:
 		"advanced_geometry": advanced_geometry_available,
 		"multimesh": multimesh_available,
 		"occlusion_culling": occlusion_culling_available,
+		"native_classes": get_native_capability_classes(),
 		"available_capabilities": get_available_capabilities()
 	}
+
+
+## Return the immutable runtime identity and native class contract.
+func get_runtime_contract() -> Dictionary:
+	return {
+		"contract_version": CAPABILITY_CONTRACT_VERSION,
+		"runtime": {"id": RUNTIME_ID, "version": RUNTIME_VERSION},
+		"native_classes": get_native_capability_classes(),
+		"capabilities": get_available_capabilities()
+	}
+
+
+func get_native_capability_classes() -> Dictionary:
+	var classes: Dictionary = {}
+	for capability: String in NATIVE_CAPABILITY_CLASSES:
+		classes[capability] = NATIVE_CAPABILITY_CLASSES[capability]
+	return classes
 
 
 func get_available_capabilities() -> Array[String]:
@@ -433,6 +457,7 @@ func create_availability_report() -> Dictionary:
 		"contract_version": CAPABILITY_CONTRACT_VERSION,
 		"runtime": {"id": RUNTIME_ID, "version": RUNTIME_VERSION},
 		"capabilities": get_available_capabilities(),
+		"native_classes": get_native_capability_classes(),
 		"voxel_tools":
 		{
 			"available": voxel_tools_available,

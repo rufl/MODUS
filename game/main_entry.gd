@@ -1,6 +1,9 @@
 extends Node
 
 const MAIN_MENU_SCREEN: String = "res://shared/ui_core/screens/main_menu_screen.tscn"
+const FeatureAvailabilityScript = preload(
+	"res://game/scripts/map_generator/feature_availability.gd"
+)
 
 
 func _ready() -> void:
@@ -11,8 +14,8 @@ func _ready() -> void:
 	if _has_qualification_arg("--windows-qualification-network-client"):
 		await _run_windows_network("client")
 		return
-	if "--windows-qualification" in OS.get_cmdline_args() or "--windows-qualification" in user_args:
-		await _run_windows_qualification()
+	if _has_qualification_arg("--capability-report"):
+		_run_capability_report()
 		return
 	if _has_qualification_arg("--package-smoke"):
 		_run_package_smoke()
@@ -60,6 +63,17 @@ func _ready() -> void:
 
 
 func _run_package_smoke() -> void:
+	var capability_report := _build_capability_report()
+	if capability_report.get("status") != "pass":
+		push_error(
+			(
+				"[MainEntry] Package smoke capability contract failed: %s"
+				% JSON.stringify(capability_report)
+			)
+		)
+		get_tree().quit(1)
+		return
+	print("[MainEntry] Package smoke capability contract: %s" % JSON.stringify(capability_report))
 	var required_resources := PackedStringArray(
 		[
 			"res://game/main_entry.tscn",
@@ -73,6 +87,26 @@ func _run_package_smoke() -> void:
 			get_tree().quit(1)
 			return
 	get_tree().quit(0)
+
+
+func _run_capability_report() -> void:
+	var report := _build_capability_report()
+	print(JSON.stringify(report))
+	get_tree().quit(0 if report.get("status") == "pass" else 1)
+
+
+func _build_capability_report() -> Dictionary:
+	var availability := FeatureAvailabilityScript.new()
+	availability.initialize(false)
+	var report := availability.create_availability_report()
+	var manifest := availability.create_capability_manifest(
+		FeatureAvailabilityScript.COMMON_CAPABILITIES, {"voxel": "reject"}
+	)
+	var validation := availability.validate_capability_manifest(manifest)
+	report["status"] = "pass" if validation.get("success", false) else "fail"
+	if report["status"] != "pass":
+		report["error"] = str(validation.get("error", "Capability contract validation failed."))
+	return report
 
 
 func _run_windows_qualification() -> void:

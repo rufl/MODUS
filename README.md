@@ -27,6 +27,7 @@ The parts most likely to frustrate you:
 - First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
 - Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
 - Capability manifests now detect the native CSG, MultiMesh, and occlusion classes exposed by the running Godot build; module validation and optional generation passes refuse unavailable capabilities instead of assuming stock-runtime parity.
+- Packaged exports expose `--capability-report` for target-side runtime identity/native-class diagnostics, and package smoke fails closed when the common walk/CSG contract is unavailable.
 - The Showcase route is an automated smoke path, not proof that the game feels good. Manual gameplay evidence is still zero reviewed hours.
 - Multiplayer proof is strongest on local ENet and focused authority contracts. The qualification harness now records application delivery, reconnect/soak and controlled host-loss outcomes; independently routed WAN sessions, Steam, Workshop, target-Windows execution, graphical exported-editor acceptance, and long-session proof remain open.
 - The current release line is `0.9.5-beta`; production readiness is explicitly **NOT READY**.
