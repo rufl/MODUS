@@ -29,7 +29,7 @@ The parts most likely to frustrate you:
 - Capability manifests now detect the native CSG, MultiMesh, and occlusion classes exposed by the running Godot build; module validation and optional generation passes refuse unavailable capabilities instead of assuming stock-runtime parity.
 - Packaged exports expose `--capability-report` for target-side runtime identity, native-class and optional-dependency diagnostics; package smoke fails closed when the common walk/CSG contract is unavailable.
 - The Showcase route is an automated smoke path, not proof that the game feels good. Manual gameplay evidence is still zero reviewed hours.
-- Multiplayer proof is strongest on local ENet and focused authority contracts. The qualification harness now records application delivery, reconnect/soak and controlled host-loss outcomes; independently routed WAN sessions, Steam, Workshop, target-Windows execution, graphical exported-editor acceptance, and long-session proof remain open.
+- Multiplayer proof is strongest on local ENet and focused authority contracts. Steam transport now shares the runtime native-dependency report and fails back to ENet when Steam or its peer class is absent. The qualification harness records application delivery, reconnect/soak and controlled host-loss outcomes; independently routed WAN sessions, authenticated Steam, Workshop, target-Windows execution, graphical exported-editor acceptance, and long-session proof remain open.
 - The current release line is `0.9.5-beta`; production readiness is explicitly **NOT READY**.
 
 If you want a polished game to play immediately, MODUS is the wrong download. If you want an inspectable FPS systems lab that you can bend, profile, test, and extend, it is the right kind of unfinished.

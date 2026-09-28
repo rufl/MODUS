@@ -118,10 +118,15 @@ func test_transport_capabilities_are_explicit() -> void:
 		"steam_transport",
 		"enet_transport",
 		"reason",
+		"native_dependencies",
 	]:
 		assert_true(capabilities.has(key), "Transport capabilities should expose %s" % key)
 	assert_true(capabilities.enet_transport, "ENet must remain available as fallback")
 	assert_ne(str(capabilities.reason), "", "Transport capability reason should be explicit")
+	var dependencies: Dictionary = capabilities.get("native_dependencies", {})
+	assert_true(dependencies.has("godotsteam"))
+	assert_true(dependencies.has("steam_multiplayer_peer"))
+	assert_eq(dependencies.get("voxel_tools", {}).get("fallback"), "csg")
 	assert_eq(
 		capabilities.steam_transport,
 		steam.is_steam_transport_available(),

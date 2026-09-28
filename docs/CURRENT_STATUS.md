@@ -62,6 +62,8 @@ September 28 capability-contract refresh: `FeatureAvailability` now detects CSG,
 
 The packaged entrypoint now exposes `--capability-report` and makes `--package-smoke` validate the common walk/CSG runtime contract before resource checks. The focused package runner covers both modes; prefab capability proof is **35/35 tests with 260 assertions**. This improves target-side observability and fail-closed behavior but does not bundle GodotSteam/Voxel Tools or establish native Windows execution.
 
+Steam transport now consumes the same native dependency report as packaged capability diagnostics and exposes explicit ENet fallback state. Focused Steam integration proof passes **12/12 tests with 66 assertions**; the ENet fallback lane passes **6/6 tests with 38 assertions**. This is local contract proof, not authenticated Steam, two-account, WAN or native target evidence.
+
 The packaged capability report now distinguishes stock Godot classes from optional GodotSteam, `SteamMultiplayerPeer` and Voxel Tools inputs, and records ENet/CSG fallbacks when those native integrations are absent. Focused prefab capability proof is **36/36 tests with 269 assertions**. This improves release diagnostics and fail-closed behavior; it does not bundle native binaries or establish native Windows, Steam or Workshop acceptance.
 
 Generated key, door and switch actors now expose state-aware interaction prompts through the shared actor contract. The player HUD resolves collision children back to their actor parent, and the native `InteractionPrompt` renders a high-contrast key/action panel with fade/scale feedback. Focused prompt proof passes **3/3 tests with 11 assertions**; the existing full HUD fixture still has a pre-existing player-lifecycle failure.

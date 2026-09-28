@@ -2,6 +2,7 @@ class_name SteamManager
 extends Node
 
 const Constants = preload("res://game/core/constants.gd")
+const FeatureAvailability = preload("res://game/scripts/map_generator/feature_availability.gd")
 
 signal steam_initialized
 signal steam_auth_ticket_validated(steam_id: int, response: int)
@@ -56,8 +57,9 @@ func _ready() -> void:
 
 
 func _check_steam_available() -> bool:
-	# Check if GodotSteam is present
-	return Engine.has_singleton("Steam") or ClassDB.class_exists("Steam")
+	var dependencies: Dictionary = FeatureAvailability.new().get_native_dependency_report()
+	var godotsteam: Dictionary = dependencies.get("godotsteam", {})
+	return bool(godotsteam.get("available", false))
 
 
 func _steam_has_any_method(steam: Object, method_names: Array[String]) -> bool:
@@ -621,8 +623,10 @@ func _on_validate_auth_ticket_response(
 
 ## Return the detected Steam/ENet transport capabilities.
 func get_transport_capabilities() -> Dictionary:
+	var dependencies: Dictionary = FeatureAvailability.new().get_native_dependency_report()
+	var peer_dependency: Dictionary = dependencies.get("steam_multiplayer_peer", {})
 	var steam_service := is_steam_running()
-	var peer_class := ClassDB.class_exists("SteamMultiplayerPeer")
+	var peer_class := bool(peer_dependency.get("available", false))
 	var reason := "ready"
 	if not steam_service:
 		reason = "steam_service_unavailable"
@@ -633,6 +637,7 @@ func get_transport_capabilities() -> Dictionary:
 		"steam_peer_class": peer_class,
 		"steam_transport": steam_service and peer_class,
 		"enet_transport": true,
+		"native_dependencies": dependencies,
 		"reason": reason,
 	}
 
