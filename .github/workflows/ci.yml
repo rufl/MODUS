@@ -68,6 +68,7 @@ jobs:
           bash tests/runners/test_windows_acceptance_metadata.sh
           bash tests/runners/test_ci_artifact_manifest.sh
           bash tests/runners/test_retrourban_assets.sh
+          bash tests/runners/test_fence_assets.sh
 
   test:
     name: Run GUT Tests
@@ -431,9 +432,8 @@ jobs:
       - name: Build Windows package smoke launcher
         run: |
           mkdir -p build/ztash
-          zig build-exe tools/ztash_windows_launcher.zig \
-            -target x86_64-windows-gnu -O ReleaseSafe -fstrip \
-            -femit-bin=build/ztash/modus.exe
+          zig cc -target x86_64-windows-gnu -O2 -s -municode \
+            tools/ztash_windows_launcher.c -o build/ztash/modus.exe
 
       - name: Assemble versioned Linux release candidate
         env:
