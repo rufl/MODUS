@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
-**Updated:** September 28, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
+**Updated:** September 29, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -164,7 +164,7 @@ These results are narrower than the aggregate suite and must not be summed into 
 | Combat feature | 20/20, 30 assertions; injected configuration preserves critical and knockback modifiers |
 | Audio/performance logging | 23/23, 67 assertions; maintained music navigation API and mutable signal observations |
 | Grid pathfinding/HUD boundaries | 30/30, 70 assertions; walkable-only A* and deterministic ten-update state |
-| UI/UX | 26/26, 109 assertions on August 3; supplied hero artwork, player-visible Showcase route, contextual action help, responsive containment, 48-pixel logical controls, visible version, explicit focus loop, responsive shared forms, localized welcome panel, responsive mod workflow, and complete skill-tree compatibility scene; fresh menu, welcome, mod, and golden-demo captures are retained |
+| UI/UX | 26/26, 117 assertions on September 29; polished menu action states, status/version truth, explicit `E` hint, focus feedback, responsive containment, localized welcome panel and isolated 1280×720 surface rendering |
 | Manual evidence recorder | 2/2, 21 assertions on August 4; safe CSV output, required metadata, explicit Skip accounting, compact 800×600 layout, 48-pixel targets, and focus order |
 | ENet fallback Unit contract | 11/11, 28 assertions; expected engine errors consumed and config fixture owned |
 | Configuration validation | 14/14, 104 assertions; canonical nested paths and GUT-owned managers |

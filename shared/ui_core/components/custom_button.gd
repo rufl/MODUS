@@ -45,7 +45,7 @@ func _register_theme() -> void:
 	# Defer to ensure ThemeManager is ready
 	await get_tree().process_frame
 
-	var theme_mgr: Node = get_node_or_null("/root/ThemeManager")
+	var theme_mgr: Node = _get_theme_manager()
 	if theme_mgr:
 		theme_mgr.register_themeable(self)
 
@@ -201,11 +201,18 @@ func _play_sound(sound_id: String) -> void:
 		audio.play_sound(sound_id)
 
 
+func _get_theme_manager() -> Node:
+	var ui_service := UISystem.get_service()
+	if ui_service and ui_service.theme_manager:
+		return ui_service.theme_manager
+	return null
+
+
 func _is_reduced_motion() -> bool:
 	if Engine.is_editor_hint():
 		return false
 
-	var theme_mgr: Node = get_node_or_null("/root/ThemeManager")
+	var theme_mgr: Node = _get_theme_manager()
 	if theme_mgr:
 		return theme_mgr.is_reduced_motion()
 

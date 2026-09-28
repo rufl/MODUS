@@ -12,6 +12,8 @@ extends Control
 @onready var _evidence: Label = %EvidenceLabel
 @onready var _begin_button: Button = %BeginButton
 @onready var _input_hint: Label = %InputHint
+@onready var _status: Label = %StatusLabel
+@onready var _version: Label = %VersionLabel
 
 var _dismissed: bool = false
 
@@ -27,6 +29,7 @@ func _ready() -> void:
 	_begin_button.pressed.connect(_dismiss)
 	resized.connect(_update_responsive_layout)
 	_update_responsive_layout()
+	call_deferred("_play_intro")
 	_begin_button.call_deferred("grab_focus")
 
 	var localization: Node = GameManager.get_core_system("localization")
@@ -95,9 +98,13 @@ func _refresh_copy() -> void:
 		"showcase_welcome_evidence",
 		"A run becomes evidence only after its timer CSV, notes, and captures are retained."
 	)
+	_status.text = _tr("showcase_welcome_status", "READY • LOCAL BUILD")
+	_version.text = _tr("showcase_welcome_version", "v%s" % GameManager.GAME_VERSION)
 	_begin_button.text = _tr("showcase_welcome_begin", "Begin Showcase")
-	_input_hint.text = _tr("showcase_welcome_hint", "Enter / Space / Gamepad A")
-
+	_begin_button.tooltip_text = _tr(
+		"showcase_welcome_begin_hint", "Begin the maintained showcase route"
+	)
+	_input_hint.text = _tr("showcase_welcome_input_hint", "Enter / Space / E / Gamepad A")
 
 func _update_responsive_layout() -> void:
 	if not _panel or not _title:
@@ -109,6 +116,31 @@ func _update_responsive_layout() -> void:
 	_panel.custom_minimum_size.x = clampf(size.x - edge * 2.0, 280.0, 560.0)
 	_title.add_theme_font_size_override("font_size", 38 if narrow else 54)
 
+
+func _play_intro() -> void:
+	if not _panel:
+		return
+	_panel.pivot_offset = _panel.size / 2.0
+	if _is_reduced_motion():
+		_panel.modulate = Color.WHITE
+		_panel.scale = Vector2.ONE
+		return
+	_panel.modulate.a = 0.0
+	_panel.scale = Vector2(0.97, 0.97)
+	var tween := create_tween().set_parallel()
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_panel, "modulate:a", 1.0, 0.24)
+	tween.tween_property(_panel, "scale", Vector2.ONE, 0.28)
+
+
+func _is_reduced_motion() -> bool:
+	var ui_service := UISystem.get_service()
+	return (
+		ui_service
+		and ui_service.theme_manager
+		and ui_service.theme_manager.has_method("is_reduced_motion")
+		and ui_service.theme_manager.is_reduced_motion()
+	)
 
 func _on_language_changed(_language: String) -> void:
 	_refresh_copy()

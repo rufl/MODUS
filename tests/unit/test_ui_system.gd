@@ -206,6 +206,14 @@ func test_main_menu_screen_exists() -> void:
 	assert_true(hint.text.contains("showcase"), "Showcase focus should explain the capture route")
 	assert_ne(editor.text, "menu_editor", "Editor action should use a readable localized label")
 	assert_true(version.text.contains("0.9.5-beta"), "Menu should expose the running build version")
+	assert_eq(
+		play.mouse_default_cursor_shape,
+		Control.CURSOR_POINTING_HAND,
+		"Menu actions should expose an actionable pointer state"
+	)
+	assert_not_null(play.get_theme_stylebox("normal"), "Primary action should have a visible idle state")
+	assert_not_null(showcase.get_theme_stylebox("hover"), "Secondary action should have a visible hover state")
+	assert_not_null(showcase.get_theme_stylebox("focus"), "Secondary action should have a visible focus state")
 
 
 func test_showcase_welcome_screen_is_accessible_and_truthful() -> void:
@@ -220,6 +228,9 @@ func test_showcase_welcome_screen_is_accessible_and_truthful() -> void:
 	var route := screen.find_child("RouteLabel", true, false) as Label
 	var evidence := screen.find_child("EvidenceLabel", true, false) as Label
 	var begin := screen.find_child("BeginButton", true, false) as Button
+	var status := screen.find_child("StatusLabel", true, false) as Label
+	var build_version := screen.find_child("VersionLabel", true, false) as Label
+	var input_hint := screen.find_child("InputHint", true, false) as Label
 
 	assert_not_null(panel, "Welcome content should use a bounded panel")
 	assert_not_null(body, "Welcome screen should explain the route")
@@ -232,6 +243,14 @@ func test_showcase_welcome_screen_is_accessible_and_truthful() -> void:
 	assert_true(evidence.text.contains("evidence"), "Copy should not overclaim an unrecorded run")
 	assert_gte(begin.custom_minimum_size.y, 48.0, "Primary action should meet target size")
 	assert_eq(begin.focus_mode, Control.FOCUS_ALL, "Primary action should accept gamepad focus")
+	assert_not_null(status, "Welcome screen should expose current run status")
+	assert_not_null(build_version, "Welcome screen should expose its build version")
+	assert_true(status.text.contains("LOCAL"), "Status should identify the local build")
+	assert_true(build_version.text.contains("0.9.5-beta"), "Welcome screen should expose the running build version")
+	assert_not_null(begin.get_theme_stylebox("hover"), "Primary action should have a visible hover state")
+	assert_not_null(begin.get_theme_stylebox("focus"), "Primary action should have a visible focus state")
+	assert_not_null(input_hint, "Welcome screen should explain accepted input")
+	assert_true(input_hint.text.contains("E"), "Input hint should match the keyboard dismissal path")
 	screen.free()
 
 

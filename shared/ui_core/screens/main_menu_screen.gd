@@ -335,24 +335,21 @@ func _build_menu_ui() -> void:
 
 func _create_menu_button(loc_key: String, fallback: String) -> Button:
 	var btn: Button
-
-	# Use CustomButton if available
 	if ClassDB.class_exists("CustomButton"):
 		btn = CustomButton.new()
 	else:
 		btn = Button.new()
-
 	btn.custom_minimum_size = Vector2(280, 48)
 	btn.focus_mode = Control.FOCUS_ALL
-
-	# Try to localize
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var localization: Node = GameManager.get_core_system("localization")
 	if localization and localization.has_method("translate"):
 		var translated: String = localization.translate(loc_key)
 		btn.text = translated if translated != loc_key else fallback
 	else:
 		btn.text = fallback
-
+	btn.tooltip_text = btn.text
+	_style_secondary_button(btn)
 	return btn
 
 
@@ -405,6 +402,35 @@ func _style_primary_button(button: Button) -> void:
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.62, 0.72))
 
+
+func _style_secondary_button(button: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(0.045, 0.07, 0.12, 0.96)
+	normal.border_color = Color(0.2, 0.34, 0.52, 0.95)
+	normal.set_border_width_all(1)
+	normal.set_corner_radius_all(6)
+	normal.content_margin_top = 11
+	normal.content_margin_bottom = 11
+	var hover: StyleBoxFlat = normal.duplicate()
+	hover.bg_color = Color(0.08, 0.16, 0.27, 0.98)
+	hover.border_color = Color(0.38, 0.66, 0.92)
+	var pressed: StyleBoxFlat = normal.duplicate()
+	pressed.bg_color = Color(0.03, 0.1, 0.18, 1.0)
+	var focus: StyleBoxFlat = normal.duplicate()
+	focus.border_color = Color(0.72, 0.9, 1.0)
+	focus.set_border_width_all(2)
+	var disabled: StyleBoxFlat = normal.duplicate()
+	disabled.bg_color = Color(0.04, 0.06, 0.09, 0.8)
+	disabled.border_color = Color(0.2, 0.26, 0.34, 0.6)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", focus)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_color_override("font_color", Color(0.86, 0.93, 1.0))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color(0.78, 0.9, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.56, 0.68))
 
 func _update_responsive_layout() -> void:
 	if not _safe_margins or not _menu_panel or not _title:
