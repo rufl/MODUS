@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://game/world/maps/traversal_course.tscn" id="6_traverse"]
 [ext_resource type="PackedScene" path="res://game/world/maps/projectile_range.tscn" id="7_range"]
 [ext_resource type="PackedScene" path="res://game/world/maps/visual_tweaking_lab.tscn" id="8_vizlab"]
+[ext_resource type="Script" path="res://game/levels/asset_dressing.gd" id="9_asset_dressing"]
 
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
@@ -147,3 +148,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -60)
 
 [node name="Zone8_VisualTweakingLab" parent="Zones" instance=ExtResource("8_vizlab")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 60)
+
+[node name="AssetDressing" type="Node3D" parent="."]
+position = Vector3(20, 0, 20)
+scale = Vector3(1.25, 1.25, 1.25)
+script = ExtResource("9_asset_dressing")

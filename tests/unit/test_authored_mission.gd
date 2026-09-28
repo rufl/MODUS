@@ -425,3 +425,47 @@ func test_breakwater_presentation_contract_covers_power_audio_and_weather() -> v
 		)
 		assert_gt(report.get("target_count", 0), 0)
 
+
+func test_authored_levels_use_imported_asset_families() -> void:
+	for level_path: String in [
+		"res://game/levels/breakwater_mission.tscn",
+		"res://game/world/maps/comprehensive_showcase.tscn",
+	]:
+		var packed := load(level_path) as PackedScene
+		assert_not_null(packed, "Asset-dressed level must remain loadable: " + level_path)
+		if packed == null:
+			continue
+		var root := packed.instantiate() as Node
+		add_child_autofree(root)
+		await get_tree().process_frame
+		await get_tree().process_frame
+
+		var dressing: Node = root.get_node_or_null("AssetDressing")
+		assert_not_null(dressing, "Level must expose its asset dressing node: " + level_path)
+		if dressing == null:
+			continue
+		var contract: Dictionary = dressing.get_asset_usage_contract()
+		assert_true(contract.get("valid", false), str(contract.get("errors", [])))
+		assert_eq(contract.get("version"), 1)
+		assert_eq(
+			contract.get("spawned_models"),
+			contract.get("model_assets", []).size(),
+			"Every authored model entry must instantiate",
+		)
+		assert_eq(
+			contract.get("spawned_materials"),
+			contract.get("material_assets", []).size(),
+			"Every authored material entry must instantiate",
+		)
+		assert_eq(
+			contract.get("spawned_vfx"),
+			contract.get("vfx_assets", []).size(),
+			"Every authored VFX entry must instantiate",
+		)
+		assert_gte(contract.get("spawned_models", 0), 20)
+		assert_gte(contract.get("spawned_materials", 0), 6)
+		assert_gte(contract.get("spawned_vfx", 0), 4)
+		assert_not_null(
+			dressing.get_node_or_null("Asset_metal_fence_security"),
+			"Imported fence models must be present",
+		)
