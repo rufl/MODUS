@@ -1,5 +1,7 @@
 extends GameService
 
+const VFX_TEXTURE_CATALOG = preload("res://game/scripts/features/effects/vfx_texture_catalog.gd")
+
 ## Integrated Effects Service using modular architecture
 ## Orchestrates particles, decals, gore, and tracers
 
@@ -481,10 +483,17 @@ func _on_player_died_event(data: Dictionary) -> void:
 
 ## Spawn pooled muzzle flash (reuses objects, no GC pressure)
 func spawn_pooled_muzzle_flash(
-	pos: Vector3, color: Color = Color.ORANGE, scale: float = 1.0, lifetime: float = 0.05
+	pos: Vector3,
+	color: Color = Color.ORANGE,
+	scale: float = 1.0,
+	lifetime: float = 0.05,
+	texture: Texture2D = null
 ) -> Node3D:
 	if effect_pool_manager:
-		return effect_pool_manager.spawn_muzzle_flash(pos, color, scale, lifetime)
+		var selected_texture: Texture2D = texture
+		if not selected_texture:
+			selected_texture = VFX_TEXTURE_CATALOG.pick_muzzle_flash()
+		return effect_pool_manager.spawn_muzzle_flash(pos, color, scale, lifetime, selected_texture)
 	return null
 
 
@@ -496,11 +505,12 @@ func spawn_pooled_particles(
 	color: Color = Color.ORANGE,
 	spread: float = 15.0,
 	velocity_min: float = 2.0,
-	velocity_max: float = 5.0
+	velocity_max: float = 5.0,
+	texture: Texture2D = null
 ) -> GPUParticles3D:
 	if effect_pool_manager:
 		return effect_pool_manager.spawn_particles(
-			pos, amount, lifetime, color, spread, velocity_min, velocity_max
+			pos, amount, lifetime, color, spread, velocity_min, velocity_max, texture
 		)
 	return null
 

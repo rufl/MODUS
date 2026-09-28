@@ -193,7 +193,11 @@ func _deactivate_shell(shell: RigidBody3D) -> void:
 
 ## Muzzle Flash API
 func spawn_muzzle_flash(
-	pos: Vector3, color: Color = Color.ORANGE, scale: float = 1.0, lifetime: float = 0.05
+	pos: Vector3,
+	color: Color = Color.ORANGE,
+	scale: float = 1.0,
+	lifetime: float = 0.05,
+	texture: Texture2D = null
 ) -> Node3D:
 	var flash: Node3D = null
 
@@ -223,6 +227,9 @@ func spawn_muzzle_flash(
 	var mesh_instance := flash.get_node("Mesh") as MeshInstance3D
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
+	if texture:
+		mat.albedo_texture = texture
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	mat.emission_enabled = true
 	mat.emission = color
 	mat.emission_energy_multiplier = 5.0
@@ -265,7 +272,8 @@ func spawn_particles(
 	color: Color = Color.ORANGE,
 	spread: float = 15.0,
 	velocity_min: float = 2.0,
-	velocity_max: float = 5.0
+	velocity_max: float = 5.0,
+	texture: Texture2D = null
 ) -> GPUParticles3D:
 	var particles: GPUParticles3D = null
 
@@ -323,6 +331,9 @@ func spawn_particles(
 	draw_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	draw_mat.vertex_color_use_as_albedo = true
 	draw_mat.albedo_color = color
+	if texture:
+		draw_mat.albedo_texture = texture
+		draw_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	draw_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	quad.material = draw_mat
 	particles.draw_pass_1 = quad

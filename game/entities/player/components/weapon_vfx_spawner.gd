@@ -2,6 +2,7 @@ extends GameComponent
 class_name WeaponVFXSpawner
 
 const CARTRIDGE_SCENE = preload("res://game/scenes/effects/shell_casing.tscn")
+const VFX_TEXTURE_CATALOG = preload("res://game/scripts/features/effects/vfx_texture_catalog.gd")
 
 var _camera: Camera3D
 
@@ -175,12 +176,12 @@ func _finish_spawn_bullet_hole(hit_pos: Vector3, hit_normal: Vector3) -> void:
 	decal.no_depth_test = false
 	decal.layers = 0xFFFFF
 
-	# Create visible bullet hole texture
-	decal.texture = _create_bullet_hole_texture()
+	var impact_texture: Texture2D = VFX_TEXTURE_CATALOG.pick_impact()
+	decal.texture = impact_texture if impact_texture else _create_bullet_hole_texture()
 	decal.modulate = Color(0.15, 0.15, 0.15, 1.0)  # Dark gray
 
 	# Size
-	decal.pixel_size = 0.4 / 64.0  # Convert world size to pixel size
+	decal.pixel_size = 0.4 / float(decal.texture.get_width())
 
 	# Add to scene FIRST
 	var tree := get_tree()
@@ -250,12 +251,12 @@ func _finish_spawn_explosion_mark(hit_pos: Vector3, hit_normal: Vector3, radius:
 	decal.no_depth_test = false
 	decal.layers = 0xFFFFF
 
-	# Create explosion mark texture
-	decal.texture = _create_explosion_mark_texture()
+	var impact_texture: Texture2D = VFX_TEXTURE_CATALOG.pick_impact()
+	decal.texture = impact_texture if impact_texture else _create_explosion_mark_texture()
 	decal.modulate = Color(0.0, 0.0, 0.0, 0.95)  # Very dark black
 
 	# Large size for explosions
-	decal.pixel_size = radius / 64.0
+	decal.pixel_size = radius / float(decal.texture.get_width())
 
 	# Position slightly off surface to avoid z-fighting
 	decal.global_position = hit_pos + hit_normal * 0.02
@@ -416,14 +417,17 @@ func spawn_muzzle_flash(muzzle_pos: Vector3 = Vector3.ZERO) -> void:
 		else:
 			return
 
+	var muzzle_texture: Texture2D = VFX_TEXTURE_CATALOG.pick_muzzle_flash()
 	# Use pooled muzzle flash if available
 	var effects_service: Node = GameManager.get_core_system("effects") if GameManager else null
 	if effects_service and effects_service.has_method("spawn_pooled_muzzle_flash"):
-		effects_service.spawn_pooled_muzzle_flash(muzzle_pos, Color.ORANGE, 1.0, 0.15)
+		effects_service.spawn_pooled_muzzle_flash(
+			muzzle_pos, Color.ORANGE, 1.0, 0.15, muzzle_texture
+		)
 		# Also spawn particles
 		if effects_service.has_method("spawn_pooled_particles"):
 			effects_service.spawn_pooled_particles(
-				muzzle_pos, 20, 0.15, Color.ORANGE, 15.0, 2.0, 5.0
+				muzzle_pos, 20, 0.15, Color.ORANGE, 15.0, 2.0, 5.0, muzzle_texture
 			)
 		return
 
@@ -489,6 +493,8 @@ func spawn_muzzle_flash(muzzle_pos: Vector3 = Vector3.ZERO) -> void:
 	mesh_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mesh_mat.vertex_color_use_as_albedo = true
 	mesh_mat.albedo_color = Color.ORANGE
+	mesh_mat.albedo_texture = muzzle_texture
+	mesh_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	mesh_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mesh_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	mesh.material = mesh_mat
@@ -632,6 +638,8 @@ func spawn_muzzle_smoke(muzzle_pos: Vector3 = Vector3.ZERO) -> void:
 	smoke_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	smoke_mat.vertex_color_use_as_albedo = true
 	smoke_mat.albedo_color = smoke_color
+	smoke_mat.albedo_texture = VFX_TEXTURE_CATALOG.pick_muzzle_smoke()
+	smoke_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	smoke_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	smoke_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	mesh.material = smoke_mat

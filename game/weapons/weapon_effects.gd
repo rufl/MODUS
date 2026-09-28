@@ -1,6 +1,8 @@
 class_name WeaponEffects
 extends GameComponent3D
 
+const VFX_TEXTURE_CATALOG = preload("res://game/scripts/features/effects/vfx_texture_catalog.gd")
+
 @export var muzzle_flash_color: Color = Color.ORANGE
 @export var muzzle_flash_scale: float = 1.0
 @export var eject_cartridges: bool = true
@@ -88,6 +90,8 @@ func _finish_muzzle_flash(pos: Vector3, rot: Vector3) -> void:
 
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = muzzle_flash_color
+	mat.albedo_texture = VFX_TEXTURE_CATALOG.pick_muzzle_flash()
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	mat.emission_enabled = true
 	mat.emission = muzzle_flash_color
 	mat.emission_energy_multiplier = 5.0

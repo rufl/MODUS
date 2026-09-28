@@ -1,6 +1,8 @@
 class_name WeaponFeedbackSystem
 extends GameComponent3D
 
+const VFX_TEXTURE_CATALOG = preload("res://game/scripts/features/effects/vfx_texture_catalog.gd")
+
 signal muzzle_flash_spawned(position: Vector3)
 signal shell_ejected(position: Vector3, velocity: Vector3)
 
@@ -145,6 +147,8 @@ func _finish_spawn_muzzle_flash(pos: Vector3) -> void:
 	draw_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	draw_mat.vertex_color_use_as_albedo = true  # CRITICAL: Use particle colors
 	draw_mat.albedo_color = muzzle_flash_color
+	draw_mat.albedo_texture = VFX_TEXTURE_CATALOG.pick_muzzle_flash()
+	draw_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	draw_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	quad.material = draw_mat
 	particles.draw_pass_1 = quad

@@ -7,6 +7,10 @@ const BLOOD_HIT_SPAWNER = preload(
 	"res://game/scripts/features/effects/effects/blood_hit_spawner.gd"
 )
 const SPRITE3D_DECAL = preload("res://game/scripts/features/effects/effects/sprite3d_decal.gd")
+const EFFECT_POOL_MANAGER = preload(
+	"res://game/scripts/features/effects/effects/effect_pool_manager.gd"
+)
+const VFX_TEXTURE_CATALOG = preload("res://game/scripts/features/effects/vfx_texture_catalog.gd")
 
 
 func before_each() -> void:
@@ -110,4 +114,24 @@ func test_reusable_sprite_decal_follows_moving_surface() -> void:
 	assert_true(
 		decal.global_position.is_equal_approx(initial_position + Vector3(3, 0, 0)),
 		"Reusable Sprite3D decal follows its moving surface"
+	)
+
+
+func test_pooled_muzzle_flash_uses_catalog_texture() -> void:
+	var manager: Node = EFFECT_POOL_MANAGER.new()
+	manager.muzzle_flash_pool_size = 1
+	manager.particle_pool_size = 0
+	manager.light_pool_size = 0
+	manager.shell_casing_pool_size = 0
+	add_child_autofree(manager)
+	await wait_physics_frames(1)
+
+	var texture: Texture2D = VFX_TEXTURE_CATALOG.pick_muzzle_flash()
+	assert_not_null(texture, "VFX catalog should resolve a muzzle texture")
+	var flash: Node3D = manager.spawn_muzzle_flash(Vector3.ZERO, Color.ORANGE, 1.0, 1.0, texture)
+	var mesh := flash.get_node("Mesh") as MeshInstance3D
+	var material := mesh.get_surface_override_material(0) as StandardMaterial3D
+
+	assert_eq(
+		material.albedo_texture, texture, "Pooled muzzle flashes should use the catalog texture"
 	)
