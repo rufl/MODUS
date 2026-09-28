@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://game/world/maps/projectile_range.tscn" id="7_range"]
 [ext_resource type="PackedScene" path="res://game/world/maps/visual_tweaking_lab.tscn" id="8_vizlab"]
 [ext_resource type="Script" path="res://game/levels/asset_dressing.gd" id="9_asset_dressing"]
+[ext_resource type="Script" path="res://game/levels/map_asset_scatter.gd" id="11_map_asset_scatter"]
 [ext_resource type="Material" path="res://game/art/materials/retro_urban/cleanpavement_cleanpavement_04.tres" id="10_retro_floor"]
 
 
@@ -155,3 +156,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 60)
 position = Vector3(20, 0, 20)
 scale = Vector3(1.25, 1.25, 1.25)
 script = ExtResource("9_asset_dressing")
+
+[node name="MapAssetScatter" type="Node3D" parent="."]
+script = ExtResource("11_map_asset_scatter")
+placement_profile = "showcase"

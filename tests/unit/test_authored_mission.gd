@@ -453,6 +453,25 @@ func test_authored_levels_use_imported_asset_families() -> void:
 			contract.get("model_assets", []).size(),
 			"Every authored model entry must instantiate",
 		)
+
+		var scatter: Node = root.get_node_or_null("MapAssetScatter")
+		assert_not_null(scatter, "Level must expose map-wide asset scatter: " + level_path)
+		if scatter == null:
+			continue
+		var scatter_contract: Dictionary = scatter.get_asset_usage_contract()
+		assert_true(scatter_contract.get("valid", false), str(scatter_contract.get("errors", [])))
+		assert_eq(scatter_contract.get("version"), 1)
+		assert_eq(
+			scatter_contract.get("spawned_models"),
+			scatter_contract.get("model_assets", []).size(),
+			"Every map-wide scatter entry must instantiate",
+		)
+		assert_gte(scatter_contract.get("model_assets", []).size(), 14)
+		assert_gt(scatter_contract.get("source_families", []).size(), 5)
+		assert_eq(
+			scatter_contract.get("profile"),
+			"breakwater" if level_path == "res://game/levels/breakwater_mission.tscn" else "showcase",
+		)
 		assert_eq(
 			contract.get("spawned_materials"),
 			contract.get("material_assets", []).size(),
