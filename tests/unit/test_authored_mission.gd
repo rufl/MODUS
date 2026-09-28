@@ -504,3 +504,19 @@ func test_authored_levels_use_imported_asset_families() -> void:
 			dressing.get_node_or_null("Asset_metal_fence_security"),
 			"Imported fence models must be present",
 		)
+
+
+func test_wrad_arms_runtime_roster_loads() -> void:
+	var roster := FirstPersonArmsCatalog.get_asset_roster()
+	assert_eq(roster.size(), 3)
+	assert_eq(roster[0].get("id"), "wrad_arms_model")
+	assert_eq(roster[0].get("role"), "first_person_arms")
+	assert_eq(roster[1].get("variant"), "pale")
+	assert_eq(roster[2].get("variant"), "dark")
+	assert_true(
+		FirstPersonArmsCatalog.is_ready(),
+		"WRAD ARMS model and both supplied skin variants must load",
+	)
+	assert_not_null(FirstPersonArmsCatalog.load_model())
+	assert_not_null(FirstPersonArmsCatalog.load_skin("pale"))
+	assert_not_null(FirstPersonArmsCatalog.load_skin("dark"))

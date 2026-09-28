@@ -160,6 +160,7 @@ PSX_FENCE_PREFIXES = (
     "game/art/models/fences/",
     "game/art/textures/fences/",
 )
+WRAD_ARMS_PREFIX = "game/art/models/first_person/wrad_arms/"
 PSX_OFFICE_PREFIX = "game/art/models/office/"
 BRACKEYS_VFX_PREFIX = "game/art/textures/vfx/brackeys/"
 GENERATED_MAP_OVERVIEW_PATHS = {
@@ -331,6 +332,19 @@ def classify(path: Path, digest: str) -> dict[str, str]:
         "notes": "No repository-local provenance record currently clears this distributed asset.",
     }
 
+    if relative.startswith(WRAD_ARMS_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "wriks",
+            "source": "https://wriks.itch.io/wrad-arms",
+            "license": "CC0-1.0",
+            "local_notice": "docs/licenses/WRAD_ARMS_CC0-1.0.txt",
+            "notes": (
+                "WRAD ARMS first-person model or supplied skin texture; the "
+                "canonical model is the imported arms.glb, with the pale texture "
+                "also extracted by Godot from the model's embedded image."
+            ),
+        }
     if relative.startswith(BRACKEYS_VFX_PREFIX):
         return {
             "status": "cleared",
