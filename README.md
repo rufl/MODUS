@@ -22,7 +22,7 @@ MODUS is a developer project, not a ready-to-play Steam game and not a one-click
 
 The parts most likely to frustrate you:
 
-- There is no published release, signed installer, configured Workshop item, or bundled GodotSteam extension. Fresh local four-format/lean candidate `b1ffb5d5bb0c56e70388501b57d37e6bc494c532` passed artifact validation, extracted Linux/package/export smoke and ZEER preview; both receiver apply attempts returned HTTP 403 `MissingRequestGuard`, so it is not a supported public download.
+- There is no published release, signed installer, configured Workshop item, or bundled GodotSteam extension. Fresh local four-format/lean candidate `88848596f109be95fda315d9b6b0c083ed49e852` passed artifact validation, extracted Linux/package/export smoke and ZEER preview; both receiver apply attempts returned HTTP 403 `MissingRequestGuard`, so it is not a supported public download. Lean ZTASH hashes are Linux `15770ca476b7df91c6c05230b1c302b95de5a41e7188c657109aa81a72ae4cfd` (83570623 bytes) and Windows `0e550c4abad9381bad00fe95ca9e6ff554cf4077b7cf5ae6f518acd399ab7a3d` (93343403 bytes).
 - The expected environment is Godot 4.7 in the 4.7 line on a writable machine with Bash; the repository does not pin a portable editor binary.
 - First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
 - Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
