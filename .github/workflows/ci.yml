@@ -70,6 +70,7 @@ jobs:
           bash tests/runners/test_retrourban_assets.sh
           bash tests/runners/test_fence_assets.sh
           bash tests/runners/test_office_assets.sh
+          bash tests/runners/test_brackeys_vfx_assets.sh
 
   test:
     name: Run GUT Tests

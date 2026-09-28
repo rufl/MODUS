@@ -31,7 +31,7 @@ ASSET_SUFFIXES = {
     ".tres",
     ".ttf",
     ".wav",
-    ".webp",
+    ".tga",
 }
 EXTRA_PATHS = ("shared/shaders/blood_pool.gd",)
 
@@ -161,6 +161,7 @@ PSX_FENCE_PREFIXES = (
     "game/art/textures/fences/",
 )
 PSX_OFFICE_PREFIX = "game/art/models/office/"
+BRACKEYS_VFX_PREFIX = "game/art/textures/vfx/brackeys/"
 GENERATED_MAP_OVERVIEW_PATHS = {
     "game/world/maps/overviews/map_overview.png",
 }
@@ -330,6 +331,19 @@ def classify(path: Path, digest: str) -> dict[str, str]:
         "notes": "No repository-local provenance record currently clears this distributed asset.",
     }
 
+    if relative.startswith(BRACKEYS_VFX_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Brackeys and credited creators",
+            "source": "https://brackeysgames.itch.io/brackeys-vfx-bundle",
+            "license": "CC0-1.0",
+            "local_notice": "docs/licenses/BRACKEYS_VFX_CC0-1.0.txt",
+            "notes": (
+                "Brackeys VFX Bundle particle texture, flipbook, or pre-drawn "
+                "spritesheet; the official pack page and bundled credits state "
+                "that the repackaged/remixed assets are CC0."
+            ),
+        }
     if relative.startswith(PSX_OFFICE_PREFIX):
         return {
             "status": "cleared",

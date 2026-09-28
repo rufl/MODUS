@@ -1,0 +1,29 @@
+Brackeys' VFX Bundle
+
+Curator/source: Brackeys
+Official source: https://brackeysgames.itch.io/brackeys-vfx-bundle
+License: CC0 1.0 Universal / Public Domain
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official source page states that the pack is a combination of repackaged and
+remixed assets and releases the assets under CC0. The bundled LICENSE & CREDITS.txt
+also records CC0 for all assets and identifies the original contributors:
+- Particle textures: Picster and Kenney
+- Flipbooks: Thomas Iché
+- Pre-drawn spritesheets: CodeManu
+
+Original credited sources:
+- https://github.com/RPicster/Godot-particle-and-vfx-textures
+- https://kenney.nl/assets/particle-pack
+- https://unity.com/blog/engine-platform/free-vfx-image-sequences-flipbooks
+- https://codemanu.itch.io/vfx-free-pack
+
+Import record:
+- Uploaded archive: brackeys_vfx_bundle.zip
+- Uploaded archive SHA-256: ac0fbf5d5a07688a5d4d35fd0bbae783597d819a3d8a92893b05eb69ddb144c5
+- Imported canonical textures: 213 total
+- PNG textures: 199 (93 alpha particle textures, 92 opaque particle textures, 14 pre-drawn spritesheets)
+- TGA flipbook sheets: 14
+- Destination: game/art/textures/vfx/brackeys/
+- The archive's .DS_Store files and duplicate macOS metadata were intentionally omitted.
+- The source folder named "opague" was normalized to "opaque" in the MODUS destination.
