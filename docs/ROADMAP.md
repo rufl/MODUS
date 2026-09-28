@@ -15,7 +15,7 @@
 - Manual gameplay: 0 imported evidence files / 0.00 recorded hours.
 - Performance: one bounded 66.4-second, 130-sample showcase capture; production targets remain unproven.
 - Release: blocked at `0.9.5-beta`.
-Published readiness remains NOT READY. The two-validator-blocker snapshot covers manual evidence and release version only; the current 711-row provenance ledger is fully cleared, including the imported Binbun3D RetroUrban CC BY 4.0 maps/materials and valsekamerplant CC0 fence/wall models/textures with retained notices, while packaging, external service, target-runtime and visual asset-acceptance proof remain open. Local-only raw evidence and generated outputs do not certify a fresh clone; see [report regeneration](DOCUMENTATION_TRUTH.md#local-only-retention).
+Published readiness remains NOT READY. The two-validator-blocker snapshot covers manual evidence and release version only; the current 891-row provenance ledger is fully cleared, including the imported Binbun3D RetroUrban CC BY 4.0 maps/materials and valsekamerplant CC0 fence/wall and office models/textures with retained notices, while packaging, external service, target-runtime and visual asset-acceptance proof remain open. Local-only raw evidence and generated outputs do not certify a fresh clone; see [report regeneration](DOCUMENTATION_TRUTH.md#local-only-retention).
 
 See [Documentation Truth](DOCUMENTATION_TRUTH.md) and [Current Status](CURRENT_STATUS.md) for details.
 

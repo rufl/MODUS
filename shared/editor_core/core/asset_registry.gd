@@ -5,7 +5,7 @@ extends Node
 signal assets_loaded
 signal category_changed(category: String)
 
-enum Category { BLOCKS, ENTITIES, PROPS, INTERACTABLES, HAZARDS, PICKUPS, SPAWN_POINTS, MATERIALS, FENCES }
+enum Category { BLOCKS, ENTITIES, PROPS, INTERACTABLES, HAZARDS, PICKUPS, SPAWN_POINTS, MATERIALS, FENCES, OFFICE }
 
 const CATEGORY_NAMES := {
 	Category.BLOCKS: "Blocks",
@@ -17,6 +17,7 @@ const CATEGORY_NAMES := {
 	Category.SPAWN_POINTS: "Spawn Points",
 	Category.MATERIALS: "Materials",
 	Category.FENCES: "Fences",
+	Category.OFFICE: "Office",
 }
 
 var assets: Dictionary = {}
@@ -43,6 +44,7 @@ func _scan_assets() -> void:
 	_register_builtin_blocks()
 	_scan_material_directory("res://game/art/materials/retro_urban/", Category.MATERIALS)
 	_scan_directory_recursive("res://game/art/models/fences/", Category.FENCES, ["*.glb"])
+	_scan_directory_recursive("res://game/art/models/office/", Category.OFFICE, ["*.glb"])
 
 	# Entities - enemies from game/entities/enemies
 	_scan_directory("res://game/entities/enemies/", Category.ENTITIES, ["*.tscn"])

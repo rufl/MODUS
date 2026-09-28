@@ -108,6 +108,8 @@ require_file "tools/generate_retrourban_materials.py"
 require_file "tests/runners/test_retrourban_assets.sh"
 require_file "docs/licenses/PSX_WALLS_FENCES_CC0-1.0.txt"
 require_file "tests/runners/test_fence_assets.sh"
+require_file "docs/licenses/PSX_OFFICE_CC0-1.0.txt"
+require_file "tests/runners/test_office_assets.sh"
 require_file "tools/validate_release_readiness.sh"
 require_file "tools/validate_production_readiness.sh"
 require_file "game/data/weapons.json5"
@@ -152,6 +154,7 @@ require_text "tests/runners/test_ci_artifact_manifest.sh" "CI artifact manifest 
 require_text "tools/generate_retrourban_materials.py" "RetroUrban materials"
 require_text "tests/runners/test_retrourban_assets.sh" "RetroUrban asset integrity regression passed."
 require_text "tests/runners/test_fence_assets.sh" "Fence asset integrity regression passed."
+require_text "tests/runners/test_office_assets.sh" "Office asset integrity regression passed."
 
 if ! tools/generate_provenance_ledger.py --check; then
   fail "provenance ledger is stale"

@@ -160,6 +160,7 @@ PSX_FENCE_PREFIXES = (
     "game/art/models/fences/",
     "game/art/textures/fences/",
 )
+PSX_OFFICE_PREFIX = "game/art/models/office/"
 GENERATED_MAP_OVERVIEW_PATHS = {
     "game/world/maps/overviews/map_overview.png",
 }
@@ -329,6 +330,19 @@ def classify(path: Path, digest: str) -> dict[str, str]:
         "notes": "No repository-local provenance record currently clears this distributed asset.",
     }
 
+    if relative.startswith(PSX_OFFICE_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "valsekamerplant",
+            "source": "https://valsekamerplant.itch.io/psx-style-opulent-office",
+            "license": "CC0-1.0",
+            "local_notice": "docs/licenses/PSX_OFFICE_CC0-1.0.txt",
+            "notes": (
+                "PSX style office prop; canonical GLB model imported from the "
+                "OFFICE.zip archive. The official source page states CC0 and "
+                "that textures are CC0 or creator-owned photographs."
+            ),
+        }
     if any(relative.startswith(prefix) for prefix in PSX_FENCE_PREFIXES):
         return {
             "status": "cleared",
