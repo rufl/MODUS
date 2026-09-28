@@ -5,6 +5,10 @@ IFS=$'\n\t'
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 OVERZEER_ROOT="${OVERZEER_ROOT:-$ROOT/../../OVERZEER}"
 FLEET="$OVERZEER_ROOT/tools/overzeer-fleet-dogfood.sh"
+if [[ ! -x "$FLEET" ]]; then
+  ZEER_ROOT="${ZEER_ROOT:-$ROOT/../../ZEER}"
+  FLEET="$ZEER_ROOT/tools/zeer-fleet-dogfood.sh"
+fi
 ACTION=preview
 APPLICATION="${OVERZEER_APPLICATION:-modus}"
 VERSION="${OVERZEER_VERSION:-0.9.5-beta}"
