@@ -123,14 +123,13 @@ with zipfile.ZipFile(wrapped) as archive:
         f"{windows_root}/README.txt",
         f"{windows_root}/SHA256SUMS",
         f"{windows_root}/modus-real.exe",
-        f"{windows_root}/modus-real.pck",
         f"{windows_root}/modus.exe",
         f"{windows_root}/modus.pck",
         f"{windows_root}/server",
         f"{windows_root}/server.pck",
     }
     checksums = archive.read(f"{windows_root}/SHA256SUMS").decode()
-    for name in ("modus.exe", "modus-real.exe", "modus.pck", "modus-real.pck"):
+    for name in ("modus.exe", "modus-real.exe", "modus.pck"):
         payload = archive.read(f"{windows_root}/{name}")
         assert f"{hashlib.sha256(payload).hexdigest()}  {name}\n" in checksums
 print("OVERZEER tar.zst, tar.gz and zip reproducibility and launcher manifest checks passed.")

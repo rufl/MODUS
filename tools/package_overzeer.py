@@ -171,7 +171,6 @@ def package(args: argparse.Namespace) -> None:
                 "modus.exe": launcher,
                 "modus-real.exe": executable,
                 "modus.pck": args.content.absolute(),
-                "modus-real.pck": args.content.absolute(),
             }
         )
     else:

@@ -73,7 +73,6 @@ for item in manifest["artifacts"]:
         names = set(zipfile.ZipFile(archive).namelist())
         assert any(name.endswith("/modus.exe") for name in names)
         assert any(name.endswith("/modus-real.exe") for name in names)
-        assert any(name.endswith("/modus-real.pck") for name in names)
         assert any(name.endswith("/ztash.ico") for name in names)
     else:
         names = set(tarfile.open(archive, "r:gz").getnames())
