@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
-**Updated:** September 27, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
+**Updated:** September 28, 2026 <!-- craft-ignore: status sheet uses deliberate labels -->
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7+  
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -27,6 +27,8 @@ CI builds Linux client and editor alongside its existing targets and assembles v
 The Windows acceptance harness now records actual W movement, Space jump and E interaction outcomes, reliable application-level ENet probes, reconnect/soak and controlled host-loss evidence, renderer/viewport/window/GPU/API/OS metadata, plus same-build manifest/commit/hash metadata, the copied toolchain lock and its SHA-256 digest, and retained logs. Linux boundary regressions pass; no native Windows execution, independent WAN session, or authenticated Steam session is claimed.
 
 The OVERZEER package contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory validation passed, and the extracted Linux `--package-smoke` path exited cleanly. The source/package-smoke regression now covers user-argument dispatch without script errors; CI export manifests will record the toolchain-lock digest and native acceptance verifies that binding. Authenticated receiver publication, signing, and native target smoke remain open.
+
+September 28 current artifact proof: commit `16cc7f4f1b5316eb2df609f0c8790b7efa8e3acb` produced fresh Godot 4.7.2 Linux client/server/editor and Windows client/editor exports. All four OVERZEER formats and lean ZTASH archives passed strict inventory/hash validation; source and extracted Linux `--package-smoke`, Linux client/server export smoke, package reproducibility, and ZTASH preparation regressions passed; and ZTASH preview passed against the registered DDJARIN/CHOPPER endpoints. Direct authenticated CHOPPER deployment completed for the Linux archive (`65efea85656e2be588f4b348d206e86d96099da320cd2ba854897d5b247156f0`); the combined DDJARIN/CHOPPER apply stopped safely at DDJARIN `RemoteDeploymentPollingExceeded`, so no Windows publication or native acceptance claim is made. Windows runtime was not executed on Linux; packages are unsigned and native target, manual, Steam/Workshop/WAN and 1.0 release gates remain open.
 
 ### September 22 Persistent Hub Travel
 

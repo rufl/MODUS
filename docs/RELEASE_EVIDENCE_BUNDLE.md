@@ -2,7 +2,7 @@
 
 > **Documentation status: maintained reference.** These artifacts prove only the named capture boundary; they are not manual gameplay, performance, multiplayer, or release approval.
 
-**Updated:** September 11, 2026
+**Updated:** September 28, 2026
 **Status:** EVIDENCE INDEX COMPLETE — release approval remains blocked by manual evidence, packaging, and external/runtime clearance
 
 This published index preserves dated observations and curated media; it is not a fresh verification run. Raw `logs/`, generated reports, and historical session documents remain local-only and are absent from fresh clones. See [report regeneration](DOCUMENTATION_TRUTH.md#regenerating-local-reports) for commands and prerequisites. The August menu images predate the subsequent artwork removal and do not prove the current rendered menu.
@@ -73,6 +73,7 @@ Published context: [Performance Baseline Proof](PERFORMANCE_BASELINE_PROOF.md). 
 - Provenance inventory: `docs/ATTRIBUTION.md` and `docs/PROVENANCE_LEDGER.csv`.
 - Retained notices: root `LICENSE` and `docs/licenses/`.
 - September 11 package proof: a `Linux Desktop` preset builds a local client artifact and `tools/run_export_smoke.sh` launches it cleanly for the bounded smoke interval on Godot 4.7.2. This is local runtime proof only; it is not a published, signed, installer-backed, Steam, target-Windows, or long-session release.
+- September 28 current artifact proof: commit `16cc7f4f1b5316eb2df609f0c8790b7efa8e3acb` produced fresh Godot 4.7.2 Linux client/server/editor and Windows client/editor exports. All four OVERZEER formats and lean ZTASH packages passed strict inventory/hash validation; source and extracted Linux `--package-smoke`, Linux client/server export smoke, package reproducibility, ZTASH preparation and registered-endpoint preview passed. Direct authenticated CHOPPER deployment completed for the Linux archive (`65efea85656e2be588f4b348d206e86d96099da320cd2ba854897d5b247156f0`); the combined DDJARIN/CHOPPER apply stopped safely at DDJARIN `RemoteDeploymentPollingExceeded`. This remains unsigned local/receiver-candidate evidence; Windows execution/publication, target-native, manual, Steam/Workshop/WAN and 1.0 proof remain open.
 - September 10 security proof: NetworkEditor accepts only server-side finite, bounded, safe-path payloads; entity and transform RPCs are explicitly whitelisted and rate-limited. Focused proof passes 5/5 NetworkEditor integration tests and 9/9 RPC-whitelist tests.
 - September 10 trusted-peer proof: Steam-authenticated peers remain subject to RPC whitelist/rate limits and server movement validation; NetworkManager focused proof passes 14/14 with 54 assertions.
 - September 10 RPC payload proof: kill reports require sender participation and bounded source text; Steam ticket RPCs require positive IDs and bounded non-empty buffers. NetworkManager focused proof passes 15/15 with 62 assertions; RPC whitelist proof passes 9/9 with 119 assertions.
