@@ -9,66 +9,83 @@ static bool has_argument(int argc, wchar_t **argv, const wchar_t *needle) {
     return false;
 }
 
+static bool append_path(wchar_t *destination, size_t capacity, const wchar_t *directory, const wchar_t *name) {
+    int written = _snwprintf(destination, capacity, L"%ls\\%ls", directory, name);
+    return written >= 0 && (size_t)written < capacity;
+}
+
 int wmain(int argc, wchar_t **argv) {
-    wchar_t executable[32768];
-    wchar_t real_pck[32768];
-    wchar_t package_pck[32768];
-    bool generated_pck = false;
+    enum { PATH_CAPACITY = 32768 };
+    wchar_t package_executable[PATH_CAPACITY];
+    wchar_t package_real_executable[PATH_CAPACITY];
+    wchar_t package_pck[PATH_CAPACITY];
+    wchar_t temp_directory[PATH_CAPACITY];
+    wchar_t temp_workspace[PATH_CAPACITY];
+    wchar_t executable[PATH_CAPACITY];
+    wchar_t real_pck[PATH_CAPACITY];
+    wchar_t command_line[PATH_CAPACITY];
+    wchar_t *separator;
     PROCESS_INFORMATION process = {0};
+    STARTUPINFOW startup = {.cb = sizeof(startup)};
     DWORD exit_code = 1;
+    DWORD length;
+    DWORD temp_length;
+    bool workspace_created = false;
+    int used;
     int result = 1;
 
-    DWORD length = GetModuleFileNameW(NULL, executable, sizeof(executable) / sizeof(executable[0]));
-    if (length == 0 || length >= sizeof(executable) / sizeof(executable[0])) return 1;
-    wchar_t *separator = wcsrchr(executable, L'\\');
-    if (separator == NULL) separator = wcsrchr(executable, L'/');
+    length = GetModuleFileNameW(NULL, package_executable, PATH_CAPACITY);
+    if (length == 0 || length >= PATH_CAPACITY) return 1;
+    wcscpy(package_real_executable, package_executable);
+    separator = wcsrchr(package_real_executable, L'\\');
+    if (separator == NULL) separator = wcsrchr(package_real_executable, L'/');
     if (separator == NULL) return 1;
     wcscpy(separator + 1, L"modus-real.exe");
 
-    wcscpy(real_pck, executable);
-    separator = wcsrchr(real_pck, L'\\');
-    if (separator == NULL) separator = wcsrchr(real_pck, L'/');
-    if (separator == NULL) return 1;
-    wcscpy(separator + 1, L"modus-real.pck");
-    wcscpy(package_pck, executable);
+    wcscpy(package_pck, package_executable);
     separator = wcsrchr(package_pck, L'\\');
     if (separator == NULL) separator = wcsrchr(package_pck, L'/');
     if (separator == NULL) return 1;
     wcscpy(separator + 1, L"modus.pck");
 
-    DWORD real_pck_attributes = GetFileAttributesW(real_pck);
-    if (real_pck_attributes == INVALID_FILE_ATTRIBUTES) {
-        DWORD package_pck_attributes = GetFileAttributesW(package_pck);
-        if (package_pck_attributes == INVALID_FILE_ATTRIBUTES ||
-            (package_pck_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
-            return 1;
-        }
-        if (CreateHardLinkW(real_pck, package_pck, NULL) == 0 &&
-            CopyFileW(package_pck, real_pck, FALSE) == 0) {
-            return 1;
-        }
-        generated_pck = true;
-    } else if ((real_pck_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+    DWORD package_pck_attributes = GetFileAttributesW(package_pck);
+    if (package_pck_attributes == INVALID_FILE_ATTRIBUTES ||
+        (package_pck_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
         return 1;
     }
 
-    wchar_t command_line[32768];
-    int used = _snwprintf(
+    temp_length = GetTempPathW(PATH_CAPACITY, temp_directory);
+    if (temp_length == 0 || temp_length >= PATH_CAPACITY ||
+        GetTempFileNameW(temp_directory, L"MOD", 0, temp_workspace) == 0) {
+        return 1;
+    }
+    if (DeleteFileW(temp_workspace) == 0 || CreateDirectoryW(temp_workspace, NULL) == 0) {
+        return 1;
+    }
+    workspace_created = true;
+    if (!append_path(executable, PATH_CAPACITY, temp_workspace, L"modus-real.exe") ||
+        !append_path(real_pck, PATH_CAPACITY, temp_workspace, L"modus-real.pck") ||
+        !CopyFileW(package_real_executable, executable, FALSE) ||
+        !CopyFileW(package_pck, real_pck, FALSE)) {
+        goto cleanup;
+    }
+
+    used = _snwprintf(
         command_line,
-        sizeof(command_line) / sizeof(command_line[0]),
+        PATH_CAPACITY,
         L"\"%ls\"",
         executable
     );
-    if (used < 0 || (size_t)used >= sizeof(command_line) / sizeof(command_line[0])) goto cleanup;
+    if (used < 0 || (size_t)used >= PATH_CAPACITY) goto cleanup;
 
     bool package_smoke = has_argument(argc, argv, L"--package-smoke");
     if (package_smoke && !has_argument(argc, argv, L"--headless")) {
         int added = _snwprintf(
             command_line + used,
-            sizeof(command_line) / sizeof(command_line[0]) - (size_t)used,
+            PATH_CAPACITY - (size_t)used,
             L" --headless"
         );
-        if (added < 0 || (size_t)(used + added) >= sizeof(command_line) / sizeof(command_line[0])) goto cleanup;
+        if (added < 0 || (size_t)(used + added) >= PATH_CAPACITY) goto cleanup;
         used += added;
     }
     if (package_smoke) {
@@ -79,34 +96,54 @@ int wmain(int argc, wchar_t **argv) {
         for (size_t index = 0; index < sizeof(smoke_arguments) / sizeof(smoke_arguments[0]); ++index) {
             int added = _snwprintf(
                 command_line + used,
-                sizeof(command_line) / sizeof(command_line[0]) - (size_t)used,
+                PATH_CAPACITY - (size_t)used,
                 L" \"%ls\"",
                 smoke_arguments[index]
             );
-            if (added < 0 || (size_t)(used + added) >= sizeof(command_line) / sizeof(command_line[0])) goto cleanup;
+            if (added < 0 || (size_t)(used + added) >= PATH_CAPACITY) goto cleanup;
             used += added;
         }
     }
     for (int index = 1; index < argc; ++index) {
         int added = _snwprintf(
             command_line + used,
-            sizeof(command_line) / sizeof(command_line[0]) - (size_t)used,
+            PATH_CAPACITY - (size_t)used,
             L" \"%ls\"",
             argv[index]
         );
-        if (added < 0 || (size_t)(used + added) >= sizeof(command_line) / sizeof(command_line[0])) goto cleanup;
+        if (added < 0 || (size_t)(used + added) >= PATH_CAPACITY) goto cleanup;
         used += added;
     }
 
-    STARTUPINFOW startup = {.cb = sizeof(startup)};
-    if (!CreateProcessW(executable, command_line, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &startup, &process)) goto cleanup;
+    if (!CreateProcessW(
+            executable,
+            command_line,
+            NULL,
+            NULL,
+            FALSE,
+            CREATE_NO_WINDOW,
+            NULL,
+            temp_workspace,
+            &startup,
+            &process)) {
+        goto cleanup;
+    }
     WaitForSingleObject(process.hProcess, INFINITE);
-    GetExitCodeProcess(process.hProcess, &exit_code);
+    if (GetExitCodeProcess(process.hProcess, &exit_code) != 0) {
+        result = (int)exit_code;
+    }
     CloseHandle(process.hThread);
     CloseHandle(process.hProcess);
-    result = (int)exit_code;
+    process.hThread = NULL;
+    process.hProcess = NULL;
 
 cleanup:
-    if (generated_pck) DeleteFileW(real_pck);
+    if (process.hThread != NULL) CloseHandle(process.hThread);
+    if (process.hProcess != NULL) CloseHandle(process.hProcess);
+    if (workspace_created) {
+        DeleteFileW(real_pck);
+        DeleteFileW(executable);
+        RemoveDirectoryW(temp_workspace);
+    }
     return result;
 }
