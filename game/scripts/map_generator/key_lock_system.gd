@@ -151,6 +151,7 @@ func build_progression_manifest(
 		"room_ids": room_ids,
 		"graph_profile": str(graph_plan.get("graph_profile", "linear")),
 		"branch_room_ids": graph_plan.get("branch_room_ids", []),
+		"room_depths": graph_plan.get("room_depths", []),
 		"objectives": objectives,
 		"keys": manifest_keys,
 		"locked_transitions": manifest_doors,

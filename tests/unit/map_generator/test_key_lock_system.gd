@@ -85,6 +85,17 @@ func test_manifest_retains_reachable_mandatory_order_and_unique_records() -> voi
 	assert_eq(manifest.room_ids, [0, 1, 2, 3, 4, 5])
 	assert_eq(manifest.graph_profile, "linear")
 	assert_eq(manifest.branch_room_ids, [])
+	assert_eq(
+		manifest.room_depths,
+		[
+			{"room_id": 0, "depth": 0},
+			{"room_id": 1, "depth": 1},
+			{"room_id": 2, "depth": 2},
+			{"room_id": 3, "depth": 3},
+			{"room_id": 4, "depth": 4},
+			{"room_id": 5, "depth": 5}
+		]
+	)
 	assert_true(key_lock_system.validate_progression_manifest(context, manifest).is_valid)
 	var legacy_manifest: Dictionary = manifest.duplicate(true)
 	legacy_manifest.erase("room_ids")

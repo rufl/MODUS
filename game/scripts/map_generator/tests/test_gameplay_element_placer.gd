@@ -194,6 +194,26 @@ func test_ammo_proportional_to_monsters() -> void:
 	)
 
 
+func test_progression_uses_mission_route_depth_when_available() -> void:
+	context.metadata["mission_graph"] = {
+		"start_room_id": 0,
+		"goal_room_id": 2,
+		"room_depths":
+		[{"room_id": 0, "depth": 0}, {"room_id": 1, "depth": 1}, {"room_id": 2, "depth": 2}]
+	}
+
+	assert_eq(
+		placer._calculate_room_progression(context.rooms[1], Vector2i(10, 10), context),
+		0.5,
+		"Encounter pacing must follow playable route depth"
+	)
+	assert_eq(
+		placer._calculate_room_progression(context.rooms[2], Vector2i(10, 10), context),
+		1.0,
+		"Goal room must reach terminal progression"
+	)
+
+
 func test_encounter_manifest_reports_counts_and_room_distribution() -> void:
 	context.monster_spawns = [
 		{"id": "monster_0", "type": "monster", "room_id": 1},

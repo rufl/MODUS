@@ -23,6 +23,9 @@ const BatchGenerator = preload("res://game/scripts/map_generator/batch_generator
 const LevelRootScript = preload("res://shared/editor_core/nodes/level_root.gd")
 const ModuleLayoutSolverScript = preload("res://game/scripts/map_generator/module_layout_solver.gd")
 const ModuleAssemblyScript = preload("res://shared/editor_core/core/module_assembly.gd")
+const MissionGraphPlannerScript = preload(
+	"res://game/scripts/map_generator/mission_graph_planner.gd"
+)
 const LevelSpawnPointScript = preload("res://shared/editor_core/nodes/spawn_point.gd")
 const EnemySpawnerActorScript = preload("res://shared/editor_core/actors/enemy_spawner_actor.gd")
 const PickupSpawnerActorScript = preload("res://shared/editor_core/actors/pickup_spawner_actor.gd")
@@ -1012,6 +1015,16 @@ func _execute_gameplay_placement_phase() -> bool:
 			generation_context.metadata["spatial_plan"] = generation_context.spatial_plan.duplicate(
 				true
 			)
+	if not generation_context.metadata.has("mission_graph"):
+		var graph_plan := MissionGraphPlannerScript.new().plan(generation_context)
+		if bool(graph_plan.get("is_valid", false)):
+			generation_context.metadata["mission_graph"] = graph_plan.duplicate(true)
+			generation_context.spatial_plan = ModuleLayoutSolverScript.new().solve(
+				graph_plan, ModuleAssemblyScript.get_catalog(), 128
+			)
+			generation_context.metadata["spatial_plan"] = generation_context.spatial_plan.duplicate(
+				true
+			)
 	gameplay_element_placer.place_monster_spawns(generation_context)
 	gameplay_element_placer.place_boss_monsters(generation_context)
 	gameplay_element_placer.place_weapons_and_ammo(generation_context)
@@ -1306,6 +1319,7 @@ func _build_gameplay_metadata() -> Dictionary:
 			"keys": [],
 			"locked_doors": [],
 			"secrets": [],
+			"mission_graph": {},
 			"encounter_manifest": {}
 		}
 	var gameplay := {
@@ -1316,6 +1330,7 @@ func _build_gameplay_metadata() -> Dictionary:
 		"keys": generation_context.key_placements.duplicate(true),
 		"locked_doors": generation_context.metadata.get("locked_doors", []).duplicate(true),
 		"secrets": generation_context.secret_rooms.duplicate(true),
+		"mission_graph": generation_context.metadata.get("mission_graph", {}).duplicate(true),
 		"spatial_plan": generation_context.spatial_plan.duplicate(true),
 		"encounter_manifest":
 		generation_context.metadata.get("encounter_manifest", {}).duplicate(true)

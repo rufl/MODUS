@@ -68,6 +68,11 @@ func plan(context: GenerationContext) -> Dictionary:
 		if not route_set.has(room_id):
 			branch_room_ids.append(room_id)
 
+	var room_depths: Array[Dictionary] = []
+	var distances: Dictionary = traversal.get("distances", {})
+	for room_id: int in room_ids:
+		room_depths.append({"room_id": room_id, "depth": int(distances.get(room_id, -1))})
+
 	var graph_profile := "linear"
 	if not branch_room_ids.is_empty():
 		graph_profile = "branching"
@@ -83,6 +88,7 @@ func plan(context: GenerationContext) -> Dictionary:
 		"goal_room_id": goal_room_id,
 		"recovery_route": route_ids,
 		"branch_room_ids": branch_room_ids,
+		"room_depths": room_depths,
 		"graph_profile": graph_profile
 	}
 
@@ -141,7 +147,12 @@ func _traverse(rooms_by_id: Dictionary, start_room_id: int) -> Dictionary:
 			parents[connected_id] = room_id
 			distances[connected_id] = room_distance + 1
 			queue.append(connected_id)
-	return {"parents": parents, "visited": parents, "farthest_room_id": farthest_room_id}
+	return {
+		"parents": parents,
+		"distances": distances,
+		"visited": parents,
+		"farthest_room_id": farthest_room_id
+	}
 
 
 func _reconstruct_route(parents: Dictionary, target_room_id: int) -> Array[int]:

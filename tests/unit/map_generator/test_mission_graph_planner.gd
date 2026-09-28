@@ -30,6 +30,15 @@ func test_linear_graph_produces_recovery_route() -> void:
 	assert_true(bool(plan.get("is_valid", false)))
 	assert_eq(plan.get("graph_profile", ""), "linear")
 	assert_eq(plan.get("recovery_route", []), [0, 1, 2, 3])
+	assert_eq(
+		plan.get("room_depths", []),
+		[
+			{"room_id": 0, "depth": 0},
+			{"room_id": 1, "depth": 1},
+			{"room_id": 2, "depth": 2},
+			{"room_id": 3, "depth": 3}
+		]
+	)
 	assert_eq(plan.get("branch_room_ids", []), [])
 
 

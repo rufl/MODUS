@@ -327,10 +327,44 @@ func _is_walkable_cell(cell_pos: Vector2i, grid: Array[Array]) -> bool:
 func _calculate_room_progression(
 	room: Room, player_start: Vector2i, context: GenerationContext
 ) -> float:
+	var graph_progression := _calculate_graph_room_progression(room.id, context)
+	if graph_progression >= 0.0:
+		return graph_progression
+
 	var distance := _manhattan_distance(room.center, player_start)
 	var max_distance := context.grid_size.x + context.grid_size.y  # Maximum possible distance
 
 	return clampf(float(distance) / float(max_distance), 0.0, 1.0)
+
+
+## Use mission topology when available so branches and long corridors pace by
+## playable route depth rather than editor-space distance.
+func _calculate_graph_room_progression(room_id: int, context: GenerationContext) -> float:
+	var graph_plan: Variant = context.metadata.get("mission_graph", {})
+	if not graph_plan is Dictionary:
+		return -1.0
+	var room_depths: Variant = graph_plan.get("room_depths", [])
+	if not room_depths is Array:
+		return -1.0
+
+	var room_depth := -1
+	var goal_depth := -1
+	var goal_room_id := int(graph_plan.get("goal_room_id", -1))
+	for depth_record: Variant in room_depths:
+		if not depth_record is Dictionary:
+			continue
+		var depth_room_id := int(depth_record.get("room_id", -1))
+		var depth := int(depth_record.get("depth", -1))
+		if depth_room_id == room_id:
+			room_depth = depth
+		if depth_room_id == goal_room_id:
+			goal_depth = depth
+
+	if room_depth < 0 or goal_depth < 0:
+		return -1.0
+	if goal_depth == 0:
+		return 0.0
+	return clampf(float(room_depth) / float(goal_depth), 0.0, 1.0)
 
 
 ## Calculate monster tier based on progression and difficulty

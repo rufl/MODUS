@@ -68,6 +68,8 @@ The latest local release candidate is commit `b1ffb5d5bb0c56e70388501b57d37e6bc4
 
 The packaged capability report now distinguishes stock Godot classes from optional GodotSteam, `SteamMultiplayerPeer` and Voxel Tools inputs, and records ENet/CSG fallbacks when those native integrations are absent. Focused prefab capability proof is **36/36 tests with 269 assertions**. This improves release diagnostics and fail-closed behavior; it does not bundle native binaries or establish native Windows, Steam or Workshop acceptance.
 
+Generated mission graphs now retain deterministic room-depth records, key-lock manifests export them, and gameplay metadata preserves the graph for authored/editable inspection. Encounter placement uses playable route depth before editor-space distance for weapon, ammo, health and enemy quality pacing, with the prior fallback retained for legacy contexts. Focused planner/key-lock/placer/generator/export proof passes **49/49 tests with 697 assertions**; full encounter tuning, composed Breakwater review and manual balance remain open.
+
 Generated key, door and switch actors now expose state-aware interaction prompts through the shared actor contract. The player HUD resolves collision children back to their actor parent, and the native `InteractionPrompt` renders a high-contrast key/action panel with fade/scale feedback. Focused prompt proof passes **3/3 tests with 11 assertions**; the existing full HUD fixture still has a pre-existing player-lifecycle failure.
 Generated door collision leaves now carry both world-blocking and interactable layers; key and switch bodies are interactable-only with zero collision masks. Focused actor proof passes **8/8 tests with 60 assertions**; the native prompt is now wired into `PlayerHUDBridge`.
 
