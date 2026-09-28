@@ -1,0 +1,29 @@
+MCSTEEG Trash and Debris and Survival Assets
+Creator: MCSTEEG (mcsteeg)
+Permission source: https://mcsteeg.itch.io/trash-and-debris
+
+Permission terms:
+- The official Trash and Debris page grants use in personal and commercial
+  animation or game projects.
+- The page prohibits redistributing the asset as one's own. MODUS uses these
+  assets as part of the game and does not redistribute them as a standalone
+  asset pack.
+- The MODUS author identifies the uploaded Survival.rar content as another
+  MCSTEEG pack and authorizes it under the same creator permission basis. The
+  Survival upload did not include a dedicated source page or license file.
+- MODUS credits MCSTEEG in its attribution inventory.
+
+Imported runtime assets:
+- game/art/models/third_party/mcsteeg_trash_and_debris/TrashAndDebris.glb
+- PNG texture atlases and litter decals in the same directory
+- game/art/models/third_party/mcsteeg_survival/Survival.dae
+- Survival PNG/JPG texture files in the same directory
+
+The Trash and Debris FBX, Blender sources, Unity package, PSD files, and the
+Survival FBX authoring duplicate are not distributed. The Survival COLLADA file
+was retained because its relative texture references resolve against the
+canonical directory after import.
+
+Uploaded archive hashes:
+- Trash and Debris.zip: 62e16bb1a1f9a44d457fd38d4bf5cec319d8f1a7aca6a38e4b607413b6ab1aa1
+- Survival.rar: d8d800d0338986a64cc3ab653ce1096276fa428bbaa233817cc85204f03f5bb2

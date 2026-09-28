@@ -1,0 +1,24 @@
+Level Eleven Games Quake-like Sci-Fi 64x64 Texture Pack
+Creator: Level Eleven Games
+Source: https://level-eleven-games.itch.io/quake-like-texture-pack
+License classification: CC0 1.0 / public-domain dedication
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official description states that the pack is free for personal and
+commercial use under CC0. The creator's page comment clarifies that the
+permission is a public-domain dedication under CC0 and that credit is
+appreciated but not required. Optional credit: "Quake-like Sci-Fi 64x64
+Texture Pack by Level Eleven Games."
+
+The page's metadata table also labels the asset Creative Commons Attribution
+4.0 International. This retained discrepancy is resolved here in favor of
+the creator's explicit CC0/public-domain clarification; re-open the record if
+the source page changes or the creator withdraws that clarification.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_LVL11 Games - Quake-Like Textures.zip
+- Uploaded archive SHA-256: 82e70aedd406c911192aa7701de5054262bca9e849afa307a7cfc5da07518fee
+- Imported runtime assets: game/art/textures/third_party/lvl11_quake_sci_fi/
+- Canonical runtime payload: 298 supplied 64x64 PNG texture maps.
+- Listing_image.png, Render.png, and Thumbnail.png are preview/listing images
+  and are omitted from the runtime directory.

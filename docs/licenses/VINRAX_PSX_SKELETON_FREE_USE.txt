@@ -1,0 +1,25 @@
+Vinrax PSX Skeleton Character
+Creator: Vinrax
+Source: https://vinrax.itch.io/psx-skeleton-character
+License: Creator permission for project use; attribution required
+
+The official source page says: "feel free to use in your projects, just credit
+me." It identifies the asset as a PSX-styled, fully rigged skeleton character
+for game engines, with a simple humanoid rig, 1,596 triangles, 855 vertices,
+and a 256px texture. The page also marks the content as not made with
+generative AI. Required attribution: "PSX Skeleton Character by Vinrax."
+
+The page does not publish a separate SPDX/Creative Commons license or an
+explicit standalone commercial-use clause. MODUS therefore retains this as
+creator-permission material, not CC0, and preserves the required credit.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_skeleton_psx.zip
+- Uploaded archive SHA-256: c4d92c62d764286b49586e6e89d5df01cd39d6fe7ea20a66d868f22159644890
+- Canonical runtime asset: game/art/models/third_party/vinrax_psx_skeleton/skeleton.glb
+- Supplied pixel-equivalent source texture retained at:
+  game/art/models/third_party/vinrax_psx_skeleton/skeleton_d.png
+- skeleton.glb embeds the same 256x256 texture pixels; Godot may emit a
+  derived embedded-image import alongside the GLB.
+- skeleton.fbx is an alternate source format and is omitted because the GLB
+  contains the rig and embedded texture for the canonical runtime path.

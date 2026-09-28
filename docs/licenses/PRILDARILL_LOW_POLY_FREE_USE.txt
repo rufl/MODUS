@@ -1,0 +1,23 @@
+Prildarill Low-poly Assets
+Creator: Prildarill
+Source: https://prildarill.itch.io/low-poly-shelf
+
+Permission record:
+- The official Low-poly Shelf page says: "For use in whatever project you want,
+  no credit necessary" and permits modification.
+- In the page's public comments, Prildarill further states that the model is
+  free for anything, may be modified or included in a game, and that all of
+  the creator's models use the same terms.
+- MODUS credits Prildarill even though the creator says credit is not required.
+
+Imported runtime assets:
+- game/art/models/third_party/prildarill_low_poly_assets/Shelf.fbx
+- game/art/models/third_party/prildarill_low_poly_assets/Talllocker.fbx
+- game/art/models/third_party/prildarill_low_poly_assets/locker.fbx
+- game/art/models/third_party/prildarill_low_poly_assets/doors_single.fbx
+- game/art/models/third_party/prildarill_low_poly_assets/doors_double.fbx
+- Matching PNG textures in the same directory.
+
+The uploaded Blender authoring files are not distributed; the FBX runtime models
+and supplied textures are retained with their original filenames where needed
+for material resolution.

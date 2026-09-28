@@ -1,0 +1,32 @@
+Strideh's Stencil Painted Decal Pack v1.1
+Creator: Bradley D. (Strideh)
+Source: https://strideh.itch.io/stencil-painted-decal-pack
+License: Creator game-use permission with attribution and restrictions
+
+The supplied Attribution and License.txt and the official source page identify
+these permissions and restrictions:
+- Use these textures in free or commercial projects.
+- Distribute these textures in open-source projects with attribution.
+- Modify these textures for project use.
+- Do not sell the textures, modified or unmodified, as standalone assets.
+- Do not use the assets for generative-AI training or associated purposes.
+
+Requested attribution:
+"Stencil Painted Decals by Bradley D. (https://strideh.itch.io)"
+or, when modified:
+"Stencil Painted Decals used with modification, originally by Bradley D. (https://strideh.itch.io)"
+
+Contact:
+Bradley D.
+https://strideh.itch.io
+@strideh.bsky.social
+
+Import record:
+- Uploaded archive: C__Users_rafael_Desktop_1024x1024 Masks.7z
+- Uploaded archive SHA-256: 3e7024643efaedf1f575c7549d7fc4cd06d6a4d78d078f395016e475d5d6155e
+- Imported runtime assets: game/art/textures/third_party/strideh_stencil_decals/masks/
+- Canonical runtime payload: 12 supplied 1024x1024 grayscale PNG mask sheets.
+- CoverEx.png is a preview image and is not a runtime asset. The source
+  Attribution and License.txt is retained here rather than imported.
+- This is not CC0 and the textures must not be redistributed as standalone
+  assets or used for generative-AI training.

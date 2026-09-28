@@ -81,6 +81,25 @@ compact() {
   fi
 }
 
+count_provenance_review_rows() {
+  local output="$1"
+  local token
+  local total=0
+
+  while IFS= read -r token; do
+    case "$token" in
+      review_required=*)
+        total=$((total + ${token#review_required=}))
+        ;;
+      identified_review_required=*)
+        total=$((total + ${token#identified_review_required=}))
+        ;;
+    esac
+  done < <(printf '%s' "$output" | tr '(),' '\n')
+
+  printf '%s' "$total"
+}
+
 extract_report_status() {
   local path="$1"
   local line
@@ -436,10 +455,12 @@ case "$release_readiness_status" in
     ;;
 esac
 
+provenance_review_rows="unknown"
 if provenance_output="$(tools/generate_provenance_ledger.py --check 2>&1)"; then
+  provenance_review_rows="$(count_provenance_review_rows "$provenance_output")"
   add_check "PASS" "Provenance ledger freshness" \
     "tools/generate_provenance_ledger.py --check" \
-    "$(printf '%s' "$provenance_output" | compact); 212 rows still require rights review."
+    "$(printf '%s' "$provenance_output" | compact); ${provenance_review_rows} rows still require rights review."
 else
   add_check "FAIL" "Provenance ledger freshness" \
     "tools/generate_provenance_ledger.py --check" \
@@ -466,7 +487,7 @@ mkdir -p "$(dirname "$report_path")"
   printf '**Readiness Blockers:** %d\n\n' "$readiness_blockers"
 
   printf '## Scope\n\n'
-  printf 'This report is a conservative technical source-audit and local-tooling validation. It does not count as runtime, manual gameplay, multiplayer, rendering, or performance proof unless those checks are explicitly run and recorded. Its blocker count covers only the gates below; it is not legal or distribution clearance, and `docs/ATTRIBUTION.md` currently records unresolved third-party provenance.\n\n'
+  printf 'This report is a conservative technical source-audit and local-tooling validation. It does not count as runtime, manual gameplay, multiplayer, rendering, or performance proof unless those checks are explicitly run and recorded. Its blocker count covers only the gates below; it is not legal or distribution clearance. The provenance ledger is reported separately and may contain rights-review rows.\n\n'
 
   printf '## Test Inventory\n\n'
   printf '| Category | Count |\n'
@@ -526,7 +547,11 @@ mkdir -p "$(dirname "$report_path")"
       printf '%s\n' '- Run `tools/validate_release_readiness.sh --strict` only after release-version source truth is ready.'
     fi
   fi
-  printf '%s\n' '- Clear, exclude, or replace the 212 non-cleared rows in `docs/PROVENANCE_LEDGER.csv`; this release-clearance gap is outside the validator blocker count.'
+  if [[ "$provenance_review_rows" == "0" ]]; then
+    printf '%s\n' '- Provenance ledger contains no rows requiring rights review.'
+  else
+    printf '%s\n' "- Clear, exclude, or replace the ${provenance_review_rows} non-cleared rows in \`docs/PROVENANCE_LEDGER.csv\`; this release-clearance gap is outside the validator blocker count."
+  fi
 } > "$report_path"
 
 printf 'Production readiness report written to %s\n' "$report_path"

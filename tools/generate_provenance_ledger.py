@@ -203,6 +203,16 @@ CHILLY_DURANGO_RETRO_NOTICE = "docs/licenses/CHILLY_DURANGO_RETRO_MACHINERY_CC0-
 LOAFBRR_PIPES_PREFIX = "game/art/models/third_party/loafbrr_pipes/"
 LOAFBRR_PIPES_SOURCE = "https://loafbrr.itch.io/pipes-asset-pack"
 LOAFBRR_PIPES_NOTICE = "docs/licenses/LOAFBRR_PIPES_CC0-1.0.txt"
+PRILDARILL_PREFIX = "game/art/models/third_party/prildarill_low_poly_assets/"
+PRILDARILL_SOURCE = "https://prildarill.itch.io/low-poly-shelf"
+PRILDARILL_NOTICE = "docs/licenses/PRILDARILL_LOW_POLY_FREE_USE.txt"
+MCSTEEG_TRASH_PREFIX = "game/art/models/third_party/mcsteeg_trash_and_debris/"
+MCSTEEG_SURVIVAL_PREFIX = "game/art/models/third_party/mcsteeg_survival/"
+MCSTEEG_SOURCE = "https://mcsteeg.itch.io/trash-and-debris"
+MCSTEEG_NOTICE = "docs/licenses/MCSTEEG_FREE_USE_GAME_ASSETS.txt"
+LOOMING_LANDMARKS_PREFIX = "game/art/models/third_party/3dexter_looming_landmarks/"
+LOOMING_LANDMARKS_SOURCE = "https://3dexter.itch.io/looming-landmarks-pack"
+LOOMING_LANDMARKS_NOTICE = "docs/licenses/3DEXTER_LOOMING_LANDMARKS_CC-BY-4.0.txt"
 LUKA_ALEKSIC_SOUND_PREFIX = "game/art/audio/sfx/luka_aleksic/"
 LUKA_ALEKSIC_SOUND_SOURCE = "https://aleksicluka.itch.io/various-sound-effects"
 LUKA_ALEKSIC_SOUND_NOTICE = "docs/licenses/LUKA_ALEKSIC_SOUND_EFFECTS_CC0-1.0.txt"
@@ -212,6 +222,25 @@ COOLER11_WAVES_SOURCE = (
     "not included in uploaded archive)"
 )
 COOLER11_WAVES_NOTICE = "docs/licenses/VERY_SIMPLE_WAVES_PACK_GAME_USE.txt"
+AQUILARIUS_RETRO_PREFIX = "game/art/textures/third_party/aquilarius_retro/"
+AQUILARIUS_RETRO_SOURCE = "https://aquilarius.itch.io/aquilariusrt"
+AQUILARIUS_RETRO_NOTICE = "docs/licenses/AQUILARIUS_RETRO_TEXTURES_CC0-1.0.txt"
+LVL11_QUAKE_PREFIX = "game/art/textures/third_party/lvl11_quake_sci_fi/"
+LVL11_QUAKE_SOURCE = "https://level-eleven-games.itch.io/quake-like-texture-pack"
+LVL11_QUAKE_NOTICE = "docs/licenses/LVL11_QUAKE_TEXTURES_CC0-1.0.txt"
+DELVEN_TEXTURE_PREFIX = "game/art/textures/third_party/strideh_delven/"
+DELVEN_TEXTURE_SOURCE = "https://strideh.itch.io/delven"
+DELVEN_TEXTURE_NOTICE = "docs/licenses/STRIDEH_DELVEN_TEXTURES_GAME_USE.txt"
+TORMENT_TEXTURE_PREFIX = "game/art/textures/third_party/strideh_torment/"
+TORMENT_TEXTURE_SOURCE = "https://strideh.itch.io/torment"
+TORMENT_TEXTURE_NOTICE = "docs/licenses/STRIDEH_TORMENT_TEXTURES_GAME_USE.txt"
+STENCIL_DECAL_MASK_PREFIX = "game/art/textures/third_party/strideh_stencil_decals/"
+STENCIL_DECAL_MASK_SOURCE = "https://strideh.itch.io/stencil-painted-decal-pack"
+STENCIL_DECAL_MASK_NOTICE = "docs/licenses/STRIDEH_STENCIL_DECALS_GAME_USE.txt"
+VINRAX_SKELETON_PREFIX = "game/art/models/third_party/vinrax_psx_skeleton/"
+VINRAX_SKELETON_SOURCE = "https://vinrax.itch.io/psx-skeleton-character"
+VINRAX_SKELETON_NOTICE = "docs/licenses/VINRAX_PSX_SKELETON_FREE_USE.txt"
+
 GENERATED_MAP_OVERVIEW_PATHS = {
     "game/world/maps/overviews/map_overview.png",
 }
@@ -550,6 +579,147 @@ def classify(path: Path, digest: str) -> dict[str, str]:
                 "Godot scene, material, texture, or glTF source imported from "
                 "the uploaded PIpes_Pack_Godot_40.zip archive. The official "
                 "source page states the pack is CC0."
+            ),
+        }
+    if relative.startswith(PRILDARILL_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Prildarill",
+            "source": PRILDARILL_SOURCE,
+            "license": "Free Use (creator permission; attribution retained)",
+            "local_notice": PRILDARILL_NOTICE,
+            "notes": (
+                "Shelf, locker, tall-locker, or single/double door FBX model "
+                "or supplied PNG texture imported from the user-uploaded "
+                "Prildarill assets. The official source page permits use and "
+                "modification; the creator's public comment says the same "
+                "terms apply to all of the creator's models."
+            ),
+        }
+    if relative.startswith(MCSTEEG_TRASH_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "MCSTEEG",
+            "source": MCSTEEG_SOURCE,
+            "license": "Free Use (commercial game use; no standalone redistribution)",
+            "local_notice": MCSTEEG_NOTICE,
+            "notes": (
+                "Trash and Debris GLB runtime model or supplied PNG texture "
+                "atlas/decals from the uploaded archive. MCSTEEG's official "
+                "source page permits personal and commercial game use and "
+                "prohibits redistributing the asset as one's own."
+            ),
+        }
+    if relative.startswith(MCSTEEG_SURVIVAL_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "MCSTEEG",
+            "source": MCSTEEG_SOURCE,
+            "license": "Free Use (commercial game use; no standalone redistribution)",
+            "local_notice": MCSTEEG_NOTICE,
+            "notes": (
+                "Survival COLLADA runtime model or supplied PNG/JPG texture "
+                "from the uploaded Survival.rar archive. The MODUS author "
+                "identifies the upload as another MCSTEEG pack and applies the "
+                "same creator permission basis recorded in the local notice."
+            ),
+        }
+    if relative.startswith(LOOMING_LANDMARKS_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "3Dexter3D",
+            "source": LOOMING_LANDMARKS_SOURCE,
+            "license": "CC BY 4.0",
+            "local_notice": LOOMING_LANDMARKS_NOTICE,
+            "notes": (
+                "Wind Turbine GLB, supplied PNG texture, or Godot-extracted "
+                "embedded texture map imported from the uploaded Looming "
+                "Landmarks demo archive. The official source page releases "
+                "the pack under CC BY 4.0 and requires creator attribution."
+            ),
+        }
+    if relative.startswith(AQUILARIUS_RETRO_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Aquilarius",
+            "source": AQUILARIUS_RETRO_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": AQUILARIUS_RETRO_NOTICE,
+            "notes": (
+                "Aquilarius Retro Textures 128x128 PNG map imported from the "
+                "uploaded archive. The official source page states CC0; the "
+                "supplied archive contains 59 t*.png maps and no t17.png."
+            ),
+        }
+    if relative.startswith(LVL11_QUAKE_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Level Eleven Games",
+            "source": LVL11_QUAKE_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": LVL11_QUAKE_NOTICE,
+            "notes": (
+                "Level Eleven Games Quake-like Sci-Fi 64x64 PNG texture "
+                "imported from the uploaded archive. The creator clarified "
+                "the page's CC0/public-domain dedication; the page metadata "
+                "contains a conflicting CC BY 4.0 label retained in the notice."
+            ),
+        }
+    if relative.startswith(DELVEN_TEXTURE_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Bradley D. (Strideh)",
+            "source": DELVEN_TEXTURE_SOURCE,
+            "license": "Free Use (commercial game use; attribution and restrictions)",
+            "local_notice": DELVEN_TEXTURE_NOTICE,
+            "notes": (
+                "Delven True Colour PNG texture imported from the uploaded "
+                "archive. The creator permits free/commercial project use and "
+                "modification, requires attribution for open-source redistribution, "
+                "prohibits standalone resale, and prohibits generative-AI training."
+            ),
+        }
+    if relative.startswith(TORMENT_TEXTURE_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Bradley D. (Strideh)",
+            "source": TORMENT_TEXTURE_SOURCE,
+            "license": "Free Use (commercial game use; attribution and restrictions)",
+            "local_notice": TORMENT_TEXTURE_NOTICE,
+            "notes": (
+                "Torment True Colour PNG texture imported from the uploaded "
+                "archive. The creator permits free/commercial project use and "
+                "modification, requires attribution for open-source redistribution, "
+                "prohibits standalone resale, and prohibits generative-AI training."
+            ),
+        }
+    if relative.startswith(STENCIL_DECAL_MASK_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Bradley D. (Strideh)",
+            "source": STENCIL_DECAL_MASK_SOURCE,
+            "license": "Free Use (commercial game use; attribution and restrictions)",
+            "local_notice": STENCIL_DECAL_MASK_NOTICE,
+            "notes": (
+                "Stencil Painted Decal Pack 1024x1024 grayscale PNG mask sheet "
+                "imported from the uploaded archive. The creator permits "
+                "free/commercial project use and modification, requires "
+                "attribution for open-source redistribution, prohibits standalone "
+                "resale, and prohibits generative-AI training."
+            ),
+        }
+    if relative.startswith(VINRAX_SKELETON_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Vinrax",
+            "source": VINRAX_SKELETON_SOURCE,
+            "license": "Free Use (creator permission; attribution required)",
+            "local_notice": VINRAX_SKELETON_NOTICE,
+            "notes": (
+                "PSX Skeleton Character GLB, supplied 256x256 PNG texture, or "
+                "Godot-extracted embedded texture map from the uploaded archive. "
+                "The official source page permits project use with creator credit; "
+                "the alternate FBX source is intentionally not distributed."
             ),
         }
     if relative == SEWERS_MODEL_PATH:

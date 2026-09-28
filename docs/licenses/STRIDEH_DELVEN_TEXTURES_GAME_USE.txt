@@ -1,0 +1,27 @@
+Strideh's Delven Textures v1.2
+Creator: Bradley D. (Strideh)
+Source: https://strideh.itch.io/delven
+License: Creator game-use permission with attribution and restrictions
+
+The supplied Attribution and License.txt and the official source page grant
+these permissions and restrictions:
+- Use the textures in free or commercial projects.
+- Modify the textures for project use.
+- Distribute the textures in open-source projects only with attribution.
+- Do not sell the textures, modified or unmodified, as standalone assets.
+- Do not use the assets for generative-AI training or associated purposes.
+- Requested attribution: "Delven Textures by Bradley D. (https://strideh.itch.io)"
+  or, when modified, "Delven Textures used with modification, originally by
+  Bradley D. (https://strideh.itch.io)".
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_Delven Textures 1.2a.rar
+- Uploaded archive SHA-256: cb465502d9268b6dec6c4210ceb12627f09d4f2e75124a7c5521bb87c3c36367
+- Imported runtime assets: game/art/textures/third_party/strideh_delven/true_colour/
+- Canonical runtime payload: 313 supplied True Colour PNG maps, 128x128.
+- The duplicate Quake Palette BMP maps, str_delven.wad, delven_example.bsp,
+  delven_example.lit, CoverNewEx.png, Running the map.txt, and the source
+  attribution file are not runtime payloads. Their relevant license terms are
+  retained in this notice.
+- This is not an unrestricted CC0 dependency and must not be redistributed as
+  a standalone texture pack.

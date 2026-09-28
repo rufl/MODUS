@@ -1,0 +1,21 @@
+Aquilarius Retro Textures
+Creator: Aquilarius
+Source: https://aquilarius.itch.io/aquilariusrt
+License: CC0 1.0 Universal
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official source page describes a 60-texture, 128x128 retro texture pack,
+uses the Quake palette, and states CC0. It permits commercial and
+non-commercial use without requiring credit. Optional credit: "Aquilarius
+Retro Textures by Aquilarius."
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_AquilariusRetroTextures.zip
+- Uploaded archive SHA-256: 0bc11243760eb1fc655696cc5869e66f18aee3eadf45897b5b895b353c2cecfc
+- Imported runtime assets: game/art/textures/third_party/aquilarius_retro/
+- Canonical runtime payload: 59 supplied t*.png maps, each 128x128 RGBA.
+- The supplied archive contains pack1.png, pack2.png, and pack3.png as
+  contact-sheet previews; they are omitted from the runtime directory.
+- The official page advertises 60 textures, but the supplied archive contains
+  no t17.png. The missing map is recorded rather than reconstructed or
+  represented as imported.

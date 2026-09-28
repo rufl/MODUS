@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://game/world/test_scenes/assorted_props_demo.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://game/art/models/third_party/kkryy_street_furniture/Barrel.fbx" id="2_barrel"]
@@ -10,6 +10,11 @@
 [ext_resource type="PackedScene" path="res://game/art/models/third_party/kkryy_street_furniture/TrashCan.fbx" id="8_trashcan"]
 [ext_resource type="PackedScene" path="res://game/art/models/third_party/elbolilloduro_psx_models/models.dae" id="9_psx"]
 [ext_resource type="PackedScene" path="res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx" id="10_industrial"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/prildarill_low_poly_assets/Shelf.fbx" id="11_shelf"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/prildarill_low_poly_assets/Talllocker.fbx" id="12_talllocker"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/prildarill_low_poly_assets/locker.fbx" id="13_locker"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/prildarill_low_poly_assets/doors_single.fbx" id="14_doors_single"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/prildarill_low_poly_assets/doors_double.fbx" id="15_doors_double"]
 
 [sub_resource type="Environment" id="Environment_props"]
 background_mode = 1
@@ -71,6 +76,27 @@ scale = Vector3(0.08, 0.08, 0.08)
 position = Vector3(4.0, 0.07, -5.64)
 scale = Vector3(0.07, 0.07, 0.07)
 
+[node name="PrildarillAssets" type="Node3D" parent="."]
+
+[node name="Shelf" parent="PrildarillAssets" instance=ExtResource("11_shelf")]
+position = Vector3(-7.2, 0, 0)
+
+[node name="Talllocker" parent="PrildarillAssets" instance=ExtResource("12_talllocker")]
+position = Vector3(-4.2, 0, 0)
+
+[node name="Locker" parent="PrildarillAssets" instance=ExtResource("13_locker")]
+position = Vector3(-1.5, 0, 0)
+scale = Vector3(2, 2, 2)
+
+[node name="DoorsSingle" parent="PrildarillAssets" instance=ExtResource("14_doors_single")]
+position = Vector3(2.0, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="DoorsDouble" parent="PrildarillAssets" instance=ExtResource("15_doors_double")]
+position = Vector3(6.0, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+
 [node name="StreetFurniture" type="Node3D" parent="."]
 
 [node name="Barrel" parent="StreetFurniture" instance=ExtResource("2_barrel")]
@@ -112,7 +138,7 @@ modulate = Color(0.72, 0.9, 1, 1)
 [node name="Subtitle" type="Label3D" parent="."]
 position = Vector3(0, 4.7, -2.5)
 billboard = 1
-text = "STREET FURNITURE  •  PSX MODELS  •  INDUSTRIAL EXTERIOR"
+text = "STREET FURNITURE  •  PSX MODELS  •  INDUSTRIAL  •  PRILDARILL ASSETS"
 font_size = 26
 outline_size = 8
 modulate = Color(0.58, 0.72, 0.78, 1)
@@ -140,6 +166,14 @@ text = "GODGOLDFEAR INDUSTRIAL  •  CC BY 4.0"
 font_size = 32
 outline_size = 7
 modulate = Color(1, 0.62, 0.48, 1)
+
+[node name="PrildarillLabel" type="Label3D" parent="."]
+position = Vector3(0, 4.0, 1.0)
+billboard = 1
+text = "PRILDARILL LOW-POLY ASSETS  •  FREE USE"
+font_size = 32
+outline_size = 7
+modulate = Color(0.82, 0.76, 0.98, 1)
 
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(0, 6, 17)

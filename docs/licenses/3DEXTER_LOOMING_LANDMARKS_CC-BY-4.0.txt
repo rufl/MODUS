@@ -1,0 +1,20 @@
+3Dexter3D Looming Landmarks Structures Pack — free Wind Turbine demo
+Creator: 3Dexter3D
+Source: https://3dexter.itch.io/looming-landmarks-pack
+License: Creative Commons Attribution 4.0 International
+License reference: https://creativecommons.org/licenses/by/4.0/legalcode.txt
+
+Attribution: “Looming Landmarks” by 3Dexter3D.
+
+The official source page identifies the free demo as the Wind Turbine model
+with its texture map and lists the pack as CC BY 4.0. MODUS retains the
+required creator attribution and this license notice.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_DEMO_LoomingLandmarks-V1.2.zip
+- Uploaded archive SHA-256: 59061ceb8376c587080c6670c0534be03e1d1dbe036b1e9215a41503aec9a7fd
+- Imported runtime assets: game/art/models/third_party/3dexter_looming_landmarks/
+- Canonical runtime source: WindTurbine.glb and WindTurbineBake.png
+- The GLB's Godot-extracted embedded texture map is a derived import artifact.
+- WindTurbine.fbx, WindTurbine.obj, and WindTurbine.mtl are omitted duplicate
+  source formats; the canonical GLB provides the same runtime model.

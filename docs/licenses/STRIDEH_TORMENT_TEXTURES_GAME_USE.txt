@@ -1,0 +1,26 @@
+Strideh's Torment Textures v1.1
+Creator: Bradley D. (Strideh)
+Source: https://strideh.itch.io/torment
+License: Creator game-use permission with attribution and restrictions
+
+The supplied Attribution and License.txt and the official source page grant
+these permissions and restrictions:
+- Use the textures in free or commercial projects.
+- Modify the textures for project use.
+- Distribute the textures in open-source projects only with attribution.
+- Do not sell the textures, modified or unmodified, as standalone assets.
+- Do not use the assets for generative-AI training or associated purposes.
+- Requested attribution: "Torment Textures by Bradley D. (https://strideh.itch.io)"
+  or, when modified, "Torment Textures used with modification, originally by
+  Bradley D. (https://strideh.itch.io)".
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_Torment Textures 1.1.rar
+- Uploaded archive SHA-256: 15a6afd3434c5d62d0edbef601137f3a13d41f28bd15d143762b8cfd10b46d26
+- Imported runtime assets: game/art/textures/third_party/strideh_torment/true_colour/
+- Canonical runtime payload: 99 supplied True Colour PNG maps, 256x256.
+- The duplicate Quake Palette BMP maps, str_torment_ex.wad, CoverNewEx.png,
+  and the source attribution file are not runtime payloads. Their relevant
+  license terms are retained in this notice.
+- This is not an unrestricted CC0 dependency and must not be redistributed as
+  a standalone texture pack.
