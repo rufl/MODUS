@@ -5,7 +5,7 @@ extends Node
 signal assets_loaded
 signal category_changed(category: String)
 
-enum Category { BLOCKS, ENTITIES, PROPS, INTERACTABLES, HAZARDS, PICKUPS, SPAWN_POINTS, MATERIALS }
+enum Category { BLOCKS, ENTITIES, PROPS, INTERACTABLES, HAZARDS, PICKUPS, SPAWN_POINTS, MATERIALS, FENCES }
 
 const CATEGORY_NAMES := {
 	Category.BLOCKS: "Blocks",
@@ -16,6 +16,7 @@ const CATEGORY_NAMES := {
 	Category.PICKUPS: "Pickups",
 	Category.SPAWN_POINTS: "Spawn Points",
 	Category.MATERIALS: "Materials",
+	Category.FENCES: "Fences",
 }
 
 var assets: Dictionary = {}
@@ -41,6 +42,7 @@ func _scan_assets() -> void:
 	# Blocks - CSG primitives with materials
 	_register_builtin_blocks()
 	_scan_material_directory("res://game/art/materials/retro_urban/", Category.MATERIALS)
+	_scan_directory_recursive("res://game/art/models/fences/", Category.FENCES, ["*.glb"])
 
 	# Entities - enemies from game/entities/enemies
 	_scan_directory("res://game/entities/enemies/", Category.ENTITIES, ["*.tscn"])
@@ -212,6 +214,27 @@ func _scan_directory(path: String, category: Category, patterns: Array) -> void:
 			for pattern: Variant in patterns:
 				if file_name.match(pattern):
 					var full_path := path.path_join(file_name)
+					_register_scene_asset(full_path, category)
+					break
+		file_name = dir.get_next()
+
+	dir.list_dir_end()
+
+func _scan_directory_recursive(path: String, category: Category, patterns: Array) -> void:
+	var dir := DirAccess.open(path)
+	if not dir:
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+
+	while file_name != "":
+		var full_path := path.path_join(file_name)
+		if dir.current_is_dir():
+			_scan_directory_recursive(full_path, category, patterns)
+		else:
+			for pattern: Variant in patterns:
+				if file_name.match(pattern):
 					_register_scene_asset(full_path, category)
 					break
 		file_name = dir.get_next()

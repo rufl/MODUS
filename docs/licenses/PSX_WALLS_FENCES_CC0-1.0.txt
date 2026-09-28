@@ -1,0 +1,20 @@
+PSX style modular walls & fences
+
+Creator: valsekamerplant
+Source: https://valsekamerplant.itch.io/psx-style-walls-fences
+License: CC0 1.0 Universal / Public Domain
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official source page states that these fence and wall assets, including
+their textures, are free for commercial and non-commercial use under the
+CC0/Public Domain terms; MODUS retains this concise notice and the
+creator and source URL for provenance.
+
+Import record:
+- Uploaded archive: all_fences.zip
+- Uploaded archive SHA-256: 421755bb3b23b4d817f36b199c4d3194137a3924d08b5694613c25f3500cd749
+- Imported canonical models: 79 GLB files from the archive's 79 modular parts
+- Imported textures: 34 PNG/JPEG files
+- GLB import sidecars use Godot's "Embed as Uncompressed" mode so the models retain their embedded textures without committing redundant extracted copies.
+- The archive's 79 FBX files are format duplicates of the GLB models and are
+  intentionally not copied into MODUS; GLB is the runtime/editor canonical.

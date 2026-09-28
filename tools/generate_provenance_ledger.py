@@ -156,6 +156,10 @@ RETROURBAN_PREFIXES = (
     "game/art/textures/retro_urban/",
     "game/art/materials/retro_urban/",
 )
+PSX_FENCE_PREFIXES = (
+    "game/art/models/fences/",
+    "game/art/textures/fences/",
+)
 GENERATED_MAP_OVERVIEW_PATHS = {
     "game/world/maps/overviews/map_overview.png",
 }
@@ -325,6 +329,19 @@ def classify(path: Path, digest: str) -> dict[str, str]:
         "notes": "No repository-local provenance record currently clears this distributed asset.",
     }
 
+    if any(relative.startswith(prefix) for prefix in PSX_FENCE_PREFIXES):
+        return {
+            "status": "cleared",
+            "author": "valsekamerplant",
+            "source": "https://valsekamerplant.itch.io/psx-style-walls-fences",
+            "license": "CC0-1.0",
+            "local_notice": "docs/licenses/PSX_WALLS_FENCES_CC0-1.0.txt",
+            "notes": (
+                "PSX style modular walls and fences; canonical GLB model or "
+                "source texture imported from the all_fences.zip archive. "
+                "The official source page states CC0/Public Domain."
+            ),
+        }
     if any(relative.startswith(prefix) for prefix in RETROURBAN_PREFIXES):
         return {
             "status": "cleared",
