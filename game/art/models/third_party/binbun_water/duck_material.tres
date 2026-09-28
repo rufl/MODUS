@@ -1,0 +1,10 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://game/art/models/third_party/binbun_water/texture.png" id="1_duck_texture"]
+
+[resource]
+resource_name = "Binbun Water / Duck"
+diffuse_mode = 3
+specular_mode = 1
+albedo_texture = ExtResource("1_duck_texture")
+rim = 0.84

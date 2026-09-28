@@ -8,6 +8,7 @@ signal pools_ready(success: bool)
 
 const CFG_PATH: String = "res://game/config/gameplay/audio.json5"
 const SOUND_GEN_PATH: String = "res://game/core/tools/sound_generator.gd"
+const AudioOverrideCatalog = preload("res://game/scripts/features/audio/audio_override_catalog.gd")
 const POOL_SIZE_3D: int = 32
 const POOL_SIZE_2D: int = 16
 const JSON5_LOADER_PATH: String = "res://game/core/json5_loader.gd"
@@ -29,6 +30,7 @@ var _playlist: Array[String] = []
 var _sound_gen: Script
 var _event_config: Dictionary = {}
 var _stream_cache: Dictionary = {}
+var _audio_overrides: Dictionary = {}
 var _generator_map: Dictionary = {}
 var _current_song_name: String = ""
 var _pool_init_tree: SceneTree
@@ -117,6 +119,7 @@ func _exit_tree() -> void:
 	_stream_cache.clear()
 	_generator_map.clear()
 	_event_config.clear()
+	_audio_overrides.clear()
 	_playlist.clear()
 	_current_song_name = ""
 	pools_ready.emit(false)
@@ -391,7 +394,7 @@ func _load_config() -> void:
 		if data is Dictionary:
 			if data.has("events"):
 				_event_config = data.events
-
+	_audio_overrides = AudioOverrideCatalog.load_overrides()
 
 func _init_generator_map() -> void:
 	if not _sound_gen:
@@ -449,6 +452,10 @@ func _init_generator_map() -> void:
 func _get_event_stream(event_name: String) -> AudioStream:
 	if _stream_cache.has(event_name):
 		return _stream_cache[event_name]
+	var override_stream := AudioOverrideCatalog.load_stream(_audio_overrides, event_name)
+	if override_stream:
+		_stream_cache[event_name] = override_stream
+		return override_stream
 	if _generator_map.has(event_name):
 		var callable: Callable = _generator_map[event_name]
 		var stream: AudioStream = callable.call()

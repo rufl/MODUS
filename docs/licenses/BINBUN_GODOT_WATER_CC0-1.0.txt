@@ -1,0 +1,18 @@
+Godot Water by Binbun
+Creator: Binbun
+Source: https://binbun3d.itch.io/godot-water-shader
+License: CC0 1.0 Universal / Public Domain
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official itch.io source page identifies Godot Water as CC0 and permits
+personal, educational, and commercial use without required attribution. MODUS
+retains this concise notice and the creator/source URL for provenance.
+
+Import record:
+- Uploaded source archive: C__Users_rafael_Downloads_GodotWaterSource.zip
+- Uploaded source archive SHA-256: 872fe729642546f52056a8665080962270c1de6dff04f4e79bfad5169a16014a
+- Uploaded demo archive: C__Users_rafael_Downloads_duck.zip
+- Uploaded demo archive SHA-256: 6fa547f46201dca52fd35ff6149a37504beaa0c13b3588b25c4ea78b5f01a2a2
+- Imported shader sources: water.gdshader and water_toon.gdshader
+- Imported demo model: duck.glb and its 512x512 texture.png
+- The original Blender authoring files and Godot source-side import metadata are not distributed; GLB and PNG are the canonical MODUS runtime inputs.

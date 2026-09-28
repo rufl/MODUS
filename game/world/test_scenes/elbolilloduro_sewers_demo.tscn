@@ -1,0 +1,94 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://game/world/test_scenes/elbolilloduro_sewers_demo.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://game/art/models/sewers/Sewers.dae" id="2_sewers"]
+[ext_resource type="Material" path="res://game/art/materials/liquids/retro_water.tres" id="3_water"]
+
+[sub_resource type="Environment" id="Environment_sewers"]
+background_mode = 1
+background_color = Color(0.012, 0.02, 0.028, 1)
+background_energy_multiplier = 0.55
+ambient_light_source = 3
+ambient_light_color = Color(0.28, 0.38, 0.46, 1)
+ambient_light_energy = 0.45
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial_sewers"]
+albedo_color = Color(0.035, 0.045, 0.052, 1)
+roughness = 0.86
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="FloorMesh_sewers"]
+size = Vector3(250, 0.5, 250)
+
+[sub_resource type="PlaneMesh" id="WaterMesh_sewers"]
+size = Vector2(86, 18)
+subdivide_width = 48
+subdivide_depth = 16
+
+[sub_resource type="StandardMaterial3D" id="WaterEdgeMaterial_sewers"]
+albedo_color = Color(0.04, 0.12, 0.16, 1)
+metallic = 0.2
+roughness = 0.42
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="WaterEdgeMesh_sewers"]
+size = Vector3(86, 0.08, 0.18)
+
+[node name="ElbolilloduroSewersDemo" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." groups=["world_environment"]]
+environment = SubResource("Environment_sewers")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -28, 0)
+light_color = Color(0.62, 0.78, 0.9, 1)
+light_energy = 0.0
+shadow_enabled = true
+
+[node name="TunnelLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 4, -4)
+light_color = Color(0.3, 0.75, 1, 1)
+light_energy = 0.0
+omni_range = 20.0
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -7, 0)
+visible = false
+mesh = SubResource("FloorMesh_sewers")
+material_override = SubResource("FloorMaterial_sewers")
+
+[node name="Water" type="MeshInstance3D" parent="."]
+position = Vector3(0, -1.5, -5)
+mesh = SubResource("WaterMesh_sewers")
+material_override = ExtResource("3_water")
+cast_shadow = 0
+
+[node name="WaterEdge" type="MeshInstance3D" parent="."]
+position = Vector3(0, -1.46, 2)
+visible = false
+mesh = SubResource("WaterEdgeMesh_sewers")
+material_override = SubResource("WaterEdgeMaterial_sewers")
+
+[node name="Sewers" parent="." instance=ExtResource("2_sewers")]
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 9, -4)
+billboard = 1
+text = "ELBOLILLODURO SEWERS"
+font_size = 34
+modulate = Color(0.62, 0.88, 1, 1)
+
+[node name="Subtitle" type="Label3D" parent="."]
+position = Vector3(0, 7.5, -4)
+billboard = 1
+text = "CC0 MODEL GEOMETRY + PROJECT-OWNED WATER REVIEW"
+font_size = 18
+modulate = Color(0.5, 0.72, 0.82, 1)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 4, 18)
+rotation_degrees = Vector3(-9, 0, 0)
+fov = 50.0
+current = true

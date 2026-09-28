@@ -1,0 +1,20 @@
+Godgoldfear PSX Industrial Environment Asset Pack
+Creator: godgoldfear
+Source: https://godgoldfear.itch.io/psx-industrial-environment-asset-pack
+License: Creative Commons Attribution 4.0 International
+License reference: https://creativecommons.org/licenses/by/4.0/legalcode.txt
+
+Attribution: “PSX Industrial Environment Asset Pack” by godgoldfear.
+
+The official source page identifies the available FBX upload as
+Industrial_exterior_v2.zip and releases the pack under CC BY 4.0. MODUS retains
+the required creator attribution and this license notice.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_Industrial_exterior_v1.zip
+- Uploaded archive SHA-256: a64ac6e29820571b5c9e97f7adc384b82c959478097ca7f433da6d836f59b6d3
+- Imported runtime assets: game/art/models/third_party/godgoldfear_industrial/
+- The source FBX and diffuse/normal PNG files are retained without content edits.
+  They are arranged in one Godot import directory so basename texture references
+  resolve; Godot-generated import resources are derived files.
+- Review scene: game/world/test_scenes/assorted_props_demo.tscn

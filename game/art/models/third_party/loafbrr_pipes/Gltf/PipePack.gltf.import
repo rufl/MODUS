@@ -1,0 +1,63 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://c4oxpb4xml4f"
+path="res://.godot/imported/PipePack.gltf-6382d74d4f5fcb0434d25b1e70e1edc8.scn"
+
+[deps]
+
+source_file="res://game/art/models/third_party/loafbrr_pipes/Gltf/PipePack.gltf"
+dest_files=["res://.godot/imported/PipePack.gltf-6382d74d4f5fcb0434d25b1e70e1edc8.scn"]
+
+[params]
+
+nodes/root_type="Node3D"
+nodes/root_name="Scene Root"
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"Pipe3": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://game/art/models/third_party/loafbrr_pipes/Material/Pipes_Material.tres",
+"use_external/path": "uid://dbtypb3fleeu2"
+},
+"PipeStickers": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://game/art/models/third_party/loafbrr_pipes/Material/Pipe_Stickers.tres",
+"use_external/path": "uid://ck7efhxvi23rg"
+},
+"ValveTextures": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://game/art/models/third_party/loafbrr_pipes/Material/Valves_Pipe.tres",
+"use_external/path": "uid://bjc87vbkofxxd"
+}
+}
+}
+gltf/naming_version=0
+gltf/embedded_image_handling=0
+gltf/texture_map_mode=0

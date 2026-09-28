@@ -1,0 +1,68 @@
+[gd_resource type="ShaderMaterial" load_steps=8 format=3]
+
+[ext_resource type="Shader" path="res://game/art/shaders/third_party/binbun_water/water.gdshader" id="1_shader"]
+
+[sub_resource type="FastNoiseLite" id="Noise_wave"]
+noise_type = 1
+frequency = 0.035
+fractal_octaves = 3
+
+[sub_resource type="NoiseTexture2D" id="Texture_wave"]
+width = 256
+height = 256
+seamless = true
+noise = SubResource("Noise_wave")
+
+[sub_resource type="FastNoiseLite" id="Noise_normal"]
+noise_type = 1
+frequency = 0.08
+fractal_octaves = 2
+
+[sub_resource type="NoiseTexture2D" id="Texture_normal"]
+width = 256
+height = 256
+seamless = true
+as_normal_map = true
+bump_strength = 1.5
+noise = SubResource("Noise_normal")
+
+[sub_resource type="FastNoiseLite" id="Noise_foam"]
+noise_type = 1
+frequency = 0.055
+fractal_octaves = 2
+
+[sub_resource type="NoiseTexture2D" id="Texture_foam"]
+width = 256
+height = 256
+seamless = true
+noise = SubResource("Noise_foam")
+
+[resource]
+resource_name = "Binbun Water / Smooth"
+shader = ExtResource("1_shader")
+shader_parameter/surface_color = Color(0.045, 0.32, 0.44, 1)
+shader_parameter/depth_color = Color(0.008, 0.08, 0.16, 1)
+shader_parameter/foam_color = Color(0.72, 0.92, 0.94, 1)
+shader_parameter/depth_size = 4.0
+shader_parameter/surface_roughness = 0.12
+shader_parameter/foam_roughness = 0.35
+shader_parameter/wave_texture = SubResource("Texture_wave")
+shader_parameter/wave_normal_texture = SubResource("Texture_normal")
+shader_parameter/wave_softness = 3.0
+shader_parameter/wave_scale = Vector2(0.18, 0.18)
+shader_parameter/wave_layer_scale = Vector2(1.5, 1.5)
+shader_parameter/wave_highlight = 0.22
+shader_parameter/wave_velocity = Vector2(0.02, 0.012)
+shader_parameter/foam_texture = SubResource("Texture_foam")
+shader_parameter/edge_foam_depth_size = 0.6
+shader_parameter/wave_foam_amount = 0.6
+shader_parameter/foam_start = 0.2
+shader_parameter/foam_end = 0.55
+shader_parameter/foam_exponent = 1.6
+shader_parameter/refraction_amount = 0.2
+shader_parameter/refraction_exponent = 0.65
+shader_parameter/displacement_amount = 0.12
+shader_parameter/diffuse_steps = 8.0
+shader_parameter/diffuse_smoothness = 0.35
+shader_parameter/specular_steps = 8.0
+shader_parameter/specular_smoothness = 0.3

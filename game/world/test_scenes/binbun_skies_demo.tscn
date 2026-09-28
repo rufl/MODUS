@@ -1,0 +1,61 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Sky" path="res://game/art/materials/sky/third_party/binbun_skies/binbun_skies.tres" id="1_sky"]
+[ext_resource type="Script" path="res://game/world/test_scenes/binbun_skies_demo.gd" id="2_script"]
+
+
+[sub_resource type="Environment" id="Environment_binbun_skies"]
+background_mode = 1
+background_color = Color(0.08, 0.13, 0.2, 1)
+background_energy_multiplier = 0.85
+ambient_light_source = 3
+ambient_light_color = Color(0.5, 0.62, 0.75, 1)
+ambient_light_energy = 0.75
+reflected_light_source = 2
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial_binbun_skies"]
+albedo_color = Color(0.045, 0.06, 0.08, 1)
+metallic = 0.18
+roughness = 0.78
+
+[sub_resource type="BoxMesh" id="FloorMesh_binbun_skies"]
+size = Vector3(28, 0.5, 28)
+
+[node name="BinbunSkiesDemo" type="Node3D"]
+script = ExtResource("2_script")
+binbun_sky = ExtResource("1_sky")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." groups=["world_environment"]]
+environment = SubResource("Environment_binbun_skies")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-38, -28, 0)
+light_color = Color(1, 0.88, 0.72, 1)
+light_energy = 1.15
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.35, 0)
+mesh = SubResource("FloorMesh_binbun_skies")
+material_override = SubResource("FloorMaterial_binbun_skies")
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 3.8, -3.2)
+billboard = 1
+text = "BINBUN GODOT SKIES"
+font_size = 34
+modulate = Color(0.78, 0.9, 1, 1)
+
+[node name="Subtitle" type="Label3D" parent="."]
+position = Vector3(0, 2.9, -3.2)
+billboard = 1
+text = "CC0 SHADER + PROCEDURAL CLOUD NOISE"
+font_size = 18
+modulate = Color(0.65, 0.78, 0.9, 1)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 5.8, 14.5)
+rotation_degrees = Vector3(-15, 0, 0)
+fov = 52.0
+current = true

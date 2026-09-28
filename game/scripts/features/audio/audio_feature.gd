@@ -8,6 +8,7 @@ class_name AudioFeature
 extends FeatureModule
 
 const SoundGenerator = preload("res://game/core/tools/sound_generator.gd")
+const AudioOverrideCatalog = preload("res://game/scripts/features/audio/audio_override_catalog.gd")
 
 signal music_changed(song_name: String)
 
@@ -33,6 +34,7 @@ var _music_player: AudioStreamPlayer
 var _playlist: Array[String] = []
 var _event_config: Dictionary = {}
 var _stream_cache: Dictionary = {}
+var _audio_overrides: Dictionary = {}
 var _generator_map: Dictionary = {}
 var _current_song_name: String = ""
 
@@ -56,6 +58,7 @@ func initialize() -> void:
 
 	# Load event configuration
 	_event_config = config.get("events", {})
+	_audio_overrides = AudioOverrideCatalog.load_overrides()
 
 	# Initialize subsystems
 	_init_generator_map()
@@ -85,6 +88,7 @@ func shutdown() -> void:
 	_audio_pool_3d.clear()
 	_audio_pool_2d.clear()
 	_stream_cache.clear()
+	_audio_overrides.clear()
 
 	super.shutdown()
 
@@ -273,10 +277,14 @@ func _init_generator_map() -> void:
 	}
 
 
-## Get event stream from cache or generator
+## Get event stream from cache, file override, or generator
 func _get_event_stream(event_name: String) -> AudioStream:
 	if _stream_cache.has(event_name):
 		return _stream_cache[event_name]
+	var override_stream := AudioOverrideCatalog.load_stream(_audio_overrides, event_name)
+	if override_stream:
+		_stream_cache[event_name] = override_stream
+		return override_stream
 	if _generator_map.has(event_name):
 		var callable: Callable = _generator_map[event_name]
 		var stream: AudioStream = callable.call()

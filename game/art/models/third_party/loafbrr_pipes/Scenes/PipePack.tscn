@@ -1,0 +1,211 @@
+[gd_scene load_steps=70 format=3 uid="uid://bhpvsjaimrtqa"]
+
+[ext_resource type="PackedScene" uid="uid://dy2xjxedv1136" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_48.tscn" id="1_1pf2d"]
+[ext_resource type="PackedScene" uid="uid://11s1cdffos3i" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_32.tscn" id="2_0d5ps"]
+[ext_resource type="PackedScene" uid="uid://8bgv7i5id4n6" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_1.tscn" id="3_juees"]
+[ext_resource type="PackedScene" uid="uid://cb1n5v1piua6x" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_17.tscn" id="4_d3tfc"]
+[ext_resource type="PackedScene" uid="uid://juu5yq4re82p" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_20.tscn" id="5_tyjhf"]
+[ext_resource type="PackedScene" uid="uid://c16ytcovw7r8f" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_28.tscn" id="6_6lqce"]
+[ext_resource type="PackedScene" uid="uid://covcktuix6w5n" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_19.tscn" id="7_0db2j"]
+[ext_resource type="PackedScene" uid="uid://b0hn6548cp1pi" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_14.tscn" id="8_ad7io"]
+[ext_resource type="PackedScene" uid="uid://csjwpvx25n1iv" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_21.tscn" id="9_6rnx6"]
+[ext_resource type="PackedScene" uid="uid://ba1yw8e5qo5cd" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_22.tscn" id="10_8or1o"]
+[ext_resource type="PackedScene" uid="uid://djkp0t5nnea7o" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_15.tscn" id="11_13roa"]
+[ext_resource type="PackedScene" uid="uid://bkt213kb7tvlj" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_16.tscn" id="12_b1f66"]
+[ext_resource type="PackedScene" uid="uid://dupck36dd4s3l" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_29.tscn" id="13_idxrc"]
+[ext_resource type="PackedScene" uid="uid://doculr4c35yus" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_41.tscn" id="14_ansu3"]
+[ext_resource type="PackedScene" uid="uid://cn5rbsdejgbpu" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_35.tscn" id="15_pxk7u"]
+[ext_resource type="PackedScene" uid="uid://eaaky50w7csb" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_49.tscn" id="16_kykmi"]
+[ext_resource type="PackedScene" uid="uid://c51oi0u44pqcc" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_33.tscn" id="17_oxs4s"]
+[ext_resource type="PackedScene" uid="uid://cupmdvea6hrpa" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_34.tscn" id="18_tg64y"]
+[ext_resource type="PackedScene" uid="uid://pymd8pdjgab0" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_44.tscn" id="19_2adj5"]
+[ext_resource type="PackedScene" uid="uid://b6fc2x08fllfh" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_46.tscn" id="20_g8pss"]
+[ext_resource type="PackedScene" uid="uid://c4ki1nr18yai0" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_45.tscn" id="21_cfga6"]
+[ext_resource type="PackedScene" uid="uid://vkxvx4rw7umo" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_47.tscn" id="22_fwtgv"]
+[ext_resource type="PackedScene" uid="uid://csarkts4r6d5s" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_5.tscn" id="23_3wnf1"]
+[ext_resource type="PackedScene" uid="uid://bawouxqwqsoj6" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_4.tscn" id="24_j00fb"]
+[ext_resource type="PackedScene" uid="uid://cpmcch5rb2aud" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_3.tscn" id="25_rt3ch"]
+[ext_resource type="PackedScene" uid="uid://kruo50j8kyue" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_2.tscn" id="26_uuadh"]
+[ext_resource type="PackedScene" uid="uid://d18e0jlsillyu" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_9.tscn" id="27_ijoin"]
+[ext_resource type="PackedScene" uid="uid://bkm4jpupa7q4r" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_7.tscn" id="28_fd530"]
+[ext_resource type="PackedScene" uid="uid://bquwrpguxy2gb" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_8.tscn" id="29_7hksy"]
+[ext_resource type="PackedScene" uid="uid://cptn044ehqdor" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_10.tscn" id="30_srdk3"]
+[ext_resource type="PackedScene" uid="uid://vit85s5r7mck" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_11.tscn" id="31_a0d1x"]
+[ext_resource type="PackedScene" uid="uid://b23c6i1fi5kpe" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_12.tscn" id="32_ci63n"]
+[ext_resource type="PackedScene" uid="uid://dd07wvghvuqit" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_50.tscn" id="33_pyyrr"]
+[ext_resource type="PackedScene" uid="uid://bnfwsodmo7jjn" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_13.tscn" id="34_a5u3d"]
+[ext_resource type="PackedScene" uid="uid://cv0su2lddbwe0" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_26.tscn" id="35_vhica"]
+[ext_resource type="PackedScene" uid="uid://ums4jw13g1uk" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_25.tscn" id="36_ttf7e"]
+[ext_resource type="PackedScene" uid="uid://y5g0lfuwj7gn" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_38.tscn" id="37_j65vw"]
+[ext_resource type="PackedScene" uid="uid://e5p28aaxr1f6" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_30.tscn" id="38_apmvv"]
+[ext_resource type="PackedScene" uid="uid://fdrvcja208nm" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_31.tscn" id="39_ujnk7"]
+[ext_resource type="PackedScene" uid="uid://c0b2j82qv158d" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_6.tscn" id="40_gvwek"]
+[ext_resource type="PackedScene" uid="uid://cmg4vsl7yg1sd" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_43.tscn" id="41_g0x0d"]
+[ext_resource type="PackedScene" uid="uid://w8jv2e46erd2" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_36.tscn" id="42_alnul"]
+[ext_resource type="PackedScene" uid="uid://bcvx0redi7kll" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_18.tscn" id="43_juqyl"]
+[ext_resource type="PackedScene" uid="uid://l4ijaj4mwg7e" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_42.tscn" id="44_ojxf0"]
+[ext_resource type="PackedScene" uid="uid://dkjb5c2pvn2ru" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_24.tscn" id="45_vwyq4"]
+[ext_resource type="PackedScene" uid="uid://bd104wh7hwa4b" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_37.tscn" id="46_ih238"]
+[ext_resource type="PackedScene" uid="uid://beapnb2l8fmvy" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_27.tscn" id="47_5a1ug"]
+[ext_resource type="PackedScene" uid="uid://by83mmj8wv21k" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_23.tscn" id="48_fr81o"]
+[ext_resource type="PackedScene" uid="uid://dc3fw0648l07g" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_39.tscn" id="49_huqrf"]
+[ext_resource type="PackedScene" uid="uid://b58gsl8iwv74f" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_40.tscn" id="50_1sx87"]
+[ext_resource type="PackedScene" uid="uid://cuw5e02xhjj0v" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Valves/valve_b_grp.tscn" id="51_iw4hv"]
+[ext_resource type="PackedScene" uid="uid://coj4j823ybu4d" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Valves/valve_a_grp.tscn" id="52_f4i6v"]
+[ext_resource type="PackedScene" uid="uid://cxmb21vagsq1y" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_aa.tscn" id="53_6rxf7"]
+[ext_resource type="PackedScene" uid="uid://cdmon8x3cyrsk" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_ba.tscn" id="54_p14hi"]
+[ext_resource type="PackedScene" uid="uid://77pthk8yvux3" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_dd.tscn" id="55_2fyey"]
+[ext_resource type="PackedScene" uid="uid://c3dxwkyxkdlmp" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_cd.tscn" id="56_cpb2e"]
+[ext_resource type="PackedScene" uid="uid://chfao0ykqbloe" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_cc.tscn" id="57_x6emf"]
+[ext_resource type="PackedScene" uid="uid://cn5it7db8gmin" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_ca.tscn" id="58_7rrlw"]
+[ext_resource type="PackedScene" uid="uid://d3bftorp1sd35" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_cb.tscn" id="59_7xfyx"]
+[ext_resource type="PackedScene" uid="uid://d37c4yct7rmtd" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_db.tscn" id="60_vynk3"]
+[ext_resource type="PackedScene" uid="uid://bb8v6gwwip1ct" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_dc.tscn" id="61_ao0ip"]
+[ext_resource type="PackedScene" uid="uid://dueksbs4g4gqk" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_da.tscn" id="62_jfatd"]
+[ext_resource type="PackedScene" uid="uid://d1grcbceo3teg" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_bb.tscn" id="63_aykah"]
+[ext_resource type="PackedScene" uid="uid://bfcqhtuaw0nif" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_bc.tscn" id="64_5or0f"]
+[ext_resource type="PackedScene" uid="uid://nd5rqlr55bsn" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_bd.tscn" id="65_i4vg8"]
+[ext_resource type="PackedScene" uid="uid://cvyre4s2yli17" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_ab.tscn" id="66_pwwh1"]
+[ext_resource type="PackedScene" uid="uid://chm2epyod0vle" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_ac.tscn" id="67_xvqu8"]
+[ext_resource type="PackedScene" uid="uid://dfi8pcj4vfjc8" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_ad.tscn" id="68_rgt8a"]
+[ext_resource type="PackedScene" uid="uid://ryyhr8tgruue" path="res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipe_set_nut.tscn" id="69_2e2aj"]
+
+[node name="PipePack" type="Node3D"]
+
+[node name="PipeSet_48" parent="." instance=ExtResource("1_1pf2d")]
+
+[node name="PipeSet_32" parent="." instance=ExtResource("2_0d5ps")]
+
+[node name="PipeSet_1" parent="." instance=ExtResource("3_juees")]
+
+[node name="PipeSet_17" parent="." instance=ExtResource("4_d3tfc")]
+
+[node name="PipeSet_20" parent="." instance=ExtResource("5_tyjhf")]
+
+[node name="PipeSet_28" parent="." instance=ExtResource("6_6lqce")]
+
+[node name="PipeSet_19" parent="." instance=ExtResource("7_0db2j")]
+
+[node name="PipeSet_14" parent="." instance=ExtResource("8_ad7io")]
+
+[node name="PipeSet_21" parent="." instance=ExtResource("9_6rnx6")]
+
+[node name="PipeSet_22" parent="." instance=ExtResource("10_8or1o")]
+
+[node name="PipeSet_15" parent="." instance=ExtResource("11_13roa")]
+
+[node name="PipeSet_16" parent="." instance=ExtResource("12_b1f66")]
+
+[node name="PipeSet_29" parent="." instance=ExtResource("13_idxrc")]
+
+[node name="PipeSet_41" parent="." instance=ExtResource("14_ansu3")]
+
+[node name="PipeSet_49" parent="." instance=ExtResource("16_kykmi")]
+
+[node name="PipeSet_44" parent="." instance=ExtResource("19_2adj5")]
+
+[node name="PipeSet_46" parent="." instance=ExtResource("20_g8pss")]
+
+[node name="PipeSet_45" parent="." instance=ExtResource("21_cfga6")]
+
+[node name="PipeSet_47" parent="." instance=ExtResource("22_fwtgv")]
+
+[node name="PipeSet_5" parent="." instance=ExtResource("23_3wnf1")]
+
+[node name="PipeSet_4" parent="." instance=ExtResource("24_j00fb")]
+
+[node name="PipeSet_3" parent="." instance=ExtResource("25_rt3ch")]
+
+[node name="PipeSet_2" parent="." instance=ExtResource("26_uuadh")]
+
+[node name="PipeSet_9" parent="." instance=ExtResource("27_ijoin")]
+
+[node name="PipeSet_7" parent="." instance=ExtResource("28_fd530")]
+
+[node name="PipeSet_8" parent="." instance=ExtResource("29_7hksy")]
+
+[node name="PipeSet_10" parent="." instance=ExtResource("30_srdk3")]
+
+[node name="PipeSet_11" parent="." instance=ExtResource("31_a0d1x")]
+
+[node name="PipeSet_12" parent="." instance=ExtResource("32_ci63n")]
+
+[node name="PipeSet_50" parent="." instance=ExtResource("33_pyyrr")]
+
+[node name="PipeSet_13" parent="." instance=ExtResource("34_a5u3d")]
+
+[node name="PipeSet_26" parent="." instance=ExtResource("35_vhica")]
+
+[node name="PipeSet_25" parent="." instance=ExtResource("36_ttf7e")]
+
+[node name="PipeSet_30" parent="." instance=ExtResource("38_apmvv")]
+
+[node name="PipeSet_31" parent="." instance=ExtResource("39_ujnk7")]
+
+[node name="PipeSet_6" parent="." instance=ExtResource("40_gvwek")]
+
+[node name="PipeSet_43" parent="." instance=ExtResource("41_g0x0d")]
+
+[node name="PipeSet_18" parent="." instance=ExtResource("43_juqyl")]
+
+[node name="PipeSet_42" parent="." instance=ExtResource("44_ojxf0")]
+
+[node name="PipeSet_24" parent="." instance=ExtResource("45_vwyq4")]
+
+[node name="PipeSet_27" parent="." instance=ExtResource("47_5a1ug")]
+
+[node name="PipeSet_23" parent="." instance=ExtResource("48_fr81o")]
+
+[node name="PipeSet_40" parent="." instance=ExtResource("50_1sx87")]
+
+[node name="PipeSet_39" parent="." instance=ExtResource("49_huqrf")]
+
+[node name="PipeSet_35" parent="." instance=ExtResource("15_pxk7u")]
+
+[node name="PipeSet_33" parent="." instance=ExtResource("17_oxs4s")]
+
+[node name="PipeSet_34" parent="." instance=ExtResource("18_tg64y")]
+
+[node name="PipeSet_38" parent="." instance=ExtResource("37_j65vw")]
+
+[node name="PipeSet_36" parent="." instance=ExtResource("42_alnul")]
+
+[node name="PipeSet_37" parent="." instance=ExtResource("46_ih238")]
+
+[node name="Valve_B_Grp" parent="." instance=ExtResource("51_iw4hv")]
+
+[node name="Valve_A_Grp" parent="." instance=ExtResource("52_f4i6v")]
+
+[node name="Pipes_Box_AA" parent="." instance=ExtResource("53_6rxf7")]
+
+[node name="Pipes_Box_BA" parent="." instance=ExtResource("54_p14hi")]
+
+[node name="Pipes_Box_DD" parent="." instance=ExtResource("55_2fyey")]
+
+[node name="Pipes_Box_CD" parent="." instance=ExtResource("56_cpb2e")]
+
+[node name="Pipes_Box_CC" parent="." instance=ExtResource("57_x6emf")]
+
+[node name="Pipes_Box_CA" parent="." instance=ExtResource("58_7rrlw")]
+
+[node name="Pipes_Box_CB" parent="." instance=ExtResource("59_7xfyx")]
+
+[node name="Pipes_Box_DB" parent="." instance=ExtResource("60_vynk3")]
+
+[node name="Pipes_Box_DC" parent="." instance=ExtResource("61_ao0ip")]
+
+[node name="Pipes_Box_DA" parent="." instance=ExtResource("62_jfatd")]
+
+[node name="Pipes_Box_BB" parent="." instance=ExtResource("63_aykah")]
+
+[node name="Pipes_Box_BC" parent="." instance=ExtResource("64_5or0f")]
+
+[node name="Pipes_Box_BD" parent="." instance=ExtResource("65_i4vg8")]
+
+[node name="Pipes_Box_AB" parent="." instance=ExtResource("66_pwwh1")]
+
+[node name="Pipes_Box_AC" parent="." instance=ExtResource("67_xvqu8")]
+
+[node name="Pipes_Box_AD" parent="." instance=ExtResource("68_rgt8a")]
+
+[node name="PipeSet_Nut" parent="." instance=ExtResource("69_2e2aj")]

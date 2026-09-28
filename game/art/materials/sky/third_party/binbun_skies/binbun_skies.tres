@@ -1,0 +1,42 @@
+[gd_resource type="Sky" load_steps=6 format=3]
+
+[ext_resource type="Shader" path="res://game/art/shaders/third_party/binbun_skies/main.gdshader" id="1_shader"]
+[ext_resource type="Texture2D" path="res://game/art/materials/sky/third_party/binbun_skies/clouds_01.tres" id="2_cloud_01"]
+[ext_resource type="Texture2D" path="res://game/art/materials/sky/third_party/binbun_skies/clouds_02.tres" id="3_cloud_02"]
+[ext_resource type="Texture2D" path="res://game/art/materials/sky/third_party/binbun_skies/clouds_06.tres" id="4_noise_01"]
+[ext_resource type="Texture2D" path="res://game/art/materials/sky/third_party/binbun_skies/clouds_07.tres" id="5_noise_02"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_binbun_skies"]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/sky_day = Color(0.08, 0.21, 0.4, 1)
+shader_parameter/horizon_day = Color(0.48, 0.62, 0.72, 1)
+shader_parameter/horizon_sunset = Color(0.82, 0.33, 0.12, 1)
+shader_parameter/sky_sunset = Color(0.18, 0.14, 0.3, 1)
+shader_parameter/horizon_night = Color(0.04, 0.07, 0.13, 1)
+shader_parameter/sky_night = Color(0.01, 0.018, 0.05, 1)
+shader_parameter/day_night_mix = 0.72
+shader_parameter/use_directional_light = true
+shader_parameter/horizon_exponent = 2.0
+shader_parameter/sunset_amount_exponent = 0.7
+shader_parameter/night_amount_exponent = 4.0
+shader_parameter/cloud_tex_01 = ExtResource("2_cloud_01")
+shader_parameter/cloud_tex_02 = ExtResource("3_cloud_02")
+shader_parameter/cloud_color = Color(0.76, 0.82, 0.86, 1)
+shader_parameter/cloud_tiling = Vector2(1, 1)
+shader_parameter/wind_speed = Vector2(0.35, 0.12)
+shader_parameter/cloud_density = 0.72
+shader_parameter/cloud_depth = 2.0
+shader_parameter/cloud_shape_exponent = 2.0
+shader_parameter/cloud_occlude_exponent = 1.0
+shader_parameter/night_noise_01 = ExtResource("4_noise_01")
+shader_parameter/night_noise_02 = ExtResource("5_noise_02")
+shader_parameter/sun_scale = 0.05
+shader_parameter/sun_strength = 15.0
+shader_parameter/sun_color = Color(1, 0.88, 0.64, 1)
+shader_parameter/moon_scale = 0.03
+shader_parameter/moon_strength = 15.0
+shader_parameter/moon_color = Color(0.5, 0.55, 0.7, 1)
+
+[resource]
+sky_material = SubResource("ShaderMaterial_binbun_skies")

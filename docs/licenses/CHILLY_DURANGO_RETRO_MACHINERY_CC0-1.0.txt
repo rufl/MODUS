@@ -1,0 +1,29 @@
+3D Retro Plumbing, Wiring & Machinery
+Creator: chilly_durango
+Source: https://chilly-durango.itch.io/3d-retro-plumbing-wiring
+License: Creative Commons Zero v1.0 Universal
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official source page states that the models and textures are released under
+CC0 1.0 Universal and require no attribution. The page describes the pack as
+low-poly PSX/N64-style plumbing, wiring, and industrial puzzle machinery.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_3D Retro Plumbing & Wiring.zip
+- Uploaded archive SHA-256: e0a3aa799a1adee81dc4bb7f42e45fa068c36fde63d01db884dfb909038141bc
+- Imported runtime assets: game/art/models/third_party/chilly_durango_retro_machinery/
+- Source .blend files were converted to nine Godot-compatible GLB model files;
+  the original Blender authoring files are not distributed.
+- The eight source PNG textures are retained under the target textures
+  directory. The GLB exports embed the source materials where supported by
+  the exporter.
+- Godot's GLB importer generates one extracted embedded-image PNG beside each
+  model; these files are derived import outputs and are covered by the same
+  CC0 source record.
+- Review scene: game/world/test_scenes/retro_machinery_demo.tscn
+
+Included runtime categories:
+- Electrical: circuit breaker/fuse and three switch variants
+- Plumbing: pipe pieces and pipe valve
+- Wiring: wire assemblies
+- Machinery: generator, pump, transformer, and turbine

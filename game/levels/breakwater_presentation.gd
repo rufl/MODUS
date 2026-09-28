@@ -44,6 +44,9 @@ func _ready() -> void:
 		return
 	for child: Node in get_children():
 		if child is AudioStreamPlayer3D:
+			if child.stream is AudioStreamWAV:
+				var wav_stream := child.stream as AudioStreamWAV
+				wav_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 			_sources.append(child)
 			_gains.append(0.0)
 			child.bus = &"SFX"

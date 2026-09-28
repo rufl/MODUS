@@ -1,0 +1,156 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://game/world/test_scenes/retro_machinery_demo.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_circuit_breaker.glb" id="2_breaker"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb" id="3_generator"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipe_valve.glb" id="4_valve"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipes.glb" id="5_pipes"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pump.glb" id="6_pump"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_switches.glb" id="7_switches"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_transformer.glb" id="8_transformer"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_turbine.glb" id="9_turbine"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_wires.glb" id="10_wires"]
+
+[sub_resource type="Environment" id="Environment_retro"]
+background_mode = 1
+background_color = Color(0.028, 0.038, 0.055, 1)
+background_energy_multiplier = 0.9
+ambient_light_source = 3
+ambient_light_color = Color(0.43, 0.5, 0.58, 1)
+ambient_light_energy = 0.8
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial_retro"]
+albedo_color = Color(0.07, 0.082, 0.1, 1)
+metallic = 0.25
+roughness = 0.82
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="FloorMesh_retro"]
+size = Vector3(60, 0.3, 60)
+
+[sub_resource type="StandardMaterial3D" id="BackdropMaterial_retro"]
+albedo_color = Color(0.02, 0.028, 0.042, 1)
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="BackdropMesh_retro"]
+size = Vector3(160, 30, 0.2)
+
+[node name="RetroMachineryDemo" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." groups=["world_environment"]]
+environment = SubResource("Environment_retro")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(0.72, 0.84, 1, 1)
+light_energy = 0.65
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 7, 8)
+light_color = Color(1, 0.54, 0.28, 1)
+light_energy = 0.8
+omni_range = 24.0
+
+[node name="Backdrop" type="MeshInstance3D" parent="."]
+position = Vector3(0, 12, -14)
+mesh = SubResource("BackdropMesh_retro")
+material_override = SubResource("BackdropMaterial_retro")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.15, 0)
+mesh = SubResource("FloorMesh_retro")
+material_override = SubResource("FloorMaterial_retro")
+
+[node name="Generator" parent="." instance=ExtResource("3_generator")]
+position = Vector3(-4.1, 0, -2.0)
+rotation_degrees = Vector3(0, 18, 0)
+scale = Vector3(1.35, 1.35, 1.35)
+
+[node name="Transformer" parent="." instance=ExtResource("8_transformer")]
+position = Vector3(-1.35, 0, -2.0)
+rotation_degrees = Vector3(0, -12, 0)
+scale = Vector3(1.45, 1.45, 1.45)
+
+[node name="Turbine" parent="." instance=ExtResource("9_turbine")]
+position = Vector3(1.4, 0, -2.0)
+rotation_degrees = Vector3(0, -16, 0)
+scale = Vector3(1.2, 1.2, 1.2)
+
+[node name="Pump" parent="." instance=ExtResource("6_pump")]
+position = Vector3(4.15, 0.02, -2.0)
+rotation_degrees = Vector3(0, -20, 0)
+scale = Vector3(1.45, 1.45, 1.45)
+
+[node name="Pipes" parent="." instance=ExtResource("5_pipes")]
+position = Vector3(-4.1, 0.25, 1.0)
+rotation_degrees = Vector3(0, 10, 0)
+scale = Vector3(1.45, 1.45, 1.45)
+
+[node name="PipeValve" parent="." instance=ExtResource("4_valve")]
+position = Vector3(-1.25, 0.22, 1.0)
+rotation_degrees = Vector3(0, -14, 0)
+scale = Vector3(1.55, 1.55, 1.55)
+
+[node name="Wires" parent="." instance=ExtResource("10_wires")]
+position = Vector3(1.55, 1.25, 1.0)
+rotation_degrees = Vector3(0, -8, 0)
+scale = Vector3(1.2, 1.2, 1.2)
+
+[node name="CircuitBreaker" parent="." instance=ExtResource("2_breaker")]
+position = Vector3(4.05, 0.1, 1.0)
+rotation_degrees = Vector3(0, -18, 0)
+scale = Vector3(1.9, 1.9, 1.9)
+
+[node name="Switches" parent="." instance=ExtResource("7_switches")]
+position = Vector3(0, 0.1, 3.45)
+rotation_degrees = Vector3(0, 18, 0)
+scale = Vector3(1.9, 1.9, 1.9)
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 5.1, -3.2)
+billboard = 1
+text = "RETRO PLUMBING  •  WIRING  •  MACHINERY"
+font_size = 104
+outline_size = 12
+modulate = Color(0.82, 0.92, 1, 1)
+
+[node name="Subtitle" type="Label3D" parent="."]
+position = Vector3(0, 4.35, -3.2)
+billboard = 1
+text = "CHILLY_DURANGO  •  CC0 1.0  •  GLB CONVERSIONS"
+font_size = 42
+outline_size = 9
+modulate = Color(0.56, 0.76, 0.84, 1)
+
+[node name="MachineryLabel" type="Label3D" parent="."]
+position = Vector3(-0.2, 3.0, -2.8)
+billboard = 1
+text = "GENERATOR  •  TRANSFORMER  •  TURBINE  •  PUMP"
+font_size = 40
+outline_size = 8
+modulate = Color(1, 0.7, 0.38, 1)
+
+[node name="PlumbingLabel" type="Label3D" parent="."]
+position = Vector3(-2.3, 1.9, 0.2)
+billboard = 1
+text = "PIPES  •  VALVE  •  WIRING  •  BREAKER"
+font_size = 36
+outline_size = 8
+modulate = Color(0.48, 0.9, 0.78, 1)
+
+[node name="SwitchLabel" type="Label3D" parent="."]
+position = Vector3(0, 1.35, 3.2)
+billboard = 1
+text = "SWITCH BANK"
+font_size = 38
+outline_size = 8
+modulate = Color(0.54, 0.74, 1, 1)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 3.6, 10.5)
+rotation_degrees = Vector3(-9, 0, 0)
+fov = 56.0
+current = true

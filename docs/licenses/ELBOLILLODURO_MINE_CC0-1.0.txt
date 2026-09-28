@@ -1,0 +1,22 @@
+Elbolilloduro Mine Asset Pack
+Creator: Elbolilloduro
+Source: https://elbolilloduro.itch.io/mine
+License: Creative Commons Zero v1.0 Universal
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official Mine page describes a small modular mine model pack and states that
+its models are CC0. It also identifies some textures as obtained from
+texturer.com and textures.com without providing separate redistribution terms.
+
+- Uploaded archive: Mine.rar
+- Uploaded archive SHA-256: 6031036af83452bd85d3bd5047762b672bb49a4d1970a6d94525422055843571
+- Imported runtime assets: game/art/models/third_party/elbolilloduro_mine/
+- Imported geometry: texture-free derived COLLADA files mine_props.dae and
+  mine_modular.dae, preserving the source scene/node names.
+- Source FBX files and all source texture files are intentionally omitted from
+  the project. The derived DAE files remove image libraries, texture bindings,
+  and external texture paths, then use neutral material colors for review.
+- Reusable prop examples include barrels, wooden boxes, lockers, a generator,
+  medical box, petrol can, shovel, tray, wagon, lamps, fences, rocks, cables,
+  TNT, detonator, and elevator/rail components.
+- Review scene: game/world/test_scenes/assorted_props_demo.tscn

@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3]
+[gd_scene load_steps=37 format=3]
 
 [ext_resource type="Script" path="res://shared/editor_core/nodes/level_root.gd" id="level"]
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/dock.tscn" id="dock"]
@@ -13,12 +13,13 @@
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return_gallery.tscn" id="return_gallery"]
 [ext_resource type="PackedScene" path="res://game/levels/modules/breakwater/mission/return_elbow.tscn" id="return_elbow"]
 [ext_resource type="Script" path="res://game/levels/breakwater_presentation.gd" id="presentation"]
-[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_exterior.tres" id="audio_exterior"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/ocean_waves/Waves2.wav" id="audio_ocean_wave_2"]
 [ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_shelter.tres" id="audio_shelter"]
 [ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_pump.tres" id="audio_pump"]
 [ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_coolant.tres" id="audio_coolant"]
 [ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_station.tres" id="audio_station"]
 [ext_resource type="AudioStream" path="res://game/art/audio/breakwater/black_start_cavern.tres" id="audio_cavern"]
+[ext_resource type="AudioStream" path="res://game/art/audio/breakwater/ocean_waves/Waves1.wav" id="audio_ocean_wave_1"]
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_water.tres" id="water"]
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/coast_rock.tres" id="rock"]
 [ext_resource type="Material" path="res://game/levels/modules/breakwater/materials/amber_light.tres" id="emergency_lens"]
@@ -202,7 +203,7 @@ powered_lens = ExtResource("powered_lens")
 
 [node name="DockCoast" type="AudioStreamPlayer3D" parent="Presentation"]
 position = Vector3(-8, 2, 0)
-stream = ExtResource("audio_exterior")
+stream = ExtResource("audio_ocean_wave_1")
 volume_db = -80.0
 unit_size = 9.0
 max_distance = 32.0
@@ -275,7 +276,7 @@ metadata/mix_db = -17.0
 
 [node name="RelayCoast" type="AudioStreamPlayer3D" parent="Presentation"]
 position = Vector3(-8, 4, -116)
-stream = ExtResource("audio_exterior")
+stream = ExtResource("audio_ocean_wave_2")
 volume_db = -80.0
 unit_size = 10.0
 max_distance = 29.0

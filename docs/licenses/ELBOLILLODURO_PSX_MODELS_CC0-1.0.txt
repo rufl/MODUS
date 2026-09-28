@@ -1,0 +1,20 @@
+Elbolilloduro PSX Model Pack 2
+Creator: Elbolilloduro
+Source: https://elbolilloduro.itch.io/paquete-de-modelos-low-poly-estilo-psx-2
+License: CC0 1.0 Universal / Public Domain for the models
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official source page states that the models are CC0. It also identifies
+Textures.com, Texturelib, and Texturify as texture sources and warns that
+Textures.com images may not be redistributed by default. This notice therefore
+clears the model geometry only; source textures are not distributed by MODUS.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_Models pack psx - new.rar
+- Uploaded archive SHA-256: 9ba031ed07fbb8c106ea608125b35be60c963549e103583e03b499d6890401d4
+- Imported runtime geometry: game/art/models/third_party/elbolilloduro_psx_models/models.dae
+- Runtime DAE is a texture-free derived COLLADA copy. External image libraries,
+  texture bindings, and source texture files were removed; neutral material
+  colors were added for the review import.
+- Original FBX, Blender authoring files, and source textures are not distributed.
+- Review scene: game/world/test_scenes/assorted_props_demo.tscn

@@ -14,8 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs/PROVENANCE_LEDGER.csv"
 SCAN_ROOTS = ("game", "shared", "standalone", "mods")
 ASSET_SUFFIXES = {
-    ".flac",
+    ".dae",
     ".fbx",
+    ".exr",
+    ".flac",
     ".gdshader",
     ".glb",
     ".gltf",
@@ -28,10 +30,10 @@ ASSET_SUFFIXES = {
     ".png",
     ".res",
     ".svg",
+    ".tga",
     ".tres",
     ".ttf",
     ".wav",
-    ".tga",
 }
 EXTRA_PATHS = ("shared/shaders/blood_pool.gd",)
 
@@ -163,6 +165,53 @@ PSX_FENCE_PREFIXES = (
 WRAD_ARMS_PREFIX = "game/art/models/first_person/wrad_arms/"
 PSX_OFFICE_PREFIX = "game/art/models/office/"
 BRACKEYS_VFX_PREFIX = "game/art/textures/vfx/brackeys/"
+BINBUN_WATER_PREFIXES = (
+    "game/art/shaders/third_party/binbun_water/",
+    "game/art/models/third_party/binbun_water/",
+    "game/art/materials/liquids/binbun_water",
+)
+BINBUN_WATER_SOURCE = "https://binbun3d.itch.io/godot-water-shader"
+BINBUN_WATER_NOTICE = "docs/licenses/BINBUN_GODOT_WATER_CC0-1.0.txt"
+BINBUN_SKIES_PREFIXES = (
+    "game/art/shaders/third_party/binbun_skies/",
+    "game/art/materials/sky/third_party/binbun_skies/",
+)
+BINBUN_SKIES_SOURCE = "https://binbun3d.itch.io/godot-skies"
+BINBUN_SKIES_NOTICE = "docs/licenses/BINBUN_GODOT_SKIES_CC0-1.0.txt"
+SEWERS_MODEL_PATH = "game/art/models/sewers/Sewers.dae"
+SEWERS_SOURCE = "https://elbolilloduro.itch.io/sewers"
+SEWERS_NOTICE = "docs/licenses/ELBOLILLODURO_SEWERS_CC0-1.0.txt"
+KKRYY_STREET_PREFIX = "game/art/models/third_party/kkryy_street_furniture/"
+KKRYY_STREET_SOURCE = "https://kkryy.itch.io/streetfurniture"
+KKRYY_STREET_NOTICE = "docs/licenses/KKRYY_STREET_FURNITURE_CC0-1.0.txt"
+ELBOLILLODURO_PSX_PREFIX = "game/art/models/third_party/elbolilloduro_psx_models/"
+ELBOLILLODURO_PSX_SOURCE = (
+    "https://elbolilloduro.itch.io/paquete-de-modelos-low-poly-estilo-psx-2"
+)
+ELBOLILLODURO_PSX_NOTICE = "docs/licenses/ELBOLILLODURO_PSX_MODELS_CC0-1.0.txt"
+ELBOLILLODURO_MINE_PREFIX = "game/art/models/third_party/elbolilloduro_mine/"
+ELBOLILLODURO_MINE_SOURCE = "https://elbolilloduro.itch.io/mine"
+ELBOLILLODURO_MINE_NOTICE = "docs/licenses/ELBOLILLODURO_MINE_CC0-1.0.txt"
+GODGOLDFEAR_INDUSTRIAL_PREFIX = "game/art/models/third_party/godgoldfear_industrial/"
+GODGOLDFEAR_INDUSTRIAL_SOURCE = (
+    "https://godgoldfear.itch.io/psx-industrial-environment-asset-pack"
+)
+GODGOLDFEAR_INDUSTRIAL_NOTICE = "docs/licenses/GODGOLDFEAR_INDUSTRIAL_CC-BY-4.0.txt"
+CHILLY_DURANGO_RETRO_PREFIX = "game/art/models/third_party/chilly_durango_retro_machinery/"
+CHILLY_DURANGO_RETRO_SOURCE = "https://chilly-durango.itch.io/3d-retro-plumbing-wiring"
+CHILLY_DURANGO_RETRO_NOTICE = "docs/licenses/CHILLY_DURANGO_RETRO_MACHINERY_CC0-1.0.txt"
+LOAFBRR_PIPES_PREFIX = "game/art/models/third_party/loafbrr_pipes/"
+LOAFBRR_PIPES_SOURCE = "https://loafbrr.itch.io/pipes-asset-pack"
+LOAFBRR_PIPES_NOTICE = "docs/licenses/LOAFBRR_PIPES_CC0-1.0.txt"
+LUKA_ALEKSIC_SOUND_PREFIX = "game/art/audio/sfx/luka_aleksic/"
+LUKA_ALEKSIC_SOUND_SOURCE = "https://aleksicluka.itch.io/various-sound-effects"
+LUKA_ALEKSIC_SOUND_NOTICE = "docs/licenses/LUKA_ALEKSIC_SOUND_EFFECTS_CC0-1.0.txt"
+COOLER11_WAVES_PREFIX = "game/art/audio/breakwater/ocean_waves/"
+COOLER11_WAVES_SOURCE = (
+    "Very Simple Waves Pack/README.txt (creator cooler11; official itch.io URL "
+    "not included in uploaded archive)"
+)
+COOLER11_WAVES_NOTICE = "docs/licenses/VERY_SIMPLE_WAVES_PACK_GAME_USE.txt"
 GENERATED_MAP_OVERVIEW_PATHS = {
     "game/world/maps/overviews/map_overview.png",
 }
@@ -405,6 +454,158 @@ def classify(path: Path, digest: str) -> dict[str, str]:
             "license": "MIT",
             "local_notice": "LICENSE",
             "notes": "Original baked OBJ and native Godot resources; audio deterministically synthesized by game/art/audio/breakwater/author_breakwater_audio.py with no recordings or third-party samples.",
+        }
+    if any(relative.startswith(prefix) for prefix in BINBUN_SKIES_PREFIXES):
+        return {
+            "status": "cleared",
+            "author": "Binbun",
+            "source": BINBUN_SKIES_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": BINBUN_SKIES_NOTICE,
+            "notes": (
+                "Binbun Godot Skies shader, procedural cloud/noise resource, or "
+                "derived MODUS Sky preset imported from the uploaded CC0 source "
+                "archive. The empty unused triplanar include is intentionally "
+                "not distributed."
+            ),
+        }
+    if relative.startswith(KKRYY_STREET_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Kkryy",
+            "source": KKRYY_STREET_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": KKRYY_STREET_NOTICE,
+            "notes": (
+                "Street Furniture FBX or PNG source file imported from the "
+                "uploaded Street Furniture.zip archive. The official source "
+                "page states CC0; Blender authoring files are not distributed."
+            ),
+        }
+    if relative.startswith(ELBOLILLODURO_MINE_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Elbolilloduro",
+            "source": ELBOLILLODURO_MINE_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": ELBOLILLODURO_MINE_NOTICE,
+            "notes": (
+                "Texture-free derived COLLADA Mine prop or modular geometry "
+                "from the uploaded Mine.rar archive. The official source page "
+                "states the models are CC0; texture files identified as obtained "
+                "from texturer.com and textures.com are not distributed."
+            ),
+        }
+    if relative.startswith(ELBOLILLODURO_PSX_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Elbolilloduro",
+            "source": ELBOLILLODURO_PSX_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": ELBOLILLODURO_PSX_NOTICE,
+            "notes": (
+                "Texture-free derived COLLADA model geometry from the uploaded "
+                "Models pack psx - new.rar archive. The source page states the "
+                "models are CC0; source textures with separate terms are not "
+                "distributed."
+            ),
+        }
+    if relative.startswith(GODGOLDFEAR_INDUSTRIAL_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "godgoldfear",
+            "source": GODGOLDFEAR_INDUSTRIAL_SOURCE,
+            "license": "CC-BY-4.0",
+            "local_notice": GODGOLDFEAR_INDUSTRIAL_NOTICE,
+            "notes": (
+                "PSX Industrial Environment FBX, diffuse texture, or normal "
+                "texture imported from the uploaded Industrial_exterior_v1.zip "
+                "archive. Source bytes are retained; attribution to godgoldfear "
+                "is required."
+            ),
+        }
+    if relative.startswith(CHILLY_DURANGO_RETRO_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "chilly_durango",
+            "source": CHILLY_DURANGO_RETRO_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": CHILLY_DURANGO_RETRO_NOTICE,
+            "notes": (
+                "Low-poly retro plumbing, wiring, electrical, and machinery GLB "
+                "conversion or retained PNG texture from the uploaded 3D Retro "
+                "Plumbing & Wiring.zip archive. The official source page states "
+                "the models and textures are CC0; source Blender files are not "
+                "distributed."
+            ),
+        }
+    if relative.startswith(LOAFBRR_PIPES_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "loafbrr",
+            "source": LOAFBRR_PIPES_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": LOAFBRR_PIPES_NOTICE,
+            "notes": (
+                "Godot scene, material, texture, or glTF source imported from "
+                "the uploaded PIpes_Pack_Godot_40.zip archive. The official "
+                "source page states the pack is CC0."
+            ),
+        }
+    if relative == SEWERS_MODEL_PATH:
+        return {
+            "status": "cleared",
+            "author": "Elbolilloduro",
+            "source": SEWERS_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": SEWERS_NOTICE,
+            "notes": (
+                "Texture-free COLLADA geometry derived from the uploaded Sewer.rar "
+                "model source. The official page identifies the models as CC0; "
+                "the source archive's externally obtained textures are intentionally "
+                "not distributed because their separate license terms are not retained."
+            ),
+        }
+    if any(relative.startswith(prefix) for prefix in BINBUN_WATER_PREFIXES):
+        return {
+            "status": "cleared",
+            "author": "Binbun",
+            "source": BINBUN_WATER_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": BINBUN_WATER_NOTICE,
+            "notes": (
+                "Binbun Godot Water shader source, derived procedural-noise "
+                "material, duck demo GLB, or duck texture imported from the "
+                "uploaded CC0 source/demo archives. The original Blender files "
+                "and source-side import metadata are intentionally excluded."
+            ),
+        }
+    if relative.startswith(LUKA_ALEKSIC_SOUND_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Luka Aleksic",
+            "source": LUKA_ALEKSIC_SOUND_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": LUKA_ALEKSIC_SOUND_NOTICE,
+            "notes": (
+                "Luka Aleksic public-domain sound effect WAV imported from "
+                "the uploaded sounds.zip archive. The source page states CC0; "
+                "the creator's optional credit request is retained in the local notice."
+            ),
+        }
+    if relative.startswith(COOLER11_WAVES_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "cooler11",
+            "source": COOLER11_WAVES_SOURCE,
+            "license": "Free Use (game use; no standalone redistribution)",
+            "local_notice": COOLER11_WAVES_NOTICE,
+            "notes": (
+                "Very Simple Waves Pack WAV imported from the supplied archive. "
+                "The included README permits free and commercial game use and "
+                "modification, requests optional credit, and prohibits standalone "
+                "or asset-pack redistribution."
+            ),
         }
     if relative in LIQUID_PATHS:
         return {

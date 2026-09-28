@@ -1,0 +1,23 @@
+Godot Skies by Binbun
+Creator: Binbun
+Source: https://binbun3d.itch.io/godot-skies
+License: CC0 1.0 Universal / Public Domain
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official Godot Skies page identifies the pack as a customizable Godot sky
+shader with procedural cloud noise, sun/moon support, day/sunset/night blending,
+stars, and presets. Its licensing section permits personal, educational, and
+commercial use with no attribution required (CC0).
+
+Import record:
+- Uploaded source archive: C__Users_rafael_Downloads_SourceCode.zip
+- Uploaded source archive SHA-256: 2550d3abe6be08c9c0dd55a424ce1dd96d463f512e6567916a824630136a3895
+- Imported shader: `main.gdshader` under
+  `game/art/shaders/third_party/binbun_skies/`
+- Imported procedural cloud/noise resources: `clouds_01.tres` through
+  `clouds_07.tres` under `game/art/materials/sky/third_party/binbun_skies/`
+- Added MODUS preset: `binbun_skies.tres`
+- Added isolated review scene: `game/world/test_scenes/binbun_skies_demo.tscn`
+- MODUS defaults to the Compatibility renderer; the review scene preserves a solid-color fallback there because `shader_type sky` requires Forward+/Mobile for runtime review.
+- The archive's empty `triplanar.gdshaderinc` utility is not referenced by the
+  supplied main shader and is intentionally not copied into the runtime tree.

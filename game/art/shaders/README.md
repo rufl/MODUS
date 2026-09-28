@@ -30,3 +30,18 @@ A suite of retro-styled animated liquid shaders inspired by Quake/Half-Life.
 
 - **`liquid.gdshader`**: Generic liquid shader with vertex wobble and UV scrolling.
 - **`post_process.gdshader`**: Screen-space effect for dithering and color quantization.
+
+## Third-party water shader
+
+- **`third_party/binbun_water/water.gdshader`** and **`water_toon.gdshader`**:
+  - Binbun's CC0 Godot Water shaders with depth-aware colour, refraction, displacement, foam, and optional caustics.
+  - The imported materials are `game/art/materials/liquids/binbun_water.tres` and `binbun_water_toon.tres`.
+  - The isolated review scene is `game/world/test_scenes/binbun_water_demo.tscn`; the shaders remain optional and do not replace the project-owned liquid materials.
+
+## Third-party Binbun sky shader
+
+- **`third_party/binbun_skies/main.gdshader`**:
+  - Binbun's CC0 Godot Skies shader with directional-light sun/moon tracking, day/sunset/night blending, procedural cloud layers, and stars.
+  - The imported procedural noise resources and derived `Sky` preset are under `game/art/materials/sky/third_party/binbun_skies/`.
+  - The isolated review scene is `game/world/test_scenes/binbun_skies_demo.tscn`; the optional third-party sky does not replace the project-owned sky resources or claim the golden route.
+- MODUS defaults to the Compatibility renderer, so the demo keeps a solid-color fallback there; Forward+/Mobile visual review remains required before runtime adoption.

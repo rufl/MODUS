@@ -1,0 +1,17 @@
+Pipes Asset Pack
+Creator: loafbrr
+Source: https://loafbrr.itch.io/pipes-asset-pack
+License: Creative Commons Zero v1.0 Universal
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official source page identifies the pack as CC0 and describes fifty modular pipe
+sets, valves, utility boxes, and pipe stickers for Godot and Unity. The source page
+also states a total of 20,305 triangles and identifies the creator as loafbrr.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_PIpes_Pack_Godot_40.zip
+- Uploaded archive SHA-256: 239bbb99ca0c382a12c28434ab711e0992739a41b6c3852c38b1d1ed0b815921
+- Imported runtime assets: game/art/models/third_party/loafbrr_pipes/
+- The Godot scenes, materials, textures, and glTF source are retained; the archive's
+  paths were relocated from res://Assets/PIpes_Pack/ to the canonical MODUS path.
+- Review scene supplied by the pack: game/art/models/third_party/loafbrr_pipes/Scenes/Pipes.tscn

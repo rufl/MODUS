@@ -1,0 +1,19 @@
+Very Simple Waves Pack
+Creator: cooler11
+Source evidence: README.txt included in the uploaded archive
+Official source URL: Not included in the uploaded archive
+License: Free Use License for game use; no standalone pack redistribution
+
+The retained README grants use of the sound effects in free and commercial games
+without fees or royalties, permits modifications, and requests optional credit
+only. It prohibits redistributing or selling the sound-effects pack itself or
+selling the sounds as another asset package. MODUS therefore treats these files
+as game-use audio, not CC0/public-domain material, and must not publish them as
+a standalone sound pack.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_Very Simple Waves Pack.zip
+- Uploaded archive SHA-256: 5d507ea3503e5ed5b08e29a421971d494b4dd6e43628eec6888229f90269d99a
+- Imported runtime files: Waves1.wav, Waves2.wav, Waves3.wav, and Waves4.wav
+- Integration: `DockCoast` uses `Waves1.wav`; `RelayCoast` uses `Waves2.wav`.
+- The other clips remain available as source-pack variants for later coastal-zone mixing.

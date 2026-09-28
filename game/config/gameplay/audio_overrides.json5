@@ -23,7 +23,7 @@
   "crit": "",
   "kill_confirm": "",
   "weapon_switch": "",
-  "pickup": "",
+  "pickup": "luka_aleksic/pickup_coins.wav",
   "rocket_launch": "",
   "grenade_launch": "",
   "grenade_bounce": "",
@@ -45,9 +45,9 @@
   "enemy_whoosh": "",
 
   // World & Interactive
-  "door_open": "",
-  "door_close": "",
-  "switch": "",
+  "door_open": "luka_aleksic/door_open.wav",
+  "door_close": "luka_aleksic/door_close.wav",
+  "switch": "luka_aleksic/switch_on.wav",
   "secret": "",
   "splash": "",
   "teleport": "",

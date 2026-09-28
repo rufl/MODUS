@@ -15,6 +15,17 @@ The scope is:
 
 The search target is **CC0 / public-domain dedication with source evidence**, not merely “free,” “royalty-free,” or “commercial use allowed.”
 
+## Current 3D prop style gate
+
+New prop candidates must match the MODUS stylized industrial language: PSX/PS2/HL2-era low-poly forms, readable silhouettes, restrained geometry, and low-resolution authored textures. Earlier high-poly/high-resolution recommendations are rejected for this target and must not be imported as-is.
+
+Default acceptance targets:
+
+- Repeated dressing props: roughly 500–2,500 triangles each with a 128–512 px texture or atlas.
+- Hero/interactable props: roughly 2,500–8,000 triangles, normally using 512 px textures; allow 1024 px only when silhouette or label readability requires it.
+- Reject 2K/4K texture packs, photoreal scans, dense subdivision, baked microdetail, expensive material stacks, and proprietary/ripped HL2 or PS2 assets.
+- Use `PSX`, `PS2 low poly`, `Half-Life 2-era low poly`, `retro industrial`, and `Source-style low-poly` as visual search terms only. Import only candidates with clear CC0/public-domain rights.
+
 ## Already covered — do not search for duplicates
 
 | Area | Already present | Search decision |
@@ -25,7 +36,9 @@ The search target is **CC0 / public-domain dedication with source evidence**, no
 | Brackeys VFX | Particle textures and flipbooks under `game/art/textures/vfx/brackeys/` | Do not search for generic fire/smoke/spark sheets first. Search only for uncovered water spray, steam, electrical arc, dust, and impact variants. |
 | First-person arms | `game/art/models/first_person/wrad_arms/arms.glb` and supplied skins | Do not search for another arms model. |
 | Breakwater architecture and ambience | Native Breakwater module geometry/materials and six original synthesized ambience streams under `game/levels/modules/breakwater/` and `game/art/audio/breakwater/` | Do not replace the authored room kit or six base loops. Search for modular detail props, surface variation, control visuals, and optional layered one-shots. |
-| Liquid shader logic | Project-owned `retro_water`, `retro_lava`, `retro_poison`, and `retro_blood` shaders/materials | Do not search for a replacement shader. Search for compatible texture inputs and supporting foam, caustic, splash, and shoreline assets. |
+| Loafbrr Pipes Asset Pack | `game/art/models/third_party/loafbrr_pipes/` supplies 50 modular pipe-set scenes, valves, utility boxes, pipe stickers, and source materials under CC0. | Do not search for another modular pipe/valve/utility-box pack. The remaining I-01 gap is a cohesive panel/console kit with push buttons, keypad/card reader, gauges, status lamps/screens, junction boxes, conduit, and cable bundles. |
+| Liquid shader logic | Project-owned `retro_water`, `retro_lava`, `retro_poison`, and `retro_blood` shaders/materials, plus the optional CC0 Binbun Water shader/material review under `game/art/shaders/third_party/binbun_water/`, `game/art/materials/liquids/binbun_water*.tres`, and `game/world/test_scenes/binbun_water_demo.tscn` | Do not replace the project-owned liquid shaders. The Binbun source is an optional comparison/integration candidate; continue searching for compatible texture inputs and supporting foam, caustic, splash, and shoreline assets. |
+| Sky shader source | `game/art/shaders/third_party/binbun_skies/`, `game/art/materials/sky/third_party/binbun_skies/`, and `game/world/test_scenes/binbun_skies_demo.tscn` | Binbun's CC0 Godot Skies source shader and procedural noise resources are retained as an optional review/demo path; they do not replace the project-owned sky resources or establish golden-route visual/performance proof. |
 
 License paths and current provenance are maintained in [Licensing and Provenance Inventory](ATTRIBUTION.md) and [Retained Third-Party License Records](licenses/README.md).
 
@@ -39,19 +52,20 @@ These should be searched before one-off room props. One good modular kit can imp
 | W-02 | Water effect support | Edge foam, shore wetness, underwater caustics, splash rings, droplets, spray, and a small looping surface ripple/foam flipbook. | `CC0 water splash sprite sheet`, `CC0 foam particle texture`, `CC0 underwater caustic tile`, `CC0 stylized water spray` | Coastline, basin, hazards arena, liquid test surfaces | Transparent PNG/TGA sheets with frame layout documented; separate masks preferred over a single baked composite. |
 | M-01 | Industrial surface material kit | Tileable concrete, wet concrete, painted enamel, dark metal, galvanized metal, rust/oxidation, grating, brass/copper, black rubber, glass, ceramic/tile, and dirty/wet variants. Current Breakwater role materials are intentionally small and mostly colour/roughness driven; Showcase floors and ramps still use flat/prototype assignments. | `CC0 low poly industrial PBR texture`, `CC0 stylized wet concrete tile`, `CC0 painted metal rust trim sheet`, `CC0 sci fi grating material`, `CC0 galvanized metal texture` | Every Showcase zone; dock, pump, intake, turbine, relay, and return rooms | Tileable albedo plus normal/roughness/metallic/AO where available; 128–512 px; one consistent stylized/PSX scale rather than photoreal 4K scans. |
 | D-01 | Trim and decal atlas | Yellow/black hazard stripes, red/white emergency stripes, arrows, floor lanes, room IDs, maintenance labels, caution symbols, numbered range markers, waterline stains, leak streaks, grime, edge wear, and small panel labels. | `CC0 industrial hazard decal atlas`, `CC0 sci fi warning decals`, `CC0 low poly maintenance labels`, `CC0 hazard stripe trim sheet` | Showcase navigation/readability; Breakwater intake, pump, turbine, relay, dock | Transparent PNG/TGA atlas with non-baked text variants; source files or a clear license record; avoid real company logos. |
-| I-01 | Reusable interaction hardware kit | Panel/console body, toggle switch, momentary push button, hold button, emergency-stop button, breaker/lever, key switch, keypad/card reader, valve wheel, gauge, status lamps, small screen, junction box, conduit, and cable bundles. Current switch/lever/button/door actors create boxes/CSG or have null material overrides. | `CC0 low poly industrial control panel GLB`, `CC0 sci fi switch panel`, `CC0 breaker box lever button`, `CC0 emergency stop button 3D`, `CC0 valve wheel gauge GLB`, `CC0 PSX control console` | Interactables Demo; generated showcase switches/buttons/doors; Breakwater pump, intake, relay, return | Modular GLB, metre scale, separate pieces for controls and indicator lamps, sensible pivots, optional LOD, no gameplay collision required. Variants should share a texture/material family. |
-| I-02 | Door, lift, and platform presentation kit | Industrial door face, frame trim, lock/light module, lift gate, handrails, platform edge, elevator call panel, and mechanical travel details. Existing door/platform mechanics can receive visual children; do not replace their collision or scripts. | `CC0 industrial sci fi door GLB`, `CC0 elevator platform low poly`, `CC0 maintenance lift gate`, `CC0 door control panel GLB` | Interactables Demo, Traversal Course, Breakwater airlock/return route | GLB parts with open/closed-compatible pivots or static dressing variants; no baked collision; low-poly silhouette readable at gameplay distance. |
-| A-01 | Shared audio one-shots | Switch/button/lever click, breaker clunk, emergency-stop thunk, key/card reader beep, denied/locked beep, door servo open/close, platform/elevator start/stop, pickup/key, UI confirm/error, timer beep, teleport in/out, jump-pad launch, and slipgate hum. | `CC0 industrial switch click`, `CC0 sci fi panel button beep`, `CC0 hydraulic door servo`, `CC0 elevator motor one shot`, `CC0 teleport whoosh`, `CC0 jump pad sound`, `CC0 machinery clunk` | All test maps and interaction demos | WAV or OGG; short clean one-shots; mono for 3D events; 44.1/48 kHz; supply loop points for hums. |
+| I-01 | Reusable interaction hardware kit | Panel/console body, toggle switch, momentary push button, hold button, emergency-stop button, breaker/lever, key switch, keypad/card reader, valve wheel, gauge, status lamps, small screen, junction box, conduit, and cable bundles. Chilly Durango's retro machinery pack covers switches, breaker/fuse, valve, pipes, wires, and machinery; loafbrr's Pipes Asset Pack now adds 50 modular pipe sets, valves, utility boxes, and stickers. The remaining gap is a cohesive panel/console, push-button, keypad/card-reader, gauge/status/screen, junction/conduit, and cable-bundle kit. | Interactables Demo; generated showcase switches/buttons/doors; Breakwater pump, intake, relay, return | Modular GLB or Godot scene set, metre scale, separate pieces for controls and indicator lamps, sensible pivots, 500–2,500 triangles for repeated pieces, no gameplay collision by default. |
+| I-02 | Door, lift, and platform presentation kit | Industrial door face, frame trim, lock/light module, lift gate, handrails, platform edge, elevator call panel, and mechanical travel details. Existing door/platform mechanics can receive visual children; do not replace their collision or scripts. | `CC0 PSX low poly sci fi door`, `CC0 PS2 low poly elevator gate`, `CC0 Half-Life 2-era maintenance lift`, `CC0 retro industrial door frame` | Interactables Demo, Traversal Course, Breakwater airlock/return route | GLB parts with open/closed-compatible pivots or static dressing variants; 500–2,500 triangles for repeated parts, 2,500–8,000 for a hero assembly, 128–512 px texture/atlas, no baked collision. |
+| A-01 | Shared audio one-shots | Switch/button/lever click, breaker clunk, emergency-stop thunk, key/card reader beep, denied/locked beep, door servo open/close, platform/elevator start/stop, pickup/key, UI confirm/error, timer beep, teleport in/out, jump-pad launch, and slipgate hum. | `CC0 industrial switch click`, `CC0 sci fi panel button beep`, `CC0 hydraulic door servo`, `CC0 elevator motor one shot`, `CC0 teleport whoosh`, `CC0 jump pad sound`, `CC0 machinery clunk` | All test maps and interaction demos | Luka Aleksic's imported CC0 pack now covers pickup, door open/close, and switch overrides; continue searching for the remaining short one-shots. WAV or OGG; mono for 3D events; 44.1/48 kHz; supply loop points for hums. |
 | A-02 | Shared environmental audio | Ocean/waves, rain, wind, sheltered wind, cavern drips, pump/machinery hum, turbine/rotor loop, electrical buzz/arc, warning alarm, water splash, steam hiss, metal impact, and grating/concrete footsteps. | `CC0 coastal storm ambience loop`, `CC0 industrial pump loop`, `CC0 turbine machinery loop`, `CC0 electrical arc sound`, `CC0 cavern drip ambience`, `CC0 metal grating footsteps` | Showcase weather zones; Breakwater dock/cavern/pump/turbine/relay; movement and traversal tests | Loopable WAV/OGG with clean endpoints and source duration; provide mono/stereo intent and loudness notes. |
+The supplied cooler11 Very Simple Waves Pack now covers two Breakwater coastal sources with four imported WAV variants. It is a restricted game-use exception documented at `docs/licenses/VERY_SIMPLE_WAVES_PACK_GAME_USE.txt`, not CC0/public-domain material; do not redistribute it as a standalone or asset pack, and continue the CC0 search for unrestricted environmental loops.
 
 ### Audio files that are specifically absent today
 
-The runtime has direct load paths for these files, but `game/art/audio/sfx/` currently contains no committed audio file:
+The runtime now has committed one-shot assets under `game/art/audio/sfx/luka_aleksic/`; its safe overrides cover pickup, door open/close, and switch events. The remaining direct-load gaps are:
 
 - `game/art/audio/sfx/jump_pad.wav` — required by `shared/editor_core/actors/jump_pad_actor.gd`;
 - `game/art/audio/sfx/teleport.wav` — required by `shared/editor_core/actors/teleporter_actor.gd`.
 
-The event catalogue in `game/config/gameplay/audio_overrides.json5` also leaves the world/interaction and movement events open for file overrides. The procedural audio fallback keeps those events functional, so these are **presentation-completion searches**, not a reason to change the audio API.
+The event catalogue in `game/config/gameplay/audio_overrides.json5` still leaves the remaining world/interaction and movement events open for file overrides. The procedural audio fallback keeps those events functional, so these are **presentation-completion searches**, not a reason to change the audio API.
 
 There is no committed music track in `game/art/audio/music/`. Add music only after the map ambience and interaction sounds are covered; it is optional for test-map completion.
 
@@ -106,6 +120,7 @@ Search these only after W-01, M-01, I-01, and A-01/A-02 have candidates:
 ### Licensing and provenance
 
 - Accept only CC0 / public-domain material with a source page and license text that can be retained in `docs/licenses/`.
+- Direct user-supplied runtime material may be imported only when the retained terms explicitly grant game use; record it as a non-CC0 dependency, preserve every redistribution restriction in `docs/licenses/`, and never present it as an unrestricted acquisition candidate.
 - Record the author, source URL, exact asset/archive name, download date, archive hash, and any attribution/credit requirement even when the source says CC0.
 - “Free,” “open,” “royalty-free,” “free for commercial use,” or “no attribution required” is not sufficient without the actual license terms.
 - Do not import logos, recognizable commercial signage, scraped game assets, or packs with mixed/unclear licenses.
@@ -115,13 +130,13 @@ Search these only after W-01, M-01, I-01, and A-01/A-02 have candidates:
 
 - Prefer GLB/glTF as the canonical runtime format; OBJ is acceptable only as a source that will be deliberately converted. Do not make FBX/BLEND the runtime dependency.
 - Require metre-scale dimensions, sensible origin/pivot, readable silhouette at gameplay distance, and no hidden external dependencies.
-- Prefer modular pieces and variants over a single hero mesh. Supply LODs or keep triangle/texture cost appropriate for repeated dressing.
+- Prefer modular pieces and variants over a single hero mesh. Keep repeated dressing within the style-gate triangle budget; supply LODs only when they preserve the low-poly silhouette rather than adding hidden density.
 - Imported dressing must not add gameplay collision unless a separate collision asset is explicitly needed and reviewed.
-- Match the existing stylized/low-poly industrial language; reject photoreal scans that make the prototype surfaces inconsistent.
+- Match the existing stylized/low-poly industrial language; reject photoreal scans, dense subdivision, and high-resolution hero assets that make the prototype surfaces inconsistent.
 
 ### Textures and materials
 
-- Prefer tileable PNG/TGA maps at 128, 256, or 512 px. Reserve larger maps for a single hero asset.
+- Prefer tileable PNG/TGA maps at 128, 256, or 512 px. Allow 1024 only for a singular hero/interactable when readability requires it; reject 2K/4K maps for routine props.
 - Albedo/emissive maps use sRGB intent; normal, roughness, metallic, AO, height, and masks use linear intent.
 - Identify normal-map Y orientation. Prefer OpenGL/+Y normals or include conversion instructions.
 - Keep text, logos, and room-specific labels out of reusable texture atlases; use separate decals or Godot labels.

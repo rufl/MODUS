@@ -1,0 +1,17 @@
+Various Sound Effects by Luka Aleksic
+Creator: Luka Aleksic
+Source: https://aleksicluka.itch.io/various-sound-effects
+License: CC0 1.0 Universal / Public Domain
+License reference: https://creativecommons.org/publicdomain/zero/1.0/
+
+The official itch.io source page identifies this as a set of 27 sound effects
+recorded by Luka Aleksic and released under CC0. The creator requests optional
+credit but imposes no attribution requirement.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Downloads_sounds.zip
+- Uploaded archive SHA-256: 82c945e5f3c97e4d38dbf18fa27bcea78dbed73b4078c5bbafc04ad89b4096db
+- Imported runtime files: 27 WAV sound effects under
+  game/art/audio/sfx/luka_aleksic/
+- Selected safe event overrides: pickup, door_open, door_close, and switch
+  through game/config/gameplay/audio_overrides.json5.
