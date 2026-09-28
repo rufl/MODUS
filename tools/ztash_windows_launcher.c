@@ -26,7 +26,9 @@ int wmain(int argc, wchar_t **argv) {
         executable
     );
     if (used < 0 || (size_t)used >= sizeof(command_line) / sizeof(command_line[0])) return 1;
-    if (has_argument(argc, argv, L"--package-smoke") && !has_argument(argc, argv, L"--headless")) {
+
+    bool package_smoke = has_argument(argc, argv, L"--package-smoke");
+    if (package_smoke && !has_argument(argc, argv, L"--headless")) {
         int added = _snwprintf(
             command_line + used,
             sizeof(command_line) / sizeof(command_line[0]) - (size_t)used,
@@ -34,6 +36,22 @@ int wmain(int argc, wchar_t **argv) {
         );
         if (added < 0 || (size_t)(used + added) >= sizeof(command_line) / sizeof(command_line[0])) return 1;
         used += added;
+    }
+    if (package_smoke) {
+        const wchar_t *smoke_arguments[] = {
+            L"--audio-driver", L"Dummy",
+            L"--rendering-method", L"gl_compatibility",
+        };
+        for (size_t index = 0; index < sizeof(smoke_arguments) / sizeof(smoke_arguments[0]); ++index) {
+            int added = _snwprintf(
+                command_line + used,
+                sizeof(command_line) / sizeof(command_line[0]) - (size_t)used,
+                L" \"%ls\"",
+                smoke_arguments[index]
+            );
+            if (added < 0 || (size_t)(used + added) >= sizeof(command_line) / sizeof(command_line[0])) return 1;
+            used += added;
+        }
     }
     for (int index = 1; index < argc; ++index) {
         int added = _snwprintf(
