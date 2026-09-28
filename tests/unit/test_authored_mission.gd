@@ -393,3 +393,35 @@ func test_breakwater_station_is_an_authored_multi_room_cycle() -> void:
 		instances.size(),
 		"A connected 11-room route needs a loop edge"
 	)
+
+
+func test_breakwater_presentation_contract_covers_power_audio_and_weather() -> void:
+	var packed := load("res://game/levels/breakwater_mission.tscn") as PackedScene
+	assert_not_null(packed, "The authored Breakwater mission must remain loadable")
+	if packed == null:
+		return
+	var root := packed.instantiate() as Node3D
+	add_child_autofree(root)
+	await get_tree().process_frame
+
+	var presentation: Node = root.get_node("Presentation")
+	var contract: Dictionary = presentation.get_presentation_contract()
+	assert_true(contract.get("valid", false), str(contract.get("errors", [])))
+	assert_eq(contract.get("version"), 1)
+	assert_eq(contract.get("audio_sources", []).size(), 13)
+	assert_eq(contract.get("rain_emitters"), 3)
+	assert_gte(contract.get("status_labels"), 2)
+
+	var stages: Dictionary = contract.get("power_stages", {})
+	for stage: String in ["aux", "coolant", "relay"]:
+		var report: Dictionary = stages.get(stage, {})
+		assert_eq(
+			report.get("power_actor"),
+			{
+				"aux": "pump/aux_lights",
+				"coolant": "turbine/cooling_lights",
+				"relay": "hub/station_power"
+			}[stage]
+		)
+		assert_gt(report.get("target_count", 0), 0)
+

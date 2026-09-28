@@ -1,6 +1,25 @@
 extends Node3D
 ## Document-local presentation: no gameplay triggers, global weather mutation or save state.
 
+const POWER_STAGES := ["aux", "coolant", "relay"]
+const POWER_ACTORS := {
+	"aux": "pump/aux_lights", "coolant": "turbine/cooling_lights", "relay": "hub/station_power"
+}
+const POWER_TARGET_GROUPS := {
+	"aux": "breakwater_aux_lights",
+	"coolant": "breakwater_coolant_lights",
+	"relay": "breakwater_relay_lights"
+}
+const MACHINERY_GROUPS := {
+	"aux": "breakwater_aux_machinery", "coolant": "breakwater_coolant_machinery", "relay": ""
+}
+const FIXTURE_GROUPS := {
+	"aux": "breakwater_aux_emissive",
+	"coolant": "breakwater_coolant_emissive",
+	"relay": "breakwater_relay_fixtures"
+}
+const CONTRACT_VERSION := 1
+
 @export var emergency_lens: Material
 @export var powered_lens: Material
 
@@ -34,21 +53,15 @@ func _ready() -> void:
 
 
 func _bind_power() -> void:
-	for stage: String in ["aux", "coolant", "relay"]:
-		var identity: String = {
-			"aux": "pump/aux_lights",
-			"coolant": "turbine/cooling_lights",
-			"relay": "hub/station_power"
-		}[stage]
+	for stage: String in POWER_STAGES:
+		var identity: String = str(POWER_ACTORS[stage])
 		var actor := _document.call("find_actor", identity) as StationPowerActor
 		if actor:
 			actor.power_applied.connect(_on_power_applied.bind(stage))
 			_power[stage] = actor.is_active
-		var group := "breakwater_%s_machinery" % stage
-		_rotors[stage] = _document_group(group)
-		var fixture_group := (
-			"breakwater_relay_fixtures" if stage == "relay" else "breakwater_%s_emissive" % stage
-		)
+		var machinery_group: String = str(MACHINERY_GROUPS[stage])
+		_rotors[stage] = _document_group(machinery_group) if not machinery_group.is_empty() else []
+		var fixture_group: String = str(FIXTURE_GROUPS[stage])
 		_fixtures[stage] = []
 		for node: Node in _document_group(fixture_group):
 			if node is MeshInstance3D:
@@ -58,15 +71,123 @@ func _bind_power() -> void:
 			node.set_meta("unpowered_text", node.text)
 			_labels.append(node)
 	_bound = true
+	var contract := get_presentation_contract()
+	if not bool(contract.get("valid", false)):
+		push_error(
+			(
+				"[BreakwaterPresentation] Invalid presentation contract: %s"
+				% contract.get("errors", [])
+			)
+		)
 	_update_settings()
 	for stage: String in _power:
 		_apply_power_presentation(stage)
 
 
+func get_presentation_contract() -> Dictionary:
+	var errors: Array[String] = []
+	var document := _document if is_instance_valid(_document) else get_parent() as Node3D
+	var stages: Dictionary = {}
+	if not document:
+		errors.append("Presentation node must be parented to a LevelRoot document.")
+	else:
+		for stage: String in POWER_STAGES:
+			var identity: String = str(POWER_ACTORS[stage])
+			var actor: Node = null
+			if document.has_method("find_actor"):
+				actor = document.call("find_actor", identity) as Node
+			var target_group: String = str(POWER_TARGET_GROUPS[stage])
+			var target_nodes := _nodes_in_document(target_group, document)
+			var machinery_group: String = str(MACHINERY_GROUPS[stage])
+			var machinery_nodes: Array[Node] = []
+			if not machinery_group.is_empty():
+				machinery_nodes = _nodes_in_document(machinery_group, document)
+			var fixture_group: String = str(FIXTURE_GROUPS[stage])
+			var fixture_nodes := _nodes_in_document(fixture_group, document)
+			var stage_report := {
+				"power_actor": identity,
+				"actor_type": actor.get_class() if actor else "",
+				"target_group": target_group,
+				"target_count": target_nodes.size(),
+				"machinery_group": machinery_group,
+				"machinery_count": machinery_nodes.size(),
+				"fixture_group": fixture_group,
+				"fixture_count": fixture_nodes.size()
+			}
+			stages[stage] = stage_report
+			if actor == null:
+				errors.append("Missing power actor: " + identity)
+			elif not actor is StationPowerActor:
+				errors.append("Power actor is not a StationPowerActor: " + identity)
+			else:
+				if str(actor.get("target_group")) != target_group:
+					errors.append(identity + " targets the wrong group.")
+				var input_channels: Array = actor.get("input_channels")
+				var expected_channel: String = str(
+					{"aux": "aux_power", "coolant": "coolant", "relay": "relay_power"}[stage]
+				)
+				if not input_channels.has(expected_channel):
+					errors.append(identity + " is missing input channel " + expected_channel + ".")
+			if target_nodes.is_empty():
+				errors.append("Power stage has no target nodes: " + target_group)
+
+	var audio_sources: Array[Dictionary] = []
+	for child: Node in get_children():
+		if not child is AudioStreamPlayer3D:
+			continue
+		var source := child as AudioStreamPlayer3D
+		var stage := str(source.get_meta("power_stage", ""))
+		var zone: Variant = source.get_meta("zone_half_extents", null)
+		var valid_zone: bool = zone is Vector3 and zone.x > 0.0 and zone.y > 0.0 and zone.z > 0.0
+		audio_sources.append(
+			{
+				"name": source.name,
+				"power_stage": stage,
+				"has_stream": source.stream != null,
+				"zone_half_extents": zone
+			}
+		)
+		if source.stream == null:
+			errors.append("Audio source has no stream: " + source.name)
+		if not source.has_meta("zone_half_extents") or not valid_zone:
+			errors.append("Audio source has an invalid listener zone: " + source.name)
+		if not stage.is_empty() and not POWER_STAGES.has(stage):
+			errors.append("Audio source references an unknown power stage: " + source.name)
+
+	var rain_count := 0
+	for child: Node in get_children():
+		if child is CPUParticles3D:
+			rain_count += 1
+	var status_label_count := _nodes_in_document("breakwater_relay_status", document).size()
+	if emergency_lens == null or powered_lens == null:
+		errors.append("Power presentation requires emergency and powered materials.")
+	if audio_sources.is_empty():
+		errors.append("Breakwater presentation requires at least one audio source.")
+	if rain_count == 0:
+		errors.append("Breakwater presentation requires at least one rain emitter.")
+	if status_label_count == 0:
+		errors.append("Breakwater presentation requires at least one relay status label.")
+	return {
+		"version": CONTRACT_VERSION,
+		"valid": errors.is_empty(),
+		"errors": errors,
+		"power_stages": stages,
+		"audio_sources": audio_sources,
+		"rain_emitters": rain_count,
+		"status_labels": status_label_count
+	}
+
+
 func _document_group(group: String) -> Array[Node]:
+	return _nodes_in_document(group, _document)
+
+
+func _nodes_in_document(group: String, document: Node3D) -> Array[Node]:
 	var result: Array[Node] = []
+	if not document:
+		return result
 	for node: Node in get_tree().get_nodes_in_group(group):
-		if _document.is_ancestor_of(node):
+		if document.is_ancestor_of(node):
 			result.append(node)
 	return result
 
