@@ -114,11 +114,7 @@ def write_zip(
             info.create_system = 3
             info.external_attr = (mode & 0xFFFF) << 16
             source = stage / name
-            info.compress_type = (
-                zipfile.ZIP_STORED
-                if source.stat().st_size >= 16 * 1024 * 1024
-                else zipfile.ZIP_DEFLATED
-            )
+            info.compress_type = zipfile.ZIP_DEFLATED
             with archive.open(info, mode="w") as target, source.open("rb") as input_stream:
                 shutil.copyfileobj(input_stream, target, length=1024 * 1024)
 
