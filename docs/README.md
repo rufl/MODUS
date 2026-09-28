@@ -27,6 +27,7 @@ Published context and curated artifacts:
 - [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md)
 - [Known-Limits Matrix](KNOWN_LIMITS_MATRIX.md)
 - [Provenance Inventory and Ledger](ATTRIBUTION.md)
+- [CC0 Asset Search List](CC0_ASSET_SEARCH_LIST.md)
 
 ## Maintained References
 

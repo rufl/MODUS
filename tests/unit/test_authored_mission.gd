@@ -9,6 +9,7 @@ const SwitchActorScript := preload("res://shared/editor_core/actors/switch_actor
 const SecretWallActorScript := preload("res://shared/editor_core/actors/secret_wall_actor.gd")
 const TravelActorScript := preload("res://shared/editor_core/actors/travel_actor.gd")
 const PlayerHUDBridgeScript := preload("res://game/entities/player/components/player_hud_bridge.gd")
+const BreakwaterMissionScene := preload("res://game/levels/breakwater_mission.tscn")
 var _mission: MissionMgr
 var _previous: Dictionary
 var _previous_level: Node3D
@@ -351,7 +352,7 @@ func test_generated_progression_manifest_survives_runtime_roundtrip() -> void:
 
 
 func test_breakwater_station_is_an_authored_multi_room_cycle() -> void:
-	var packed := load("res://game/levels/breakwater_mission.tscn") as PackedScene
+	var packed := BreakwaterMissionScene
 	assert_not_null(packed, "The authored Breakwater mission must remain loadable")
 	if packed == null:
 		return
@@ -396,7 +397,7 @@ func test_breakwater_station_is_an_authored_multi_room_cycle() -> void:
 
 
 func test_breakwater_presentation_contract_covers_power_audio_and_weather() -> void:
-	var packed := load("res://game/levels/breakwater_mission.tscn") as PackedScene
+	var packed := BreakwaterMissionScene
 	assert_not_null(packed, "The authored Breakwater mission must remain loadable")
 	if packed == null:
 		return

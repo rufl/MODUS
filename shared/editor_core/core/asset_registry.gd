@@ -5,7 +5,18 @@ extends Node
 signal assets_loaded
 signal category_changed(category: String)
 
-enum Category { BLOCKS, ENTITIES, PROPS, INTERACTABLES, HAZARDS, PICKUPS, SPAWN_POINTS, MATERIALS, FENCES, OFFICE }
+enum Category {
+	BLOCKS,
+	ENTITIES,
+	PROPS,
+	INTERACTABLES,
+	HAZARDS,
+	PICKUPS,
+	SPAWN_POINTS,
+	MATERIALS,
+	FENCES,
+	OFFICE
+}
 
 const CATEGORY_NAMES := {
 	Category.BLOCKS: "Blocks",
@@ -138,6 +149,7 @@ func _register_material_asset(material_path: String, category: Category) -> void
 		}
 	)
 
+
 func _register_interactables() -> void:
 	## Register existing interactable components
 	var interactables := [
@@ -221,6 +233,7 @@ func _scan_directory(path: String, category: Category, patterns: Array) -> void:
 		file_name = dir.get_next()
 
 	dir.list_dir_end()
+
 
 func _scan_directory_recursive(path: String, category: Category, patterns: Array) -> void:
 	var dir := DirAccess.open(path)
