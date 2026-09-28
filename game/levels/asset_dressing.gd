@@ -3,14 +3,40 @@ extends Node3D
 
 ## Runtime dressing contract for authored levels.
 ##
-## The imported fence, office, RetroUrban material, and Brackeys VFX families
-## are deliberately instantiated here instead of being editor-only registry
-## entries. Models are visual-only: dressing must never change gameplay collision.
+## Imported model and texture families are deliberately instantiated here
+## instead of remaining editor-only registry entries. The gallery uses one or
+## more visual representatives from each imported family; texture-heavy packs
+## are shown as display cards so dressing remains readable and performant.
+## Models are visual-only: dressing must never change gameplay collision.
 
 const CONTRACT_VERSION := 1
-const DISPLAY_PLATFORM_SIZE := Vector3(24.0, 0.4, 18.0)
+const DISPLAY_PLATFORM_SIZE := Vector3(48.0, 0.4, 32.0)
 const DISPLAY_PLATFORM_POSITION := Vector3(0.0, -0.28, 2.0)
 const DISPLAY_PLATFORM_MATERIAL_PATH := "res://game/art/materials/retro_urban/cleanpavement_cleanpavement_04.tres"
+
+const IMPORTED_ASSET_FAMILIES: Array[String] = [
+	"fences",
+	"office",
+	"retro_urban",
+	"brackeys_vfx",
+	"3dexter_looming_landmarks",
+	"mcsteeg_survival",
+	"mcsteeg_trash_and_debris",
+	"chilly_durango_retro_machinery",
+	"loafbrr_pipes",
+	"elbolilloduro_mine",
+	"elbolilloduro_psx_models",
+	"godgoldfear_industrial",
+	"kkryy_street_furniture",
+	"prildarill_low_poly_assets",
+	"binbun_water",
+	"vinrax_psx_skeleton",
+	"aquilarius_retro",
+	"lvl11_quake_sci_fi",
+	"strideh_delven",
+	"strideh_torment",
+	"strideh_stencil_decals",
+]
 
 const MODEL_ASSETS: Array[Dictionary] = [
 	{
@@ -153,6 +179,118 @@ const MODEL_ASSETS: Array[Dictionary] = [
 		"rotation_degrees": Vector3(0.0, 20.0, 0.0),
 		"scale": Vector3(1.2, 1.2, 1.2),
 	},
+	{
+		"id": "landmark_wind_turbine",
+		"path": "res://game/art/models/third_party/3dexter_looming_landmarks/WindTurbine.glb",
+		"position": Vector3(-18.0, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.08, 0.08, 0.08),
+	},
+	{
+		"id": "survival_camp",
+		"path": "res://game/art/models/third_party/mcsteeg_survival/Survival.dae",
+		"position": Vector3(-12.0, 0.0, 12.0),
+		"rotation_degrees": Vector3.ZERO,
+		"scale": Vector3(0.05, 0.05, 0.05),
+	},
+	{
+		"id": "trash_debris_pile",
+		"path": "res://game/art/models/third_party/mcsteeg_trash_and_debris/TrashAndDebris.glb",
+		"position": Vector3(-6.0, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, 35.0, 0.0),
+		"scale": Vector3(0.65, 0.65, 0.65),
+	},
+	{
+		"id": "retro_generator",
+		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb",
+		"position": Vector3(-1.5, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, 20.0, 0.0),
+		"scale": Vector3(1.5, 1.5, 1.5),
+	},
+	{
+		"id": "retro_pump",
+		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pump.glb",
+		"position": Vector3(2.5, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, -20.0, 0.0),
+		"scale": Vector3(1.5, 1.5, 1.5),
+	},
+	{
+		"id": "retro_pipe_valve",
+		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipe_valve.glb",
+		"position": Vector3(5.5, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, 30.0, 0.0),
+		"scale": Vector3(1.5, 1.5, 1.5),
+	},
+	{
+		"id": "pipe_set_1",
+		"path": "res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_1.tscn",
+		"position": Vector3(9.0, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(1.0, 1.0, 1.0),
+	},
+	{
+		"id": "pipe_valve_group",
+		"path": "res://game/art/models/third_party/loafbrr_pipes/Scenes/Valves/valve_a_grp.tscn",
+		"position": Vector3(13.0, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, 15.0, 0.0),
+		"scale": Vector3(0.6, 0.6, 0.6),
+	},
+	{
+		"id": "pipe_utility_box",
+		"path": "res://game/art/models/third_party/loafbrr_pipes/Scenes/Boxes/pipes_box_aa.tscn",
+		"position": Vector3(16.5, 0.0, 12.0),
+		"rotation_degrees": Vector3(0.0, -15.0, 0.0),
+		"scale": Vector3(0.8, 0.8, 0.8),
+	},
+	{
+		"id": "mine_props",
+		"path": "res://game/art/models/third_party/elbolilloduro_mine/mine_props.dae",
+		"position": Vector3(-17.0, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.05, 0.05, 0.05),
+	},
+	{
+		"id": "psx_models",
+		"path": "res://game/art/models/third_party/elbolilloduro_psx_models/models.dae",
+		"position": Vector3(-10.5, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.08, 0.08, 0.08),
+	},
+	{
+		"id": "industrial_exterior",
+		"path": "res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx",
+		"position": Vector3(-3.5, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.07, 0.07, 0.07),
+	},
+	{
+		"id": "street_barrel",
+		"path": "res://game/art/models/third_party/kkryy_street_furniture/Barrel.fbx",
+		"position": Vector3(4.0, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 25.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "prildarill_shelf",
+		"path": "res://game/art/models/third_party/prildarill_low_poly_assets/Shelf.fbx",
+		"position": Vector3(8.5, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.8, 0.8, 0.8),
+	},
+	{
+		"id": "psx_skeleton",
+		"path": "res://game/art/models/third_party/vinrax_psx_skeleton/skeleton.glb",
+		"position": Vector3(12.5, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.08, 0.08, 0.08),
+	},
+	{
+		"id": "water_duck",
+		"path": "res://game/art/models/third_party/binbun_water/duck.glb",
+		"position": Vector3(17.0, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 25.0, 0.0),
+		"scale": Vector3(1.5, 1.5, 1.5),
+	},
 ]
 
 const MATERIAL_ASSETS: Array[Dictionary] = [
@@ -194,6 +332,129 @@ const MATERIAL_ASSETS: Array[Dictionary] = [
 	},
 ]
 
+const TEXTURE_ASSETS: Array[Dictionary] = [
+	{
+		"id": "aquilarius_retro_tile",
+		"path": "res://game/art/textures/third_party/aquilarius_retro/t1.png",
+		"position": Vector3(-18.0, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.76, 0.9, 1.0, 1.0),
+	},
+	{
+		"id": "lvl11_quake_sci_fi_tile",
+		"path": "res://game/art/textures/third_party/lvl11_quake_sci_fi/flr_painted_Q_G.png",
+		"position": Vector3(-13.5, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(1.0, 0.82, 0.62, 1.0),
+	},
+	{
+		"id": "strideh_delven_tile",
+		"path": "res://game/art/textures/third_party/strideh_delven/true_colour/dlv_woodgen1.png",
+		"position": Vector3(-9.0, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.92, 0.78, 0.62, 1.0),
+	},
+	{
+		"id": "strideh_torment_tile",
+		"path": "res://game/art/textures/third_party/strideh_torment/true_colour/str_wasteland1.png",
+		"position": Vector3(-4.5, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(1.0, 0.72, 0.55, 1.0),
+	},
+	{
+		"id": "strideh_stencil_mask",
+		"path": "res://game/art/textures/third_party/strideh_stencil_decals/masks/MaskAlphabet.png",
+		"position": Vector3(0.0, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.95, 0.95, 0.9, 1.0),
+	},
+	{
+		"id": "trash_debris_decal",
+		"path": "res://game/art/models/third_party/mcsteeg_trash_and_debris/TrashAndDebris_LitterDecal_1.png",
+		"position": Vector3(4.5, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.88, 0.82, 0.7, 1.0),
+	},
+	{
+		"id": "chilly_generator_texture",
+		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator_Generator-Texture.png",
+		"position": Vector3(9.0, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.82, 0.92, 1.0, 1.0),
+	},
+	{
+		"id": "loafbrr_pipe_texture",
+		"path": "res://game/art/models/third_party/loafbrr_pipes/Textures/Pipe3/Pipe3_albedo.png",
+		"position": Vector3(13.5, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.78, 0.9, 0.84, 1.0),
+	},
+	{
+		"id": "industrial_wall_texture",
+		"path": "res://game/art/models/third_party/godgoldfear_industrial/Wall.png",
+		"position": Vector3(18.0, 2.2, 16.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.84, 0.76, 0.66, 1.0),
+	},
+	{
+		"id": "survival_backpack_texture",
+		"path": "res://game/art/models/third_party/mcsteeg_survival/Backpack.png",
+		"position": Vector3(-13.5, 2.2, 12.8),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.72, 0.9, 0.76, 1.0),
+	},
+	{
+		"id": "prildarill_door_texture",
+		"path": "res://game/art/models/third_party/prildarill_low_poly_assets/doorandframe.png",
+		"position": Vector3(-9.0, 2.2, 12.8),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.92, 0.82, 0.98, 1.0),
+	},
+	{
+		"id": "street_furniture_texture",
+		"path": "res://game/art/models/third_party/kkryy_street_furniture/barrel.png",
+		"position": Vector3(-4.5, 2.2, 12.8),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(1.0, 0.76, 0.62, 1.0),
+	},
+	{
+		"id": "vinrax_skeleton_texture",
+		"path": "res://game/art/models/third_party/vinrax_psx_skeleton/skeleton_d.png",
+		"position": Vector3(0.0, 2.2, 12.8),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.88, 0.9, 0.76, 1.0),
+	},
+	{
+		"id": "wind_turbine_texture",
+		"path": "res://game/art/models/third_party/3dexter_looming_landmarks/WindTurbineBake.png",
+		"position": Vector3(4.5, 2.2, 12.8),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.8, 0.9, 1.0, 1.0),
+	},
+	{
+		"id": "binbun_water_texture",
+		"path": "res://game/art/models/third_party/binbun_water/texture.png",
+		"position": Vector3(9.0, 2.2, 12.8),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"size": Vector2(3.0, 2.5),
+		"color": Color(0.68, 0.9, 1.0, 1.0),
+	},
+]
+
 const VFX_ASSETS: Array[Dictionary] = [
 	{
 		"id": "vfx_fire_flipbook",
@@ -232,6 +493,7 @@ const VFX_ASSETS: Array[Dictionary] = [
 var load_errors: Array[String] = []
 var spawned_model_count := 0
 var spawned_material_count := 0
+var spawned_texture_count := 0
 var spawned_vfx_count := 0
 var _built := false
 
@@ -249,9 +511,13 @@ func _build() -> void:
 		_spawn_model(entry)
 	for entry: Dictionary in MATERIAL_ASSETS:
 		_spawn_material(entry)
+	for entry: Dictionary in TEXTURE_ASSETS:
+		_spawn_texture(entry)
 	for entry: Dictionary in VFX_ASSETS:
 		_spawn_vfx(entry)
 	set_meta("asset_usage_contract", get_asset_usage_contract())
+
+
 
 
 func _spawn_display_platform() -> void:
@@ -279,11 +545,14 @@ func get_asset_usage_contract() -> Dictionary:
 	return {
 		"version": CONTRACT_VERSION,
 		"valid": _built and load_errors.is_empty(),
+		"asset_families": IMPORTED_ASSET_FAMILIES.duplicate(),
 		"model_assets": _asset_ids(MODEL_ASSETS),
 		"material_assets": _asset_ids(MATERIAL_ASSETS),
+		"texture_assets": _asset_ids(TEXTURE_ASSETS),
 		"vfx_assets": _asset_ids(VFX_ASSETS),
 		"spawned_models": spawned_model_count,
 		"spawned_materials": spawned_material_count,
+		"spawned_textures": spawned_texture_count,
 		"spawned_vfx": spawned_vfx_count,
 		"errors": load_errors.duplicate(),
 	}
@@ -336,6 +605,35 @@ func _spawn_material(entry: Dictionary) -> void:
 	add_child(panel)
 	panel.add_to_group("level_asset_material")
 	spawned_material_count += 1
+
+
+func _spawn_texture(entry: Dictionary) -> void:
+	var path := str(entry.get("path", ""))
+	var texture := ResourceLoader.load(path) as Texture2D
+	if texture == null:
+		load_errors.append("Texture %s failed to load: %s" % [entry.get("id", ""), path])
+		return
+	var panel := MeshInstance3D.new()
+	panel.name = "Texture_%s" % entry.get("id", "texture")
+	panel.position = entry.get("position", Vector3.ZERO)
+	panel.rotation_degrees = entry.get("rotation_degrees", Vector3.ZERO)
+	panel.set_meta("asset_id", entry.get("id", ""))
+	panel.set_meta("asset_path", path)
+	panel.set_meta("asset_family", "texture")
+	var mesh := QuadMesh.new()
+	mesh.size = entry.get("size", Vector2(2.0, 2.0))
+	var material := StandardMaterial3D.new()
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.albedo_color = entry.get("color", Color.WHITE)
+	material.albedo_texture = texture
+	mesh.material = material
+	panel.mesh = mesh
+	panel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(panel)
+	panel.add_to_group("level_asset_texture")
+	spawned_texture_count += 1
 
 
 func _spawn_vfx(entry: Dictionary) -> void:

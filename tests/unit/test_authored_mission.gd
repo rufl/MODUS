@@ -459,6 +459,38 @@ func test_authored_levels_use_imported_asset_families() -> void:
 			"Every authored material entry must instantiate",
 		)
 		assert_eq(
+			contract.get("spawned_textures"),
+			contract.get("texture_assets", []).size(),
+			"Every authored texture card must instantiate",
+		)
+		for family: String in [
+			"fences",
+			"office",
+			"retro_urban",
+			"brackeys_vfx",
+			"3dexter_looming_landmarks",
+			"mcsteeg_survival",
+			"mcsteeg_trash_and_debris",
+			"chilly_durango_retro_machinery",
+			"loafbrr_pipes",
+			"elbolilloduro_mine",
+			"elbolilloduro_psx_models",
+			"godgoldfear_industrial",
+			"kkryy_street_furniture",
+			"prildarill_low_poly_assets",
+			"binbun_water",
+			"vinrax_psx_skeleton",
+			"aquilarius_retro",
+			"lvl11_quake_sci_fi",
+			"strideh_delven",
+			"strideh_torment",
+			"strideh_stencil_decals",
+		]:
+			assert_true(
+				contract.get("asset_families", []).has(family),
+				"Imported family must be represented: " + family,
+			)
+		assert_eq(
 			contract.get("spawned_vfx"),
 			contract.get("vfx_assets", []).size(),
 			"Every authored VFX entry must instantiate",
@@ -466,6 +498,7 @@ func test_authored_levels_use_imported_asset_families() -> void:
 		assert_gte(contract.get("spawned_models", 0), 20)
 		assert_gte(contract.get("spawned_materials", 0), 6)
 		assert_gte(contract.get("spawned_vfx", 0), 4)
+		assert_gte(contract.get("spawned_textures", 0), 15)
 		assert_not_null(
 			dressing.get_node_or_null("AssetDisplayPlatform"),
 			"Asset dressing must provide a grounded material display platform",
