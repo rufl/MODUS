@@ -26,6 +26,16 @@ const FeatureAvailabilityScript := preload(
 const SUPPORTED_CAPABILITIES: Array[String] = FeatureAvailabilityScript.COMMON_CAPABILITIES
 
 
+## Empty capability arguments use the actual runtime contract. Explicit arrays
+## remain available for authoring previews and negative-path validation.
+static func _resolve_supported_capabilities(supported_capabilities: Array[String]) -> Array[String]:
+	if not supported_capabilities.is_empty():
+		return supported_capabilities
+	var availability := FeatureAvailabilityScript.new()
+	availability.initialize(false)
+	return availability.get_available_capabilities()
+
+
 static func _unsupported_capabilities(
 	definition: PrefabMetadata, supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
 ) -> Array[String]:
@@ -82,10 +92,10 @@ static func get_compatible_replacement_catalog(
 
 
 static func get_replacement_diagnostics(
-	root: Node3D,
-	catalog: Array[PrefabMetadata] = [],
-	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+	root: Node3D, catalog: Array[PrefabMetadata] = [], supported_capabilities: Array[String] = []
 ) -> Dictionary:
+	supported_capabilities = _resolve_supported_capabilities(supported_capabilities)
+
 	var candidates := catalog if not catalog.is_empty() else get_catalog()
 	var compatible: Array[PrefabMetadata] = []
 	var rejected: Array[Dictionary] = []
@@ -350,9 +360,11 @@ static func _free_instances(instances: Array[ModuleInstance]) -> void:
 static func build_regeneration_plans(
 	root: Node3D,
 	replacement_catalog: Array[PrefabMetadata] = [],
-	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES,
+	supported_capabilities: Array[String] = [],
 	max_attempts: int = 128
 ) -> Dictionary:
+	supported_capabilities = _resolve_supported_capabilities(supported_capabilities)
+
 	if root == null or not "module_connections" in root:
 		return _regeneration_failure(
 			"Open a LevelRoot document before capturing regeneration plans."
@@ -550,10 +562,10 @@ static func _instantiate_replacement(
 
 
 static func _stage_regeneration(
-	root: Node3D,
-	plans: Array[Dictionary],
-	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+	root: Node3D, plans: Array[Dictionary], supported_capabilities: Array[String] = []
 ) -> Dictionary:
+	supported_capabilities = _resolve_supported_capabilities(supported_capabilities)
+
 	if root == null or not "module_connections" in root:
 		return _regeneration_failure("Open a LevelRoot document before regenerating modules.")
 	var previous := validate_level(root)
@@ -941,9 +953,9 @@ static func set_pinned(root: Node3D, instance_id: String, pinned: bool) -> Dicti
 	return {"success": true, "error": "", "pinned": pinned}
 
 
-static func validate_level(
-	root: Node3D, supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
-) -> Dictionary:
+static func validate_level(root: Node3D, supported_capabilities: Array[String] = []) -> Dictionary:
+	supported_capabilities = _resolve_supported_capabilities(supported_capabilities)
+
 	if root == null or not "module_connections" in root:
 		return {"valid": false, "errors": ["Document must be a LevelRoot."]}
 	var errors := _validate(get_instances(root), root.module_connections, supported_capabilities)
@@ -953,8 +965,9 @@ static func validate_level(
 static func _validate(
 	instances: Array[ModuleInstance],
 	graph: Array[Dictionary],
-	supported_capabilities: Array[String] = SUPPORTED_CAPABILITIES
+	supported_capabilities: Array[String] = []
 ) -> Array[String]:
+	supported_capabilities = _resolve_supported_capabilities(supported_capabilities)
 	var errors: Array[String] = []
 	var ids := {}
 	for instance in instances:

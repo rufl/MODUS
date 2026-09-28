@@ -6,22 +6,39 @@ class_name FeatureAvailability
 const CAPABILITY_CONTRACT_VERSION := 1
 const RUNTIME_ID := "modus"
 const RUNTIME_VERSION := 1
+## Capabilities guaranteed by the stock offline path. Optional native features
+## are added only when the current runtime exposes their native classes.
 const COMMON_CAPABILITIES: Array[String] = ["walk", "csg"]
 ## FeatureAvailability
-## Detects and manages graceful degradation for optional features
-## Provides fallback mechanisms when optional dependencies are unavailable
+## Detects and manages graceful degradation for optional runtime features.
+## Provides fallback mechanisms when optional dependencies are unavailable.
 
 ## Feature availability flags
 var voxel_tools_available: bool = false
-var advanced_geometry_available: bool = true  # CSG always available in Godot
-var multimesh_available: bool = true  # MultiMesh always available in Godot
-var occlusion_culling_available: bool = true  # OccluderInstance3D always available
+var advanced_geometry_available: bool = true
+var multimesh_available: bool = true
+var occlusion_culling_available: bool = true
 
 
-## Initialize and detect all optional features
-func initialize() -> void:
+func _init() -> void:
+	_detect_native_features()
 	_detect_voxel_tools()
-	_log_feature_availability()
+
+
+## Initialize and detect all optional features.
+func initialize(emit_log: bool = true) -> void:
+	_detect_native_features()
+	_detect_voxel_tools()
+	if emit_log:
+		_log_feature_availability()
+
+
+func _detect_native_features() -> void:
+	# These classes are built into stock Godot, but stripped/custom runtimes
+	# must not be advertised as supporting them until ClassDB confirms them.
+	advanced_geometry_available = ClassDB.class_exists("CSGShape3D")
+	multimesh_available = ClassDB.class_exists("MultiMesh")
+	occlusion_culling_available = ClassDB.class_exists("OccluderInstance3D")
 
 
 func _detect_voxel_tools() -> void:
@@ -39,48 +56,72 @@ func _log_feature_availability() -> void:
 			% ("Available" if voxel_tools_available else "Not Available (using CSG fallback)")
 		)
 	)
-	print("  - Advanced Geometry (CSG): Available")
-	print("  - MultiMesh Batching: Available")
-	print("  - Occlusion Culling: Available")
+	print(
+		(
+			"  - Advanced Geometry (CSG): %s"
+			% ("Available" if advanced_geometry_available else "Unavailable")
+		)
+	)
+	print("  - MultiMesh Batching: %s" % ("Available" if multimesh_available else "Unavailable"))
+	print(
+		(
+			"  - Occlusion Culling: %s"
+			% ("Available" if occlusion_culling_available else "Unavailable")
+		)
+	)
 
 
 ## Get cave generation method based on availability
 func get_cave_generation_method() -> String:
 	if voxel_tools_available:
 		return "voxel"
-	return "csg"
+	if advanced_geometry_available:
+		return "csg"
+	return "unavailable"
 
 
-## Check if a feature is available
+## Check if a feature or canonical capability is available
 func is_feature_available(feature_name: String) -> bool:
 	match feature_name:
-		"voxel_tools":
+		"voxel_tools", "voxel":
 			return voxel_tools_available
-		"advanced_geometry":
+		"advanced_geometry", "csg":
 			return advanced_geometry_available
 		"multimesh":
 			return multimesh_available
 		"occlusion_culling":
 			return occlusion_culling_available
+		"walk":
+			return true
 		_:
 			push_warning("Unknown feature: %s" % feature_name)
 			return false
 
 
-## Return the detected optional feature state for editor/runtime consumers.
+## Return the detected runtime feature and capability state.
 func get_capability_snapshot() -> Dictionary:
 	return {
+		"contract_version": CAPABILITY_CONTRACT_VERSION,
+		"runtime": {"id": RUNTIME_ID, "version": RUNTIME_VERSION},
 		"voxel_tools": voxel_tools_available,
 		"advanced_geometry": advanced_geometry_available,
 		"multimesh": multimesh_available,
-		"occlusion_culling": occlusion_culling_available
+		"occlusion_culling": occlusion_culling_available,
+		"available_capabilities": get_available_capabilities()
 	}
 
 
 func get_available_capabilities() -> Array[String]:
-	var capabilities: Array[String] = ["walk", "csg"]
+	var capabilities: Array[String] = ["walk"]
+	if advanced_geometry_available:
+		capabilities.append("csg")
+	if multimesh_available:
+		capabilities.append("multimesh")
+	if occlusion_culling_available:
+		capabilities.append("occlusion_culling")
 	if voxel_tools_available:
 		capabilities.append("voxel")
+	capabilities.sort()
 	return capabilities
 
 
@@ -389,14 +430,34 @@ func handle_occlusion_culling_failure(error: String, context: RefCounted) -> boo
 ## Create feature availability report
 func create_availability_report() -> Dictionary:
 	return {
+		"contract_version": CAPABILITY_CONTRACT_VERSION,
+		"runtime": {"id": RUNTIME_ID, "version": RUNTIME_VERSION},
+		"capabilities": get_available_capabilities(),
 		"voxel_tools":
 		{
 			"available": voxel_tools_available,
-			"fallback": "csg_geometry" if not voxel_tools_available else "none"
+			"fallback":
+			(
+				("csg_geometry" if advanced_geometry_available else "unavailable")
+				if not voxel_tools_available
+				else "none"
+			)
 		},
-		"advanced_geometry": {"available": advanced_geometry_available, "fallback": "none"},
-		"multimesh": {"available": multimesh_available, "fallback": "none"},
-		"occlusion_culling": {"available": occlusion_culling_available, "fallback": "none"}
+		"advanced_geometry":
+		{
+			"available": advanced_geometry_available,
+			"fallback": "unavailable" if not advanced_geometry_available else "none"
+		},
+		"multimesh":
+		{
+			"available": multimesh_available,
+			"fallback": "individual_instances" if not multimesh_available else "none"
+		},
+		"occlusion_culling":
+		{
+			"available": occlusion_culling_available,
+			"fallback": "no_occlusion" if not occlusion_culling_available else "none"
+		}
 	}
 
 
@@ -404,9 +465,15 @@ func create_availability_report() -> Dictionary:
 func get_recommended_config() -> Dictionary:
 	var config := {}
 
-	# Recommend disabling features that aren't available
+	# Recommend disabling features that aren't available.
 	if not voxel_tools_available:
-		config["cave_bias"] = 0.0  # Suggest lower cave bias if voxel tools unavailable
+		config["cave_bias"] = 0.0
 		config["cave_generation_note"] = "Using CSG fallback (Voxel Tools not available)"
+	if not multimesh_available:
+		config["use_multimesh"] = false
+	if not occlusion_culling_available:
+		config["enable_occlusion_culling"] = false
+	if not advanced_geometry_available:
+		config["geometry_generation_note"] = "CSG runtime capability is unavailable"
 
 	return config

@@ -973,7 +973,13 @@ func _execute_prefab_placement_phase() -> bool:
 			generation_context.prefab_instances.append(placement_result.node)
 
 	# Apply MultiMesh optimization if enabled
-	if config.use_multimesh and multimesh_manager and generation_context.csg_root.is_inside_tree():
+	if (
+		config.use_multimesh
+		and feature_availability
+		and feature_availability.is_feature_available("multimesh")
+		and multimesh_manager
+		and generation_context.csg_root.is_inside_tree()
+	):
 		multimesh_manager.apply_multimesh_batching(
 			placement_results, generation_context.csg_root, generation_context
 		)
@@ -1109,6 +1115,8 @@ func _execute_export_phase() -> bool:
 	# Apply occlusion culling if enabled
 	if (
 		config.enable_occlusion_culling
+		and feature_availability
+		and feature_availability.is_feature_available("occlusion_culling")
 		and occlusion_culling_manager
 		and generation_context.csg_root.is_inside_tree()
 	):

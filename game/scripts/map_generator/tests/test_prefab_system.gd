@@ -196,11 +196,28 @@ func test_prefab_system_replacement_metadata_deduplicates_entries() -> void:
 
 func test_feature_availability_exposes_capability_snapshot() -> void:
 	var availability := FeatureAvailability.new()
+	availability.initialize(false)
 	var snapshot := availability.get_capability_snapshot()
+	assert_eq(snapshot.get("contract_version"), FeatureAvailability.CAPABILITY_CONTRACT_VERSION)
+	assert_eq(snapshot.get("runtime", {}).get("id"), FeatureAvailability.RUNTIME_ID)
+	assert_true(snapshot.has("available_capabilities"))
 	assert_true(snapshot.has("voxel_tools"))
 	assert_true(snapshot.has("advanced_geometry"))
 	assert_true(snapshot.has("multimesh"))
 	assert_true(snapshot.has("occlusion_culling"))
+
+
+func test_feature_availability_exposes_detected_runtime_capabilities() -> void:
+	var availability := FeatureAvailability.new()
+	availability.initialize(false)
+	var capabilities := availability.get_available_capabilities()
+	assert_true(capabilities.has("walk"))
+	assert_eq(capabilities.has("csg"), availability.advanced_geometry_available)
+	assert_eq(capabilities.has("multimesh"), availability.multimesh_available)
+	assert_eq(capabilities.has("occlusion_culling"), availability.occlusion_culling_available)
+	assert_eq(capabilities.has("voxel"), availability.voxel_tools_available)
+	var manifest := availability.create_capability_manifest(capabilities)
+	assert_true(availability.validate_capability_manifest(manifest).success)
 
 
 func test_feature_availability_exposes_replacement_capabilities() -> void:
@@ -697,6 +714,16 @@ func test_regeneration_without_pins_selects_content_and_checks_capabilities() ->
 	assert_true(
 		csg_diagnostics.rejected.is_empty(),
 		"Common runtime capabilities must be accepted by default module validation"
+	)
+	var availability := FeatureAvailability.new()
+	availability.initialize(false)
+	var native_supported := replacement.duplicate(true) as PrefabMetadata
+	native_supported.required_capabilities = PackedStringArray(["multimesh"])
+	var native_diagnostics := ModuleAssembly.get_replacement_diagnostics(root, [native_supported])
+	assert_eq(
+		native_diagnostics.rejected.is_empty(),
+		availability.multimesh_available,
+		"Default module validation must follow detected native capabilities"
 	)
 	var authoring_supported := ModuleAssembly.build_regeneration_plans(
 		root, [unsupported], ["walk", "teleport"]
