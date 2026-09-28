@@ -104,6 +104,8 @@ require_file "tests/runners/test_windows_acceptance_metadata.sh"
 require_file "tests/runners/test_package_smoke.sh"
 require_file "tools/generate_ci_artifact_manifest.py"
 require_file "tests/runners/test_ci_artifact_manifest.sh"
+require_file "tools/generate_retrourban_materials.py"
+require_file "tests/runners/test_retrourban_assets.sh"
 require_file "tools/validate_release_readiness.sh"
 require_file "tools/validate_production_readiness.sh"
 require_file "game/data/weapons.json5"
@@ -145,6 +147,8 @@ require_text "tools/validate_windows_acceptance_metadata.ps1" "Build metadata to
 require_text "tests/runners/test_package_smoke.sh" "Package smoke user-argument regression passed."
 require_text "tools/generate_ci_artifact_manifest.py" "toolchain_lock_sha256"
 require_text "tests/runners/test_ci_artifact_manifest.sh" "CI artifact manifest lock and tamper regression passed."
+require_text "tools/generate_retrourban_materials.py" "RetroUrban materials"
+require_text "tests/runners/test_retrourban_assets.sh" "RetroUrban asset integrity regression passed."
 
 if ! tools/generate_provenance_ledger.py --check; then
   fail "provenance ledger is stale"

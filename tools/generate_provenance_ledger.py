@@ -151,6 +151,11 @@ RETRO_TEXTURE_PATHS = {
     "shared/editor_core/textures/retro/wall_concrete_01.png",
     "shared/editor_core/textures/retro/wall_metal_01.png",
 }
+
+RETROURBAN_PREFIXES = (
+    "game/art/textures/retro_urban/",
+    "game/art/materials/retro_urban/",
+)
 GENERATED_MAP_OVERVIEW_PATHS = {
     "game/world/maps/overviews/map_overview.png",
 }
@@ -320,6 +325,19 @@ def classify(path: Path, digest: str) -> dict[str, str]:
         "notes": "No repository-local provenance record currently clears this distributed asset.",
     }
 
+    if any(relative.startswith(prefix) for prefix in RETROURBAN_PREFIXES):
+        return {
+            "status": "cleared",
+            "author": "Binbun3D",
+            "source": "https://binbun3d.itch.io/retrourban-free",
+            "license": "CC-BY-4.0",
+            "local_notice": "docs/licenses/RETOURBAN_CC-BY-4.0.txt",
+            "notes": (
+                "RetroUrban Free 128x128 urban texture map or derived Godot "
+                "material resource; imported without changing source PNG pixels. "
+                "Attribution to Binbun3D is required."
+            ),
+        }
     if relative in BREAKWATER_ASSETS:
         return {
             "status": "cleared",

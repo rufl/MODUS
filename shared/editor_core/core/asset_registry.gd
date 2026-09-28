@@ -5,7 +5,7 @@ extends Node
 signal assets_loaded
 signal category_changed(category: String)
 
-enum Category { BLOCKS, ENTITIES, PROPS, INTERACTABLES, HAZARDS, PICKUPS, SPAWN_POINTS }
+enum Category { BLOCKS, ENTITIES, PROPS, INTERACTABLES, HAZARDS, PICKUPS, SPAWN_POINTS, MATERIALS }
 
 const CATEGORY_NAMES := {
 	Category.BLOCKS: "Blocks",
@@ -15,6 +15,7 @@ const CATEGORY_NAMES := {
 	Category.HAZARDS: "Hazards",
 	Category.PICKUPS: "Pickups",
 	Category.SPAWN_POINTS: "Spawn Points",
+	Category.MATERIALS: "Materials",
 }
 
 var assets: Dictionary = {}
@@ -39,6 +40,7 @@ func _init_asset_categories() -> void:
 func _scan_assets() -> void:
 	# Blocks - CSG primitives with materials
 	_register_builtin_blocks()
+	_scan_material_directory("res://game/art/materials/retro_urban/", Category.MATERIALS)
 
 	# Entities - enemies from game/entities/enemies
 	_scan_directory("res://game/entities/enemies/", Category.ENTITIES, ["*.tscn"])
@@ -98,6 +100,39 @@ func _register_builtin_blocks() -> void:
 			}
 		)
 
+
+func _scan_material_directory(path: String, category: Category) -> void:
+	var dir := DirAccess.open(path)
+	if not dir:
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.ends_with(".tres"):
+			_register_material_asset(path.path_join(file_name), category)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+
+func _register_material_asset(material_path: String, category: Category) -> void:
+	if not ResourceLoader.exists(material_path):
+		return
+	var material := load(material_path) as StandardMaterial3D
+	if not material:
+		return
+	var id := material_path.get_file().get_basename()
+	assets[category].append(
+		{
+			"id": id,
+			"name": material.resource_name if not material.resource_name.is_empty() else id,
+			"type": "material",
+			"material": material,
+			"material_path": material_path,
+			"thumbnail": material.albedo_texture,
+			"description": "RetroUrban material licensed CC BY 4.0"
+		}
+	)
 
 func _register_interactables() -> void:
 	## Register existing interactable components

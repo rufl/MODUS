@@ -197,7 +197,7 @@ func _on_asset_button_pressed(asset_data: Dictionary) -> void:
 
 		# Auto-select appropriate tool based on asset type
 		match asset_data.type:
-			"block":
+			"block", "material":
 				editor_state.select_tool(editor_state.ToolType.BLOCK_BRUSH)
 			"scene", "interactable":
 				editor_state.select_tool(editor_state.ToolType.ENTITY_PLACER)

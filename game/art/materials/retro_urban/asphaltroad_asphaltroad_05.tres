@@ -1,0 +1,22 @@
+[gd_resource type="StandardMaterial3D" load_steps=7 format=3]
+
+[ext_resource type="Texture2D" path="res://game/art/textures/retro_urban/AsphaltRoad/AsphaltRoad_05/AsphaltRoad_05_basecolor.png" id="1_basecolor"]
+[ext_resource type="Texture2D" path="res://game/art/textures/retro_urban/AsphaltRoad/AsphaltRoad_05/AsphaltRoad_05_metallic.png" id="2_metallic"]
+[ext_resource type="Texture2D" path="res://game/art/textures/retro_urban/AsphaltRoad/AsphaltRoad_05/AsphaltRoad_05_roughness.png" id="3_roughness"]
+[ext_resource type="Texture2D" path="res://game/art/textures/retro_urban/AsphaltRoad/AsphaltRoad_05/AsphaltRoad_05_ambientocclusion.png" id="4_ao"]
+[ext_resource type="Texture2D" path="res://game/art/textures/retro_urban/AsphaltRoad/AsphaltRoad_05/AsphaltRoad_05_normal.png" id="5_normal"]
+[ext_resource type="Texture2D" path="res://game/art/textures/retro_urban/AsphaltRoad/AsphaltRoad_05/AsphaltRoad_05_height.png" id="6_height"]
+
+[resource]
+resource_name = "RetroUrban / AsphaltRoad / AsphaltRoad 05"
+albedo_texture = ExtResource("1_basecolor")
+metallic_texture = ExtResource("2_metallic")
+roughness_texture = ExtResource("3_roughness")
+ao_enabled = true
+ao_texture = ExtResource("4_ao")
+normal_enabled = false
+normal_texture = ExtResource("5_normal")
+heightmap_enabled = false
+heightmap_texture = ExtResource("6_height")
+texture_filter = 1
+uv1_triplanar = true
