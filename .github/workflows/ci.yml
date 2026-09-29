@@ -62,6 +62,7 @@ jobs:
           bash tests/runners/test_release_staging.sh
           bash tests/runners/test_overzeer_package.sh
           bash tests/runners/test_overzeer_release_inventory.sh
+          bash tests/runners/test_deploy_overzeer_fleet.sh
           bash tests/runners/test_cleanup_overzeer_archives.sh
           bash tests/runners/test_performance_evidence_validator.sh
           bash tests/runners/test_toolchain_lock.sh
