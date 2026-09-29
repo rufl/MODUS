@@ -21,9 +21,12 @@ var _safe_margins: MarginContainer = null
 var _menu_side: CenterContainer = null
 var _art_space: Control = null
 var _menu_panel: PanelContainer = null
+var _menu_scroll: ScrollContainer = null
 var _menu_container: VBoxContainer = null
+var _authored_row: BoxContainer = null
 var _title: Label = null
 var _menu_hint: Label = null
+var _control_hint: Label = null
 var _play_btn: Button = null
 var _showcase_btn: Button = null
 var _breakwater_btn: Button = null
@@ -219,10 +222,20 @@ func _build_menu_ui() -> void:
 	panel_margins.add_theme_constant_override("margin_bottom", 18)
 	_menu_panel.add_child(panel_margins)
 
+	_menu_scroll = ScrollContainer.new()
+	_menu_scroll.name = "MenuScroll"
+	_menu_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_menu_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_menu_scroll.follow_focus = true
+	_menu_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel_margins.add_child(_menu_scroll)
+
 	_menu_container = VBoxContainer.new()
 	_menu_container.name = "MenuActions"
 	_menu_container.add_theme_constant_override("separation", 6)
-	panel_margins.add_child(_menu_container)
+	_menu_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_menu_scroll.add_child(_menu_container)
 
 	_title = Label.new()
 	_title.name = "Title"
@@ -254,19 +267,21 @@ func _build_menu_ui() -> void:
 	_showcase_btn.pressed.connect(_on_showcase_pressed)
 	_menu_container.add_child(_showcase_btn)
 
-	var authored_row := HBoxContainer.new()
-	authored_row.add_theme_constant_override("separation", 8)
-	_menu_container.add_child(authored_row)
+	_authored_row = BoxContainer.new()
+	_authored_row.name = "AuthoredRoutes"
+	_authored_row.vertical = false
+	_authored_row.add_theme_constant_override("separation", 8)
+	_menu_container.add_child(_authored_row)
 	_breakwater_btn = _create_menu_button("menu_breakwater", "Breakwater Station")
 	_breakwater_btn.name = "BreakwaterButton"
 	_breakwater_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_breakwater_btn.pressed.connect(func(): LevelGame.launch())
-	authored_row.add_child(_breakwater_btn)
+	_authored_row.add_child(_breakwater_btn)
 	_package_btn = _create_menu_button("menu_open_level", "Open level package")
 	_package_btn.name = "OpenLevelButton"
 	_package_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_package_btn.pressed.connect(_on_open_level_pressed)
-	authored_row.add_child(_package_btn)
+	_authored_row.add_child(_package_btn)
 
 	# Multiplayer Button
 	_multiplayer_btn = _create_menu_button("menu_multiplayer", "Multiplayer")
@@ -309,6 +324,14 @@ func _build_menu_ui() -> void:
 	_menu_hint.add_theme_font_size_override("font_size", 12)
 	_menu_hint.add_theme_color_override("font_color", Color(0.62, 0.7, 0.8))
 	_menu_container.add_child(_menu_hint)
+
+	_control_hint = Label.new()
+	_control_hint.name = "ControlHint"
+	_control_hint.text = "UP / DOWN  •  ENTER / A  SELECT"
+	_control_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_control_hint.add_theme_font_size_override("font_size", 11)
+	_control_hint.add_theme_color_override("font_color", Color(0.45, 0.55, 0.68))
+	_menu_container.add_child(_control_hint)
 
 	_connect_menu_hint(_play_btn, "Launch the current single-player build.")
 	_connect_menu_hint(_showcase_btn, "Tour the maintained gameplay showcase and capture route.")
@@ -440,7 +463,9 @@ func _update_responsive_layout() -> void:
 	var edge := 18 if narrow else 40
 	for side: String in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		_safe_margins.add_theme_constant_override(side, edge)
-	_menu_panel.custom_minimum_size.x = minf(420.0, maxf(280.0, size.x - edge * 2.0))
+	var panel_width := minf(420.0, maxf(280.0, size.x - edge * 2.0))
+	var panel_height := minf(640.0, maxf(280.0, size.y - edge * 2.0))
+	_menu_panel.custom_minimum_size = Vector2(panel_width, panel_height)
 	_title.add_theme_font_size_override("font_size", 46 if narrow else 64)
 	if _menu_side:
 		_menu_side.custom_minimum_size.x = 0.0 if narrow else 480.0
@@ -449,6 +474,8 @@ func _update_responsive_layout() -> void:
 		)
 	if _art_space:
 		_art_space.visible = not narrow
+	if _authored_row:
+		_authored_row.vertical = narrow
 
 
 func _is_reduced_motion() -> bool:

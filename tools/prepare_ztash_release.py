@@ -215,13 +215,25 @@ def prepare(args: argparse.Namespace) -> None:
     print(f"PASS: ZTASH release {output}")
 
 
+def default_icons_path() -> Path:
+    candidates = (
+        Path(__file__).with_name("packaging"),
+        Path(__file__).parents[3] / "OVERZEER" / "packaging",
+        Path(__file__).parents[3] / "ZEER" / "packaging",
+    )
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return candidates[0]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True)
     parser.add_argument("--build-id", required=True)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--icons", type=Path, default=Path(__file__).parents[3] / "OVERZEER" / "packaging")
+    parser.add_argument("--icons", type=Path, default=default_icons_path())
     parser.add_argument("--package-tool", type=Path, default=Path(__file__).with_name("package_overzeer.py"))
     parser.add_argument("--windows-launcher", type=Path, help="optional Windows wrapper for package smoke")
     parser.add_argument(

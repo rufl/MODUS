@@ -175,17 +175,25 @@ func test_main_menu_screen_exists() -> void:
 
 	var veil := test_screen.find_child("BackdropVeil", true, false) as ColorRect
 	var panel := test_screen.find_child("MenuPanel", true, false) as PanelContainer
+	var scroll := test_screen.find_child("MenuScroll", true, false) as ScrollContainer
 	var actions := test_screen.find_child("MenuActions", true, false) as VBoxContainer
+	var authored_row := test_screen.find_child("AuthoredRoutes", true, false) as BoxContainer
+	var art_space := test_screen.find_child("ArtSpace", true, false) as Control
 	var play := test_screen.find_child("PlayButton", true, false) as Button
 	var showcase := test_screen.find_child("ShowcaseButton", true, false) as Button
 	var editor := test_screen.find_child("EditorButton", true, false) as Button
 	var quit := test_screen.find_child("QuitButton", true, false) as Button
 	var hint := test_screen.find_child("MenuHint", true, false) as Label
+	var control_hint := test_screen.find_child("ControlHint", true, false) as Label
 	var version := test_screen.find_child("VersionLabel", true, false) as Label
 
 	assert_not_null(veil, "Menu should protect text contrast with a backdrop veil")
 	assert_not_null(panel, "Menu actions should sit on a readable panel")
 	assert_not_null(actions, "Menu actions should use a responsive container")
+	assert_not_null(scroll, "Menu should stay usable when the viewport is short")
+	assert_not_null(authored_row, "Authored routes should share a responsive container")
+	assert_not_null(art_space, "Menu should expose an isolated art region")
+	assert_not_null(control_hint, "Menu should explain keyboard and gamepad navigation")
 	assert_not_null(play, "Primary play action should exist")
 	assert_not_null(showcase, "The maintained showcase should be player-visible")
 	assert_not_null(editor, "Editor action should exist")
@@ -217,6 +225,19 @@ func test_main_menu_screen_exists() -> void:
 	assert_not_null(
 		showcase.get_theme_stylebox("hover"), "Secondary action should have a visible hover state"
 	)
+	assert_true(control_hint.text.contains("ENTER"), "Control hint should explain primary input")
+	test_screen.size = Vector2(640, 480)
+	test_screen.call("_update_responsive_layout")
+	await get_tree().process_frame
+	assert_false(art_space.visible, "Narrow menus should prioritize actions over background art")
+	assert_true(authored_row.vertical, "Authored routes should stack on narrow menus")
+	assert_lte(panel.custom_minimum_size.x, 640.0, "Menu panel should fit a narrow viewport")
+	assert_lte(panel.custom_minimum_size.y, 480.0, "Menu panel should fit a short viewport")
+	test_screen.size = Vector2(1280, 720)
+	test_screen.call("_update_responsive_layout")
+	await get_tree().process_frame
+	assert_true(art_space.visible, "Wide menus should restore the background art region")
+	assert_false(authored_row.vertical, "Authored routes should share a row on wide menus")
 	assert_not_null(
 		showcase.get_theme_stylebox("focus"), "Secondary action should have a visible focus state"
 	)

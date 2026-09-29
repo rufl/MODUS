@@ -51,7 +51,7 @@ See [Documentation Truth](DOCUMENTATION_TRUTH.md) and [Current Status](CURRENT_S
 
 | Area | Source status | Required proof/hardening |
 | --- | --- | --- |
-| Main menu and mod workflow | Artwork/showcase/help/responsive/focus/version/welcome/mod/skill-tree contracts pass 26/26 with 109 assertions; recorder/timer passes 2/2 with 21 assertions and a compact 800×600 capture | Run and review the manual menu/input observations |
+| Main menu and mod workflow | Artwork/showcase/help/responsive/focus/version/welcome/mod/skill-tree contracts pass 26/26 with 128 assertions; short viewports stack authored routes and bound menu height with scrolling; recorder/timer passes 2/2 with 21 assertions and a compact 800×600 capture | Run and review the manual menu/input observations |
 | Level serialization/export | Focused round-trip passes | Live editor UI authoring workflow |
 | Standalone undo/redo | Runtime-safe block placement now uses the shared editor fallback and supports place/undo/redo in focused proof; other standalone command paths remain | Complete and exercise remaining authoring commands |
 | Mod loader/SDK | Focused integration/sample proof passes | Distribution packaging and multiplayer behavior |
