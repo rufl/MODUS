@@ -178,6 +178,8 @@ func test_main_menu_screen_exists() -> void:
 	var scroll := test_screen.find_child("MenuScroll", true, false) as ScrollContainer
 	var actions := test_screen.find_child("MenuActions", true, false) as VBoxContainer
 	var authored_row := test_screen.find_child("AuthoredRoutes", true, false) as BoxContainer
+	var utility_row := test_screen.find_child("UtilityRoutes", true, false) as BoxContainer
+	var system_row := test_screen.find_child("SystemRoutes", true, false) as BoxContainer
 	var art_space := test_screen.find_child("ArtSpace", true, false) as Control
 	var play := test_screen.find_child("PlayButton", true, false) as Button
 	var showcase := test_screen.find_child("ShowcaseButton", true, false) as Button
@@ -188,12 +190,19 @@ func test_main_menu_screen_exists() -> void:
 	var hint := test_screen.find_child("MenuHint", true, false) as Label
 	var control_hint := test_screen.find_child("ControlHint", true, false) as Label
 	var version := test_screen.find_child("VersionLabel", true, false) as Label
+	var build_status := test_screen.find_child("BuildStatus", true, false) as PanelContainer
+	var status_label := test_screen.find_child("BuildStatusLabel", true, false) as Label
+	var play_section := test_screen.find_child("PlaySection", true, false) as Label
+	var authored_section := test_screen.find_child("AuthoredSection", true, false) as Label
+	var system_section := test_screen.find_child("SystemSection", true, false) as Label
 
 	assert_not_null(veil, "Menu should protect text contrast with a backdrop veil")
 	assert_not_null(panel, "Menu actions should sit on a readable panel")
 	assert_not_null(actions, "Menu actions should use a responsive container")
 	assert_not_null(scroll, "Menu should stay usable when the viewport is short")
 	assert_not_null(authored_row, "Authored routes should share a responsive container")
+	assert_not_null(utility_row, "Utility routes should share a responsive container")
+	assert_not_null(system_row, "System routes should share a responsive container")
 	assert_not_null(art_space, "Menu should expose an isolated art region")
 	assert_not_null(control_hint, "Menu should explain keyboard and gamepad navigation")
 	assert_not_null(play, "Primary play action should exist")
@@ -204,8 +213,26 @@ func test_main_menu_screen_exists() -> void:
 	assert_not_null(package_button, "Level package route should remain player-visible")
 	assert_not_null(hint, "Focused actions should explain their outcome")
 	assert_not_null(version, "Build version should be visible")
+	assert_not_null(build_status, "Menu should identify the local build state")
+	assert_not_null(status_label, "Build status should be readable")
+	assert_not_null(play_section, "Play routes should have a visible section heading")
+	assert_not_null(authored_section, "Authored content should have a visible section heading")
+	assert_not_null(system_section, "System actions should have a visible section heading")
+	assert_true(
+		status_label.text.contains("NOT RELEASE READY"),
+		"Build status should preserve the release evidence boundary"
+	)
+	assert_not_null(
+		build_status.get_theme_stylebox("panel"),
+		"Build status should use a distinct status surface"
+	)
+	assert_eq(play_section.text, "PLAY ROUTES", "Primary route heading should be explicit")
+	assert_eq(authored_section.text, "AUTHORED CONTENT", "Authored heading should be explicit")
+	assert_eq(system_section.text, "SYSTEM", "System heading should be explicit")
 	assert_gt(veil.size.x, 0.0, "Backdrop should fill the rendered menu instead of collapsing")
 	assert_gt(panel.size.x, 0.0, "Menu panel should participate in container layout")
+	assert_gt(play.size.y, 0.0, "Primary action should render inside the menu panel")
+	assert_gt(status_label.size.y, 0.0, "Build status should render inside the menu panel")
 	assert_gte(play.custom_minimum_size.y, 48.0, "Menu targets should be comfortably selectable")
 	assert_gte(
 		editor.custom_minimum_size.y, 48.0, "Secondary targets should be comfortably selectable"
@@ -235,6 +262,8 @@ func test_main_menu_screen_exists() -> void:
 	await get_tree().process_frame
 	assert_false(art_space.visible, "Narrow menus should prioritize actions over background art")
 	assert_true(authored_row.vertical, "Authored routes should stack on narrow menus")
+	assert_true(utility_row.vertical, "Utility routes should stack on narrow menus")
+	assert_true(system_row.vertical, "System routes should stack on narrow menus")
 	assert_lte(panel.custom_minimum_size.x, 640.0, "Menu panel should fit a narrow viewport")
 	assert_lte(panel.custom_minimum_size.y, 480.0, "Menu panel should fit a short viewport")
 	test_screen.size = Vector2(320, 240)
@@ -250,6 +279,8 @@ func test_main_menu_screen_exists() -> void:
 	await get_tree().process_frame
 	assert_true(art_space.visible, "Wide menus should restore the background art region")
 	assert_false(authored_row.vertical, "Authored routes should share a row on wide menus")
+	assert_false(utility_row.vertical, "Utility routes should share a row on wide menus")
+	assert_false(system_row.vertical, "System routes should share a row on wide menus")
 	assert_not_null(
 		showcase.get_theme_stylebox("focus"), "Secondary action should have a visible focus state"
 	)

@@ -15,6 +15,19 @@ const OPTIONS_SCREEN: String = "res://shared/ui_core/screens/options_screen.tscn
 const MULTIPLAYER_SCREEN: String = "res://shared/ui_core/screens/multiplayer_menu_screen.tscn"
 const MOD_MANAGER_SCREEN: String = "res://shared/ui_core/screens/mod_manager_screen.tscn"
 const SHOWCASE_SCENE: String = "res://game/world/maps/showcase.tscn"
+const COLOR_TEXT_PRIMARY := Color(0.94, 0.97, 1.0)
+const COLOR_TEXT_SECONDARY := Color(0.62, 0.7, 0.8)
+const COLOR_TEXT_MUTED := Color(0.45, 0.55, 0.68)
+const COLOR_PANEL := Color(0.035, 0.045, 0.07, 0.96)
+const COLOR_PANEL_BORDER := Color(0.2, 0.38, 0.62, 0.85)
+const COLOR_PRIMARY := Color(0.12, 0.38, 0.68)
+const COLOR_PRIMARY_HOVER := Color(0.16, 0.48, 0.82)
+const COLOR_SECONDARY := Color(0.045, 0.07, 0.12, 0.96)
+const COLOR_SECONDARY_HOVER := Color(0.08, 0.16, 0.27, 0.98)
+
+var _panel_content: VBoxContainer = null
+var _status_label: Label = null
+var _status_indicator: ColorRect = null
 
 var _background_viewport: SubViewportContainer = null
 var _safe_margins: MarginContainer = null
@@ -25,6 +38,8 @@ var _menu_scroll: ScrollContainer = null
 var _panel_margins: MarginContainer = null
 var _menu_container: VBoxContainer = null
 var _authored_row: BoxContainer = null
+var _utility_row: BoxContainer = null
+var _system_row: BoxContainer = null
 var _title: Label = null
 var _menu_hint: Label = null
 var _control_hint: Label = null
@@ -216,12 +231,33 @@ func _build_menu_ui() -> void:
 	_menu_panel.add_theme_stylebox_override("panel", _create_menu_panel_style())
 	_menu_side.add_child(_menu_panel)
 
+	_panel_content = VBoxContainer.new()
+	_panel_content.name = "PanelContent"
+	_panel_content.add_theme_constant_override("separation", 0)
+	_menu_panel.add_child(_panel_content)
+
+	var accent := ColorRect.new()
+	accent.name = "PanelAccent"
+	accent.color = Color(0.25, 0.68, 0.95, 0.9)
+	accent.custom_minimum_size.y = 3
+	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panel_content.add_child(accent)
+
+	var panel_body := MarginContainer.new()
+	panel_body.name = "PanelBody"
+	panel_body.add_theme_constant_override("margin_left", 0)
+	panel_body.add_theme_constant_override("margin_right", 0)
+	panel_body.add_theme_constant_override("margin_top", 0)
+	panel_body.add_theme_constant_override("margin_bottom", 0)
+	panel_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_panel_content.add_child(panel_body)
+
 	_panel_margins = MarginContainer.new()
 	_panel_margins.add_theme_constant_override("margin_left", 32)
 	_panel_margins.add_theme_constant_override("margin_right", 32)
 	_panel_margins.add_theme_constant_override("margin_top", 18)
 	_panel_margins.add_theme_constant_override("margin_bottom", 18)
-	_menu_panel.add_child(_panel_margins)
+	panel_body.add_child(_panel_margins)
 
 	_menu_scroll = ScrollContainer.new()
 	_menu_scroll.name = "MenuScroll"
@@ -234,7 +270,7 @@ func _build_menu_ui() -> void:
 
 	_menu_container = VBoxContainer.new()
 	_menu_container.name = "MenuActions"
-	_menu_container.add_theme_constant_override("separation", 6)
+	_menu_container.add_theme_constant_override("separation", 2)
 	_menu_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_menu_scroll.add_child(_menu_container)
 
@@ -243,7 +279,7 @@ func _build_menu_ui() -> void:
 	_title.text = "MODUS"
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.add_theme_font_size_override("font_size", 64)
-	_title.add_theme_color_override("font_color", Color(0.94, 0.97, 1.0))
+	_title.add_theme_color_override("font_color", COLOR_TEXT_PRIMARY)
 	_menu_container.add_child(_title)
 
 	var subtitle := Label.new()
@@ -251,11 +287,13 @@ func _build_menu_ui() -> void:
 	subtitle.text = "BUILD. FIGHT. REWRITE THE RULES."
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 13)
-	subtitle.add_theme_color_override("font_color", Color(0.58, 0.7, 0.86))
+	subtitle.add_theme_color_override("font_color", COLOR_TEXT_SECONDARY)
 	_menu_container.add_child(subtitle)
+	_menu_container.add_child(_create_build_status())
 
 	_menu_container.add_child(HSeparator.new())
 
+	_menu_container.add_child(_create_menu_section("PLAY ROUTES", "PlaySection"))
 	# Play Button
 	_play_btn = _create_menu_button("menu_play", "Start Game")
 	_play_btn.name = "PlayButton"
@@ -268,6 +306,7 @@ func _build_menu_ui() -> void:
 	_showcase_btn.pressed.connect(_on_showcase_pressed)
 	_menu_container.add_child(_showcase_btn)
 
+	_menu_container.add_child(_create_menu_section("AUTHORED CONTENT", "AuthoredSection"))
 	_authored_row = BoxContainer.new()
 	_authored_row.name = "AuthoredRoutes"
 	_authored_row.vertical = false
@@ -284,54 +323,76 @@ func _build_menu_ui() -> void:
 	_package_btn.pressed.connect(_on_open_level_pressed)
 	_authored_row.add_child(_package_btn)
 
+	_utility_row = BoxContainer.new()
+	_utility_row.name = "UtilityRoutes"
+	_utility_row.vertical = false
+	_utility_row.add_theme_constant_override("separation", 8)
+	_menu_container.add_child(_utility_row)
+
 	# Multiplayer Button
 	_multiplayer_btn = _create_menu_button("menu_multiplayer", "Multiplayer")
 	_multiplayer_btn.name = "MultiplayerButton"
+	_multiplayer_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_multiplayer_btn.pressed.connect(_on_multiplayer_pressed)
-	_menu_container.add_child(_multiplayer_btn)
+	_utility_row.add_child(_multiplayer_btn)
 
 	# Options Button
 	_options_btn = _create_menu_button("menu_options", "Options")
 	_options_btn.name = "OptionsButton"
+	_options_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_options_btn.pressed.connect(_on_options_pressed)
-	_menu_container.add_child(_options_btn)
+	_utility_row.add_child(_options_btn)
 
 	# Mods Button
 	_mods_btn = _create_menu_button("menu_mods", "Mods")
 	_mods_btn.name = "ModsButton"
+	_mods_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_mods_btn.pressed.connect(_on_mods_pressed)
-	_menu_container.add_child(_mods_btn)
+	_utility_row.add_child(_mods_btn)
 
 	_menu_container.add_child(HSeparator.new())
+
+	_menu_container.add_child(_create_menu_section("SYSTEM", "SystemSection"))
+	_system_row = BoxContainer.new()
+	_system_row.name = "SystemRoutes"
+	_system_row.vertical = false
+	_system_row.add_theme_constant_override("separation", 8)
+	_menu_container.add_child(_system_row)
 
 	# Editor Button
 	_editor_btn = _create_menu_button("menu_editor", "Editor")
 	_editor_btn.name = "EditorButton"
+	_editor_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_editor_btn.pressed.connect(_on_editor_pressed)
-	_menu_container.add_child(_editor_btn)
+	_system_row.add_child(_editor_btn)
 
 	# Quit Button (last)
 	_quit_btn = _create_menu_button("menu_quit", "Quit")
 	_quit_btn.name = "QuitButton"
+	_quit_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_quit_btn.pressed.connect(_on_quit_pressed)
-	_menu_container.add_child(_quit_btn)
+	_system_row.add_child(_quit_btn)
 
 	_menu_hint = Label.new()
 	_menu_hint.name = "MenuHint"
 	_menu_hint.text = "Launch the current single-player build."
 	_menu_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_menu_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_menu_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_menu_hint.custom_minimum_size.y = 34
-	_menu_hint.add_theme_font_size_override("font_size", 12)
-	_menu_hint.add_theme_color_override("font_color", Color(0.62, 0.7, 0.8))
+	_menu_hint.custom_minimum_size.y = 22
+	_menu_hint.add_theme_font_size_override("font_size", 11)
+	_menu_hint.add_theme_color_override("font_color", COLOR_TEXT_SECONDARY)
 	_menu_container.add_child(_menu_hint)
 
 	_control_hint = Label.new()
 	_control_hint.name = "ControlHint"
 	_control_hint.text = "UP / DOWN  •  ENTER / A  SELECT"
 	_control_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_control_hint.add_theme_font_size_override("font_size", 11)
-	_control_hint.add_theme_color_override("font_color", Color(0.45, 0.55, 0.68))
+	_control_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_control_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_control_hint.custom_minimum_size.y = 14
+	_control_hint.add_theme_font_size_override("font_size", 10)
+	_control_hint.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
 	_menu_container.add_child(_control_hint)
 
 	_connect_menu_hint(_play_btn, "Launch the current single-player build.")
@@ -352,8 +413,8 @@ func _build_menu_ui() -> void:
 	version.name = "VersionLabel"
 	version.text = "VERSION %s" % GameManager.GAME_VERSION
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	version.add_theme_font_size_override("font_size", 11)
-	version.add_theme_color_override("font_color", Color(0.48, 0.55, 0.66))
+	version.add_theme_font_size_override("font_size", 8)
+	version.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
 	_menu_container.add_child(version)
 
 
@@ -377,6 +438,60 @@ func _create_menu_button(loc_key: String, fallback: String) -> Button:
 	return btn
 
 
+func _create_menu_section(text: String, node_name: String) -> Label:
+	var label := Label.new()
+	label.name = node_name
+	label.text = text
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", COLOR_TEXT_MUTED)
+	label.custom_minimum_size.y = 18
+	return label
+
+
+func _create_build_status() -> PanelContainer:
+	var strip := PanelContainer.new()
+	strip.name = "BuildStatus"
+	strip.custom_minimum_size.y = 30
+	strip.add_theme_stylebox_override("panel", _create_status_style())
+
+	var row := HBoxContainer.new()
+	row.name = "BuildStatusRow"
+	row.add_theme_constant_override("separation", 8)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	strip.add_child(row)
+
+	_status_indicator = ColorRect.new()
+	_status_indicator.name = "BuildStatusIndicator"
+	_status_indicator.color = Color(0.35, 0.9, 0.72, 0.95)
+	_status_indicator.custom_minimum_size = Vector2(7, 7)
+	_status_indicator.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_status_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_status_indicator)
+
+	_status_label = Label.new()
+	_status_label.name = "BuildStatusLabel"
+	_status_label.text = "LOCAL BUILD  •  NOT RELEASE READY"
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_label.add_theme_font_size_override("font_size", 10)
+	_status_label.add_theme_color_override("font_color", Color(0.68, 0.92, 0.84))
+	row.add_child(_status_label)
+	return strip
+
+
+func _create_status_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.1, 0.1, 0.9)
+	style.border_color = Color(0.2, 0.52, 0.48, 0.72)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 3
+	style.content_margin_bottom = 3
+	return style
+
+
 func _connect_menu_hint(button: Button, hint: String) -> void:
 	button.focus_entered.connect(_set_menu_hint.bind(hint))
 	button.mouse_entered.connect(_set_menu_hint.bind(hint))
@@ -389,9 +504,10 @@ func _set_menu_hint(hint: String) -> void:
 
 func _create_menu_panel_style() -> StyleBoxFlat:
 	var panel := StyleBoxFlat.new()
-	panel.bg_color = Color(0.035, 0.045, 0.07, 0.96)
-	panel.border_color = Color(0.2, 0.38, 0.62, 0.85)
+	panel.bg_color = COLOR_PANEL
+	panel.border_color = COLOR_PANEL_BORDER
 	panel.set_border_width_all(1)
+	panel.border_width_top = 2
 	panel.set_corner_radius_all(12)
 	panel.shadow_color = Color(0.0, 0.0, 0.0, 0.55)
 	panel.shadow_size = 24
@@ -401,14 +517,16 @@ func _create_menu_panel_style() -> StyleBoxFlat:
 
 func _style_primary_button(button: Button) -> void:
 	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.12, 0.38, 0.68)
+	normal.bg_color = COLOR_PRIMARY
 	normal.border_color = Color(0.42, 0.72, 1.0)
 	normal.set_border_width_all(1)
 	normal.set_corner_radius_all(6)
+	normal.content_margin_left = 18
+	normal.content_margin_right = 18
 	normal.content_margin_top = 12
 	normal.content_margin_bottom = 12
 	var hover: StyleBoxFlat = normal.duplicate()
-	hover.bg_color = Color(0.16, 0.48, 0.82)
+	hover.bg_color = COLOR_PRIMARY_HOVER
 	var pressed: StyleBoxFlat = normal.duplicate()
 	pressed.bg_color = Color(0.09, 0.3, 0.56)
 	var focus: StyleBoxFlat = normal.duplicate()
@@ -422,21 +540,23 @@ func _style_primary_button(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("focus", focus)
 	button.add_theme_stylebox_override("disabled", disabled)
-	button.add_theme_color_override("font_color", Color.WHITE)
+	button.add_theme_color_override("font_color", COLOR_TEXT_PRIMARY)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.62, 0.72))
 
 
 func _style_secondary_button(button: Button) -> void:
 	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.045, 0.07, 0.12, 0.96)
+	normal.bg_color = COLOR_SECONDARY
 	normal.border_color = Color(0.2, 0.34, 0.52, 0.95)
 	normal.set_border_width_all(1)
 	normal.set_corner_radius_all(6)
+	normal.content_margin_left = 18
+	normal.content_margin_right = 18
 	normal.content_margin_top = 11
 	normal.content_margin_bottom = 11
 	var hover: StyleBoxFlat = normal.duplicate()
-	hover.bg_color = Color(0.08, 0.16, 0.27, 0.98)
+	hover.bg_color = COLOR_SECONDARY_HOVER
 	hover.border_color = Color(0.38, 0.66, 0.92)
 	var pressed: StyleBoxFlat = normal.duplicate()
 	pressed.bg_color = Color(0.03, 0.1, 0.18, 1.0)
@@ -460,20 +580,20 @@ func _style_secondary_button(button: Button) -> void:
 func _update_responsive_layout() -> void:
 	if not _safe_margins or not _menu_panel or not _title:
 		return
-	var narrow := size.x < 720.0 or size.y < 720.0
-	var edge := 18 if narrow else 40
+	var narrow := size.x < 720.0 or size.y < 640.0
+	var edge := 18
 	for side: String in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		_safe_margins.add_theme_constant_override(side, edge)
 	var available_width := maxf(1.0, size.x - edge * 2.0)
 	var available_height := maxf(1.0, size.y - edge * 2.0)
 	var panel_width := minf(420.0, available_width)
-	var panel_height := minf(640.0, available_height)
+	var panel_height := minf(660.0, available_height)
 	_menu_panel.custom_minimum_size = Vector2(panel_width, panel_height)
 	if _panel_margins:
 		var content_edge := 18 if narrow else 32
 		for side: String in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 			_panel_margins.add_theme_constant_override(side, content_edge)
-	_title.add_theme_font_size_override("font_size", 46 if narrow else 64)
+	_title.add_theme_font_size_override("font_size", 42 if narrow else 56)
 	if _menu_side:
 		_menu_side.custom_minimum_size.x = 0.0 if narrow else 480.0
 		_menu_side.size_flags_horizontal = (
@@ -483,6 +603,10 @@ func _update_responsive_layout() -> void:
 		_art_space.visible = not narrow
 	if _authored_row:
 		_authored_row.vertical = narrow
+	if _utility_row:
+		_utility_row.vertical = narrow
+	if _system_row:
+		_system_row.vertical = narrow
 
 
 func _is_reduced_motion() -> bool:
