@@ -12,7 +12,7 @@
 
 MODUS possui uma base ampla de FPS, provas focadas de runtime e um smoke automatizado do Showcase. A evidência manual revisada ainda não existe e o gate de versão de release está bloqueado. O agregado headless estrito de 25 de setembro passou 1.665/1.665 testes, 22.767 asserções em 149 scripts; dois arquivos que exigem GUI permanecem excluídos.
 
-O pipeline hospedado mais recente passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, qualidade `36588760149`). Ele cobre formatação, lint, verdade do projeto, contratos de release, segurança, GUT, exports, manifests e o fluxo de qualificação do Windows. Isso não substitui execução manual ou hardware nativo aprovado.
+O baseline atual de validação do código passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, qualidade `36588760149`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. Ele cobre formatação, lint, verdade do projeto, contratos de release, segurança, GUT, exports, manifests e o fluxo de qualificação do Windows. Isso não substitui execução manual ou hardware nativo aprovado.
 
 ## Dogfood autenticado
 

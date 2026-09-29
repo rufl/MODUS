@@ -6,7 +6,7 @@
 **Updated:** September 29, 2026
 **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
 
-**Current publication state:** Hosted CI pipeline `36588760158` passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff`. Source-matched complete OVERZEER archives passed strict four-format validation, and lean ZTASH packages were authenticated and deployed for dogfood validation. DDJARIN reconciles Windows SHA-256 `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`; CHOPPER reconciles Linux SHA-256 `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`. Packages are unsigned; no signed public release, installer, native Windows acceptance, or external Steam/WAN/Workshop proof is claimed.
+**Current publication state:** The source-validation baseline pipeline `36588760158` passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows. Source-matched complete OVERZEER archives passed strict four-format validation, and lean ZTASH packages were authenticated and deployed for dogfood validation. DDJARIN reconciles Windows SHA-256 `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`; CHOPPER reconciles Linux SHA-256 `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`. Packages are unsigned; no signed public release, installer, native Windows acceptance, or external Steam/WAN/Workshop proof is claimed.
 
 This published index preserves dated observations and curated media; it is not a fresh verification run. Raw `logs/`, generated reports, and historical session documents remain local-only and are absent from fresh clones. The August menu images predate subsequent artwork/layout changes and do not prove the current rendered menu. Historical artifact entries below remain useful for provenance but do not override the current publication state.
 
@@ -69,7 +69,7 @@ The current capture validates duration, sample monotonicity and contextual metad
 
 ## Published Context and Local Evidence
 
-- Automated suite: the [current status](CURRENT_STATUS.md) records the September 25 1,665/1,665 aggregate and hosted CI `36588760158`; raw logs remain local-only. Run `./tests/runners/run_all_tests_headless.sh` for new local logs and a new result.
+- Automated suite: the [current status](CURRENT_STATUS.md) records the September 25 1,665/1,665 aggregate and source-validation CI baseline `36588760158`; raw logs remain local-only. Documentation-only commits run through the same workflows. Run `./tests/runners/run_all_tests_headless.sh` for new local logs and a new result.
 - UI focus: `tests/unit/test_ui_system.gd`.
 - Performance baseline: [published context](PERFORMANCE_BASELINE_PROOF.md); use `godot --path . --script tools/run_performance_evidence_capture.gd` and `tools/validate_performance_evidence.sh --strict` to create and validate new local CSV evidence.
 - Showcase route: [maintained checklist](SHOWCASE_ROUTE.md). Local `docs/GOLDEN_DEMO_SMOKE.md` and startup-only `docs/SHOWCASE_LAUNCH_SMOKE.md` are regenerated using the [report commands](DOCUMENTATION_TRUTH.md#regenerating-local-reports), not fetched as committed proof.

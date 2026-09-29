@@ -5,7 +5,7 @@
 **Idiomas:** [English](../README.md) · [Português (Brasil)](README.md)
 **Versão:** `0.9.5-beta` · **Toolchain:** Godot 4.7.2 · **Prontidão:** **NÃO PRONTO**
 
-O pipeline hospedado `36588760158` passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff`. O dogfood ZTASH autenticado está ativo no DDJARIN (Windows) e CHOPPER (Linux), mas os pacotes ainda não são assinados nem públicos.
+O baseline atual de validação do código passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`; qualidade `36588760149`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. O dogfood ZTASH autenticado está ativo no DDJARIN (Windows) e CHOPPER (Linux), mas os pacotes ainda não são assinados nem públicos.
 
 ## Verdade atual
 

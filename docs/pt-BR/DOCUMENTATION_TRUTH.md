@@ -18,7 +18,7 @@ Quando documentos divergirem, use:
 4. [Changelog raiz](../../CHANGELOG.md) para trabalho concluído e seu escopo.
 5. [Bundle de Evidências](RELEASE_EVIDENCE_BUNDLE.md) para capturas, proveniência, hashes e exclusões de release.
 
-O pipeline CI `36588760158` passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff`. O agregado headless estrito de 25 de setembro continua sendo a última evidência publicada de suite completa: 1.665/1.665 testes, 22.767 asserções em 149 scripts, com dois arquivos GUI excluídos. O dogfood ZTASH autenticado passou, mas os pacotes permanecem sem assinatura e os gates público, nativo e externo continuam abertos.
+O baseline atual de validação do código passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`). Commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. O agregado headless estrito de 25 de setembro continua sendo a última evidência publicada de suite completa: 1.665/1.665 testes, 22.767 asserções em 149 scripts, com dois arquivos GUI excluídos. O dogfood ZTASH autenticado passou, mas os pacotes permanecem sem assinatura e os gates público, nativo e externo continuam abertos.
 
 ## Retenção local
 

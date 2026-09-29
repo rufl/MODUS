@@ -5,7 +5,7 @@
 **Languages:** [English](INDEX.md) · [Português (Brasil)](pt-BR/INDEX.md)
 **Updated:** September 29, 2026 · **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
 
-Current hosted CI passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`). Authenticated unsigned ZTASH dogfood deployment is active for Windows on DDJARIN and Linux on CHOPPER. The project is not signed, publicly released, or native-target accepted.
+The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`). Documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood deployment is active for Windows on DDJARIN and Linux on CHOPPER. The project is not signed, publicly released, or native-target accepted.
 
 ## Canonical Current Truth
 

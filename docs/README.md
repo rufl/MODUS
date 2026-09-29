@@ -5,7 +5,7 @@
 **Languages:** [English](README.md) · [Português (Brasil)](pt-BR/README.md)
 **Version:** `0.9.5-beta` · **Engine:** Godot 4.7.2 toolchain · **Readiness:** **NOT READY**
 
-The latest hosted CI pipeline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`; quality `36588760149`). Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux). Signing, public publication, native target acceptance, reviewed manual gameplay, and external Steam/WAN/Workshop proof remain open.
+The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`; quality `36588760149`); documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux). Signing, public publication, native target acceptance, reviewed manual gameplay, and external Steam/WAN/Workshop proof remain open.
 
 ## Read First
 

@@ -7,7 +7,7 @@
 
 ## Current release snapshot
 
-- Hosted CI pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
+- Source-validation baseline: pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows.
 - Source-matched complete OVERZEER archives passed strict four-format validation.
 - Lean ZTASH packages passed Linux package smoke/capability checks and authenticated dogfood deployment.
 - DDJARIN reconciles Windows hash `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`; CHOPPER reconciles Linux hash `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.

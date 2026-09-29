@@ -8,7 +8,7 @@
 
 ## Estado atual de publicação
 
-O pipeline CI `36588760158` passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff`. Archives completos de cliente/servidor/editor passaram validação estrita de quatro formatos. Pacotes ZTASH enxutos passaram `--package-smoke`/`--capability-report` no Linux, capabilities autenticadas, preview e deployment dogfood.
+O pipeline de baseline de validação `36588760158` passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff`; commits somente de documentação passam pelos mesmos workflows do GitHub Actions. Archives completos de cliente/servidor/editor passaram validação estrita de quatro formatos. Pacotes ZTASH enxutos passaram `--package-smoke`/`--capability-report` no Linux, capabilities autenticadas, preview e deployment dogfood.
 
 Estado ativo reconciliado:
 

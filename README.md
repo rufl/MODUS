@@ -12,7 +12,7 @@ It combines fast FPS combat, movement, weapons, loot, enemy AI, procedural map g
 **Engine:** Godot 4.7+ (CI/toolchain pinned to 4.7.2)
 **Readiness:** **NOT READY**
 
-MODUS is not presented as a shipped game or production-ready SDK. The latest hosted CI pipeline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`; quality run `36588760149`). Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux), but signing, public release, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
+MODUS is not presented as a shipped game or production-ready SDK. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`; quality run `36588760149`); documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux), but signing, public release, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
 
 ## Read This Before Cloning
 
@@ -262,7 +262,7 @@ For a real reviewed session, run `tools/run_manual_showcase_session.sh --tester 
 
 | Evidence | Result |
 | --- | --- |
-| Hosted CI | **PASS:** quality run `36588760149` and CI/CD pipeline `36588760158` on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; formatting, lint, truth, release contracts, security scan, GUT lanes, exports, manifests and native qualification workflow completed successfully |
+| Hosted CI | **PASS:** source-validation baseline quality run `36588760149` and CI/CD pipeline `36588760158` on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; formatting, lint, truth, release contracts, security scan, GUT lanes, exports, manifests and native qualification workflow completed successfully. Documentation-only commits run through the same workflows. |
 | Focused release engineering | **PASS:** archive validation, Linux lifecycle, staging, OVERZEER inventory, fleet-wrapper forwarding, ZTASH preparation, cleanup, toolchain lock and project-truth checks |
 | Authenticated dogfood deployment | **PASS:** DDJARIN Windows and CHOPPER Linux active states match build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` and retained SHA-256 metadata |
 | Golden demo runtime smoke | **PASS:** all 8 controlled framework-loop steps; automated scope only |

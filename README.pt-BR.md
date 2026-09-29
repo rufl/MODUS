@@ -12,7 +12,7 @@ MODUS é um framework experimental de FPS multiplayer e um laboratório jogável
 
 ## Estado atual
 
-- O pipeline hospedado do GitHub passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`; qualidade `36588760149`).
+- O baseline de validação do código passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`; qualidade `36588760149`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions.
 - O agregado headless estrito de 25 de setembro passou 1.665/1.665 testes, com 22.767 asserções em 149 scripts; dois arquivos que exigem GUI continuam explicitamente excluídos.
 - Pacotes ZTASH enxutos foram validados e implantados por HTTPS autenticado para dogfood: DDJARIN mantém Windows e CHOPPER mantém Linux.
 - Esses pacotes são **não assinados** e não constituem lançamento público. Assinatura, instalador, aceitação nativa do Windows, evidência manual e provas externas de Steam/WAN/Workshop continuam abertas.

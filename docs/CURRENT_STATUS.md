@@ -11,7 +11,7 @@
 
 ## Summary
 
-MODUS contains broad FPS framework code plus focused and golden-demo runtime proof. Reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped. The latest hosted CI pipeline also passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, quality `36588760149`).
+MODUS contains broad FPS framework code plus focused and golden-demo runtime proof. Reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, quality `36588760149`); documentation-only commits run through the same GitHub Actions workflows.
 
 Authenticated unsigned ZTASH dogfood deployment is now verified end-to-end: DDJARIN serves the Windows package and CHOPPER serves the Linux package, both reconciled against build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` and retained SHA-256 metadata. This closes authenticated dogfood validation only. Signed/public release, installer packaging, native Windows execution, manual gameplay, Steam/WAN/Workshop, and target-platform graphical proof remain open.
 

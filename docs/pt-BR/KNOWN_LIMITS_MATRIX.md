@@ -10,7 +10,7 @@ Resultados abaixo são observações datadas. Logs e relatórios gerados são lo
 
 | Área | Limite verificado | Não verificado / limitação de release |
 | --- | --- | --- |
-| Testes automatizados | Agregado estrito de 25/09: 1.665/1.665 testes, 22.767 asserções, 149 scripts; dois arquivos GUI excluídos. CI `36588760158` passou no commit `701ead47`. | Testes GUI, sensação manual, performance sincronizada ao display e serviços externos continuam separados. |
+| Testes automatizados | Agregado estrito de 25/09: 1.665/1.665 testes, 22.767 asserções, 149 scripts; dois arquivos GUI excluídos. O baseline de validação do código `36588760158` passou no commit `701ead47`; commits somente de documentação passam pelos mesmos workflows. | Testes GUI, sensação manual, performance sincronizada ao display e serviços externos continuam separados. |
 | CI/CD | Formatação, lint, truth, contratos de release, segurança, GUT, exports, manifests e fluxo de qualificação Windows passaram. | CI hospedado não fecha aceitação nativa aprovada, WAN independente, Steam/Workshop, assinatura ou publicação. |
 | Release engineering | OVERZEER completo em quatro formatos; ZTASH preparado; capability/package smoke, preview, deployment autenticado e reconciliação DDJARIN/CHOPPER passaram. | Inventário é `unsigned`; metadata do receptor é `signing: unavailable`; dogfood não é release assinado; não há instalador ou bundling nativo fechado. |
 | Capacidades do runtime | `--capability-report` registra identidade, classes nativas e GodotSteam/SteamMultiplayerPeer/Voxel Tools; `--package-smoke` valida walk/CSG comum e falha fechado. | Não prova binários nativos empacotados, Windows nativo, Steam real, Workshop ou WAN. |

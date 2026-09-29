@@ -7,7 +7,7 @@
 
 ## Snapshot atual
 
-- CI/CD `36588760158` e qualidade `36588760149` passaram no commit `701ead47`.
+- Baseline de validação do código: CI/CD `36588760158` e qualidade `36588760149` passaram no commit `701ead47`; commits somente de documentação passam pelos mesmos workflows do GitHub Actions.
 - Archives OVERZEER completos passaram validação estrita de quatro formatos.
 - ZTASH enxuto passou package smoke/capability report e foi implantado por HTTPS autenticado para dogfood.
 - DDJARIN reconcilia Windows `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`.
