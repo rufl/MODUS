@@ -2,6 +2,9 @@
 
 > **Documentation status: maintained reference.** This page describes runner behavior. Published dated outcomes are consolidated in [Current Status](../../docs/CURRENT_STATUS.md); generated reports describe individual local invocations.
 
+**Languages:** [English](README.md) · [Português (Brasil)](../../docs/pt-BR/TESTING.md)
+**Updated:** September 29, 2026 · **Toolchain:** Godot 4.7.2 / GUT 9.7.1
+
 ## Maintained shell runners
 
 ### Full default selection

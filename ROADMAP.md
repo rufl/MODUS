@@ -1,23 +1,25 @@
 # MODUS Roadmap
 
-> **Documentation status: maintained reference.** This roadmap prioritizes proof and hardening. Current status is defined by `docs/DOCUMENTATION_TRUTH.md` and `docs/CURRENT_STATUS.md`.
+> **Documentation status: maintained reference.** This roadmap prioritizes proof and hardening. Current status is defined by [Documentation Truth](docs/DOCUMENTATION_TRUTH.md) and [Current Status](docs/CURRENT_STATUS.md).
 
-**Updated:** September 13, 2026
+**Languages:** [English](ROADMAP.md) · [Português (Brasil)](docs/pt-BR/ROADMAP.md)
+**Updated:** September 29, 2026
 **Current version:** `0.9.5-beta`  
-**Engine:** Godot 4.7+  
-**Readiness:** NOT READY
+**Engine:** Godot 4.7.2 toolchain
+**Readiness:** **NOT READY**
 
 ## North Star
 
-Make MODUS a dependable Godot 4.7 FPS framework whose public claims are backed by live source, focused automated contracts, complete aggregate test runs, runtime observation, manual evidence, and contextualized performance captures.
+Make MODUS a dependable Godot 4.7 FPS framework whose public claims are backed by live source, focused automated contracts, complete aggregate test runs, runtime observation, manual evidence, contextualized performance captures, and authenticated distribution gates.
 
 ## Now: Maintain the Verified Baseline
 
-1. Preserve the September 10 refreshed aggregate: 1,568/1,568 tests with 21,718 assertions across 135 scripts; two GUI-required files remain skipped.
-2. Preserve zero GUT orphans in focused lanes while reducing service-initialization and engine-exit diagnostics without weakening assertions.
-3. Keep maintained status, known limits, active backlog, and root changelog synchronized. Generated reports and raw logs remain local-only; completed work belongs in the published root changelog.
+1. Preserve the September 25 strict aggregate: 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped.
+2. Preserve the hosted CI baseline: pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
+3. Keep maintained status, known limits, active backlog, release evidence, root changelog, and both language navigation surfaces synchronized.
+4. Keep authenticated dogfood deployment reconciled to immutable package hashes without calling unsigned validation a release.
 
-The current baseline includes the eight-step golden-demo smoke, responsive manual recorder, focused editor history/productization proof, local ENet lifecycle proof, authenticated local GodotSteam initialization, refreshed package-notice/export checks, and a reproducible Linux desktop export smoke. These are bounded observations, not production or release approval.
+These are bounded observations, not production or release approval. Manual, target-native, signing, installer, Steam, Workshop, WAN and long-session evidence remain separate gates.
 
 Historical August and July totals remain below only as dated context. They must not be reused as current-tree totals.
 

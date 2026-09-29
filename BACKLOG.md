@@ -1,6 +1,17 @@
 # MODUS Backlog
 
-> **Documentation status: maintained reference.** Published readiness and dated test boundaries are defined by `docs/DOCUMENTATION_TRUTH.md` and `docs/CURRENT_STATUS.md`; locally generated reports describe individual runs, not fresh-clone guarantees.
+> **Documentation status: maintained reference.** Published readiness and dated test boundaries are defined by [Documentation Truth](docs/DOCUMENTATION_TRUTH.md) and [Current Status](docs/CURRENT_STATUS.md); locally generated reports describe individual runs, not fresh-clone guarantees.
+
+**Languages:** [English](BACKLOG.md) · [Português (Brasil)](docs/pt-BR/BACKLOG.md)
+**Updated:** September 29, 2026 · **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
+
+## Current release snapshot
+
+- Hosted CI pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
+- Source-matched complete OVERZEER archives passed strict four-format validation.
+- Lean ZTASH packages passed Linux package smoke/capability checks and authenticated dogfood deployment.
+- DDJARIN reconciles Windows hash `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`; CHOPPER reconciles Linux hash `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
+- These artifacts are unsigned dogfood validation. Signing, installer/public release, native Windows, manual, Steam, Workshop, WAN and graphical/editor acceptance remain open.
 
 ## Source Of Truth Policy
 
@@ -34,9 +45,7 @@ Treat generated entries as proposals until they are promoted into the active que
 - Release readiness validation: `tools/validate_release_readiness.sh --strict`
 - Runtime gameplay/manual proof: launch a normal Godot session, complete the manual checklist, and record the observed path.
 
-Report paths and `logs/` are ignored local outputs. See [report regeneration and evidence prerequisites](docs/DOCUMENTATION_TRUTH.md#regenerating-local-reports); their absence on a fresh clone does not invalidate historical summaries or establish a current PASS.
-
-The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts using Godot 4.7.2; the filtered run completed in 812.984 seconds. Manual, performance-evidence, release-version, provenance, GUI-required, target-native, signing, publication, and external proof remain open. `[truth:test]`
+The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts using Godot 4.7.2; two GUI-required files remain skipped. Manual, performance-target, release-version, target-native, signing, publication, and external proof remain open. `[truth:test]`
 
 ### Native Windows acceptance contract (definition of done)
 

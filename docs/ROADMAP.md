@@ -2,22 +2,21 @@
 
 > **Documentation status: maintained reference.** This document expands the root roadmap by product area. It does not promote implementation presence into runtime or release proof.
 
-**Updated:** September 11, 2026
+**Languages:** [English](ROADMAP.md) · [Português (Brasil)](pt-BR/ROADMAP.md)
+**Updated:** September 29, 2026
 **Current version:** `0.9.5-beta`  
-**Current readiness:** NOT READY
+**Current readiness:** **NOT READY**
 
 ## Current Evidence Boundary
 
-- Historical August 4 full suite: 1440/1440 with 20,475 assertions and no risky/pending tests or GUT orphans; not the current-tree suite total.
-- That aggregate completed in 702.76 seconds under a bounded 3600-second run, with six engine-exit ObjectDB leak diagnostics.
-- Historical category observations: August 1 Unit 1056/1056 and Property 175/175; July 19 Integration 200/200; Benchmark skipped. Local `docs/AUTOMATED_TEST_LANES_REPORT.md` is not committed; regenerate it with `./tests/runners/run_tests_by_category.sh --report docs/AUTOMATED_TEST_LANES_REPORT.md`.
-- Earlier source-shape/resource/editor-registry proof recorded 37/37 with 172 assertions and zero GUT orphans. September 9 focused repair observations now cover the four formerly missing loot-prop scenes; see [Current Status](CURRENT_STATUS.md).
+- September 25 strict headless aggregate: 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped.
+- Hosted CI pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
+- Authenticated unsigned ZTASH dogfood deployment reconciles DDJARIN Windows and CHOPPER Linux to build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`.
 - Manual gameplay: 0 imported evidence files / 0.00 recorded hours.
-- Performance: one bounded 66.4-second, 130-sample showcase capture; production targets remain unproven.
-- Release: blocked at `0.9.5-beta`.
-- Published readiness remains NOT READY. The two-validator-blocker snapshot covers manual evidence and release version only; the current 2159-row provenance ledger is fully cleared, including the imported Binbun3D RetroUrban CC BY 4.0 maps/materials, valsekamerplant CC0 fence/wall and office models/textures, Brackeys CC0 VFX textures, WRAD ARMS model/skin textures, optional Binbun Godot Water shader/demo resources, optional Binbun Godot Skies shader/preset/noise resources, Luka Aleksic sound-effect WAVs with retained notices, and the four cooler11 ocean-wave WAVs under their game-use notice; the latter are not CC0 and cannot be redistributed as a standalone or asset pack. Packaging, external service, target-runtime and visual asset-acceptance proof remain open. Local-only raw evidence and generated outputs do not certify a fresh clone; see [report regeneration](DOCUMENTATION_TRUTH.md#local-only-retention).
+- Performance: one warmed bounded 69.90-second/66-sample Showcase capture; production targets remain unproven.
+- Release: blocked at `0.9.5-beta`; signing, installer, public publication, native Windows and external-service proof remain open.
 
-See [Documentation Truth](DOCUMENTATION_TRUTH.md) and [Current Status](CURRENT_STATUS.md) for details.
+See [Documentation Truth](DOCUMENTATION_TRUTH.md) and [Current Status](CURRENT_STATUS.md) for details. Historical totals remain below only as dated context.
 
 ## Core Framework
 

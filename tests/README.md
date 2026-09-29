@@ -2,11 +2,14 @@
 
 > **Documentation status: maintained reference.** Published outcomes and exclusions are consolidated in [Current Status](../docs/CURRENT_STATUS.md); generated reports are local outputs for individual invocations. This page documents inventory and execution.
 
+**Languages:** [English](README.md) · [Português (Brasil)](../docs/pt-BR/TESTING.md)
+**Updated:** September 29, 2026 · **Toolchain:** Godot 4.7.2 / GUT 9.7.1
+
 ## Current boundary
 
-The August 4 complete filtered Godot 4.7 aggregate recorded 1440/1440 tests with 20,475 assertions and no risky/pending tests or GUT orphans in 702.76 seconds under a bounded 3600-second run. The August 1 Unit lane recorded 1056/1056 with 16,419 assertions and Property 175/175 with 2,804 assertions; July 19 Integration recorded 200/200. These are historical boundaries, not the current-tree suite total. August focused proof included UI 26/26 with 109 assertions, manual recorder/timer 2/2 with 21 assertions, localization 27/27, mod/save UI packet 72/72 with 298 assertions, and reference/shader integrity 22/22. Automated recorder tests do not replace human observations, release-version proof, or distribution clearance.
+The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts using Godot 4.7.2; two GUI-required files remain skipped. Hosted CI pipeline `36588760158` passed the bounded CI selections, release contracts, exports, manifests, security scan and Windows qualification workflow. These results remain scoped evidence: they do not replace manual gameplay, display-synchronized performance, native target acceptance, signing or external-service proof.
 
-The retained August 4 source inventory recorded:
+The retained source inventory contains:
 
 - 71 unit test scripts;
 - 18 integration test scripts;

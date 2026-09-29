@@ -2,21 +2,24 @@
 
 > **Documentation status: maintained reference.** Start with the published truth contract and consolidated status. Generated reports and historical files are local-only, not prerequisites for reading a fresh clone.
 
-**Version:** `0.9.5-beta`  
-**Engine:** Godot 4.7+  
-**Readiness:** NOT READY
+**Languages:** [English](README.md) · [Português (Brasil)](pt-BR/README.md)
+**Version:** `0.9.5-beta` · **Engine:** Godot 4.7.2 toolchain · **Readiness:** **NOT READY**
+
+The latest hosted CI pipeline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`; quality `36588760149`). Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux). Signing, public publication, native target acceptance, reviewed manual gameplay, and external Steam/WAN/Workshop proof remain open.
 
 ## Read First
 
 1. [Documentation Truth Contract](DOCUMENTATION_TRUTH.md)
 2. [Current Status](CURRENT_STATUS.md)
-3. [Ship-Readiness Estimate](SHIP_READINESS_ESTIMATE.md)
-4. [Active Backlog](../BACKLOG.md)
-5. [Documentation Index](INDEX.md)
+3. [Known-Limits Matrix](KNOWN_LIMITS_MATRIX.md)
+4. [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md)
+5. [Ship-Readiness Estimate](SHIP_READINESS_ESTIMATE.md)
+6. [Active Backlog](../BACKLOG.md)
+7. [Documentation Index](INDEX.md)
 
 ## Evidence and Regeneration
 
-Generated reports and raw logs are ignored local outputs, not committed evidence links. [Regenerating Local Reports](DOCUMENTATION_TRUTH.md#regenerating-local-reports) lists all eight report paths, commands, and prerequisites. Missing manual/performance inputs on a fresh clone remain missing evidence, not a historical PASS.
+Generated reports and raw logs are ignored local outputs, not committed evidence links. [Regenerating Local Reports](DOCUMENTATION_TRUTH.md#regenerating-local-reports) lists report paths, commands, and prerequisites. Missing manual/performance inputs on a fresh clone remain missing evidence, not a historical PASS.
 
 Published context and curated artifacts:
 
@@ -44,6 +47,12 @@ Published context and curated artifacts:
 - [Hardware Requirements](hardware_requirements.md)
 - [Roadmap](ROADMAP.md)
 - [Full Index](INDEX.md)
+
+## Portuguese navigation
+
+- [Índice português](pt-BR/INDEX.md)
+- [Changelog português](../CHANGELOG.pt-BR.md)
+- [README português](../README.pt-BR.md)
 
 ## Historical Material
 

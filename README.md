@@ -1,39 +1,36 @@
 # MODUS Framework
 
-> **Documentation status: maintained reference.** Published readiness is consolidated in `docs/DOCUMENTATION_TRUTH.md` and `docs/CURRENT_STATUS.md`. Generated reports are local invocation records; narrower claims in this file apply only to the named subsystem or workflow.
+> **Documentation status: maintained reference.** Published readiness is consolidated in `docs/DOCUMENTATION_TRUTH.md` and `docs/CURRENT_STATUS.md`. Generated reports are local invocation records; narrower claims apply only to the named subsystem or workflow.
+
+**Languages:** [English](README.md) · [Português (Brasil)](README.pt-BR.md)
 
 MODUS is an experimental Godot 4.7 multiplayer FPS framework and playable mechanics lab for developers who still care how guns feel, movement flows, enemies pressure space, and levels create stories.
 
-If you like boomer shooters, arena shooters, looter shooters, procedural maps, co-op experiments, or games that expose their systems instead of hiding them behind a black box, MODUS is built in that direction.
-
-It combines fast FPS combat, movement, weapons, loot, enemy AI, procedural map generation, splitscreen, multiplayer foundations, a level editor, and a modding SDK in one inspectable project. Build a tight combat room, a procedural gauntlet, a strange weapon pack, a custom enemy faction, or a ruleset that changes how the whole game behaves.
+It combines fast FPS combat, movement, weapons, loot, enemy AI, procedural map generation, splitscreen, multiplayer foundations, a level editor, and a modding SDK in one inspectable project. Build a combat room, a procedural gauntlet, a weapon pack, a custom enemy faction, or a ruleset that changes how the whole game behaves.
 
 **Version:** `0.9.5-beta`
-
-**Engine:** Godot 4.7+
-
+**Engine:** Godot 4.7+ (CI/toolchain pinned to 4.7.2)
 **Readiness:** **NOT READY**
 
-MODUS is not presented as a shipped game or production-ready SDK. Manual gameplay evidence, release packaging, Workshop publication, and broader external runtime validation remain open. The project keeps those boundaries visible while the underlying systems are developed and tested; bounded performance evidence and a native-Windows acceptance harness exist without closing those gates.
+MODUS is not presented as a shipped game or production-ready SDK. The latest hosted CI pipeline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`; quality run `36588760149`). Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux), but signing, public release, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
 
 ## Read This Before Cloning
 
 MODUS is a developer project, not a ready-to-play Steam game and not a one-click Godot template. Expect to inspect source, install the matching tools, wait for Godot imports, and validate the path you care about.
 
-The parts most likely to frustrate you:
+Current boundaries:
 
-- There is no published release, signed installer, configured Workshop item, or bundled GodotSteam extension. Fresh lean ZTASH candidates from GUI commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` (GitHub CI run `36556656363`, artifact set 183) passed ZTASH preparation and extracted Linux `--package-smoke`/`--capability-report`; lean hashes are Linux `5af77e153bc2b3cb159b1e125dbbf1237f4d55c82b9b824f6669730f8c3eca4b` (131225533 bytes) and Windows `42c46585462fc5d4242c07457710a41baf1cdb5d425af0e4ba5f159b3d6c2e6e` (141074387 bytes). Deployment preview failed closed because no HTTPS receiver base URL/token is configured.
+- No signed or public release exists. Complete Linux/Windows client/server/editor OVERZEER archives were validated from the GUI payload commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`; lean ZTASH packages passed Linux package smoke/capability checks and were authenticated for dogfood deployment.
+- DDJARIN currently reconciles the Windows package (`45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`); CHOPPER reconciles the Linux package (`da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`). Both are unsigned validation deployments, not public release artifacts.
 - The expected environment is Godot 4.7 in the 4.7 line on a writable machine with Bash; the repository does not pin a portable editor binary.
 - First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
 - Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
-- Capability manifests now detect the native CSG, MultiMesh, and occlusion classes exposed by the running Godot build; module validation and optional generation passes refuse unavailable capabilities instead of assuming stock-runtime parity.
-- Packaged exports expose `--capability-report` for target-side runtime identity, native-class and optional-dependency diagnostics; package smoke fails closed when the common walk/CSG contract is unavailable.
-- Procedural mission metadata now retains deterministic room depths and generated encounter placement follows playable route depth for weapon, ammo, health, and enemy quality pacing; focused graph/generator/export proof passes 49/49 tests with 697 assertions. This is source-level pacing evidence, not manual balance or a finished Breakwater production review.
-- Breakwater Station now exposes a versioned presentation contract covering all three power stages, target groups, audio listener zones, rain emitters, relay labels and power materials. Comprehensive Showcase uses the authored RetroUrban clean-pavement floor; both levels now instantiate 20 curated fence/office models, six RetroUrban material panels plus grounded display plinths, and four Brackeys flipbook effects through the runtime asset-dressing contract. Breakwater dressing stays outside the 28 m module footprint. Authored mission proof is **12/12 tests with 144 assertions**. This is source/headless evidence, not manual audiovisual approval.
-- The runtime roster now includes WRAD ARMS under `FirstPersonArmsCatalog` with the canonical GLB plus pale/dark skin variants; player-camera fit and skin selection remain manual presentation work.
-- The Showcase route is an automated smoke path, not proof that the game feels good. Manual gameplay evidence is still zero reviewed hours.
-- Multiplayer proof is strongest on local ENet and focused authority contracts. Steam transport now shares the runtime native-dependency report and fails back to ENet when Steam or its peer class is absent. The qualification harness records application delivery, reconnect/soak and controlled host-loss outcomes; independently routed WAN sessions, authenticated Steam, Workshop, target-Windows execution, graphical exported-editor acceptance, and long-session proof remain open.
-- The current release line is `0.9.5-beta`; production readiness is explicitly **NOT READY**.
+- Capability manifests detect native CSG, MultiMesh, and occlusion classes plus optional dependency availability. Unsupported capabilities are rejected or reported instead of being silently treated as stock-runtime parity.
+- Packaged exports expose `--capability-report`; `--package-smoke` fails closed when the common walk/CSG contract is unavailable.
+- Procedural mission metadata retains deterministic room depths and route-aware encounter pacing; focused graph/generator/export proof passes 49/49 tests with 697 assertions. This is source-level evidence, not manual balance or finished Breakwater approval.
+- Breakwater Station exposes a versioned presentation contract; authored mission proof is 12/12 tests with 144 assertions. This is source/headless evidence, not manual audiovisual approval.
+- The Showcase route is an automated smoke path, not proof that the game feels good. Manual gameplay evidence remains at zero reviewed hours.
+- Multiplayer proof is strongest on local ENet and focused authority contracts. Independent WAN, authenticated two-account Steam, Workshop, target-Windows execution, exported-editor graphical acceptance, and long-session proof remain open.
 
 If you want a polished game to play immediately, MODUS is the wrong download. If you want an inspectable FPS systems lab that you can bend, profile, test, and extend, it is the right kind of unfinished.
 
@@ -131,20 +128,20 @@ python3 tools/validate_release_artifacts.py \
 
 Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. `tools/toolchain.lock.json` pins the recorded Godot/GUT/GDScript Toolkit/SCons inputs and archive hashes; run `python3 tools/validate_toolchain_lock.py` before candidate assembly. Public publication, signing, native runtime/dependency bundling and target acceptance remain open.
 
-The current local dogfood batch produces unsigned transfer archives at
-`build/release/modus-0.9.5-beta-linux-x86_64.tar.zst`,
-`build/release/modus-0.9.5-beta-linux-x86_64.tar.gz`,
-`build/release/modus-0.9.5-beta-windows-x86_64.tar.zst`, and
-`build/release/modus-0.9.5-beta-windows-x86_64.zip`. Each archive uses the
-OVERZEER root naming contract and includes `README`, `LICENSE`, payload hashes,
-the Linux `modus` client/server/editor exports, or the Windows `modus.exe`
-client plus editor export. `.tar.zst` is the compact local transfer format;
-OVERZEER receiver deployment currently accepts the Linux `.tar.gz` and Windows
-`.zip` variants. These are local candidates, not authenticated deployments;
-the native-Windows acceptance harness retains same-build manifest/hash metadata,
-the copied toolchain lock and its SHA-256 digest, renderer/viewport/window/GPU/OS
-evidence and logs when the target is run, but native Windows execution, driver
-review, signing, receiver authentication and target acceptance remain required.
+The September 29 dogfood batch produced unsigned transfer archives from GUI
+payload commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`. Complete
+client/server/editor archive hashes and the lean receiver-package hashes are
+recorded in [Release Evidence Bundle](docs/RELEASE_EVIDENCE_BUNDLE.md); the
+ignored local evidence directory was cleaned to retain only the source-matched
+batch.
+
+DDJARIN and CHOPPER accepted the lean ZTASH packages through authenticated
+separate-endpoint deployment. Active state currently reconciles to the Windows
+hash `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363` and
+Linux hash `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
+This is unsigned dogfood validation, not signed public release publication.
+Native Windows execution, driver review, signing, installer packaging, and
+target acceptance remain required.
 
 CI and local release jobs use `tools/package_overzeer.py` to build these
 archives from verified exports:
@@ -265,16 +262,16 @@ For a real reviewed session, run `tools/run_manual_showcase_session.sh --tester 
 
 | Evidence | Result |
 | --- | --- |
-| Retained complete Godot/GUT suite | **PASS:** September 10 refreshed aggregate, 1,568/1,568 passing with 21,718 assertions across 135 scripts; two GUI-required files skipped |
-| Latest strict aggregate attempt | **PASS/complete:** September 10 bounded run completed with the patched Godot 4.7.2 binary; known engine-exit ObjectDB diagnostics remain |
-| Latest batched lanes | **PASS:** Unit 1,166/1,166; Integration 227/227 with 2 GUI-required files skipped; Property 175/175 |
-| Craft / Slopometer | **PASS:** Craft penalty 0; MODUS 0.0/10 across all five dimensions |
+| Hosted CI | **PASS:** quality run `36588760149` and CI/CD pipeline `36588760158` on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; formatting, lint, truth, release contracts, security scan, GUT lanes, exports, manifests and native qualification workflow completed successfully |
+| Focused release engineering | **PASS:** archive validation, Linux lifecycle, staging, OVERZEER inventory, fleet-wrapper forwarding, ZTASH preparation, cleanup, toolchain lock and project-truth checks |
+| Authenticated dogfood deployment | **PASS:** DDJARIN Windows and CHOPPER Linux active states match build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` and retained SHA-256 metadata |
 | Golden demo runtime smoke | **PASS:** all 8 controlled framework-loop steps; automated scope only |
 | Main menu / showcase scene launch smokes | **PASS:** startup scope only; see [Current Status](docs/CURRENT_STATUS.md) for dates and boundaries |
 | Manual gameplay | **BLOCKED:** the recorder workflow is ready, but no reviewed CSV evidence has been imported |
-| Performance evidence | **PASS** for one bounded 66.4-second/130-sample showcase capture only |
+| Performance evidence | **PASS** for one warmed bounded 69.90-second/66-sample Showcase capture; not a display-synchronized target claim |
+| Release signing/publication | **BLOCKED:** complete archives and deployed ZTASH packages remain unsigned; no public release or installer exists |
 | Release-version gate | **BLOCKED** — current version remains `0.9.5-beta` |
-| Production readiness | **NOT READY** with manual evidence and release-version blockers; legal/distribution clearance is a separate boundary |
+| Production readiness | **NOT READY:** native Windows, manual, signing, installer, Steam/WAN/Workshop and other external gates remain open |
 
 Focused green tests are listed in [Current Status](docs/CURRENT_STATUS.md). They prove only their named contracts and do not replace manual, release, or distribution evidence.
 

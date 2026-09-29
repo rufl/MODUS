@@ -2,15 +2,17 @@
 
 > **Documentation status: maintained reference.** MODUS is `0.9.5-beta` and NOT READY for production use. This guide gets the current checkout running; it is not a release promise.
 
+**Languages:** [English](getting_started.md) · [Português (Brasil)](pt-BR/GETTING_STARTED.md)
+**Updated:** September 29, 2026 · **Toolchain:** Godot 4.7.2 / GUT 9.7.1
+
 ## Requirements
 
-- Godot 4.7 in the 4.7 line expected by `project.godot`; newer major/minor versions are not a supported assumption.
+- Godot 4.7 in the 4.7 line expected by `project.godot`; CI uses 4.7.2.
 - Bash for repository verification scripts.
 - A writable `/tmp` for the isolated headless runner environment.
 - A graphical session for editor, visual, input, and manual gameplay evidence.
-
-- A Linux portable package helper is available for local artifact packaging and user-local install/uninstall; it is not a signed or published release.
-- No GodotSteam extension is bundled. Steam-specific behavior requires separate installation and proof.
+- Python 3.10+ for release helpers; `zstd` for `.tar.zst` package operations.
+- No GodotSteam extension is bundled. Steam-specific behavior requires separate installation, app configuration, and proof.
 
 ## Open and launch
 

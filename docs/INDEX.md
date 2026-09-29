@@ -2,20 +2,24 @@
 
 > **Documentation status: maintained reference.** This index separates published references and curated evidence from local-only generated outputs and historical snapshots.
 
-**Updated:** September 13, 2026
+**Languages:** [English](INDEX.md) · [Português (Brasil)](pt-BR/INDEX.md)
+**Updated:** September 29, 2026 · **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
+
+Current hosted CI passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`). Authenticated unsigned ZTASH dogfood deployment is active for Windows on DDJARIN and Linux on CHOPPER. The project is not signed, publicly released, or native-target accepted.
 
 ## Canonical Current Truth
 
-- [Documentation Truth Contract](DOCUMENTATION_TRUTH.md): publication policy and current headline boundary
-- [Current Status](CURRENT_STATUS.md): consolidated current snapshot
-- [Ship-Readiness Estimate](SHIP_READINESS_ESTIMATE.md): explicit evidence gateboard and calendar estimate
+- [Documentation Truth Contract](DOCUMENTATION_TRUTH.md): publication policy and evidence boundaries
+- [Current Status](CURRENT_STATUS.md): consolidated implementation and dated evidence snapshot
+- [Known-Limits Matrix](KNOWN_LIMITS_MATRIX.md): explicit exclusions and unresolved proof
+- [Ship-Readiness Estimate](SHIP_READINESS_ESTIMATE.md): dated gateboard, not release approval
 - [Active Backlog](../BACKLOG.md): open work and current progress
 - [Root Roadmap](../ROADMAP.md) and [Product Roadmap](ROADMAP.md): proof sequence and product-area gaps
-- [Release and World-Building Plan](RELEASE_AND_WORLD_BUILDING_PLAN.md): researched proposal for the first mission, modular generation/editor, hubs and distribution acceptance; not shipped-feature evidence
+- [Release and World-Building Plan](RELEASE_AND_WORLD_BUILDING_PLAN.md): authored mission, modular generation/editor, hubs and distribution acceptance
 
 ## Local Reports and Published Evidence
 
-The eight generated reports are ignored local outputs, absent from a fresh clone. See [Regenerating Local Reports](DOCUMENTATION_TRUTH.md#regenerating-local-reports) for output paths, commands, and evidence prerequisites. A fresh report describes only its invocation; old local logs do not certify the current checkout.
+The generated reports are ignored local outputs, absent from a fresh clone. See [Regenerating Local Reports](DOCUMENTATION_TRUTH.md#regenerating-local-reports) for output paths, commands, and evidence prerequisites. A PASS applies only to the scope stated in that report; focused or simulated evidence does not promote the whole project to ready.
 
 - [Performance Baseline Context](PERFORMANCE_BASELINE_PROOF.md)
 - [Multiplayer Profile Smoke](MULTIPLAYER_PROFILE_SMOKE.md)
@@ -72,7 +76,7 @@ A PASS applies only to the scope stated in that report. Focused or simulated evi
 - [Licensing and Provenance Inventory](ATTRIBUTION.md)
 - [Machine-Readable Provenance Ledger](PROVENANCE_LEDGER.csv)
 - [Retained Third-Party License Records](licenses/README.md)
-- [Root Changelog](../CHANGELOG.md): maintained chronological record; old entries retain their original bounded results
+- [Root Changelog](../CHANGELOG.md) and [Portuguese summary](../CHANGELOG.pt-BR.md): maintained chronological record; old entries retain their original bounded results
 - `docs/CHANGELOG.md` and `docs/RELEASE_NOTES.md`: local-only historical snapshots, not published release evidence
 
 ## Historical Documents

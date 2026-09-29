@@ -2,6 +2,9 @@
 
 > **Documentation status: maintained reference.** These are current repository checks. Historical error reports may describe retired paths or already-fixed failures.
 
+**Languages:** [English](troubleshooting.md) · [Português (Brasil)](pt-BR/TROUBLESHOOTING.md)
+**Updated:** September 29, 2026 · **Version:** `0.9.5-beta`
+
 ## Start with the evidence boundary
 
 Read [Current Status](CURRENT_STATUS.md) and [Known Limits](KNOWN_LIMITS_MATRIX.md). Generated `docs/PRODUCTION_READINESS_REPORT.md` is a local output, absent from a fresh clone; regenerate it with `tools/validate_production_readiness.sh --run-godot-tests --strict` when attempting a new readiness baseline. See [report prerequisites](DOCUMENTATION_TRUTH.md#regenerating-local-reports). Some failures are known project blockers; others are environment limitations or missing local evidence. Do not erase any category by rerunning a narrower check or copying an old PASS.
@@ -70,15 +73,15 @@ tools/validate_manual_evidence.sh --strict
 
 ## Performance numbers look implausibly high
 
-The retained showcase capture is unthrottled and includes a one-FPS sample plus a large maximum frame-time spike. It proves that a correctly shaped capture exists, not that the game sustains its average on target hardware. Read `docs/PERFORMANCE_BASELINE_PROOF.md` before citing it.
+The retained warmed Showcase capture is headless/unthrottled, 69.90 seconds with 66 samples, and includes a 7.00 FPS minimum. It proves evidence shape and duration, not a supported display-synchronized target. Read `docs/PERFORMANCE_BASELINE_PROOF.md` before citing it.
 
 ## Standalone editor limitations
 
-The scene and export preset exist, but the source explicitly reports undo/redo and mod export as unavailable. The current editor round-trip proof exercises the focused model path, not a shipped standalone-editor UI.
+Source and exported Linux editor → package → game headless round trips now preserve root state, ownership, channels, geometry, save/reopen/resave and `.mdsl` extraction. This does not prove a polished standalone-editor UI, pointer/keyboard feel, native Windows editor behavior, or graphical acceptance.
 
 ## Dedicated server limitations
 
-Dedicated mode is selected by the `dedicated_server` export feature, `--dedicated-server`, `--modus-dedicated`, or `MODUS_DEDICATED_SERVER=1`. The default config is `user://server_config.json5`. No current external client/server evidence proves a production deployment.
+Dedicated mode is selected by the `dedicated_server` export feature, `--dedicated-server`, `--modus-dedicated`, or `MODUS_DEDICATED_SERVER=1`. The default config is `user://server_config.json5`. Local separate-process ENet and Steam lifecycle contracts pass, but no independent WAN, two-account Steam, or public production deployment is claimed.
 
 ## Documentation conflict
 

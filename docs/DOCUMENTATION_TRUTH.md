@@ -2,8 +2,10 @@
 
 > **Documentation status: maintained reference.** This file defines publication policy. Committed summaries record dated, bounded observations; locally generated reports describe individual invocations, not checkout guarantees.
 
+**Languages:** [English](DOCUMENTATION_TRUTH.md) · [Português (Brasil)](pt-BR/DOCUMENTATION_TRUTH.md)
+**Updated:** September 29, 2026
 **Version:** `0.9.5-beta`  
-**Engine:** Godot 4.7+  
+**Engine:** Godot 4.7.2 toolchain (Godot 4.7 line)
 **Overall readiness:** **NOT READY**
 
 ## Canonical Published Sources
@@ -14,9 +16,9 @@ Use these maintained files when documents disagree:
 2. [Known-Limits Matrix](KNOWN_LIMITS_MATRIX.md) for exclusions and unresolved runtime, manual, external, and distribution proof.
 3. [Active Backlog](../BACKLOG.md) and [Roadmap](../ROADMAP.md) for open work and acceptance boundaries.
 4. [Root Changelog](../CHANGELOG.md) for completed or retired work and its historical proof scope.
-5. [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md) for curated captures, provenance, and release exclusions.
+5. [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md) for curated captures, provenance, package hashes and release exclusions.
 
-The August 4 aggregate (1440/1440 tests, 20,475 assertions) is historical, not the current suite total. The September 10 refreshed aggregate is 1,568/1,568 tests with 21,718 assertions across 135 scripts; two GUI-required files remain skipped. Manual gameplay and the release-version gate remain blocked; the validator's two-blocker snapshot is not legal/distribution clearance. Consult the consolidated status rather than duplicating totals in new guides.
+The latest hosted CI pipeline (`36588760158`) passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff`. The September 25 strict headless aggregate remains the latest published full automated result: 1,665/1,665 tests with 22,767 assertions across 149 scripts, with two GUI-required files skipped. Authenticated ZTASH dogfood deployment is current, but packages remain unsigned and public/native/external release gates remain open.
 
 ## Local-Only Retention
 

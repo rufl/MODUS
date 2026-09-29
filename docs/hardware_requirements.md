@@ -2,8 +2,9 @@
 
 > **Documentation status: maintained reference.** No minimum or recommended shipping specification has been validated. This file records only observed evidence and unproven requirements.
 
-**Updated:** July 13, 2026  
-**Version:** `0.9.5-beta`
+**Languages:** [English](hardware_requirements.md) · [Português (Brasil)](pt-BR/HARDWARE_REQUIREMENTS.md)
+**Updated:** September 29, 2026
+**Version:** `0.9.5-beta` · **Toolchain:** Godot 4.7.2
 
 ## Supported Claim
 
@@ -13,22 +14,20 @@ Do not publish CPU, GPU, RAM, storage, player-count, resolution, or FPS requirem
 
 ## Recorded Hardware Evidence
 
-The published summary preserves one bounded July 13 showcase observation; its raw CSV remains local-only and is absent from fresh clones:
+The published summary preserves one warmed bounded Showcase observation; its raw CSV remains local-only and is absent from fresh clones:
 
 | Field | Recorded value |
 | --- | --- |
-| Date | July 13, 2026 |
+| Date | September 27, 2026 |
 | GPU | Intel Arc A770 through Mesa |
 | Renderer | Godot compatibility renderer |
 | Scene | `res://game/world/maps/showcase.tscn` |
-| Duration | 66.4 seconds |
-| Samples | 130 |
-| Maximum frame time | 108.55 ms |
-| Maximum process memory | 104.10 MB |
+| Duration | 69.90 seconds |
+| Samples | 66 |
+| Maximum frame time | 7.58 ms |
+| Minimum observed FPS | 7.00 |
 
-The capture was unthrottled, was not a representative gameplay benchmark, and emitted extreme enemy-position warnings. Its average FPS must not be used as a hardware target or comparative benchmark.
-
-See [Performance Baseline Proof](PERFORMANCE_BASELINE_PROOF.md) for dated context and [capture guidance](guides/performance_optimization.md) for creating new local evidence.
+The capture was headless/unthrottled and validates evidence shape and duration, not a supported-hardware target or display-synchronized gameplay performance. Review [Performance Baseline Proof](PERFORMANCE_BASELINE_PROOF.md) before citing it.
 
 ## Unproven Areas
 
