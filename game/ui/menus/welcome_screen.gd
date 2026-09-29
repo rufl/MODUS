@@ -106,6 +106,7 @@ func _refresh_copy() -> void:
 	)
 	_input_hint.text = _tr("showcase_welcome_input_hint", "Enter / Space / E / Gamepad A")
 
+
 func _update_responsive_layout() -> void:
 	if not _panel or not _title:
 		return
@@ -141,6 +142,7 @@ func _is_reduced_motion() -> bool:
 		and ui_service.theme_manager.has_method("is_reduced_motion")
 		and ui_service.theme_manager.is_reduced_motion()
 	)
+
 
 func _on_language_changed(_language: String) -> void:
 	_refresh_copy()

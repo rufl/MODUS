@@ -39,6 +39,7 @@ func _apply_industrial_materials(node: Node) -> void:
 	for child in node.get_children():
 		_apply_industrial_materials(child)
 
+
 func _apply_psx_material(node: Node) -> void:
 	var mesh_instance := node as MeshInstance3D
 	if mesh_instance != null and mesh_instance.mesh != null:

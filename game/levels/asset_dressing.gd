@@ -202,21 +202,24 @@ const MODEL_ASSETS: Array[Dictionary] = [
 	},
 	{
 		"id": "retro_generator",
-		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb",
 		"position": Vector3(-1.5, 0.0, 12.0),
 		"rotation_degrees": Vector3(0.0, 20.0, 0.0),
 		"scale": Vector3(1.5, 1.5, 1.5),
 	},
 	{
 		"id": "retro_pump",
-		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pump.glb",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pump.glb",
 		"position": Vector3(2.5, 0.0, 12.0),
 		"rotation_degrees": Vector3(0.0, -20.0, 0.0),
 		"scale": Vector3(1.5, 1.5, 1.5),
 	},
 	{
 		"id": "retro_pipe_valve",
-		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipe_valve.glb",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipe_valve.glb",
 		"position": Vector3(5.5, 0.0, 12.0),
 		"rotation_degrees": Vector3(0.0, 30.0, 0.0),
 		"scale": Vector3(1.5, 1.5, 1.5),
@@ -258,7 +261,8 @@ const MODEL_ASSETS: Array[Dictionary] = [
 	},
 	{
 		"id": "industrial_exterior",
-		"path": "res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx",
+		"path":
+		"res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx",
 		"position": Vector3(-3.5, 0.0, -8.5),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
 		"scale": Vector3(0.07, 0.07, 0.07),
@@ -359,7 +363,8 @@ const TEXTURE_ASSETS: Array[Dictionary] = [
 	},
 	{
 		"id": "strideh_torment_tile",
-		"path": "res://game/art/textures/third_party/strideh_torment/true_colour/str_wasteland1.png",
+		"path":
+		"res://game/art/textures/third_party/strideh_torment/true_colour/str_wasteland1.png",
 		"position": Vector3(-4.5, 2.2, 16.0),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
 		"size": Vector2(3.0, 2.5),
@@ -375,7 +380,8 @@ const TEXTURE_ASSETS: Array[Dictionary] = [
 	},
 	{
 		"id": "trash_debris_decal",
-		"path": "res://game/art/models/third_party/mcsteeg_trash_and_debris/TrashAndDebris_LitterDecal_1.png",
+		"path":
+		"res://game/art/models/third_party/mcsteeg_trash_and_debris/TrashAndDebris_LitterDecal_1.png",
 		"position": Vector3(4.5, 2.2, 16.0),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
 		"size": Vector2(3.0, 2.5),
@@ -383,7 +389,8 @@ const TEXTURE_ASSETS: Array[Dictionary] = [
 	},
 	{
 		"id": "chilly_generator_texture",
-		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator_Generator-Texture.png",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator_Generator-Texture.png",
 		"position": Vector3(9.0, 2.2, 16.0),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
 		"size": Vector2(3.0, 2.5),
@@ -516,8 +523,6 @@ func _build() -> void:
 	for entry: Dictionary in VFX_ASSETS:
 		_spawn_vfx(entry)
 	set_meta("asset_usage_contract", get_asset_usage_contract())
-
-
 
 
 func _spawn_display_platform() -> void:

@@ -30,17 +30,40 @@ func _material_for_name(node_name: String, modular: bool) -> Material:
 		return _stone_material
 	if name_lower.contains("barrel") or name_lower.contains("rust"):
 		return _rust_material
-	if name_lower.contains("box") or name_lower.contains("shelving") or name_lower.contains("wagon"):
+	if (
+		name_lower.contains("box")
+		or name_lower.contains("shelving")
+		or name_lower.contains("wagon")
+	):
 		return _wood_material
-	if name_lower.contains("locker") or name_lower.contains("generator") or name_lower.contains("metal"):
+	if (
+		name_lower.contains("locker")
+		or name_lower.contains("generator")
+		or name_lower.contains("metal")
+	):
 		return _metal_material
-	if name_lower.contains("tnt") or name_lower.contains("detonator") or name_lower.contains("button"):
+	if (
+		name_lower.contains("tnt")
+		or name_lower.contains("detonator")
+		or name_lower.contains("button")
+	):
 		return _danger_material
 	if name_lower.contains("medical") or name_lower.contains("helmet"):
 		return _medical_material
-	if name_lower.contains("shovel") or name_lower.contains("petrol") or name_lower.contains("lamp"):
+	if (
+		name_lower.contains("shovel")
+		or name_lower.contains("petrol")
+		or name_lower.contains("lamp")
+	):
 		return _utility_material
-	if modular and (name_lower.contains("rail") or name_lower.contains("elevator") or name_lower.contains("beam")):
+	if (
+		modular
+		and (
+			name_lower.contains("rail")
+			or name_lower.contains("elevator")
+			or name_lower.contains("beam")
+		)
+	):
 		return _metal_material
 	if name_lower.contains("fence") or name_lower.contains("cable") or name_lower.contains("farol"):
 		return _base_material

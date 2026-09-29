@@ -33,9 +33,16 @@ static func load_stream(overrides: Dictionary, event_name: String) -> AudioStrea
 		return null
 	var stream_path := AUDIO_ROOT + relative_path
 	if not ResourceLoader.exists(stream_path):
-		push_warning("[AudioOverrideCatalog] Missing override for %s: %s" % [event_name, stream_path])
+		push_warning(
+			"[AudioOverrideCatalog] Missing override for %s: %s" % [event_name, stream_path]
+		)
 		return null
-	var stream := ResourceLoader.load(stream_path, "AudioStream", ResourceLoader.CACHE_MODE_REUSE) as AudioStream
+	var stream := (
+		ResourceLoader.load(stream_path, "AudioStream", ResourceLoader.CACHE_MODE_REUSE)
+		as AudioStream
+	)
 	if stream == null:
-		push_warning("[AudioOverrideCatalog] Failed to load override for %s: %s" % [event_name, stream_path])
+		push_warning(
+			"[AudioOverrideCatalog] Failed to load override for %s: %s" % [event_name, stream_path]
+		)
 	return stream

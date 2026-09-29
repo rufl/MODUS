@@ -211,9 +211,15 @@ func test_main_menu_screen_exists() -> void:
 		Control.CURSOR_POINTING_HAND,
 		"Menu actions should expose an actionable pointer state"
 	)
-	assert_not_null(play.get_theme_stylebox("normal"), "Primary action should have a visible idle state")
-	assert_not_null(showcase.get_theme_stylebox("hover"), "Secondary action should have a visible hover state")
-	assert_not_null(showcase.get_theme_stylebox("focus"), "Secondary action should have a visible focus state")
+	assert_not_null(
+		play.get_theme_stylebox("normal"), "Primary action should have a visible idle state"
+	)
+	assert_not_null(
+		showcase.get_theme_stylebox("hover"), "Secondary action should have a visible hover state"
+	)
+	assert_not_null(
+		showcase.get_theme_stylebox("focus"), "Secondary action should have a visible focus state"
+	)
 
 
 func test_showcase_welcome_screen_is_accessible_and_truthful() -> void:
@@ -246,11 +252,20 @@ func test_showcase_welcome_screen_is_accessible_and_truthful() -> void:
 	assert_not_null(status, "Welcome screen should expose current run status")
 	assert_not_null(build_version, "Welcome screen should expose its build version")
 	assert_true(status.text.contains("LOCAL"), "Status should identify the local build")
-	assert_true(build_version.text.contains("0.9.5-beta"), "Welcome screen should expose the running build version")
-	assert_not_null(begin.get_theme_stylebox("hover"), "Primary action should have a visible hover state")
-	assert_not_null(begin.get_theme_stylebox("focus"), "Primary action should have a visible focus state")
+	assert_true(
+		build_version.text.contains("0.9.5-beta"),
+		"Welcome screen should expose the running build version"
+	)
+	assert_not_null(
+		begin.get_theme_stylebox("hover"), "Primary action should have a visible hover state"
+	)
+	assert_not_null(
+		begin.get_theme_stylebox("focus"), "Primary action should have a visible focus state"
+	)
 	assert_not_null(input_hint, "Welcome screen should explain accepted input")
-	assert_true(input_hint.text.contains("E"), "Input hint should match the keyboard dismissal path")
+	assert_true(
+		input_hint.text.contains("E"), "Input hint should match the keyboard dismissal path"
+	)
 	screen.free()
 
 

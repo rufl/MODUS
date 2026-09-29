@@ -172,14 +172,17 @@ def validate_ci_cd_pipeline():
                 print(f"❌ Missing required job: {job}")
                 return False
         
-        # Check for GUT test execution
-        if "run_unit_tests_only.gd" not in workflow_content:
-            print("❌ Unit test execution not found in workflow")
-            return False
-        
-        if "run_benchmark_tests_only.gd" not in workflow_content:
-            print("❌ Benchmark test execution not found in workflow")
-            return False
+        # Check the maintained GUT execution and CI smoke lanes.
+        required_markers = [
+            "modus_collect_gut_tests tests/unit tests/integration",
+            "modus_collect_gut_tests tests/property",
+            "bash tests/runners/test_package_smoke.sh",
+            "bash tests/runners/test_windows_network_qualification.sh",
+        ]
+        for marker in required_markers:
+            if marker not in workflow_content:
+                print(f"❌ Required CI marker not found: {marker}")
+                return False
         
         print("✅ CI/CD pipeline configuration is valid")
         return True

@@ -54,7 +54,8 @@ const BREAKWATER_ASSETS: Array[Dictionary] = [
 	{
 		"id": "pump_retro_generator",
 		"family": "chilly_durango_retro_machinery",
-		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb",
 		"position": Vector3(16.5, 0.0, -40.0),
 		"rotation_degrees": Vector3(0.0, 20.0, 0.0),
 		"scale": Vector3(1.5, 1.5, 1.5),
@@ -70,7 +71,8 @@ const BREAKWATER_ASSETS: Array[Dictionary] = [
 	{
 		"id": "intake_retro_pump",
 		"family": "chilly_durango_retro_machinery",
-		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pump.glb",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pump.glb",
 		"position": Vector3(16.5, 0.0, -64.0),
 		"rotation_degrees": Vector3(0.0, -20.0, 0.0),
 		"scale": Vector3(1.5, 1.5, 1.5),
@@ -102,7 +104,8 @@ const BREAKWATER_ASSETS: Array[Dictionary] = [
 	{
 		"id": "relay_industrial_exterior",
 		"family": "godgoldfear_industrial",
-		"path": "res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx",
+		"path":
+		"res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx",
 		"position": Vector3(-16.5, 0.0, -116.0),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
 		"scale": Vector3(0.05, 0.05, 0.05),
@@ -169,7 +172,8 @@ const SHOWCASE_ASSETS: Array[Dictionary] = [
 	{
 		"id": "hazards_retro_generator",
 		"family": "chilly_durango_retro_machinery",
-		"path": "res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_generator.glb",
 		"position": Vector3(65.0, 0.0, -50.0),
 		"rotation_degrees": Vector3(0.0, 20.0, 0.0),
 		"scale": Vector3(1.5, 1.5, 1.5),
@@ -177,7 +181,8 @@ const SHOWCASE_ASSETS: Array[Dictionary] = [
 	{
 		"id": "hazards_industrial",
 		"family": "godgoldfear_industrial",
-		"path": "res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx",
+		"path":
+		"res://game/art/models/third_party/godgoldfear_industrial/IndustrialHorror_PS_like.fbx",
 		"position": Vector3(35.0, 0.0, -50.0),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
 		"scale": Vector3(0.05, 0.05, 0.05),
@@ -325,7 +330,9 @@ func _spawn_model(entry: Dictionary) -> void:
 		return
 	var instance := packed.instantiate() as Node3D
 	if instance == null:
-		load_errors.append("Model %s did not instantiate as Node3D: %s" % [entry.get("id", ""), path])
+		load_errors.append(
+			"Model %s did not instantiate as Node3D: %s" % [entry.get("id", ""), path]
+		)
 		return
 	instance.name = "Scatter_%s" % entry.get("id", "model")
 	instance.set_meta("asset_id", entry.get("id", ""))

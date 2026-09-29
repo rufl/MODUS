@@ -396,6 +396,7 @@ func _load_config() -> void:
 				_event_config = data.events
 	_audio_overrides = AudioOverrideCatalog.load_overrides()
 
+
 func _init_generator_map() -> void:
 	if not _sound_gen:
 		return

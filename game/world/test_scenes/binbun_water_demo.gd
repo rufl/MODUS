@@ -1,6 +1,8 @@
 extends Node3D
 
-const DUCK_MATERIAL: Material = preload("res://game/art/models/third_party/binbun_water/duck_material.tres")
+const DUCK_MATERIAL: Material = preload(
+	"res://game/art/models/third_party/binbun_water/duck_material.tres"
+)
 
 
 func _ready() -> void:

@@ -12,6 +12,8 @@ func _ready() -> void:
 		world_environment.environment.background_mode = Environment.BG_SKY
 	else:
 		push_warning(
-			"[BinbunSkiesDemo] Sky shaders require Forward+/Mobile; "
-			+ "the Compatibility renderer keeps the procedural fallback."
+			(
+				"[BinbunSkiesDemo] Sky shaders require Forward+/Mobile; "
+				+ "the Compatibility renderer keeps the procedural fallback."
+			)
 		)

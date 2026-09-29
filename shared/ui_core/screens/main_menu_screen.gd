@@ -432,6 +432,7 @@ func _style_secondary_button(button: Button) -> void:
 	button.add_theme_color_override("font_pressed_color", Color(0.78, 0.9, 1.0))
 	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.56, 0.68))
 
+
 func _update_responsive_layout() -> void:
 	if not _safe_margins or not _menu_panel or not _title:
 		return

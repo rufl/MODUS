@@ -470,7 +470,11 @@ func test_authored_levels_use_imported_asset_families() -> void:
 		assert_gt(scatter_contract.get("source_families", []).size(), 5)
 		assert_eq(
 			scatter_contract.get("profile"),
-			"breakwater" if level_path == "res://game/levels/breakwater_mission.tscn" else "showcase",
+			(
+				"breakwater"
+				if level_path == "res://game/levels/breakwater_mission.tscn"
+				else "showcase"
+			),
 		)
 		assert_eq(
 			contract.get("spawned_materials"),
