@@ -16,7 +16,7 @@ printf 'windows candidate\n' > "$TMP/modus-0.1.0-windows-x86_64.zip"
 printf 'linux candidate\n' > "$TMP/modus-0.1.0-linux-x86_64.tar.gz"
 
 FLEET_ARGS_FILE="$TMP/args" OVERZEER_ROOT="$TMP/fleet" \
-  "$ROOT/tools/deploy_overzeer_fleet.sh" preview \
+  bash "$ROOT/tools/deploy_overzeer_fleet.sh" preview \
   --application modus --version 0.1.0 \
   --build-id aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
   --ddjarin-base-url https://ddjarin.example \
