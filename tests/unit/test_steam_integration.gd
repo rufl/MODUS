@@ -44,6 +44,7 @@ func test_steam_manager_has_required_methods() -> void:
 		"get_multiplayer_peer",
 		"initialize_steam_server",
 		"init_game_server",
+		"shutdown_steam_server",
 		"pump_callbacks",
 		"get_auth_ticket",
 		"begin_auth_session",
@@ -161,6 +162,48 @@ func test_dedicated_server_contract_fails_closed_without_steam() -> void:
 		"Dedicated server startup must fail closed when Steam is unavailable"
 	)
 	steam._steam_available = original_available
+
+
+func test_dedicated_server_profile_preserves_steam_config() -> void:
+	var server := DedicatedServer.new()
+	server.config = {
+		"port": 28015,
+		"steam_query_port": 28016,
+		"max_players": 24,
+		"server_name": "Acceptance Server",
+		"steam_server_description": "Acceptance Description",
+		"steam_server_mode": 2,
+		"steam_server_token": "token-fixture",
+	}
+	var profile: Dictionary = server._build_steam_server_profile()
+	server.free()
+
+	assert_eq(profile.get("game_port"), 28015)
+	assert_eq(profile.get("query_port"), 28016)
+	assert_eq(profile.get("max_players"), 24)
+	assert_eq(profile.get("server_name"), "Acceptance Server")
+	assert_eq(profile.get("description"), "Acceptance Description")
+	assert_eq(profile.get("server_mode"), 2)
+	assert_eq(profile.get("server_token"), "token-fixture")
+
+
+func test_dedicated_server_shutdown_clears_server_profile() -> void:
+	var steam := _get_steam_manager()
+	assert_not_null(steam, "SteamManager should be available")
+	if not steam:
+		return
+
+	var original_available: bool = steam._steam_available
+	var original_server: bool = steam._is_server
+	steam._steam_available = false
+	steam._is_server = true
+	assert_true(
+		steam.shutdown_steam_server(),
+		"Shutdown should clear an active server profile even when Steam is unavailable"
+	)
+	assert_false(steam._is_server, "Shutdown should clear the server callback profile")
+	steam._steam_available = original_available
+	steam._is_server = original_server
 
 
 func test_callback_pump_fails_closed_without_steam() -> void:

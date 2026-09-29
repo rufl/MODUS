@@ -201,18 +201,48 @@ func initialize_steam_server(data: Dictionary) -> bool:
 
 
 ## Compatibility entrypoint used by DedicatedServer.
+##
+## Optional arguments preserve the legacy four-argument call while allowing a
+## dedicated-server config to select the query port, authentication mode and
+## login token.
 func init_game_server(
-	game_port: int, max_players: int, server_name: String, description: String
+	game_port: int,
+	max_players: int,
+	server_name: String,
+	description: String,
+	query_port: int = -1,
+	server_mode: int = 1,
+	steam_server_token: String = ""
 ) -> bool:
 	return initialize_steam_server(
 		{
 			"steam_game_port": game_port,
-			"steam_query_port": game_port + 1,
+			"steam_query_port": query_port if query_port > 0 else game_port + 1,
+			"server_mode": server_mode,
 			"max_players": max_players,
 			"name": server_name,
 			"description": description,
+			"steam_server_token": steam_server_token,
 		}
 	)
+
+
+## Stop the dedicated-server Steam profile without shutting down the client API.
+## Returns true when an active dedicated-server profile was cleared.
+func shutdown_steam_server() -> bool:
+	if not _is_server:
+		return false
+
+	var steam: Object = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
+	if steam:
+		_steam_call_first(
+			steam,
+			["enableHeartbeats", "gameServer_EnableHeartbeats", "gameServerEnableHeartbeats"],
+			[false]
+		)
+		_steam_call_first(steam, ["logOff", "gameServer_LogOff", "gameServerLogOff"], [])
+	_is_server = false
+	return true
 
 
 func _connect_steam_signals() -> void:

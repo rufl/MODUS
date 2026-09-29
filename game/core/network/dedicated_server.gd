@@ -413,6 +413,19 @@ func _on_auto_save() -> void:
 				gs.player.save_all_players()
 
 
+func _build_steam_server_profile() -> Dictionary:
+	var port: int = int(config.get("port", 7777))
+	return {
+		"game_port": port,
+		"query_port": int(config.get("steam_query_port", port + 1)),
+		"max_players": int(config.get("max_players", 16)),
+		"server_name": str(config.get("server_name", "Modus Server")),
+		"description": str(config.get("steam_server_description", "Dedicated Server")),
+		"server_mode": int(config.get("steam_server_mode", 1)),
+		"server_token": str(config.get("steam_server_token", "")),
+	}
+
+
 func _start_steam_game_server() -> void:
 	if not config.get("steam_server", false):
 		return
@@ -434,11 +447,18 @@ func _start_steam_game_server() -> void:
 	if logger2 and logger2.has_method("info"):
 		logger2.info("[DedicatedServer] Initializing Steam Game Server...", "DedicatedServer")
 
-	# Initialize via NetworkService.steam_manager
-	var port: int = config.get("port", 7777)
-	var max_players: int = config.get("max_players", 16)
-	var server_name: String = config.get("server_name", "Modus Server")
-	if steam.init_game_server(port, max_players, server_name, "Dedicated Server"):
+	# Forward the complete server profile instead of dropping query-port,
+	# authentication-mode and login-token settings at the compatibility boundary.
+	var steam_profile := _build_steam_server_profile()
+	if steam.init_game_server(
+		steam_profile["game_port"],
+		steam_profile["max_players"],
+		steam_profile["server_name"],
+		steam_profile["description"],
+		steam_profile["query_port"],
+		steam_profile["server_mode"],
+		steam_profile["server_token"]
+	):
 		_steam_server_active = true
 		var logger3: Node = gm.get_core_system("logger")
 		if logger3 and logger3.has_method("info"):
@@ -448,10 +468,22 @@ func _start_steam_game_server() -> void:
 			)
 
 
+func _stop_steam_game_server() -> void:
+	if not _steam_server_active:
+		return
+
+	var gm: Node = _get_game_manager()
+	var ns: Node = gm.get_core_system("network") if gm else null
+	var steam: Node = ns.steam_manager if ns else null
+	if steam and steam.has_method("shutdown_steam_server"):
+		steam.shutdown_steam_server()
+	_steam_server_active = false
+
+
 ## Stop server
-
-
 func stop_server() -> void:
+	_stop_steam_game_server()
+
 	# Stop broadcasting
 	if _broadcaster:
 		_broadcaster.stop_broadcasting()
