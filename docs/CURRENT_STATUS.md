@@ -165,7 +165,7 @@ These results are narrower than the aggregate suite and must not be summed into 
 | Combat feature | 20/20, 30 assertions; injected configuration preserves critical and knockback modifiers |
 | Audio/performance logging | 23/23, 67 assertions; maintained music navigation API and mutable signal observations |
 | Grid pathfinding/HUD boundaries | 30/30, 70 assertions; walkable-only A* and deterministic ten-update state |
-| UI/UX | 26/26, 128 assertions on September 29; polished menu action states, status/version truth, explicit keyboard/gamepad hints, short-viewport scrolling and authored-route stacking, responsive containment, localized welcome panel and isolated 1280×720 surface rendering |
+| UI/UX | 26/26, 135 assertions on September 29; polished menu action states, status/version truth, explicit keyboard/gamepad hints, short-viewport scrolling, authored-route stacking and ultra-short viewport containment, localized welcome panel and isolated 1280×720 surface rendering |
 | Manual evidence recorder | 2/2, 21 assertions on August 4; safe CSV output, required metadata, explicit Skip accounting, compact 800×600 layout, 48-pixel targets, and focus order |
 | ENet fallback Unit contract | 11/11, 28 assertions; expected engine errors consumed and config fixture owned |
 | Configuration validation | 14/14, 104 assertions; canonical nested paths and GUT-owned managers |

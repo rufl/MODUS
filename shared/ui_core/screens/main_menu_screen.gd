@@ -22,6 +22,7 @@ var _menu_side: CenterContainer = null
 var _art_space: Control = null
 var _menu_panel: PanelContainer = null
 var _menu_scroll: ScrollContainer = null
+var _panel_margins: MarginContainer = null
 var _menu_container: VBoxContainer = null
 var _authored_row: BoxContainer = null
 var _title: Label = null
@@ -215,12 +216,12 @@ func _build_menu_ui() -> void:
 	_menu_panel.add_theme_stylebox_override("panel", _create_menu_panel_style())
 	_menu_side.add_child(_menu_panel)
 
-	var panel_margins := MarginContainer.new()
-	panel_margins.add_theme_constant_override("margin_left", 32)
-	panel_margins.add_theme_constant_override("margin_right", 32)
-	panel_margins.add_theme_constant_override("margin_top", 18)
-	panel_margins.add_theme_constant_override("margin_bottom", 18)
-	_menu_panel.add_child(panel_margins)
+	_panel_margins = MarginContainer.new()
+	_panel_margins.add_theme_constant_override("margin_left", 32)
+	_panel_margins.add_theme_constant_override("margin_right", 32)
+	_panel_margins.add_theme_constant_override("margin_top", 18)
+	_panel_margins.add_theme_constant_override("margin_bottom", 18)
+	_menu_panel.add_child(_panel_margins)
 
 	_menu_scroll = ScrollContainer.new()
 	_menu_scroll.name = "MenuScroll"
@@ -229,7 +230,7 @@ func _build_menu_ui() -> void:
 	_menu_scroll.follow_focus = true
 	_menu_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_menu_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel_margins.add_child(_menu_scroll)
+	_panel_margins.add_child(_menu_scroll)
 
 	_menu_container = VBoxContainer.new()
 	_menu_container.name = "MenuActions"
@@ -362,7 +363,7 @@ func _create_menu_button(loc_key: String, fallback: String) -> Button:
 		btn = CustomButton.new()
 	else:
 		btn = Button.new()
-	btn.custom_minimum_size = Vector2(280, 48)
+	btn.custom_minimum_size = Vector2(0, 48)
 	btn.focus_mode = Control.FOCUS_ALL
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	var localization: Node = GameManager.get_core_system("localization")
@@ -463,9 +464,15 @@ func _update_responsive_layout() -> void:
 	var edge := 18 if narrow else 40
 	for side: String in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
 		_safe_margins.add_theme_constant_override(side, edge)
-	var panel_width := minf(420.0, maxf(280.0, size.x - edge * 2.0))
-	var panel_height := minf(640.0, maxf(280.0, size.y - edge * 2.0))
+	var available_width := maxf(1.0, size.x - edge * 2.0)
+	var available_height := maxf(1.0, size.y - edge * 2.0)
+	var panel_width := minf(420.0, available_width)
+	var panel_height := minf(640.0, available_height)
 	_menu_panel.custom_minimum_size = Vector2(panel_width, panel_height)
+	if _panel_margins:
+		var content_edge := 18 if narrow else 32
+		for side: String in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+			_panel_margins.add_theme_constant_override(side, content_edge)
 	_title.add_theme_font_size_override("font_size", 46 if narrow else 64)
 	if _menu_side:
 		_menu_side.custom_minimum_size.x = 0.0 if narrow else 480.0

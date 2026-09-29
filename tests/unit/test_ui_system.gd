@@ -183,6 +183,8 @@ func test_main_menu_screen_exists() -> void:
 	var showcase := test_screen.find_child("ShowcaseButton", true, false) as Button
 	var editor := test_screen.find_child("EditorButton", true, false) as Button
 	var quit := test_screen.find_child("QuitButton", true, false) as Button
+	var breakwater := test_screen.find_child("BreakwaterButton", true, false) as Button
+	var package_button := test_screen.find_child("OpenLevelButton", true, false) as Button
 	var hint := test_screen.find_child("MenuHint", true, false) as Label
 	var control_hint := test_screen.find_child("ControlHint", true, false) as Label
 	var version := test_screen.find_child("VersionLabel", true, false) as Label
@@ -198,6 +200,8 @@ func test_main_menu_screen_exists() -> void:
 	assert_not_null(showcase, "The maintained showcase should be player-visible")
 	assert_not_null(editor, "Editor action should exist")
 	assert_not_null(quit, "Quit action should exist")
+	assert_not_null(breakwater, "Breakwater route should remain player-visible")
+	assert_not_null(package_button, "Level package route should remain player-visible")
 	assert_not_null(hint, "Focused actions should explain their outcome")
 	assert_not_null(version, "Build version should be visible")
 	assert_gt(veil.size.x, 0.0, "Backdrop should fill the rendered menu instead of collapsing")
@@ -233,6 +237,14 @@ func test_main_menu_screen_exists() -> void:
 	assert_true(authored_row.vertical, "Authored routes should stack on narrow menus")
 	assert_lte(panel.custom_minimum_size.x, 640.0, "Menu panel should fit a narrow viewport")
 	assert_lte(panel.custom_minimum_size.y, 480.0, "Menu panel should fit a short viewport")
+	test_screen.size = Vector2(320, 240)
+	test_screen.call("_update_responsive_layout")
+	await get_tree().process_frame
+	assert_lte(panel.custom_minimum_size.x, 320.0, "Menu panel should fit an ultra-narrow viewport")
+	assert_lte(panel.custom_minimum_size.y, 240.0, "Menu panel should fit an ultra-short viewport")
+	assert_lte(breakwater.size.x, panel.size.x, "Breakwater action should not overflow its panel")
+	assert_lte(package_button.size.x, panel.size.x, "Package action should not overflow its panel")
+	assert_gte(breakwater.custom_minimum_size.y, 48.0, "Narrow targets should remain selectable")
 	test_screen.size = Vector2(1280, 720)
 	test_screen.call("_update_responsive_layout")
 	await get_tree().process_frame
