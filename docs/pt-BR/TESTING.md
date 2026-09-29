@@ -7,7 +7,7 @@
 
 ## Limite atual
 
-O agregado headless estrito de 25 de setembro passou 1.665/1.665 testes, 22.767 asserções em 149 scripts; dois arquivos GUI permanecem excluídos. O pipeline CI `36588760158` passou as lanes limitadas, contratos de release, exports, manifests, security scan e workflow de qualificação Windows.
+O agregado headless estrito de 29 de setembro passou 1.671/1.671 testes, 22.982 asserções em 149 scripts; dois arquivos GUI permanecem excluídos. O pipeline CI `36588760158` passou as lanes limitadas, contratos de release, exports, manifests, security scan e workflow de qualificação Windows.
 
 Esses resultados são limitados ao escopo executado. Não substituem gameplay manual, performance sincronizada ao display, aceitação nativa, assinatura ou serviços externos.
 

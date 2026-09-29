@@ -7,7 +7,7 @@
 
 ## Current boundary
 
-The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts using Godot 4.7.2; two GUI-required files remain skipped. Hosted CI pipeline `36588760158` passed the bounded CI selections, release contracts, exports, manifests, security scan and Windows qualification workflow. These results remain scoped evidence: they do not replace manual gameplay, display-synchronized performance, native target acceptance, signing or external-service proof.
+The September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts using Godot 4.7.2; two GUI-required files remain skipped. Hosted CI pipeline `36588760158` passed the bounded CI selections, release contracts, exports, manifests, security scan and Windows qualification workflow. These results remain scoped evidence: they do not replace manual gameplay, display-synchronized performance, native target acceptance, signing or external-service proof.
 
 The retained source inventory contains:
 

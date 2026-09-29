@@ -9,7 +9,7 @@
 
 ## Current Evidence Boundary
 
-- September 25 strict headless aggregate: 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped.
+- September 29 strict headless aggregate: 1,671/1,671 tests with 22,982 assertions across 149 scripts; two GUI-required files remain skipped.
 - Hosted CI pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
 - Authenticated unsigned ZTASH dogfood deployment reconciles DDJARIN Windows and CHOPPER Linux to build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`.
 - Manual gameplay: 0 imported evidence files / 0.00 recorded hours.

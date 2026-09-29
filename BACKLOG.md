@@ -45,7 +45,7 @@ Treat generated entries as proposals until they are promoted into the active que
 - Release readiness validation: `tools/validate_release_readiness.sh --strict`
 - Runtime gameplay/manual proof: launch a normal Godot session, complete the manual checklist, and record the observed path.
 
-The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts using Godot 4.7.2; two GUI-required files remain skipped. Manual, performance-target, release-version, target-native, signing, publication, and external proof remain open. `[truth:test]`
+The September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts using Godot 4.7.2; two GUI-required files remain skipped. Manual, performance-target, release-version, target-native, signing, publication, and external proof remain open. `[truth:test]`
 
 ### Native Windows acceptance contract (definition of done)
 

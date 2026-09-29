@@ -14,7 +14,7 @@ Make MODUS a dependable Godot 4.7 FPS framework whose public claims are backed b
 
 ## Now: Maintain the Verified Baseline
 
-1. Preserve the September 25 strict aggregate: 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped.
+1. Preserve the September 29 strict aggregate: 1,671/1,671 tests with 22,982 assertions across 149 scripts; two GUI-required files remain skipped.
 2. Preserve the source-validation baseline: pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows.
 3. Keep maintained status, known limits, active backlog, release evidence, root changelog, and both language navigation surfaces synchronized.
 4. Keep authenticated dogfood deployment reconciled to immutable package hashes without calling unsigned validation a release.

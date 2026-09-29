@@ -22,7 +22,7 @@ O payload comum é o build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`. Nenhuma c
 ## Evidência automatizada mantida
 
 - O golden demo automatizado registra cena, player, movimento, disparo, derrota de inimigo, pickup, save/load criptografado e carregamento do mod SDK de exemplo.
-- O agregado headless estrito de 25 de setembro passa 1.665/1.665 testes com 22.767 asserções em 149 scripts; dois testes que exigem GUI permanecem excluídos.
+- O agregado headless estrito de 29 de setembro passa 1.671/1.671 testes com 22.982 asserções em 149 scripts; dois testes que exigem GUI permanecem excluídos.
 - A captura Showcase aquecida de 69,90 segundos/66 amostras passa validação de forma. Ela não é benchmark sincronizado ao display.
 - A suíte de release valida manifests, hashes, staging, inventários OVERZEER, ZTASH, notices, toolchain lock e lifecycle Linux em escopos focados.
 

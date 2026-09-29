@@ -14,7 +14,7 @@ This snapshot reports evidence state, not lines of code or feature volume. It de
 | --- | --- | --- |
 | Documentation truth | **PASS** | Documentation, project truth, runner-manifest and provenance checks pass locally |
 | Hosted CI | **PASS** | Source-validation pipeline `36588760158` and quality `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows |
-| Automated Godot aggregate | **PASS / bounded** | September 25 strict aggregate: 1,665/1,665 tests, 22,767 assertions, 149 scripts; two GUI-required files skipped |
+| Automated Godot aggregate | **PASS / bounded** | September 29 strict aggregate: 1,671/1,671 tests, 22,982 assertions, 149 scripts in 1,103.095 seconds; two GUI-required files skipped |
 | Focused release engineering | **PASS** | Archive validation, staging, package lifecycle, ZTASH preparation, fleet forwarding and toolchain-lock contracts pass |
 | Authenticated dogfood transfer | **PASS** | DDJARIN Windows and CHOPPER Linux active state reconciles to immutable hashes for build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` |
 | Manual gameplay evidence | **BLOCKED / TOOLING READY** | Recorder and strict validator exist; reviewed CSV count is 0 and validated hours are 0.00 |

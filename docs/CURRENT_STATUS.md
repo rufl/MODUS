@@ -11,7 +11,7 @@
 
 ## Summary
 
-MODUS contains broad FPS framework code plus focused and golden-demo runtime proof. Reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 25 strict headless aggregate passed 1,665/1,665 tests with 22,767 assertions across 149 scripts; two GUI-required files remain skipped. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, quality `36588760149`); documentation-only commits run through the same GitHub Actions workflows.
+MODUS contains broad FPS framework code plus focused and golden-demo runtime proof. Reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts in 1,103.095 seconds; two GUI-required files remain skipped. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, quality `36588760149`); documentation-only commits run through the same GitHub Actions workflows.
 
 Authenticated unsigned ZTASH dogfood deployment is now verified end-to-end: DDJARIN serves the Windows package and CHOPPER serves the Linux package, both reconciled against build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` and retained SHA-256 metadata. This closes authenticated dogfood validation only. Signed/public release, installer packaging, native Windows execution, manual gameplay, Steam/WAN/Workshop, and target-platform graphical proof remain open.
 
@@ -113,11 +113,11 @@ September 13 production proof: the exported Linux client completes the `.mdsl` m
 | Showcase scene launch smoke | **PASS** | Fresh August 2 world-scene load/initialization only |
 | Golden demo runtime smoke | **PASS** | August 4: all 8 controlled framework-loop steps; automated scope, not manual feel |
 | September engineering repairs | **PASS** | 67 focused tests/612 assertions; eleven-step real-player smoke; native four-prop/ten-icon render; explicit patched Godot required for the MP3 fix |
-| Retained complete Godot/GUT suite | **PASS** | September 10 refreshed headless aggregate: 1,568/1,568 passing, 21,718 assertions across 135 scripts; 10 warnings and 31 deprecations; two GUI-required files skipped |
-| Latest strict aggregate attempt | **PASS/complete** | September 10: `run_all_tests_headless.sh` completed in 1,169.121 seconds with the patched Godot 4.7.2 binary; Godot emitted the known engine-exit ObjectDB diagnostics |
-| Latest batched Unit lane | **PASS** | September 10: 1,166/1,166 passing |
-| Latest batched Integration lane | **PASS** | September 10: 227/227 passing; 2 GUI-required files skipped |
-| Latest batched Property lane | **PASS** | September 10: 175/175 passing, 2,804 assertions |
+| Retained complete Godot/GUT suite | **PASS** | September 29 refreshed headless aggregate: 1,671/1,671 passing, 22,982 assertions across 149 scripts; two GUI-required files skipped |
+| Latest strict aggregate attempt | **PASS/complete** | September 29: `run_all_tests_headless.sh` completed in 1,103.095 seconds with Godot 4.7.2; the known engine-exit ObjectDB diagnostics remain outside the pass/fail totals |
+| Latest batched Unit lane | **PASS** | September 10: 1,166/1,166 passing; lane report remains retained local evidence |
+| Latest batched Integration lane | **PASS** | September 10: 227/227 passing; 2 GUI-required files skipped; lane report remains retained local evidence |
+| Latest batched Property lane | **PASS** | September 10: 175/175 passing, 2,804 assertions; lane report remains retained local evidence |
 | Manual evidence | **BLOCKED / RECORDER READY** | Responsive 20-item F8 workflow and strict CSV validation pass; 0 reviewed CSV files and 0.00 validated hours |
 | Performance evidence | **PASS** | 2026-09-27 warmed bounded headless Showcase capture: 69.90 seconds/66 samples, 7.00 FPS minimum and 7.58ms maximum frame time; measured evidence shape only, not a production FPS claim |
 | Release-version evidence | **BLOCKED** | Project remains `0.9.5-beta` |
@@ -199,7 +199,7 @@ These results are narrower than the aggregate suite and must not be summed into 
 | Source shape/resource/editor registry | 37/37, 172 assertions, zero GUT orphans; canonical paths and built-in actor instantiation only |
 
 
-The September 10 refreshed aggregate is current-tree automated evidence: 1,568/1,568 selected tests passed with 21,718 assertions across 135 scripts. It does not certify the two GUI-required files, benchmark performance, manual gameplay feel, packaging, rights, or external service proof.
+The September 29 refreshed aggregate is current-tree automated evidence: 1,671/1,671 selected tests passed with 22,982 assertions across 149 scripts. It does not certify the two GUI-required files, benchmark performance, manual gameplay feel, packaging, rights, or external service proof.
 ## Source-Backed Implementation Boundary
 
 - `project.godot` registers two autoloads: `GameManager` and `MapGenerator`.

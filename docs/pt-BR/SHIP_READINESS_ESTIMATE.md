@@ -14,7 +14,7 @@ Não publicamos percentual ponderado: gates externos não são equivalentes a co
 | --- | --- | --- |
 | Verdade da documentação | **PASS** | Checks de documentação, projeto, runner-manifest e proveniência passam localmente |
 | CI hospedado | **PASS** | Pipeline `36588760158` e qualidade `36588760149` passam no commit `701ead47` |
-| Agregado Godot | **PASS / limitado** | 1.665/1.665 testes, 22.767 asserções, 149 scripts; dois arquivos GUI excluídos |
+| Agregado Godot | **PASS / limitado** | 1.671/1.671 testes, 22.982 asserções, 149 scripts em 1.103,095 segundos; dois arquivos GUI excluídos |
 | Release engineering | **PASS** | Validation, staging, lifecycle, ZTASH, fleet forwarding e toolchain lock focados passam |
 | Dogfood autenticado | **PASS** | DDJARIN Windows e CHOPPER Linux reconciliam hashes imutáveis do build `6d0f7817` |
 | Gameplay manual | **BLOQUEADO / ferramenta pronta** | Recorder existe; CSV revisado `0`, horas validadas `0,00` |

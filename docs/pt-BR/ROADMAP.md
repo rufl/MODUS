@@ -8,7 +8,7 @@
 
 ## Limite de evidência atual
 
-- Agregado headless estrito de 25/09: 1.665/1.665 testes, 22.767 asserções, 149 scripts; dois arquivos GUI excluídos.
+- Agregado headless estrito de 29/09: 1.671/1.671 testes, 22.982 asserções, 149 scripts; dois arquivos GUI excluídos.
 - CI pipeline `36588760158` e qualidade `36588760149` passaram no commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
 - Dogfood ZTASH autenticado reconcilia DDJARIN Windows e CHOPPER Linux ao build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`.
 - Gameplay manual: 0 arquivos importados / 0,00 horas.

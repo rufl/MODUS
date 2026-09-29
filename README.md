@@ -12,7 +12,7 @@ It combines fast FPS combat, movement, weapons, loot, enemy AI, procedural map g
 **Engine:** Godot 4.7+ (CI/toolchain pinned to 4.7.2)
 **Readiness:** **NOT READY**
 
-MODUS is not presented as a shipped game or production-ready SDK. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`; quality run `36588760149`); documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux), but signing, public release, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
+MODUS is not presented as a shipped game or production-ready SDK. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`; quality run `36588760149`); the September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts, with two GUI-required files skipped. Documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux), but signing, public release, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
 
 ## Read This Before Cloning
 

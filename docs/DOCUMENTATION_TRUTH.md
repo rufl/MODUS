@@ -18,7 +18,7 @@ Use these maintained files when documents disagree:
 4. [Root Changelog](../CHANGELOG.md) for completed or retired work and its historical proof scope.
 5. [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md) for curated captures, provenance, package hashes and release exclusions.
 
-The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`). Documentation-only commits run through the same GitHub Actions workflows. The September 25 strict headless aggregate remains the latest published full automated result: 1,665/1,665 tests with 22,767 assertions across 149 scripts, with two GUI-required files skipped. Authenticated ZTASH dogfood deployment is current, but packages remain unsigned and public/native/external release gates remain open.
+The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`). Documentation-only commits run through the same GitHub Actions workflows. The September 29 strict headless aggregate is the latest published full automated result: 1,671/1,671 tests with 22,982 assertions across 149 scripts in 1,103.095 seconds, with two GUI-required files skipped. Authenticated ZTASH dogfood deployment is current, but packages remain unsigned and public/native/external release gates remain open.
 
 ## Local-Only Retention
 

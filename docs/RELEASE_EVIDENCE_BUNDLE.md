@@ -69,7 +69,7 @@ The current capture validates duration, sample monotonicity and contextual metad
 
 ## Published Context and Local Evidence
 
-- Automated suite: the [current status](CURRENT_STATUS.md) records the September 25 1,665/1,665 aggregate and source-validation CI baseline `36588760158`; raw logs remain local-only. Documentation-only commits run through the same workflows. Run `./tests/runners/run_all_tests_headless.sh` for new local logs and a new result.
+- Automated suite: the [current status](CURRENT_STATUS.md) records the September 29 1,671/1,671 aggregate with 22,982 assertions across 149 scripts and source-validation CI baseline `36588760158`; raw logs remain local-only. Documentation-only commits run through the same workflows. Run `./tests/runners/run_all_tests_headless.sh` for new local logs and a new result.
 - UI focus: `tests/unit/test_ui_system.gd`.
 - Performance baseline: [published context](PERFORMANCE_BASELINE_PROOF.md); use `godot --path . --script tools/run_performance_evidence_capture.gd` and `tools/validate_performance_evidence.sh --strict` to create and validate new local CSV evidence.
 - Showcase route: [maintained checklist](SHOWCASE_ROUTE.md). Local `docs/GOLDEN_DEMO_SMOKE.md` and startup-only `docs/SHOWCASE_LAUNCH_SMOKE.md` are regenerated using the [report commands](DOCUMENTATION_TRUTH.md#regenerating-local-reports), not fetched as committed proof.
