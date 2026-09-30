@@ -1,124 +1,70 @@
 # MODUS Release Evidence Bundle
 
-> **Documentation status: maintained reference.** These artifacts prove only the named capture boundary; they are not manual gameplay, performance, multiplayer, or release approval.
+> **Documentation status: maintained reference.** Updated 2026-09-30. This bundle makes public beta evidence easy to inspect without turning bounded checks into broad readiness claims.
 
-**Languages:** [English](RELEASE_EVIDENCE_BUNDLE.md) · [Português (Brasil)](pt-BR/RELEASE_EVIDENCE_BUNDLE.md)
-**Updated:** September 30, 2026
-**Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
+## Release identity
 
-**Current publication state:** The latest source-validation baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (CI/CD `36779150278`, quality `36779150276`); documentation-only commits run through the same GitHub Actions workflows. Current complete OVERZEER archives passed strict four-format validation, and lean ZTASH packages for build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` passed local smoke/capability checks, ZEER preview, and authenticated dogfood deployment. The public GitHub beta below is a separate unsigned client distribution; signed production release, installer, native target, manual and external-service gates remain open.
+| Field | Value |
+| --- | --- |
+| Tag | [`v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) |
+| Source commit | `1367b270d651b1a2588044774a15f1dbeb2b8b51` |
+| Engine | Godot `4.7.2-stable` |
+| License | MIT for repository code; see [Attribution](ATTRIBUTION.md) for third-party terms |
+| Distribution boundary | Unsigned beta archives; macOS is not notarized |
 
-## Public GitHub beta artifact
+## Published artifacts
 
-The [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) was published by workflow `36779157160` from tag/build commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`.
-
-| Asset | Bytes | SHA-256 |
+| Artifact | Size (bytes) | SHA-256 |
 | --- | ---: | --- |
-| `modus-0.9.5-beta-linux-x86_64.tar.gz` | 131401146 | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
-| `modus-0.9.5-beta-windows-x86_64.zip` | 141246788 | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
-| `modus-0.9.5-beta-macos-universal.zip` | 152177480 | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
-| `SHA256SUMS` | 308 | `42346a904f4114d769c5ada42595ca9454590018fd25a558da11a05678b63d48` |
+| `modus-0.9.5-beta-linux-x86_64.tar.gz` | 131,401,146 | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
+| `modus-0.9.5-beta-windows-x86_64.zip` | 141,246,788 | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
+| `modus-0.9.5-beta-macos-universal.zip` | 152,177,480 | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
+| `SHA256SUMS` | — | `42346a904f4114d769c5ada42595ca9454590018fd25a558da11a05678b63d48` |
 
-The downloaded package set passed the published `SHA256SUMS`, `tar`/`unzip` integrity checks, Linux bounded headless smoke, Windows PE32+ x86-64 identification and macOS two-architecture Mach-O identification. The archives are unsigned; macOS notarization is unavailable. This proves public beta distribution and archive integrity only, not production release approval.
+Verify after downloading:
 
-This published index preserves dated observations and curated media; it is not a fresh verification run. Raw `logs/`, generated reports, and historical session documents remain local-only and are absent from fresh clones. The August menu images predate subsequent artwork/layout changes and do not prove the current rendered menu. Historical artifact entries below remain useful for provenance but do not override the current publication state.
+```bash
+sha256sum --check SHA256SUMS
+```
 
-## Main Menu Captures
+Windows PowerShell provides `Get-FileHash`; macOS provides `shasum -a 256`.
 
-| Artifact | Resolution | SHA-256 | Boundary |
-| --- | ---: | --- | --- |
-| `media/release/main_menu_1280x720.png` | 1280×720 | `9615dbafca1cb7f64a4b40648a192f65c7531e20d4dd5dbda43baa8562931ad5` | August 2 Xvfb render of the maintained main-menu scene |
-| `media/release/main_menu_800x600.png` | 800×600 | `e7e6d9aba02aa13a0e36f0628125decf7af1f8a4752786e138d7235d492f5b04` | August 2 narrow-window render of the maintained main-menu scene |
-| `media/release/showcase_welcome_1280x720.png` | 1280×720 | `f43faf67b5c9f7fab75e713f0458a26f58be2af95e0020c0e10a049c5e8db4f0` | August 2 Xvfb render of the localized showcase welcome/evidence panel |
-| `media/release/showcase_welcome_800x600.png` | 800×600 | `95babffbe28608d018ce8ce1522d51893e121b4c8c0a29bf315ca22678cbc84c` | August 2 narrow-window render of the welcome/evidence panel |
-| `media/release/mod_manager_1280x720.png` | 1280×720 | `f45cd8cee33d9d67f85b0a705ff50b442ce16878e13132e10b605bee095423c6` | Responsive localized mod workflow with selected-package detail |
-| `media/release/mod_manager_800x600.png` | 800×600 | `76345902dbf314e99156aba0c86a1ee0b272fd7a58f12d6efaa01f4e6c25120b` | Constrained-window mod workflow capture |
+## What the release workflow established
 
-![MODUS main menu at 1280×720](media/release/main_menu_1280x720.png)
+- Linux, Windows, and macOS exports completed from the tagged source.
+- Release archives opened successfully and matched their manifest structure.
+- The Linux binary completed a bounded headless startup smoke.
+- The Windows client was identified as PE32+ x86-64.
+- The macOS application contained x86-64 and arm64 Mach-O slices.
+- Checksums were generated from the final uploaded files.
 
-![MODUS main menu at 800×600](media/release/main_menu_800x600.png)
+## What it did not establish
 
-![MODUS showcase welcome at 1280×720](media/release/showcase_welcome_1280x720.png)
+- code signing, notarization, or reputation with platform security systems;
+- native Windows or macOS gameplay acceptance;
+- graphical quality across drivers, displays, or accessibility configurations;
+- public-service multiplayer, Steam, or Workshop behavior;
+- security certification, performance certification, or production readiness.
 
-![MODUS showcase welcome at 800×600](media/release/showcase_welcome_800x600.png)
+## Curated visual evidence
 
-![MODUS mod manager at 1280×720](media/release/mod_manager_1280x720.png)
+| Surface | 1280×720 | 800×600 | Purpose |
+| --- | --- | --- | --- |
+| Main menu | [PNG](media/release/main_menu_1280x720.png) | [PNG](media/release/main_menu_800x600.png) | Primary navigation and visual identity |
+| Showcase welcome | [PNG](media/release/showcase_welcome_1280x720.png) | [PNG](media/release/showcase_welcome_800x600.png) | Guided evidence route |
+| Mod manager | [PNG](media/release/mod_manager_1280x720.png) | [PNG](media/release/mod_manager_800x600.png) | Mod discovery/management surface |
+| Evidence recorder | [PNG](media/release/manual_evidence_recorder_1280x720.png) | [PNG](media/release/manual_evidence_recorder_800x600.png) | Manual observation contract |
 
-![MODUS mod manager at 800×600](media/release/mod_manager_800x600.png)
+The [25-second automated smoke capture](media/release/golden_demo_smoke_1280x720.mp4) is evidence of the scripted route completing, not proof of game feel or production rendering quality.
 
-The August UI captures record readable hierarchy, contrast, responsive containment, visible version truth, the player-visible Showcase entry, the then-present hero artwork, the localized gamepad-ready route/evidence panel, and responsive mod selection/reload workflow. Focused UI proof at that boundary was 26/26. They do not prove current appearance or manual input feel.
+## Reproduction surfaces
 
-## Automated Golden Demo
+```bash
+bash tools/check_project_truth.sh
+bash tools/check_documentation_truth.sh
+bash tests/runners/test_release_archive_package.sh
+```
 
-| Artifact | SHA-256 | Boundary |
-| --- | --- | --- |
-| `media/release/golden_demo_smoke_1280x720.png` | `a106cea9875031cf80ff428c5d0e4b74643dd902ad7da7aa65875e0e3d1f0ed9` | Final visible eight-step PASS overlay |
-| `media/release/golden_demo_smoke_1280x720.mp4` | `08642152a9cad3c70aee183670361de5015ff8a9941ad49bf10284389eff2405` | 25.1-second automated runtime recording; not a reviewed manual trailer |
+The release workflow is defined in [`.github/workflows/beta-release.yml`](../.github/workflows/beta-release.yml). Archive construction lives in [`tools/package_release_archive.py`](../tools/package_release_archive.py). Graphical reruns require a disposable isolated display environment.
 
-![MODUS golden-demo smoke](media/release/golden_demo_smoke_1280x720.png)
-
-The retained media records one controlled local pass through scene load, player spawn, movement input, weapon fire, enemy defeat, pickup collection, encrypted save/load restoration, and bundled sample-mod loading. It remains separate from manual gameplay evidence. Generate a new local `docs/GOLDEN_DEMO_SMOKE.md` with `tools/run_showcase_golden_demo_smoke.sh --strict`; its result describes that new invocation, not the historical capture.
-
-## Manual Recorder UI
-
-| Artifact | Resolution | SHA-256 | Boundary |
-| --- | ---: | --- | --- |
-| `media/release/manual_evidence_recorder_1280x720.png` | 1280×720 | `0439b18849662ba163545c95e68eef3adddc76391c872e3b0f38b1f194704085` | Test-only recorder review state; no human result is represented |
-| `media/release/manual_evidence_recorder_800x600.png` | 800×600 | `f9387fa2b2bd92f383eb54731e21560c87ab8c2ce18d46e30c6f6df72a2b3aa6` | Compact recorder layout with readable result actions |
-
-![MODUS manual evidence recorder at 1280×720](media/release/manual_evidence_recorder_1280x720.png)
-
-![MODUS manual evidence recorder at 800×600](media/release/manual_evidence_recorder_800x600.png)
-
-These captures prove the recorder surface renders responsively with visible focus and explicit Pass/Fail/Skip states. They are automated UI captures and contain no manual gameplay evidence.
-
-## Bounded Benchmark Table
-
-| Hardware / renderer | Mode | Duration / samples | Observed values | Release boundary |
-| --- | --- | ---: | --- | --- |
-| Intel Arc A770 / Mesa, Godot 4.7 OpenGL compatibility | Warmed headless Showcase capture | 69.90s / 66 | Minimum 7.00 FPS; maximum frame time 7.58ms | Evidence-shape PASS only; not a display-synchronized target or supported-hardware claim |
-
-The current capture validates duration, sample monotonicity and contextual metadata. Its raw CSV remains local-only; use [Performance Baseline Proof](PERFORMANCE_BASELINE_PROOF.md) and `tools/validate_performance_evidence.sh --strict` for a new invocation.
-
-## Published Context and Local Evidence
-
-- Automated suite: the [current status](CURRENT_STATUS.md) records the September 29 1,671/1,671 aggregate with 22,982 assertions across 149 scripts and source-validation CI baseline `36588760158`; raw logs remain local-only. Documentation-only commits run through the same workflows. Run `./tests/runners/run_all_tests_headless.sh` for new local logs and a new result.
-- UI focus: `tests/unit/test_ui_system.gd`.
-- Performance baseline: [published context](PERFORMANCE_BASELINE_PROOF.md); use `godot --path . --script tools/run_performance_evidence_capture.gd` and `tools/validate_performance_evidence.sh --strict` to create and validate new local CSV evidence.
-- Showcase route: [maintained checklist](SHOWCASE_ROUTE.md). Local `docs/GOLDEN_DEMO_SMOKE.md` and startup-only `docs/SHOWCASE_LAUNCH_SMOKE.md` are regenerated using the [report commands](DOCUMENTATION_TRUTH.md#regenerating-local-reports), not fetched as committed proof.
-- Provenance inventory: `docs/ATTRIBUTION.md` and `docs/PROVENANCE_LEDGER.csv`.
-- Retained notices: root `LICENSE` and `docs/licenses/`.
-- September 11 package proof: a `Linux Desktop` preset builds a local client artifact and `tools/run_export_smoke.sh` launches it cleanly for the bounded smoke interval on Godot 4.7.2. This is local runtime proof only; it is not a published, signed, installer-backed, Steam, target-Windows, or long-session release.
-- September 30 current artifact and dogfood proof: build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` passed current complete four-format inventory/hash validation, lean ZTASH preparation, extracted Linux `--package-smoke`/`--capability-report`, ZEER preview and authenticated DDJARIN/CHOPPER deployment. Lean hashes are Linux `63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64` / 131419549 bytes and Windows `24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b` / 141275566 bytes. Complete archive hashes are Linux `.tar.zst` `b7e7da3ca26f7f1c98ce9c143be23230446f5838768ac91c1d4cd591b3ff4631`, Linux `.tar.gz` `f1af7d68f5f3a69eb92969ec98b5585dc207fb79b6a1e4f3ad00b3ee5a9ee5d0`, Windows `.tar.zst` `4ad69d90e9ffdd990746f871f2b281d179368d2b006f6fa7475c4706f7baa9a0`, and Windows `.zip` `3ab58d67a8011fb289efb78a9b27d54579cb2dcd68edf15b8ff90898e48658f3`.
-
-The following entries are historical preparation attempts. Their “no deployment,” receiver error, and stale-hash statements do not describe the current active receiver state above.
-- September 29 authenticated publication preparation: source-matched complete client/server/editor OVERZEER archives and lean ZTASH receiver packages were assembled from GUI commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`, CI run `36556656363` (artifact set 183), and strict four-format inventory/hash validation passed. Complete archive hashes: Linux `.tar.zst` `46c80ee04220fd3d48868dad39df25ebecd4c20e17187963ebde69d5bc658d6a`, Linux `.tar.gz` `5ec27736c84fa348065289e3f88ee4a7634b69a6e9294490e034580430734ae3`, Windows `.tar.zst` `94ed53607fa5ab65eb157bc3deddb6fe776c3d9991b82e7838647f4d441218f4`, Windows `.zip` `1d1da99165c17f7aa3d7fd1569b0187f189e27238491b8ecb5a0325f46d4a386`; lean receiver hashes: Linux `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667` / 131225481 bytes, Windows `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363` / 141111645 bytes. Extracted Linux receiver smoke/capability proof, authenticated DDJARIN/CHOPPER capability checks, and local fleet preview passed. Signing remains unavailable (`signing: unsigned` / `signing: unavailable`), and no remote mutation was performed.
-- September 29 current artifact proof: commit `e1c1fb1c8ef9e2df9673d0b88ac14c51ee48444d` (GitHub CI run `36543750407`, artifact set 181) passed the hosted quality/export pipeline and native Windows qualification job. Fresh lean ZTASH candidates assembled from Linux/Windows CI exports passed preparation, extracted Linux `--package-smoke`, and `--capability-report`; hashes are Linux `c085902d63a59561ed46357744ded1ad27740cf19a509093b620a6f7d285495f` (131218001 bytes) and Windows `edf64432c89797aa86b86e8ba84e72a5b70fd72930416873087a549c995d1a50` (141068862 bytes). No receiver deployment was attempted because no HTTPS base URL or token is configured.
-- September 28 capability/artifact refresh: commit `b1cca0b418db8968dbbd036932f8b9a8b2ae409a` publishes a versioned runtime capability manifest and derives omitted `ModuleAssembly` capability policy from detected native classes. Fresh Godot 4.7.2 client/server/editor and Windows client/editor exports passed strict four-format inventory/hash validation, source/extracted Linux `--package-smoke`, Linux client/server export smoke and ZTASH preparation. Lean ZTASH Linux is `2074c2cfa312e728a5f694d19b9fa4c9b4fe369cb4d0d57d2fd13b4e5f90c69b` / 83562624 bytes and Windows is `b72148c094d6923a99f9b64543a05220c1b220e6b2529290e230fcdc0ef6ae12` / 93372362 bytes. Authenticated CHOPPER deployment completed; DDJARIN returned `AccessDenied` during Windows validation/smoke without changing its active deployment. This remains unsigned receiver-candidate evidence; native Windows, signing, bundled runtime dependencies and manual acceptance remain open.
-- September 28 authored-texture artifact refresh: payload commit `dae27d1e42dd86eb11ba73322ad27914a7e54c7c` rebuilt five Godot 4.7.2 exports. Strict four-format OVERZEER inventory/hash validation, source/extracted Linux `--package-smoke`/`--capability-report`, Linux client/server export smoke, lean ZTASH preparation and ZEER preview through the handoff-wrapper fallback passed. Lean ZTASH Linux is `701a3c94f0685e10a5efd0f7f4a81184349c3381385d8c64c981c2a5ea0c8aff` / 83585327 bytes and Windows is `9768fbf4ece970b524d67edfb5b8d5e5423abaab7ab24956186b6d02280f87ee` / 93358863 bytes. No remote mutation was attempted; packages remain unsigned and native Windows, signing, publication, Steam/Workshop/WAN and manual acceptance remain open.
-- September 10 security proof: NetworkEditor accepts only server-side finite, bounded, safe-path payloads; entity and transform RPCs are explicitly whitelisted and rate-limited. Focused proof passes 5/5 NetworkEditor integration tests and 9/9 RPC-whitelist tests.
-- September 10 trusted-peer proof: Steam-authenticated peers remain subject to RPC whitelist/rate limits and server movement validation; NetworkManager focused proof passes 14/14 with 54 assertions.
-- September 10 RPC payload proof: kill reports require sender participation and bounded source text; Steam ticket RPCs require positive IDs and bounded non-empty buffers. NetworkManager focused proof passes 15/15 with 62 assertions; RPC whitelist proof passes 9/9 with 119 assertions.
-- September 10 revive authority proof: start, stop, and immediate-bleedout requests are server-only, rate-limited, and bound to the target player's owned component; distance checks remain server-authoritative. Unit revive proof passes 8/8 and property proof passes 5/5.
-- September 10 interaction RPC proof: physics-object pickup requests are sender-owned, object-typed, and distance-bounded; throw requests reject non-finite and excessive directions. NetworkManager focused proof passes 15/15 with 64 assertions; RPC whitelist proof passes 9/9 with 127 assertions.
-- September 11 damage authority proof: player damage reception is authority-only, and malformed/non-finite damage-request payloads are rejected before server processing. Combat feature proof passes 20/20 with 30 assertions; NetworkManager proof passes 15/15 with 64 assertions.
-- September 11 weapon VFX authority proof: blood, decal, debris, muzzle-flash, tracer, and cartridge RPCs accept calls only from the authority; clients cannot directly spawn arbitrary world effects. Combat proof passes 20/20 with 30 assertions; NetworkManager proof passes 15/15 with 64 assertions; RPC whitelist proof passes 9/9 with 127 assertions.
-- September 11 player-state authority proof: movement, dodge, dash, slide, wallrun, walljump, fly, firing-state, and restored-alive synchronization RPCs accept updates only from their authority. NetworkManager proof passes 15/15 with 64 assertions; combat proof passes 20/20 with 30 assertions; RPC whitelist proof passes 9/9 with 127 assertions.
-- September 11 player lifecycle request proof: mode/state requests execute only on the server with valid sender IDs and bounded enums; assistance requires a downed sender, and spectate requests require an existing target. Player systems proof passes 15/15 with 38 assertions; NetworkManager proof passes 15/15 with 64 assertions; RPC whitelist proof passes 9/9 with 127 assertions.
-- September 11 gameplay request proof: grenade spawn requests require the owning sender, finite direction/origin bounds; breakable-prop damage rejects malformed, non-finite, excessive, and unsafe damage types; military-chest requests bind opener identity to the sender. Weapon proof passes 58/58 with 76 assertions; NetworkManager proof passes 15/15 with 64 assertions; RPC whitelist proof passes 9/9 with 127 assertions.
-- September 11 loot-request proof: backpack retrieval and military-chest opening require valid sender identity and server-side interaction distance. Loot proof passes 7/7 with 71 assertions; NetworkManager proof passes 15/15 with 64 assertions; RPC whitelist proof passes 9/9 with 127 assertions.
-- September 11 treasure/effect authority proof: treasure-chest requests require a valid sender and nearby player before opening; enemy damage flashes accept RPC calls only from authority. Effects proof passes 12/12 with 26 assertions; NetworkManager proof passes 15/15 with 64 assertions; RPC whitelist proof passes 9/9 with 127 assertions.
-- September 11 interaction-authority source proof: button and lever requests now require a sender-owned nearby player before server application; replicated state/effects are authority-only; EnemyLab state requests require a valid mapped state and nearby sender. Local formatter/lint proof passes; CI run 52 remains red on 60 unit and 28 property failures outside this tranche.
-- September 11 door/barrel/spawn source proof: door requests require a nearby sender-owned player; explosive-barrel effects accept authority calls only; world spawn requests enforce bounded modes and positive peer IDs. Local formatter/lint proof passes; runtime proof remains bounded by CI's existing baseline failures.
-- September 11 ProjectileLab source proof: freeze requests require a nearby sender-owned player, and time-scale replication is authority-only; pickup, health synchronization, and status-effect RPCs retain server/authority gates. Local formatter/lint proof passes; runtime proof remains bounded by CI's existing baseline failures.
-- September 11 downed/player-state/interaction source proof: revive and bleedout requests now bind to sender-owned player nodes with revive distance checks; assistance and spectate requests use RPC rate limits; validated player-state requests apply transitions; pickup requests require server-side range validation. Local formatter/lint proof passes; runtime proof remains bounded by CI's existing baseline failures.
-- September 11 inventory/editor source proof: split, equip, and unequip inventory RPCs now require positive sender IDs and whitelist rate limits; NetworkEditor permission checks fail closed when runtime manager/config context is unavailable. Local formatter/lint proof passes; runtime proof remains bounded by CI's existing baseline failures.
-
-## Missing Before Release
-
-- Reviewed manual gameplay captures suitable for release marketing; the retained video is automated proof only.
-- Imported ManualTestTimer CSV evidence.
-- Additional display-synchronized benchmark rows covering declared hardware and modes.
-- ~~A known-limits matrix for networking, Steam, editor, performance, and content scope.~~ See [Known-Limits Matrix](KNOWN_LIMITS_MATRIX.md); it is source/evidence-bounded and does not replace runtime proof.
-- Provenance clearance is complete for the current 2159-row ledger. The twelve private Suno tracks were removed; Quaternius animation assets and derived resources are cleared under CC0; author-confirmed project resources, liquid/skybox assets, editor icons, shaders, effect textures, weapon icons, and retro prototype textures are classified MIT; imported Binbun3D RetroUrban maps and derived material resources are cleared under CC BY 4.0 with local attribution; imported valsekamerplant fence/wall models and textures plus office models and embedded textures, Brackeys VFX textures, WRAD ARMS model/skin textures, optional Binbun Godot Water shader/demo resources, optional Binbun Godot Skies shader/preset/noise resources, and Luka Aleksic sound-effect WAVs are cleared under CC0/Public Domain; the four cooler11 ocean-wave WAVs are cleared only for game use under `docs/licenses/VERY_SIMPLE_WAVES_PACK_GAME_USE.txt` and are not cleared for standalone or asset-pack redistribution; the map overview is a MODUS capture artifact.
-- Installer inspection remains blocked: the repository contains no installer definition/toolchain. Linux desktop local export and smoke proof now join the existing executable export/resource-notice proof; target-Windows runtime, Steam/Workshop service proof, and manual evidence remain open.
+For the complete capability boundary, read [Current Status](./CURRENT_STATUS.md) and the [Known Limits Matrix](./KNOWN_LIMITS_MATRIX.md).

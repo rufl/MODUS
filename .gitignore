@@ -26,7 +26,6 @@ mono_crash.*.json
 /.codex/
 /.pi/
 /.pi-web/
-/.overzeer/
 /MEMORY.md
 
 # Runtime, test and CI outputs (fixtures under tests/ remain eligible for tracking)

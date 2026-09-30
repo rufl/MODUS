@@ -58,10 +58,10 @@ bash tests/runners/test_retrourban_assets.sh
 bash tests/runners/test_fence_assets.sh
 bash tests/runners/test_office_assets.sh
 bash tests/runners/test_brackeys_vfx_assets.sh
-# Preview/remove only obsolete OVERZEER package archives
-python3 tools/cleanup_overzeer_archives.py \
+# Preview/remove only obsolete MODUS release archives
+python3 tools/cleanup_release_archives.py \
   --root build/release --keep-version 0.9.5-beta
-python3 tools/cleanup_overzeer_archives.py \
+python3 tools/cleanup_release_archives.py \
   --root build/release --keep-version 0.9.5-beta --apply
 ```
 

@@ -16,7 +16,7 @@ The quality target is a compact, polished FPS mission with readable combat, deli
 
 Treat shipping separately from world design. Installer/release automation can advance without Steam publication; Steam/Workshop approval and genuine WAN/Windows observations cannot be produced by local simulations.
 
-## Research: What to Borrow and What Not to Claim
+## Reference Decisions and Claim Boundaries
 
 | Reference | Evidence | Decision for MODUS |
 | --- | --- | --- |
@@ -46,11 +46,9 @@ These sources were read, not benchmarked against MODUS. No comparative quality/p
 | First level | `game/levels/breakwater_gate.tscn` contains three authored functional rooms and original baked geometry. The Systems Lab remains separate; the larger composed mission and reviewed audiovisual route remain in production scope. | `game/levels/modules/breakwater/`, `game/levels/level_play_session.gd` |
 | Missions and hubs | Persistent authored sessions now stage and validate destinations before coordinated commit, retain players/transport and restore visited actor/objective state through encrypted campaign saves. Three-process ENet travel, refusal, late join and preparation-disconnect proof passes. | `mission_manager.gd`, `game_state_manager.gd`, `level_play_session.gd`, `level_destination.gd`, `level_travel_network.gd`, `level_runtime_state.gd` |
 | Editor roundtrip | Document replacement preserves root state/names, nested ownership and collision; history changes only after successful replacement. Source and exported Linux editor → package → game headless workflows pass with document-owned channels. | `embedded_level_editor.gd`, `level_root.gd`, `channel_system.gd`; [dated proof](EDITOR_ROUNDTRIP_PROOF.md) |
-| Releases | Five export presets include Linux client/server/editor and Windows client/editor. Portable schema-v1 manifests now generate and verify role-associated executable/PCK hashes and commit/runtime identity; candidate staging verifies before/after copying. Linux package upgrades preserve unowned files and roll back failure, and deterministic `.tar.zst` transfer archives are covered by the package lifecycle regression. `tools/package_overzeer.py` now assembles both Linux and Windows OVERZEER-rooted archives with README/LICENSE and SHA-256 inventories; local Godot 4.7.2 exports exist for all five presets and the Linux client launches in the bounded headless smoke. CI/local candidate assembly has syntax and focused-contract proof only. Native dependency lock, signing/authentication, public release, authenticated OVERZEER transfer and target-Windows proof remain open. | `export_presets.cfg`, `.github/workflows/ci.yml`, `tools/validate_release_artifacts.py`, `tools/stage_release_artifacts.py`, `tools/package_linux_portable.py`, `tools/package_overzeer.py` |
+| Releases | Five export presets cover Linux client/server/editor and Windows client/editor. Portable manifests verify role-associated executable/PCK hashes and commit/runtime identity; staging revalidates before and after copying. The public beta workflow builds reproducible Linux, Windows, and macOS archives with README/LICENSE content and final-file SHA-256 checks. The tagged Linux client passes a bounded headless startup. Native dependency bundling, signing, notarization, installers, and native target acceptance remain open. | `export_presets.cfg`, `tools/package_release_archive.py`, `.github/workflows/beta-release.yml`; [release evidence](RELEASE_EVIDENCE_BUNDLE.md) |
 | Steam | Steam client and dedicated-server initialization now use explicit availability/result contracts; `DedicatedServer.init_game_server(...)` forwards configured query port, authentication mode, login token and description through `SteamManager.init_game_server(...)`, whose lifecycle shuts down heartbeats/logon without tearing down the client API. Compatible GodotSteam Game Server init/login/heartbeat calls, callback pumping, auth-ticket normalization and explicit Steam/ENet transport capabilities remain fail-closed when methods or the singleton are unavailable. Real authenticated server login, two-account transport and installed-artifact proof remain external gates. | `game/core/network/dedicated_server.gd:416-480`, `game/core/network/steam_manager.gd:90-750` |
-The September 29 handoff now has authenticated dogfood proof: source-matched lean ZTASH packages were deployed through separate DDJARIN/CHOPPER HTTPS endpoints and active Windows/Linux receiver state reconciles to the recorded build and hashes. This validates the transfer path only; packages remain unsigned, and signing, public release, native Windows execution, Steam/Workshop, WAN and manual acceptance remain open.
-
-The September 24 handoff slice remains the historical implementation boundary for archive formats. It is superseded operationally by the September 29 authenticated dogfood deployment; the wrapper now supports separate endpoint/token inputs while retaining compatibility flags.
+The public `v0.9.5-beta` prerelease proves the bounded archive, checksum, and publication path. It does not prove signing, native Windows/macOS execution, Steam/Workshop, representative WAN behavior, or manual acceptance.
 
 ### Reproduced defect before repair
 
@@ -137,7 +135,7 @@ The [dated round-trip proof](EDITOR_ROUNDTRIP_PROOF.md) records native artifact 
 
 ## First Mission: Breakwater Station — Black Start
 
-**Proposed art direction:** a storm-damaged tidal power station built into sea cliffs. Salt-stained pale concrete, dark steel, restrained teal equipment, warm amber emergency power, wet exterior surfaces, and a distinct relay-tower silhouette. Original industrial architecture rather than borrowed DOOM imagery. A repeated light/power motif visibly changes as systems come online.
+**Proposed art direction:** a storm-damaged tidal power station built into sea cliffs. Salt-stained pale concrete, dark steel, restrained teal equipment, warm amber emergency power, wet exterior surfaces, and a distinct relay-tower silhouette. Original industrial architecture without reproducing DOOM imagery. A repeated light/power motif visibly changes as systems come online.
 
 **Player objective:** restore station power, reach the relay, then return to the now-operational hub. Target a 15–20 minute first playthrough with two optional secrets. Duration is a design hypothesis to test, not measured content.
 

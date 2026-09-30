@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/rufl/MODUS/security/advisories/new
+    about: Send sensitive security reports privately.
+  - name: Read current project status
+    url: https://github.com/rufl/MODUS/blob/main/docs/CURRENT_STATUS.md
+    about: Check verified capabilities and known limits before filing.

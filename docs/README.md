@@ -5,7 +5,7 @@
 **Languages:** [English](README.md) · [Português (Brasil)](pt-BR/README.md)
 **Version:** `0.9.5-beta` · **Engine:** Godot 4.7.2 toolchain · **Readiness:** **NOT READY**
 
-The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`; quality `36588760149`); documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood packages are active on DDJARIN (Windows) and CHOPPER (Linux). Signing, public publication, native target acceptance, reviewed manual gameplay, and external Steam/WAN/Workshop proof remain open.
+The public-beta source baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`, quality `36779150276`). The [`v0.9.5-beta` prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) provides unsigned Linux, Windows, and macOS archives with checksums. Signing, installers, native target acceptance, reviewed manual gameplay, and external Steam/WAN/Workshop proof remain open.
 
 ## Read First
 

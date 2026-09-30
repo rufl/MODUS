@@ -12,30 +12,30 @@ Não publicamos percentual ponderado: gates externos não são equivalentes a co
 
 | Gate | Estado | Evidência / pendência |
 | --- | --- | --- |
-| Verdade da documentação | **PASS** | Checks de documentação, projeto, runner-manifest e proveniência passam localmente |
-| CI hospedado | **PASS** | Pipeline `36588760158` e qualidade `36588760149` passam no commit `701ead47` |
+| Verdade da documentação | **PASS** | Checks de documentação, projeto, runner-manifest e proveniência passaram para o baseline do beta público |
+| CI hospedado | **PASS** | Pipeline `36779150278` e qualidade `36779150276` passaram no commit de release `1367b270d651b1a2588044774a15f1dbeb2b8b51` |
 | Agregado Godot | **PASS / limitado** | 1.671/1.671 testes, 22.982 asserções, 149 scripts em 1.103,095 segundos; dois arquivos GUI excluídos |
-| Release engineering | **PASS** | Validation, staging, lifecycle, ZTASH, fleet forwarding e toolchain lock focados passam |
-| Dogfood autenticado | **PASS** | DDJARIN Windows (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`) e CHOPPER Linux (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`) reconciliam metadados imutáveis do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` |
+| Engenharia de release | **PASS** | Validação, staging, arquivos reprodutíveis, checksums, ciclo de pacote e toolchain lock passaram |
+| Publicação beta | **PASS / sem assinatura** | Arquivos Linux x86-64, Windows x86-64 e macOS universal, mais `SHA256SUMS`, estão publicados como `v0.9.5-beta` |
 | Gameplay manual | **BLOQUEADO / ferramenta pronta** | Recorder existe; CSV revisado `0`, horas validadas `0,00` |
-| Performance | **LIMITADA** | Capture de 69,90 s/66 samples; não é target de FPS sincronizado ao display |
-| Versão | **BLOQUEADO** | Projeto continua `0.9.5-beta`, não `1.0.0` |
-| Assinatura/distribuição | **BLOQUEADO** | Prerelease público `v0.9.5-beta` existe sem assinatura; faltam assinatura de produção, notarização, instalador e certificado/chave |
-| Runtime externo | **ABERTO** | Windows nativo, WAN, duas contas Steam, Workshop e editor gráfico não provados |
+| Performance | **LIMITADA** | Captura de 69,90 s/66 amostras; não é alvo sincronizado ao display; hardware de entrada e sessões longas estão abertos |
+| Versão | **BETA** | Projeto continua `0.9.5-beta`, não `1.0.0` |
+| Assinatura/instaladores | **BLOQUEADO** | Arquivos públicos não são assinados; macOS não é notarizado e não há instaladores polidos |
+| Runtime externo | **ABERTO** | Aceitação nativa Windows/macOS, WAN representativa, duas contas Steam, Workshop e editor gráfico não foram provados |
 | Proveniência | **PASS / limitada** | Ledger atual limpo; notices e política distributiva continuam gates próprios |
 
 ## Caminho crítico
 
 1. Coletar e revisar gameplay humano.
-2. Executar o bundle de aceitação Windows em máquina aprovada.
-3. Executar WAN ENet independente e Steam relay/P2P de duas contas quando aplicável.
-4. Obter material de assinatura, definir instalador/política pública e publicar artifacts assinados.
+2. Executar aceitação nativa Windows e macOS em sistemas representativos.
+3. Executar WAN ENet representativa e Steam relay/P2P com duas contas quando aplicável.
+4. Obter material de assinatura, definir política de instaladores e publicar artefatos assinados.
 5. Fechar runtime nativo, Workshop, editor gráfico e review audiovisual/pacing.
 6. Promover a versão somente quando automação, manual, nativo, distribuição e direitos concordarem.
 
 ## Regra de aprovação
 
-Não chame MODUS de lançado, pronto ou aprovado enquanto houver limitação necessária aberta. Dogfood autenticado sem assinatura prova transferência e compatibilidade, não aprovação de release.
+Não chame MODUS de estável, pronto para produção ou aprovado enquanto houver limitação necessária aberta. O beta público prova um caminho limitado de build e publicação, não aprovação estável.
 
 ## Verificação
 

@@ -60,10 +60,8 @@ jobs:
           bash tests/runners/test_release_artifact_validator.sh
           bash tests/runners/test_linux_portable_package.sh
           bash tests/runners/test_release_staging.sh
-          bash tests/runners/test_overzeer_package.sh
-          bash tests/runners/test_overzeer_release_inventory.sh
-          bash tests/runners/test_deploy_overzeer_fleet.sh
-          bash tests/runners/test_cleanup_overzeer_archives.sh
+          bash tests/runners/test_release_archive_package.sh
+          bash tests/runners/test_cleanup_release_archives.sh
           bash tests/runners/test_performance_evidence_validator.sh
           bash tests/runners/test_toolchain_lock.sh
           bash tests/runners/test_windows_acceptance_metadata.sh
@@ -427,22 +425,12 @@ jobs:
           printf 'Downloaded artifact checksums verified; no public deployment is configured.\n' \
             >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Install Zig for Windows package launcher
-        uses: mlugg/setup-zig@v2
-        with:
-          version: 0.16.0
-
-      - name: Build Windows package smoke launcher
-        run: |
-          mkdir -p build/ztash
-          zig cc -target x86_64-windows-gnu -O2 -s -municode \
-            tools/ztash_windows_launcher.c -o build/ztash/modus.exe
-
-      - name: Assemble versioned Linux release candidate
+      - name: Assemble versioned release candidates
         env:
           BUILD_COMMIT: ${{ github.sha }}
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
+          set -euo pipefail
           version="$(python3 -c 'import re; from pathlib import Path; print(re.search(r"GAME_VERSION := \"([^\"]+)\"", Path("game/core/constants.gd").read_text())[1])')"
           # Artifact upload/download does not preserve Linux executable permissions.
           chmod +x "artifacts/linux-build-$BUILD_NUMBER/MODUS.x86_64" \
@@ -459,17 +447,7 @@ jobs:
           bash tools/package_linux_portable.sh package \
             --artifact-dir "artifacts/linux-client-build-$BUILD_NUMBER" --version "$version" \
             --output "build/release/MODUS-$version-linux-portable.tar.zst"
-          python3 tools/package_overzeer.py package \
-            --version "$version" --target linux-x86_64 \
-            --executable "artifacts/linux-client-build-$BUILD_NUMBER/modus.x86_64" \
-            --content "artifacts/linux-client-build-$BUILD_NUMBER/modus.pck" \
-            --readme README.md --license LICENSE \
-            --extra "server=artifacts/linux-build-$BUILD_NUMBER/MODUS.x86_64" \
-            --extra "server.pck=artifacts/linux-build-$BUILD_NUMBER/MODUS.pck" \
-            --extra "modus-editor=artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.x86_64" \
-            --extra "modus-editor.pck=artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.pck" \
-            --output "build/release/modus-$version-linux-x86_64.tar.zst"
-          python3 tools/package_overzeer.py package \
+          python3 tools/package_release_archive.py package \
             --version "$version" --target linux-x86_64 \
             --executable "artifacts/linux-client-build-$BUILD_NUMBER/modus.x86_64" \
             --content "artifacts/linux-client-build-$BUILD_NUMBER/modus.pck" \
@@ -479,15 +457,7 @@ jobs:
             --extra "modus-editor=artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.x86_64" \
             --extra "modus-editor.pck=artifacts/linux-editor-build-$BUILD_NUMBER/modus-editor.pck" \
             --output "build/release/modus-$version-linux-x86_64.tar.gz"
-          python3 tools/package_overzeer.py package \
-            --version "$version" --target windows-x86_64 \
-            --executable "artifacts/windows-build-$BUILD_NUMBER/MODUS.exe" \
-            --content "artifacts/windows-build-$BUILD_NUMBER/MODUS.pck" \
-            --readme README.md --license LICENSE \
-            --extra "modus-editor.exe=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.exe" \
-            --extra "modus-editor.pck=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.pck" \
-            --output "build/release/modus-$version-windows-x86_64.tar.zst"
-          python3 tools/package_overzeer.py package \
+          python3 tools/package_release_archive.py package \
             --version "$version" --target windows-x86_64 \
             --executable "artifacts/windows-build-$BUILD_NUMBER/MODUS.exe" \
             --content "artifacts/windows-build-$BUILD_NUMBER/MODUS.pck" \
@@ -495,19 +465,16 @@ jobs:
             --extra "modus-editor.exe=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.exe" \
             --extra "modus-editor.pck=artifacts/editor-build-$BUILD_NUMBER/MODUS-editor.pck" \
             --output "build/release/modus-$version-windows-x86_64.zip"
-          python3 tools/validate_overzeer_release.py \
-            --version "$version" --build-id "$BUILD_COMMIT" \
-            --root build/release \
-            --toolchain-lock tools/toolchain.lock.json \
-            --output build/release/overzeer-release.json \
-            --ztash-output build/release/ztash-source-release.json
-          python3 tools/prepare_ztash_release.py \
-            --version "$version" --build-id "$BUILD_COMMIT" \
-            --root build/release \
-            --toolchain-lock tools/toolchain.lock.json \
-            --windows-launcher build/ztash/modus.exe \
-            --output build/release/ztash
-          printf 'Unsigned Linux and Windows candidates plus lean ZTASH receiver packages assembled. Native integration lock, signing, publication and target acceptance remain open.\n' \
+          (
+            cd build/release
+            sha256sum \
+              "MODUS-$version-linux-portable.tar.zst" \
+              "modus-$version-linux-x86_64.tar.gz" \
+              "modus-$version-windows-x86_64.zip" \
+              > SHA256SUMS
+            sha256sum --check SHA256SUMS
+          )
+          printf 'Unsigned staged artifacts and deterministic Linux/Windows archives assembled. Signing, installer packaging, and target acceptance remain open.\n' \
             >> "$GITHUB_STEP_SUMMARY"
 
       - name: Retain Linux release candidate

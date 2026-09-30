@@ -1,65 +1,80 @@
-# Estado Atual do MODUS
+# Status Atual do MODUS
 
-> **Documentation status: maintained reference.** Este é o snapshot publicado e consolidado; relatórios e logs gerados são locais e cada resultado vale apenas para sua própria invocação.
+> **Documentation status: maintained reference.** Atualizado em 2026-09-30. Este documento separa disponibilidade no código, observações focadas e prontidão de entrega. Uma verificação aprovada prova apenas a fronteira exercitada.
 
-**Idiomas:** [English](../CURRENT_STATUS.md) · [Português (Brasil)](CURRENT_STATUS.md)
-**Atualizado:** 30 de setembro de 2026
-**Versão:** `0.9.5-beta`
-**Toolchain:** Godot 4.7.2 / GUT 9.7.1
-**Prontidão:** **NÃO PRONTO**
+## Baseline
 
-## Resumo
+| Item | Valor |
+| --- | --- |
+| Versão | `0.9.5-beta` |
+| Engine | Godot `4.7.2` (feature de projeto `4.7+`) |
+| Versão pública | [`v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) |
+| Commit da versão | `1367b270d651b1a2588044774a15f1dbeb2b8b51` |
+| Licença | MIT para o código; assets de terceiros mantêm seus próprios termos |
+| Prontidão | Beta experimental; não pronto para produção |
 
-MODUS possui uma base ampla de FPS, provas focadas de runtime e um smoke automatizado do Showcase. A evidência manual revisada ainda não existe e o gate de versão de release está bloqueado. O agregado headless estrito de 29 de setembro passou 1.671/1.671 testes, 22.982 asserções em 149 scripts em 1.103,095 segundos; dois arquivos que exigem GUI permanecem excluídos.
+## Vocabulário
 
-O baseline atual de validação do código passou no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (CI/CD `36779150278`, qualidade `36779150276`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. Ele cobre formatação, lint, verdade do projeto, contratos de release, segurança, GUT, exports, manifests e o fluxo de qualificação do Windows. Isso não substitui execução manual ou hardware nativo aprovado.
+- **Implementado:** código e dados existem na árvore atual.
+- **Observado:** uma verificação focada ou rota manual exercitou a fronteira indicada.
+- **Aberto:** ainda falta aceitação representativa, segurança, escala, plataforma ou usabilidade.
 
-## Dogfood autenticado
+Implementado não significa observado. Observado não significa pronto para produção.
 
-Pacotes ZTASH enxutos do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` foram enviados por endpoints HTTPS separados e autenticados:
+## Matriz de capacidades
 
-- DDJARIN / Windows: SHA-256 `24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b` / 141275566 bytes.
-- CHOPPER / Linux: SHA-256 `63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64` / 131419549 bytes.
-- O manifesto ZTASH usa `size_bytes`, compatível com a ponte ZEER canônica; preview e deployment passaram.
+| Capacidade | Implementado | Fronteira observada | Trabalho aberto importante |
+| --- | --- | --- | --- |
+| Movimento e combate | Estados de movimento, armas, dano, projéteis, efeitos e física | Testes focados e rota automatizada de demonstração | Balanceamento, hardware variado e sessões longas |
+| Inventário e loot | Registros, coletas, drops, operações de inventário e tabelas | Testes determinísticos e caminhos autorais | Progressão e economia mais amplas |
+| Inimigos e partidas | Comportamentos, estado de partida, pontuação, cronômetros e encontros | Testes focados e smoke dos mundos de demonstração | Variedade representativa e sessões extensas |
+| Mundos procedurais | Geração com semente, workers, contratos de layout e integração autoral | Determinismo e geração limitada | Soak de mundos grandes, pressão de memória e mais sementes |
+| Multijogador ENet | Hospedagem/entrada, servidor dedicado, autoridade, allowlist de RPC, limites, predição e reconexão | Ciclo local, inventário, reconexão, late join e autoridade | Internet real, latência/perda, clientes hostis, concorrência e aceitação dedicada |
+| Steam | Adapter e inicialização condicional | Inicialização local autenticada | Duas contas, relay/P2P, serviços públicos e Workshop |
+| Editor | Editor embutido, código standalone, exportação/importação `.mdsl` e histórico | Save/export/reload e histórico focados | Fluxo gráfico completo do aplicativo exportado |
+| Mods | JSON/JSON5, registros, exemplos, sobrescritas e validação de pacotes | Sistema de arquivos local, pacotes e mod de exemplo | Distribuição pública, compatibilidade e garantias de sandbox |
+| UI e entrada | Menu, opções, gerenciador de mods, navegação por gamepad e showcase | Capturas smoke em 800×600 e 1280×720 | Localização, acessibilidade, proporções incomuns e matriz de controles |
+| Desempenho | Benchmarks, orçamentos, telemetria e validadores | Medidas locais limitadas | Hardware de entrada, escala multijogador e sessões longas |
 
-O estado ativo dos receptores coincide com build, versão, target e tamanho registrados. Isto prova compatibilidade de pacote e transferência autenticada em dogfood. Os pacotes continuam sem assinatura. O [prerelease público `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) é uma distribuição de clientes sem assinatura; não há release de produção assinado, instalador ou aprovação nativa.
+## Evidência do beta público
 
-## Prerelease público de 30 de setembro
+O workflow público produziu arquivos Linux x86-64, Windows x86-64 e macOS universal, além de um manifesto de checksums. A integridade dos arquivos e um startup headless limitado no Linux foram verificados antes da publicação.
 
-O workflow `36779157160` publicou os clientes Linux, Windows e macOS a partir do build `1367b270d651b1a2588044774a15f1dbeb2b8b51`:
+| Asset | SHA-256 |
+| --- | --- |
+| `modus-0.9.5-beta-linux-x86_64.tar.gz` | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
+| `modus-0.9.5-beta-windows-x86_64.zip` | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
+| `modus-0.9.5-beta-macos-universal.zip` | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
+| `SHA256SUMS` | `42346a904f4114d769c5ada42595ca9454590018fd25a558da11a05678b63d48` |
 
-| Asset | Bytes | SHA-256 |
-| --- | ---: | --- |
-| `modus-0.9.5-beta-linux-x86_64.tar.gz` | 131401146 | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
-| `modus-0.9.5-beta-windows-x86_64.zip` | 141246788 | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
-| `modus-0.9.5-beta-macos-universal.zip` | 152177480 | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
+O pacote Windows contém um executável PE x86-64. O aplicativo macOS contém slices Mach-O x86-64 e arm64. Verificação de formato não substitui aceitação nativa.
 
-Os archives baixados passaram `SHA256SUMS` e integridade de compressão; o launcher Linux passou o smoke headless limitado. O executável Windows é PE32+ x86-64 e o macOS é Mach-O universal com duas arquiteturas. Os assets não têm assinatura; notarização macOS não está disponível. Isto prova distribuição beta pública, não aprovação de produção.
+## Bloqueios para uma entrega estável
 
-## O que está implementado e validado
+1. assinatura e notarização para as plataformas suportadas;
+2. aceitação nativa Windows e macOS em sistemas representativos;
+3. testes de rede com latência, perda, escala e comportamento adversarial;
+4. aceitação completa do editor e do fluxo de mods exportados;
+5. validação mais ampla de acessibilidade, controles e localização;
+6. evidência em hardware de entrada e sessões longas;
+7. política de compatibilidade para formatos públicos de mods e conteúdo.
 
-- Manifests schema-v1 com paths relativos, identidade de commit/runtime, hashes SHA-256 e rejeição de conteúdo corrompido, ausente, duplicado ou escapando do root.
-- Staging verificável antes/depois da cópia, recusa de destinos existentes, rollback de upgrade Linux, preservação de arquivos não pertencentes e dados XDG.
-- OVERZEER em quatro formatos e ZTASH `ztash-release-v1`, com inventário e digest do `tools/toolchain.lock.json`.
-- `--package-smoke` e `--capability-report` para validar recursos essenciais, identidade do runtime, classes nativas e dependências opcionais.
-- Contrato de capacidades para CSG/MultiMesh/occlusion e diagnósticos explícitos para GodotSteam, `SteamMultiplayerPeer` e Voxel Tools, com fallback ENet/CSG quando permitido.
-- ENet local em processos separados, reconnect, soak curto e host-loss controlado; contratos de autoridade, rate limits, save/load criptografado, mod SDK, editor e geração procedural em escopos focados.
-- Breakwater com contrato de apresentação, estados de energia, áudio zonado, chuva, materiais de energia e asset dressing; prova autoral 12/12 com 144 asserções.
+## Referências
 
-“Validado” sempre significa apenas o escopo indicado; não é aprovação de produto.
+- [Pacote de Evidências](./RELEASE_EVIDENCE_BUNDLE.md)
+- [Matriz de Limites](../KNOWN_LIMITS_MATRIX.md)
+- [Modelo de Autoridade](../MULTIPLAYER_AUTHORITY_MODEL.md)
+- [Prova de Performance](../PERFORMANCE_BASELINE_PROOF.md)
+- [Prova de Round Trip do Editor](../EDITOR_ROUNDTRIP_PROOF.md)
+- [Verdade da Documentação](./DOCUMENTATION_TRUTH.md)
+- [Roadmap](../ROADMAP.md)
 
-## Limitações abertas
+## Atualização do baseline
 
-1. **Manual:** o recorder existe, mas não há CSV revisado; horas validadas continuam em `0,00`.
-2. **Windows nativo:** ainda falta executar o bundle em máquina Windows aprovada com renderer, W/Space/E físicos, workflow Showcase, save/load/mod e evidência de driver/janela.
-3. **Rede externa:** faltam WAN ENet em redes independentes, reconnect/host-loss/soak de 10 minutos e Steam relay/P2P com duas contas quando aplicável.
-4. **Distribuição:** faltam certificado Authenticode, chave/política de assinatura de produção, instalador, dependências nativas empacotadas e aprovação de release.
-5. **Produto:** faltam Workshop real, editor gráfico exportado, aprovação audiovisual/pacing e promoção de `0.9.5-beta` para release.
+```bash
+bash tools/check_project_truth.sh
+bash tools/check_documentation_truth.sh
+bash tools/check_headless_runner_manifest.sh
+```
 
-## Fontes canônicas
-
-- [Contrato de verdade](../DOCUMENTATION_TRUTH.md)
-- [Matriz de limites](../KNOWN_LIMITS_MATRIX.md)
-- [Evidências de release](../RELEASE_EVIDENCE_BUNDLE.md)
-- [Backlog ativo](../../BACKLOG.md)
-- [Changelog](../../CHANGELOG.md)
+Verificações gráficas devem usar um ambiente de display isolado e descartável. Matrizes completas ficam reservadas para verificação final explícita; resultados históricos não certificam commits posteriores.

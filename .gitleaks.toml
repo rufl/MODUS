@@ -1,0 +1,11 @@
+title = "MODUS gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Benign third-party asset and property-test identifiers"
+regexes = [
+  '''3dexter_looming_landmarks''',
+  '''nonexistent_key_[0-9]+''',
+]

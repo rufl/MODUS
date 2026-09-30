@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preview or remove stale MODUS OVERZEER archives from one release directory."""
+"""Preview or remove stale MODUS archives from one release directory."""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def main() -> int:
         if args.apply:
             for path in stale:
                 path.unlink()
-        print(f"PASS: {action} {len(stale)} obsolete OVERZEER archive(s)")
+        print(f"PASS: {action} {len(stale)} obsolete release archive(s)")
     except (OSError, ValueError) as error:
         print(f"FAIL: {error}")
         return 1

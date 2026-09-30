@@ -1,50 +1,61 @@
-# Backlog MODUS — Português (Brasil)
+# Backlog do MODUS
 
-> **Documentation status: maintained reference.** Este resumo traduz o backlog ativo; o backlog raiz em inglês permanece a lista operacional completa.
+> **Documentation status: maintained reference.** Prioridades atualizadas em 2026-09-30 e ordenadas pelo risco de entrega. Histórico concluído pertence ao changelog; código implementado só conclui uma tarefa quando a fronteira de aceitação está definida.
 
-**Idiomas:** [English](../../BACKLOG.md) · [Português (Brasil)](BACKLOG.md)
-**Atualizado:** 30 de setembro de 2026 · **Versão:** `0.9.5-beta` · **Prontidão:** **NÃO PRONTO**
+## Bloqueios para beta estável
 
-## Snapshot atual
+- [ ] Assinar artefatos Windows e Linux com identidade de entrega documentada.
+- [ ] Assinar e notarizar o aplicativo universal macOS.
+- [ ] Concluir aceitação nativa de instalação, startup, entrada, save e remoção no Windows e macOS.
+- [ ] Executar sessões ENet com latência, jitter, perda de pacotes, reconexão e late join representativos.
+- [ ] Exercitar validação de autoridade com tráfego malformado e hostil.
+- [ ] Definir orçamentos para CPU/GPU de entrada e soak repetível de sessão longa.
+- [ ] Publicar política de compatibilidade para mods, schemas e saves.
 
-- Baseline de validação do código: CI/CD `36779150278` e qualidade `36779150276` passaram no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`; commits somente de documentação passam pelos mesmos workflows do GitHub Actions.
-- Archives OVERZEER completos passaram validação estrita de quatro formatos.
-- ZTASH enxuto passou package smoke/capability report e foi implantado por HTTPS autenticado para dogfood.
-- DDJARIN reconcilia Windows `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`.
-- CHOPPER reconcilia Linux `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
-- Os artifacts de dogfood continuam sem assinatura. O [prerelease público `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) publica clients Linux, Windows e macOS sem assinatura; isso não é publicação de produção.
+## Gameplay e mundos
 
-- O workflow beta `36779157160` publicou e verificou os archives públicos; assinatura de produção, notarização, instalador e gates nativos/manuais/externos permanecem abertos.
+- [ ] Ajustar movimento, armas, leitura de inimigos e ritmo por meio de sessões observadas.
+- [ ] Ampliar encontros autorais sem esconder falhas procedurais atrás de caminhos roteirizados.
+- [ ] Amostrar mais sementes procedurais e registrar falhas junto com a semente.
+- [ ] Validar memória e cancelamento de workers em transições repetidas.
+- [ ] Adicionar um loop de campanha apenas após estabilizar save e versionamento de conteúdo.
 
-## Tags de prova
+## Multijogador
 
-- `[truth:source-audit]` — inspeção de fonte, referência ou artifact.
-- `[truth:docs]` — mudança documental verificada por truth check/scan.
-- `[truth:test]` — teste ou smoke automatizado executado.
-- `[truth:runtime]` — comportamento de jogo/editor lançado e observado.
-- `[truth:manual]` — teste humano executado e registrado.
-- `[truth:blocked]` — bloqueio por binário, serviço, dependência, asset ou condição externa.
-- `[truth:deferred]` — trabalho adiado com motivo e condição de retorno.
+- [ ] Validar servidor dedicado e clientes nas plataformas de entrega.
+- [ ] Registrar inventário, dano, respawn e transições autoritativos com múltiplos peers.
+- [ ] Medir banda e correções sob latência e perda representativas.
+- [ ] Definir orientação pública de hospedagem, portas, compatibilidade e moderação.
+- [ ] Provar duas contas Steam, relay/P2P e Workshop antes de apresentar esses caminhos como suportados.
 
-## Aceitação nativa Windows
+## Criação e mods
 
-Um único build exportado imutável em uma máquina Windows aprovada pode fechar esta linha, desde que o bundle retenha commit, manifests, hashes, preset, versões, GPU/driver/renderer, logs e captura de janela nativa.
+- [ ] Completar aceitação gráfica do editor embutido exportado e do editor standalone.
+- [ ] Validar round trips `.mdsl` em mais estruturas de mapas.
+- [ ] Definir dependências, conflitos, versões e falhas de mods.
+- [ ] Documentar limites seguros de conteúdo e garantias de sandbox.
+- [ ] Publicar exemplos somente com licenças e caminhos de atualização claros.
 
-1. **Renderer/input:** janela não-headless, renderer/GPU/viewport declarados, W/Space/E físicos, resultados de movimento/pulo/interação e saída limpa.
-2. **Conteúdo/save:** Showcase, player, movimento, arma contra inimigo vivo, derrota, pickup, save/load criptografado e mod SDK; remover slots e staging ao final.
-3. **Rede:** ENet local multiprocess, WAN direto em redes independentes e Steam relay/P2P com duas contas se habilitado; provar entrega, reconnect, host-loss, latência/perda e soak.
+## Acessibilidade e usabilidade
 
-Loopback, Linux, Wine, editor, input sintético, uma conta Steam ou simulação local não fecham estes gates.
+- [ ] Auditar menus e editor segundo princípios WCAG 2.2 de teclado, foco, contraste e redimensionamento.
+- [ ] Verificar navegação completa apenas por teclado e apenas por controle.
+- [ ] Adicionar remapeamento e feedback que não dependa somente de cor.
+- [ ] Definir extração de localização e expansão de layout.
+- [ ] Testar 16:10, ultrawide, baixa resolução e desktop escalado.
 
-## Pendências prioritárias
+## Experiência de contribuição
 
-- Importar CSV manual revisado e limpar o bloqueio de `0,00` horas.
-- Obter certificado Authenticode/chaves e implementar fluxo de assinatura verificável.
-- Definir instalador, runtime nativo empacotado e publicação pública de produção assinada.
-- Executar Windows nativo, WAN, Steam de duas contas e Workshop real.
-- Fechar editor gráfico exportado, review audiovisual/pacing e primeiro mission composed de Breakwater.
-- Promover `0.9.5-beta` somente após todos os gates atuais concordarem.
+- [ ] Manter setup e verificação executáveis a partir de clone limpo.
+- [ ] Criar issues iniciais apenas com owner, aceitação e dependências visíveis.
+- [ ] Reduzir superfícies amplas do `GameManager` quando trabalho real revelar uma fronteira estável.
+- [ ] Revisar dependências, proveniência de assets e afirmações antes de cada release candidate.
 
-## Limites
+## Critério de conclusão
 
-Código implementado, teste focado, CI, package smoke, dogfood autenticado e prerelease beta público não equivalem a aprovação manual, target-native, Steam/WAN/Workshop, assinatura ou release de produção.
+Uma tarefa sai do backlog apenas quando:
+
+1. o resultado visível existe;
+2. a menor verificação representativa foi observada;
+3. limitações e fronteiras de plataforma foram documentadas;
+4. nenhuma credencial, asset proprietário ou detalhe de infraestrutura privada é necessário para reproduzi-la.

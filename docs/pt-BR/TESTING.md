@@ -45,10 +45,8 @@ tests/runners/test_performance_evidence_validator.sh
 bash tests/runners/test_release_artifact_validator.sh
 bash tests/runners/test_linux_portable_package.sh
 bash tests/runners/test_release_staging.sh
-bash tests/runners/test_overzeer_package.sh
-bash tests/runners/test_overzeer_release_inventory.sh
-bash tests/runners/test_deploy_overzeer_fleet.sh
-bash tests/runners/test_prepare_ztash_release.sh
+bash tests/runners/test_release_archive_package.sh
+bash tests/runners/test_cleanup_release_archives.sh
 bash tests/runners/test_toolchain_lock.sh
 ```
 

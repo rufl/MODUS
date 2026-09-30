@@ -41,7 +41,7 @@ The official release template ignores `--script` and rejects project-path overri
 
 ### Graphical and release exclusions
 
-The reviewed `overzeer-isolated-display` wrapper refused the final graphical attempt with exit 75: `I/O full PSI=58.88% blocked=4`, above its 8% I/O threshold. The guard was not bypassed. An Openbox attempt also found no installed Openbox executable. **No rendered screenshot, mouse-capture behavior, pointer/keyboard feel, audiovisual quality or manual playthrough is claimed.**
+The reviewed isolated-display wrapper refused the final graphical attempt with exit 75 because host pressure exceeded its configured I/O threshold. The guard was not bypassed. An Openbox attempt also found no installed Openbox executable. **No rendered screenshot, mouse-capture behavior, pointer/keyboard feel, audiovisual quality, or manual playthrough is claimed.**
 
 The larger composed mission, novice-author usability, pinning/ghost placement/controlled regeneration, automatic generated-record realization, installer, bundled native integrations, native Windows, multiplayer/WAN and Steam/Workshop remain separate acceptance lanes. See [Current Status](CURRENT_STATUS.md) and the [production plan](RELEASE_AND_WORLD_BUILDING_PLAN.md).
 

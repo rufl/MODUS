@@ -42,7 +42,7 @@ var _last_sample_at: float = 0.0
 
 
 func _ready() -> void:
-	var marker_enabled := _load_overzeer_marker()
+	var marker_enabled := _load_validation_marker()
 	if _env_truthy("MODUS_LOCAL_TELEMETRY") or marker_enabled:
 		enabled = true
 	if not enabled:
@@ -237,9 +237,9 @@ func _is_detectable_text_entry(event: InputEvent) -> bool:
 	)
 
 
-func _load_overzeer_marker() -> bool:
+func _load_validation_marker() -> bool:
 	var marker_path := OS.get_executable_path().get_base_dir().path_join(
-		"overzeer-modus-telemetry.json"
+		"modus-validation-telemetry.json"
 	)
 	if not FileAccess.file_exists(marker_path):
 		return false
@@ -247,7 +247,7 @@ func _load_overzeer_marker() -> bool:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return false
 	if (
-		str(parsed.get("schema", "")) != "overzeer.modus-telemetry/v1"
+		str(parsed.get("schema", "")) != "modus.validation-telemetry/v1"
 		or not bool(parsed.get("enabled", false))
 	):
 		return false

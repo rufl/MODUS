@@ -3,9 +3,9 @@
 > **Documentation status: maintained reference.** Esta área traduz as referências mantidas de maior uso. O inglês continua sendo a fonte canônica dos detalhes técnicos; os dois idiomas devem preservar o mesmo limite de evidência.
 
 **Idiomas:** [English](../README.md) · [Português (Brasil)](README.md)
-**Versão:** `0.9.5-beta` · **Toolchain:** Godot 4.7.2 · **Prontidão:** **NÃO PRONTO**
+**Versão:** `0.9.5-beta` · **Toolchain:** Godot 4.7.2 · **Prontidão:** **BETA EXPERIMENTAL**
 
-O baseline atual de validação do código passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`; qualidade `36588760149`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. O dogfood ZTASH autenticado está ativo no DDJARIN (Windows) e CHOPPER (Linux), mas os pacotes ainda não são assinados nem públicos.
+O baseline do beta público passou no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`, qualidade `36779150276`). O [prerelease `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) oferece arquivos Linux, Windows e macOS sem assinatura, acompanhados de checksums. Instaladores, aceitação nativa, gameplay manual revisado e provas externas Steam/WAN/Workshop continuam abertos.
 
 ## Verdade atual
 
@@ -41,4 +41,4 @@ As referências abaixo continuam mantidas em inglês para evitar duplicação de
 
 ## Regra de publicação
 
-Relatórios gerados e logs são saídas locais. Uma aprovação vale apenas para o comando, build, plataforma e escopo declarados. Smoke headless, simulação local, CI ou dogfood autenticado não fecham manual gameplay, renderer nativo, Steam/WAN/Workshop, assinatura ou publicação pública.
+Relatórios gerados e logs são saídas locais. Uma aprovação vale apenas para o comando, build, plataforma e escopo declarados. Smoke headless, simulação local ou CI não fecham gameplay manual, renderer nativo, Steam/WAN/Workshop, assinatura ou prontidão estável.

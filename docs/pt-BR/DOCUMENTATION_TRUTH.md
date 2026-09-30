@@ -18,7 +18,7 @@ Quando documentos divergirem, use:
 4. [Changelog raiz](../../CHANGELOG.md) para trabalho concluído e seu escopo.
 5. [Bundle de Evidências](RELEASE_EVIDENCE_BUNDLE.md) para capturas, proveniência, hashes e exclusões de release.
 
-O baseline atual de validação do código passou no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`, qualidade `36779150276`). Commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. O agregado headless estrito de 29 de setembro é a última evidência publicada de suite completa: 1.671/1.671 testes, 22.982 asserções em 149 scripts em 1.103,095 segundos, com dois arquivos GUI excluídos. O dogfood ZTASH autenticado passou. O prerelease público `v0.9.5-beta` é uma distribuição de clientes sem assinatura; gates de produção, nativos, manuais e externos continuam abertos.
+O baseline do beta público passou no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`, qualidade `36779150276`). Commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. O agregado headless estrito de 29 de setembro é a última evidência publicada de suite completa: 1.671/1.671 testes, 22.982 asserções em 149 scripts em 1.103,095 segundos, com dois arquivos GUI excluídos. O prerelease público `v0.9.5-beta` é uma distribuição sem assinatura; assinatura, instaladores e gates nativos, manuais e externos continuam abertos.
 
 ## Limite da publicação beta pública
 

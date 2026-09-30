@@ -3,29 +3,29 @@
 > **Documentation status: maintained reference.** This roadmap prioritizes proof and hardening. Current status is defined by [Documentation Truth](docs/DOCUMENTATION_TRUTH.md) and [Current Status](docs/CURRENT_STATUS.md).
 
 **Languages:** [English](ROADMAP.md) · [Português (Brasil)](docs/pt-BR/ROADMAP.md)
-**Updated:** September 29, 2026
+**Updated:** September 30, 2026
 **Current version:** `0.9.5-beta`  
 **Engine:** Godot 4.7.2 toolchain
-**Readiness:** **NOT READY**
+**Readiness:** **EXPERIMENTAL BETA**
 
 ## North Star
 
-Make MODUS a dependable Godot 4.7 FPS framework whose public claims are backed by live source, focused automated contracts, complete aggregate test runs, runtime observation, manual evidence, contextualized performance captures, and authenticated distribution gates.
+Make MODUS a dependable Godot 4.7 FPS mechanics lab whose public claims are backed by live source, focused automated contracts, runtime observation, manual evidence, contextualized performance captures, and reproducible signed distribution.
 
 ## Now: Maintain the Verified Baseline
 
 1. Preserve the September 29 strict aggregate: 1,671/1,671 tests with 22,982 assertions across 149 scripts; two GUI-required files remain skipped.
-2. Preserve the source-validation baseline: pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows.
+2. Preserve the public-beta source baseline: pipeline `36779150278` and quality run `36779150276` passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`; later documentation commits use the same GitHub Actions workflows.
 3. Keep maintained status, known limits, active backlog, release evidence, root changelog, and both language navigation surfaces synchronized.
-4. Keep authenticated dogfood deployment reconciled to immutable package hashes without calling unsigned validation a release.
+4. Keep public beta archives reproducible and their published checksums tied to final upload bytes.
 
-These are bounded observations, not production or release approval. Manual, target-native, signing, installer, Steam, Workshop, WAN and long-session evidence remain separate gates.
+These are bounded observations, not stable-release approval. Manual, native-target, signing, installer, Steam, Workshop, representative WAN, and long-session evidence remain separate gates.
 
 Historical August and July totals remain below only as dated context. They must not be reused as current-tree totals.
 
 ## Release and World-Building Program
 
-The [implementation plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) tracks authored Breakwater content, procedural mission graphs, persistent hubs and release engineering. Persistent authored hub travel now has encrypted revisit restoration and three-process ENet refusal/late-join/pending-disconnect proof. Versioned-release publication, bundled-native-runtime, Steam/Workshop, WAN and target-Windows acceptance remain open.
+The [implementation plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) tracks authored Breakwater content, procedural mission graphs, persistent hubs, and release engineering. Persistent authored hub travel has encrypted revisit restoration and three-process ENet refusal/late-join/pending-disconnect proof. A public beta exists; signing, installers, bundled native dependencies, Steam/Workshop, representative WAN, and native target acceptance remain open.
 
 The owner selected a bundled full-feature runtime. Generator revision 2 has focused correctness proof; canonical module metadata, editor document ownership, channel execution and the three-room key/door/objective loop are now implemented. Package engineering can advance independently; Steam/Workshop publication requires the still-missing Steamworks app.
 

@@ -3,8 +3,8 @@
 > **Documentation status: maintained reference.** Pesquisa, decisões selecionadas e evidência de entrega ficam separadas. Correção do gerador e o gate de módulo/editor de três salas são exercitados; missão completa, aceitação gráfica e release continuam distintos.
 
 **Idiomas:** [English](../RELEASE_AND_WORLD_BUILDING_PLAN.md) · [Português (Brasil)](RELEASE_AND_WORLD_BUILDING_PLAN.md)
-**Atualizado:** 29 de setembro de 2026
-**Versão:** `0.9.5-beta` · **Prontidão:** **NÃO PRONTO**
+**Atualizado:** 30 de setembro de 2026
+**Versão:** `0.9.5-beta` · **Prontidão:** **BETA EXPERIMENTAL**
 
 ## Decisão de produto
 
@@ -20,7 +20,7 @@ A meta é uma missão FPS compacta, polida, com combate legível, ritmo delibera
 - Editor e runtime compartilham metadata, canais, ownership de documento, pins, ghosts, partial regeneration e export `.mdsl`.
 - Hub travel persistente restaura destino, actors, objetivos, loot e party com save criptografado; testes focados e cenário ENet de três processos passam.
 - Contract de apresentação do Breakwater valida power stages, target groups, áudio zonado, chuva, relay labels e materiais; aprovação humana permanece aberta.
-- Transferência autenticada ZTASH agora existe para dogfood: DDJARIN/CHOPPER reconciliam o build atual por hashes. Artifacts continuam unsigned.
+- O prerelease público `v0.9.5-beta` fornece arquivos Linux, Windows e macOS com checksums; assinatura, notarização, instaladores e aceitação nativa continuam abertos.
 
 ## Geração e authoring
 

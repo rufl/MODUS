@@ -3,17 +3,17 @@
 > **Documentation status: maintained reference.** Este documento detalha o roadmap raiz por área. Implementação não é promovida automaticamente a prova de runtime ou release.
 
 **Idiomas:** [English](../ROADMAP.md) · [Português (Brasil)](ROADMAP.md)
-**Atualizado:** 29 de setembro de 2026
-**Versão:** `0.9.5-beta` · **Prontidão:** **NÃO PRONTO**
+**Atualizado:** 30 de setembro de 2026
+**Versão:** `0.9.5-beta` · **Prontidão:** **BETA EXPERIMENTAL**
 
 ## Limite de evidência atual
 
 - Agregado headless estrito de 29/09: 1.671/1.671 testes, 22.982 asserções, 149 scripts; dois arquivos GUI excluídos.
-- CI pipeline `36588760158` e qualidade `36588760149` passaram no commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
-- Dogfood ZTASH autenticado reconcilia DDJARIN Windows e CHOPPER Linux ao build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`.
+- Pipeline `36779150278` e qualidade `36779150276` passaram no commit de release `1367b270d651b1a2588044774a15f1dbeb2b8b51`.
+- O prerelease público `v0.9.5-beta` oferece arquivos Linux, Windows e macOS verificados por checksum; todos continuam sem assinatura.
 - Gameplay manual: 0 arquivos importados / 0,00 horas.
 - Performance: uma captura Showcase headless aquecida de 69,90 s / 66 amostras; alvos de produção ainda não provados.
-- Release: bloqueado em `0.9.5-beta`; assinatura, instalador, publicação, Windows nativo e serviços externos permanecem abertos.
+- Release estável: bloqueado por assinatura, instaladores, aceitação nativa, multijogador representativo e serviços externos.
 
 ## Framework principal
 

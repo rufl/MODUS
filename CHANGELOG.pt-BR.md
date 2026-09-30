@@ -1,33 +1,50 @@
-# Changelog do MODUS — Português (Brasil)
+# Registro de Alterações
 
-> **Documentation status: maintained reference.** Este arquivo resume as mudanças públicas atuais em português. O histórico completo e canônico continua em [`CHANGELOG.md`](CHANGELOG.md).
+> **Documentation status: maintained reference.** Histórico público de versões e mudanças ainda não publicadas.
 
-**Idiomas:** [English](CHANGELOG.md) · [Português (Brasil)](CHANGELOG.pt-BR.md)
-**Atualizado:** 30 de setembro de 2026
+As mudanças públicas importantes do MODUS são registradas aqui. O projeto segue as convenções do [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) enquanto permanece pré-1.0.
 
-## Não lançado
-- 2026-09-30 `[distribution]` `[ci]` `[truth:runtime]` `[truth:test]` `[truth:blocked]`: publicado o prerelease público e sem assinatura `v0.9.5-beta` a partir do build `1367b270d651b1a2588044774a15f1dbeb2b8b51`, com clients Linux, Windows e macOS. O workflow `36779157160` passou nos builds e na publicação; downloads passaram checksums, integridade dos archives, smoke headless Linux e identificação PE32+/Mach-O universal. Assinatura, notarização, instalador, aceitação nativa, gameplay manual e serviços externos continuam abertos.
+## [Não publicado]
 
-### Documentação
+### Adicionado
 
-- Atualizados README, estado atual, contrato de verdade, matriz de limites, bundle de evidências, roadmap, backlog, setup, hardware, troubleshooting e testes em inglês.
-- Adicionada navegação e tradução brasileira para as referências mantidas de maior uso.
-- Claims atuais agora apontam para CI `36588760158`, commit `701ead47`, dogfood autenticado do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` e hashes ativos; snapshots históricos continuam datados.
+- Página inicial renovada com downloads, arquitetura, fronteiras de evidência e caminhos de contribuição.
+- Formulários de issue, checklist de pull request, Código de Conduta, guia de contribuição, canal privado de segurança, regras de ownership e atualização automática de GitHub Actions.
+- Configuração de varredura de segredos com exclusões documentadas para falsos positivos.
 
-### Distribuição e segurança
+### Alterado
 
-- `tools/deploy_overzeer_fleet.sh` agora aceita endpoints HTTPS e arquivos de token separados para DDJARIN e CHOPPER, mantendo o modo legado de endpoint/token único.
-- Regressão de forwarding, package/inventory/validator/staging/cleanup, ZTASH e toolchain-lock passam.
-- OVERZEER completo e ZTASH enxuto são validados sem assinatura; dogfood autenticado não é release público.
+- Ferramentas de empacotamento e limpeza agora usam conceitos públicos do MODUS.
+- Documentação de entrega reduzida a evidência atual, checksums, limitações e comandos reproduzíveis.
+- Telemetria local de validação descrita como opt-in e sem dependência de serviço remoto.
 
-### Dogfood atual
+### Removido
 
-- Build de distribuição: `1f6d4faf4a80f4426f85f3a6f731689d756806ef`.
-- DDJARIN Windows: `24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b` / 141275566 bytes.
-- CHOPPER Linux: `63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64` / 131419549 bytes.
-- O ZTASH manifest agora usa `size_bytes`, compatível com a ponte canônica do ZEER; preview e deployment autenticado passaram.
-- O pipeline CI `36588760158` e o quality run `36588760149` passaram no commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
+- Referências de implantação privada, estações de trabalho e integrações não publicadas da árvore pública.
 
-## Gates ainda abertos
+## [0.9.5-beta] - 2026-09-30
 
-Assinatura, instalador, publicação assinada/de produção, execução Windows nativa, WAN ENet independente, Steam de duas contas, Workshop real, editor gráfico exportado, gameplay manual revisado, aprovação audiovisual/pacing e promoção para `1.0` continuam pendentes. Consulte [`docs/pt-BR/CURRENT_STATUS.md`](docs/pt-BR/CURRENT_STATUS.md) e [`docs/pt-BR/KNOWN_LIMITS_MATRIX.md`](docs/pt-BR/KNOWN_LIMITS_MATRIX.md).
+### Adicionado
+
+- Arquivos beta públicos para Linux x86-64, Windows x86-64 e macOS universal.
+- Manifesto SHA-256 para todos os downloads de gameplay.
+- Verificação automática de integridade, formato, arquitetura e startup headless limitado no Linux.
+- Mídia curada do menu, showcase, gerenciador de mods e gravador de evidência em 1280×720 e 800×600.
+- Captura automatizada de 25 segundos da rota de showcase.
+
+### Alterado
+
+- Versão do projeto, metadados de exportação, tag e documentação pública alinhados em `0.9.5-beta`.
+- Evidência de capacidades e bloqueios consolidados em documentos mantidos.
+
+### Segurança
+
+- Artefatos públicos permanecem explicitamente sem assinatura; assinatura e notarização macOS continuam abertas.
+- Checksums publicados para verificação independente.
+
+## Desenvolvimento anterior
+
+Antes do primeiro beta público, o repositório acumulou as superfícies atuais de movimento, combate, inventário, loot, geração procedural, ENet, editor, mods, UI e validação focada. Notas antigas foram consolidadas: atividade histórica não prova que o checkout atual esteja pronto para entrega.
+
+[Não publicado]: https://github.com/rufl/MODUS/compare/v0.9.5-beta...HEAD
+[0.9.5-beta]: https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta

@@ -77,13 +77,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/beta/release
-          python3 tools/package_overzeer.py package \
+          python3 tools/package_release_archive.py package \
             --version "$RELEASE_VERSION" --target linux-x86_64 \
             --executable build/beta/linux/modus.x86_64 \
             --content build/beta/linux/modus.pck \
             --readme README.md --license LICENSE \
             --output "build/beta/release/modus-$RELEASE_VERSION-linux-x86_64.tar.gz"
-          python3 tools/package_overzeer.py package \
+          python3 tools/package_release_archive.py package \
             --version "$RELEASE_VERSION" --target windows-x86_64 \
             --executable build/beta/windows/modus.exe \
             --content build/beta/windows/modus.pck \

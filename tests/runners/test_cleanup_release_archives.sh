@@ -14,12 +14,12 @@ for name in (
     "modus-0.9.4-beta-windows-x86_64.zip",
     "modus-0.9.5-beta-linux-x86_64.tar.zst",
     "modus-0.9.5-beta-windows-x86_64.zip",
-    "overzeer-release.json",
+    "release-index.json",
 ):
     (root / name).write_bytes(b"fixture")
 PY
 
-PREVIEW=$(python3 tools/cleanup_overzeer_archives.py \
+PREVIEW=$(python3 tools/cleanup_release_archives.py \
     --root "$ROOT" --keep-version 0.9.5-beta)
 case "$PREVIEW" in
     *"would-remove: $ROOT/modus-0.9.4-beta-linux-x86_64.tar.zst"*) ;;
@@ -32,16 +32,16 @@ esac
 test -f "$ROOT/modus-0.9.4-beta-linux-x86_64.tar.zst"
 test -f "$ROOT/modus-0.9.5-beta-linux-x86_64.tar.zst"
 
-python3 tools/cleanup_overzeer_archives.py \
+python3 tools/cleanup_release_archives.py \
     --root "$ROOT" --keep-version 0.9.5-beta --apply >/dev/null
 
 test ! -e "$ROOT/modus-0.9.4-beta-linux-x86_64.tar.zst"
 test ! -e "$ROOT/modus-0.9.4-beta-windows-x86_64.zip"
 test -f "$ROOT/modus-0.9.5-beta-linux-x86_64.tar.zst"
 test -f "$ROOT/modus-0.9.5-beta-windows-x86_64.zip"
-test -f "$ROOT/overzeer-release.json"
+test -f "$ROOT/release-index.json"
 
-if python3 tools/cleanup_overzeer_archives.py \
+if python3 tools/cleanup_release_archives.py \
     --root "$ROOT" --keep-version not-a-version >/dev/null 2>&1; then
     echo "expected invalid version to fail" >&2
     exit 1

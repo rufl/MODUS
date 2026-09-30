@@ -41,4 +41,4 @@
 
 ## Publicação
 
-Relatórios gerados, CSVs de evidência e logs são locais. Um resultado PASS vale apenas para seu comando e escopo. Não trate CI, smoke headless, simulação local ou dogfood autenticado como release assinado ou aprovação de produção.
+Relatórios gerados, CSVs de evidência e logs são locais. Um resultado PASS vale apenas para seu comando e escopo. Não trate CI, smoke headless ou simulação local como release assinado ou aprovação de produção.

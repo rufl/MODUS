@@ -3,18 +3,18 @@
 > **Documentation status: maintained reference.** This document expands the root roadmap by product area. It does not promote implementation presence into runtime or release proof.
 
 **Languages:** [English](ROADMAP.md) · [Português (Brasil)](pt-BR/ROADMAP.md)
-**Updated:** September 29, 2026
+**Updated:** September 30, 2026
 **Current version:** `0.9.5-beta`  
-**Current readiness:** **NOT READY**
+**Current readiness:** **EXPERIMENTAL BETA**
 
 ## Current Evidence Boundary
 
 - September 29 strict headless aggregate: 1,671/1,671 tests with 22,982 assertions across 149 scripts; two GUI-required files remain skipped.
-- Hosted CI pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`.
-- Authenticated unsigned ZTASH dogfood deployment reconciles DDJARIN Windows and CHOPPER Linux to build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`.
+- Hosted CI pipeline `36779150278` and quality run `36779150276` passed on release-source commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`.
+- The public `v0.9.5-beta` prerelease provides checksum-verified Linux, Windows, and macOS archives; all remain unsigned.
 - Manual gameplay: 0 imported evidence files / 0.00 recorded hours.
 - Performance: one warmed bounded 69.90-second/66-sample Showcase capture; production targets remain unproven.
-- Release: blocked at `0.9.5-beta`; signing, installer, public publication, native Windows and external-service proof remain open.
+- Stable release: blocked by signing, installers, native target acceptance, representative multiplayer, and external-service proof.
 
 See [Documentation Truth](DOCUMENTATION_TRUTH.md) and [Current Status](CURRENT_STATUS.md) for details. Historical totals remain below only as dated context.
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
-tmp="$(mktemp -d "${TMPDIR:-/tmp}/modus-overzeer-package.XXXXXX")"
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/modus-release-package.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
 
 python3 - "$root" "$tmp" <<'PY'
@@ -26,7 +26,7 @@ server.chmod(0o755)
 server_pck = source / "server.pck"
 server_pck.write_bytes(b"server pck")
 readme = source / "README"
-readme.write_text("dogfood candidate\n")
+readme.write_text("beta candidate\n")
 license_path = source / "LICENSE"
 license_path.write_text("license\n")
 launcher = source / "launcher.exe"
@@ -36,7 +36,7 @@ launcher.chmod(0o755)
 def command(target, output):
     return [
         sys.executable,
-        str(root / "tools/package_overzeer.py"),
+        str(root / "tools/package_release_archive.py"),
         "package",
         "--version", "0.9.5-beta",
         "--target", target,
@@ -135,5 +135,5 @@ with zipfile.ZipFile(wrapped) as archive:
     for name in ("modus.exe", "modus-real.exe", "modus.pck"):
         payload = archive.read(f"{windows_root}/{name}")
         assert f"{hashlib.sha256(payload).hexdigest()}  {name}\n" in checksums
-print("OVERZEER tar.zst, tar.gz and zip reproducibility and launcher manifest checks passed.")
+print("Release tar.zst, tar.gz and zip reproducibility and launcher manifest checks passed.")
 PY

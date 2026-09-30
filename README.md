@@ -1,433 +1,154 @@
-# MODUS Framework
+<div align="center">
+  <img src="docs/media/github/modus-hero.svg" alt="MODUS — a multiplayer FPS mechanics lab for Godot 4" width="100%">
 
-> **Documentation status: maintained reference.** Published readiness is consolidated in `docs/DOCUMENTATION_TRUTH.md` and `docs/CURRENT_STATUS.md`. Generated reports are local invocation records; narrower claims apply only to the named subsystem or workflow.
+  [![CI](https://img.shields.io/github/actions/workflow/status/rufl/MODUS/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/rufl/MODUS/actions/workflows/ci.yml)
+  [![Release](https://img.shields.io/github/v/release/rufl/MODUS?include_prereleases&style=flat-square&label=release)](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta)
+  [![Godot](https://img.shields.io/badge/Godot-4.7.2-478CBF?logo=godot-engine&logoColor=white&style=flat-square)](https://godotengine.org/)
+  [![License](https://img.shields.io/github/license/rufl/MODUS?style=flat-square)](LICENSE)
+  [![Status](https://img.shields.io/badge/status-experimental_beta-D97706?style=flat-square)](docs/CURRENT_STATUS.md)
 
-**Languages:** [English](README.md) · [Português (Brasil)](README.pt-BR.md)
+  **Movement, weapons, procedural systems, multiplayer, and modding — built to find out what survives contact with an actual game.**
 
-MODUS is an experimental Godot 4.7 multiplayer FPS framework and playable mechanics lab for developers who still care how guns feel, movement flows, enemies pressure space, and levels create stories.
+  [Download beta](#public-beta) · [Quick start](#quick-start) · [Architecture](#architecture) · [Documentation](docs/README.md) · [Contribute](CONTRIBUTING.md)
 
-It combines fast FPS combat, movement, weapons, loot, enemy AI, procedural map generation, splitscreen, multiplayer foundations, a level editor, and a modding SDK in one inspectable project. Build a combat room, a procedural gauntlet, a weapon pack, a custom enemy faction, or a ruleset that changes how the whole game behaves.
+  [Português do Brasil](README.pt-BR.md)
+</div>
 
-**Version:** `0.9.5-beta`
-**Engine:** Godot 4.7+ (CI/toolchain pinned to 4.7.2)
-**Readiness:** **NOT READY**
-
-MODUS is not presented as a shipped game or production-ready SDK. The current source-validation baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`; quality run `36779150276`); the September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts, with two GUI-required files skipped. Documentation-only commits run through the same GitHub Actions workflows. The public [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) is unsigned; signing, installer, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
-
-## Read This Before Cloning
-
-MODUS is a developer project, not a ready-to-play Steam game and not a one-click Godot template. Expect to inspect source, install the matching tools, wait for Godot imports, and validate the path you care about.
-
-Current boundaries:
-
-- No signed production release exists. The public [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) provides unsigned Linux, Windows and macOS client archives from build `1367b270d651b1a2588044774a15f1dbeb2b8b51`. Complete Linux/Windows client/server/editor OVERZEER archives were also validated from the GUI payload commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`; lean ZTASH packages passed Linux package smoke/capability checks and were authenticated for dogfood deployment.
-- DDJARIN currently reconciles the Windows package (`45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`); CHOPPER reconciles the Linux package (`da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`). Both are unsigned validation deployments, separate from the public GitHub beta.
-- The expected environment is Godot 4.7 in the 4.7 line on a writable machine with Bash; the repository does not pin a portable editor binary.
-- First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
-- Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
-- Capability manifests detect native CSG, MultiMesh, and occlusion classes plus optional dependency availability. Unsupported capabilities are rejected or reported instead of being silently treated as stock-runtime parity.
-- Packaged exports expose `--capability-report`; `--package-smoke` fails closed when the common walk/CSG contract is unavailable.
-- Procedural mission metadata retains deterministic room depths and route-aware encounter pacing; focused graph/generator/export proof passes 49/49 tests with 697 assertions. This is source-level evidence, not manual balance or finished Breakwater approval.
-- Breakwater Station exposes a versioned presentation contract; authored mission proof is 12/12 tests with 144 assertions. This is source/headless evidence, not manual audiovisual approval.
-- The Showcase route is an automated smoke path, not proof that the game feels good. Manual gameplay evidence remains at zero reviewed hours.
-- Multiplayer proof is strongest on local ENet and focused authority contracts. Independent WAN, authenticated two-account Steam, Workshop, target-Windows execution, exported-editor graphical acceptance, and long-session proof remain open.
-
-If you want a polished game to play immediately, MODUS is the wrong download. If you want an inspectable FPS systems lab that you can bend, profile, test, and extend, it is the right kind of unfinished.
-
-### Release and World-Building Direction
-
-The [release and world-building plan](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md) defines the path from this systems lab to an installable product. **Breakwater Station: Black Start** now has eleven detailed mission modules, power-driven machinery/lighting, zoned original ambience, finite supplies and a powered hub-return route. The exported Linux client completes the `.mdsl` mission using real pistol fire, default movement and checkpoints; isolated native captures cover every room. Human-operated completion, audiovisual approval and first-play pacing remain open, alongside persistent hubs, installer and external-service gates. See the [human acceptance checklist](tests/docs/MANUAL_TEST_TIMING.md#black-start-production-acceptance).
+> **Documentation status: maintained reference.** This landing page describes the current public repository and beta boundary.
 
 
-## Why MODUS
+> [!IMPORTANT]
+> MODUS is an experimental `0.9.5-beta`, not a finished game or production-ready framework. Public binaries are unsigned. Verified capabilities and open evidence gaps are tracked in [Current Status](docs/CURRENT_STATUS.md).
 
-MODUS takes the parts that make FPS games worth mastering:
+![MODUS main menu with campaign, multiplayer, mods, editor, options, credits, and exit actions](docs/media/release/main_menu_1280x720.png)
 
-- Boomer-shooter movement rhythm and immediate weapon feedback.
-- Arena-shooter space, pressure, routes, and target priority.
-- Looter-shooter variety through weapons, pickups, equipment, inventory, and modifiers.
-- Procedural replayability through rooms, hallways, caves, slopes, 3D floors, navigation, and gameplay placement.
-- Mod-friendly experimentation through data overrides, event exchange, script hooks, sample packages, and validation.
-- Developer control through inspectable Godot scenes, configuration, editor tooling, focused tests, and server-authoritative boundaries.
+## Why MODUS exists
 
-The intended workflow is direct: edit a level, tune a weapon, change the data, reload the route, and test the result. MODUS is for the developer who thinks, “The gun should kick harder,” “That enemy needs to force movement,” or “I want to change the rules, not just replace a texture.”
+FPS mechanics are easy to demo in isolation and hard to keep coherent as networking, content tools, procedural worlds, input methods, and mods begin to interact. MODUS is a working laboratory for those seams.
 
-## What You Can Build
+The repository favors executable systems and explicit evidence over showcase claims. Features are separated into implemented, observed, and still-unproven boundaries so contributors can see both the useful work and the unfinished work.
 
-- A fast solo FPS with handcrafted combat arenas.
-- A procedural run with escalating enemies and loot.
-- A co-op or splitscreen experiment.
-- A custom weapons-and-modifiers sandbox.
-- A mod package that changes data, events, enemies, or rules.
-- A level-editor workflow that stays close to the playable result.
+## What works today
 
-The project is mechanics-first: velocity, pressure, readable systems, strange weapons, and levels worth learning.
+| Area | Implemented surface | Current evidence boundary |
+| --- | --- | --- |
+| Movement and combat | First-person movement, damage, weapons, projectiles, effects, and configurable gameplay services | Focused automated and showcase-route coverage; balance and broad hardware acceptance remain open |
+| Items and encounters | Inventory, pickups, loot tables, enemies, game modes, scores, and timers | Deterministic/unit coverage plus authored demo routes |
+| World building | Seeded procedural generation, authored maps, runtime map lifecycle, and content registries | Focused generation and smoke coverage; large-world soak evidence remains limited |
+| Multiplayer | ENet host/join paths, dedicated-server code, RPC allowlisting, rate limits, authority validation, and prediction | Local lifecycle and authority observations; representative Internet, hostile-client, and scale testing remain open |
+| Creation and mods | Embedded editor, `.mdsl` round trips, JSON/JSON5 data, sample mods, and package validation | Local editor and filesystem flows; public Workshop transfer remains unproven |
+| Release engineering | Headless validation, reproducible archives, checksums, and Linux/Windows/macOS beta artifacts | Assets are unsigned and not yet a polished installer experience |
 
-## Start Here
+The precise, dated record is in [Current Status](docs/CURRENT_STATUS.md). Known constraints are grouped in the [Known Limits Matrix](docs/KNOWN_LIMITS_MATRIX.md).
 
-1. Install Godot 4.7 in the 4.7 line and ensure `godot` is on `PATH`, or set `GODOT_BIN`.
-2. Clone the repository and open it with `godot --editor --path .`.
-3. Wait for the first asset import; generated `.import`/`.uid` sidecars are normal and should not be deleted while Godot is open.
-4. Run the configured main scene: `res://shared/ui_core/screens/main_menu_screen.tscn`.
-5. Use `res://game/world/maps/showcase.tscn` for the maintained showcase route.
-6. Read [Getting Started](docs/getting_started.md), [Known Limits](docs/KNOWN_LIMITS_MATRIX.md), and [Showcase Route](docs/SHOWCASE_ROUTE.md) before judging a missing feature.
+## Public beta
 
-For a fast source/setup check before launching the UI:
+The [`v0.9.5-beta` release](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) is a reproducible preview for evaluation, not a production release.
+
+| Platform | Download | Notes |
+| --- | --- | --- |
+| Linux x86-64 | [`tar.gz`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/modus-0.9.5-beta-linux-x86_64.tar.gz) | Extract and run `modus.x86_64` |
+| Windows x86-64 | [`zip`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/modus-0.9.5-beta-windows-x86_64.zip) | Extract and run `modus.exe` |
+| macOS universal | [`zip`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/modus-0.9.5-beta-macos-universal.zip) | Unsigned and unnotarized application bundle |
+| Integrity | [`SHA256SUMS`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/SHA256SUMS) | Verify before running an unsigned asset |
 
 ```bash
-bash tools/check_documentation_truth.sh
+sha256sum --check SHA256SUMS
+```
+
+Windows users can verify with `Get-FileHash`; macOS users can use `shasum -a 256`. Compare the result with the published checksum file.
+
+## Quick start
+
+### Requirements
+
+- [Godot 4.7+](https://godotengine.org/download/archive/4.7.2-stable/) — the public beta baseline uses 4.7.2
+- Git
+- Python 3 and Bash for repository validation tools
+
+```bash
+git clone https://github.com/rufl/MODUS.git
+cd MODUS
+godot --editor --path .
+```
+
+Run the project directly:
+
+```bash
+godot --path .
+```
+
+Check repository contracts without launching a graphical session:
+
+```bash
 bash tools/check_project_truth.sh
-bash tools/check_headless_runner_manifest.sh
-```
-
-The repository does not guarantee a clean first run on every machine. Missing optional integrations, import issues, renderer differences, unsupported hardware, and the absence of a graphical session are environment boundaries, not silently successful fallbacks.
-
-## Local Linux export
-
-The repository now has a `Linux Desktop` export preset. With Godot 4.7 in the
-4.7 line and the Linux export template installed:
-
-```bash
-mkdir -p standalone/client
-godot --headless --path . --export-release "Linux Desktop" standalone/client/modus.x86_64
-tools/run_export_smoke.sh --platform linux --executable standalone/client/modus.x86_64
-```
-
-The bounded export smoke passed on the current Linux/Godot 4.7.2 environment.
-This proves one local Linux artifact launches cleanly for the smoke interval; it
-does not make the artifact a release, installer, signed binary, Steam build, or
-target-Windows proof.
-
-### Local release candidates
-
-Python 3.10+ and Bash are required for the release helpers. To package an existing Linux client:
-
-```bash
-bash tools/package_linux_portable.sh package \
-  --artifact-dir standalone/client --version 0.9.5-beta --output /tmp/modus-linux.tar.zst
-bash tools/package_linux_portable.sh install --archive /tmp/modus-linux.tar.zst --prefix "$HOME/.local/opt"
-bash tools/package_linux_portable.sh verify --prefix "$HOME/.local/opt"
-bash tools/package_linux_portable.sh uninstall --prefix "$HOME/.local/opt"
-```
-
-`.tar.zst` is the preferred transfer format for deployment; `.tar.gz` remains supported. The helper requires the `zstd` executable for `.tar.zst` archives. Install again to upgrade. The helper checks the complete archive before changing an installation, rolls back failed replacements, and preserves unowned files and XDG saves/configuration. Changed owned payloads, unsafe archives and legacy installs without the checked inventory are rejected, not deleted or silently migrated. Back up and relocate a legacy install before choosing a clean prefix.
-
-For a client/server/editor candidate from one build revision, generate a portable manifest and stage it:
-
-```bash
-python3 tools/validate_release_artifacts.py --version 0.9.5-beta \
-  --commit "$(git rev-parse HEAD)" --godot-version "$(godot --version)" \
-  --root standalone --client standalone/client/modus.x86_64 \
-  --server standalone/server/server.x86_64 --editor standalone/editor/modus-editor.x86_64 \
-  --output standalone/release-manifest.json
-python3 tools/stage_release_artifacts.py --manifest standalone/release-manifest.json \
-  --output build/release/MODUS-0.9.5-beta-linux-x86_64
-python3 tools/validate_release_artifacts.py \
-  --verify build/release/MODUS-0.9.5-beta-linux-x86_64/manifest.json
-```
-
-Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. `tools/toolchain.lock.json` pins the recorded Godot/GUT/GDScript Toolkit/SCons inputs and archive hashes; run `python3 tools/validate_toolchain_lock.py` before candidate assembly. Signed production publication, native runtime/dependency bundling and target acceptance remain open.
-
-The September 29 dogfood batch produced unsigned transfer archives from GUI
-payload commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`. Complete
-client/server/editor archive hashes and the lean receiver-package hashes are
-recorded in [Release Evidence Bundle](docs/RELEASE_EVIDENCE_BUNDLE.md); the
-ignored local evidence directory was cleaned to retain only the source-matched
-batch.
-
-DDJARIN and CHOPPER accepted the lean ZTASH packages through authenticated
-separate-endpoint deployment. Active state currently reconciles to the Windows
-hash `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363` and
-Linux hash `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
-This is unsigned dogfood validation, separate from the public beta and not a signed production release.
-Native Windows execution, driver review, signing, installer packaging, and
-target acceptance remain required.
-
-The public beta package set is independently recorded in [Release Evidence Bundle](docs/RELEASE_EVIDENCE_BUNDLE.md):
-
-| Asset | Bytes | SHA-256 |
-| --- | ---: | --- |
-| Linux `tar.gz` | 131401146 | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
-| Windows `zip` | 141246788 | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
-| macOS universal `zip` | 152177480 | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
-
-The downloaded archives passed `SHA256SUMS` and compressed-archive integrity checks; Linux headless smoke passed. The Windows archive contains a PE32+ x86-64 executable, and the macOS archive contains a two-architecture Mach-O executable. The beta is unsigned and macOS notarization is unavailable.
-
-CI and local release jobs use `tools/package_overzeer.py` to build these
-archives from verified exports:
-
-```bash
-python3 tools/package_overzeer.py package \
-  --version 0.9.5-beta --target linux-x86_64 \
-  --executable standalone/client/modus.x86_64 \
-  --content standalone/client/modus.pck \
-  --readme README.md --license LICENSE \
-  --output build/release/modus-0.9.5-beta-linux-x86_64.tar.gz
-```
-
-The checked-in handoff wrapper prepares or previews the two receiver-bound
-packages without reading credential contents:
-
-```bash
-OVERZEER_DOWNLOAD_BASE_URL=https://packages.example.invalid/modus \
-tools/deploy_overzeer_fleet.sh preview
-```
-
-Use `deploy` only with an owner-approved HTTPS endpoint and
-`OVERZEER_CONFIRM=DEPLOY`; the wrapper delegates private token discovery to
-OVERZEER's canonical `oztok` root.
-
-Before handoff, qualify the exact four archives and write deterministic local
-inventory metadata:
-
-```bash
-python3 tools/validate_overzeer_release.py \
-  --version 0.9.5-beta --build-id "$(git rev-parse HEAD)" \
-  --root build/release \
-  --toolchain-lock tools/toolchain.lock.json \
-  --output build/release/overzeer-release.json
-```
-The inventory and derived ZTASH manifest carry the SHA-256 digest of the toolchain lock used for the qualification run. This binds metadata to recorded inputs; it does not authenticate unsigned archives or prove target capability.
-
-To remove only obsolete package archives while preserving the selected
-version, preview first and then apply:
-
-```bash
-python3 tools/cleanup_overzeer_archives.py \
-  --root build/release --keep-version 0.9.5-beta
-python3 tools/cleanup_overzeer_archives.py \
-  --root build/release --keep-version 0.9.5-beta --apply
-```
-
-## OVERZEER dogfood deployment and telemetry
-
-MODUS is registered as the `modus` OVERZEER dogfood application. Its package
-must use the root `modus-<version>-<target>`, executable `modus.exe` on
-Windows or the headless launcher `modus` plus native payload `modus.bin` on
-Linux, plus `README.md` and `LICENSE`. Windows packages also carry an
-identical `README.txt` compatibility entry for older receivers.
-A successful OVERZEER deployment writes `overzeer-modus-telemetry.json` beside
-the active executable. The marker is generated by the authenticated receiver,
-not shipped in source archives.
-
-The receiver smoke invokes the packaged client with the `--package-smoke`
-entrypoint; the Linux launcher adds `--headless` before forwarding it. Source
-and packaged invocations accept the flag as a user argument, and the focused
-runner verifies clean exit without script errors. The entry point validates the
-main scene, menu scene, and showcase scene before exiting. This is a
-package-integrity gate, not native rendering or gameplay acceptance.
-
-The exported MODUS binary reads that marker, enables the existing local-only
-JSONL telemetry, and writes sessions into the receiver collection directory.
-No network transport or analytics SDK is involved. Retrieve it from Chopper:
-
-```bash
-tools/overzeer-collect.sh \
-  --endpoint https://ddjarin.tail8302a.ts.net \
-  --token-file ~/.config/overzeer/ddjarin-token \
-  --output /tmp/modus-dogfood-telemetry.zip \
-  --taildrop chopper
-```
-
-Direct launches outside an OVERZEER deployment remain opt-in:
-
-```bash
-MODUS_LOCAL_TELEMETRY=1 \
-MODUS_LOCAL_TELEMETRY_DIR=/absolute/path/to/telemetry \
-./modus.exe
-```
-
-
-## Proven Showcase Route <!-- craft-ignore: maintained project reference -->
-
-The main menu exposes **Showcase**, which opens the maintained `game/world/maps/showcase.tscn` route. The automated golden-demo smoke now proves one controlled local framework loop: scene load, player spawn, movement input, weapon fire, enemy defeat, pickup collection, encrypted save/load restoration, and bundled SDK sample-mod loading. <!-- craft-ignore: scoped evidence emphasis -->
-
-![MODUS automated golden-demo result](docs/media/release/golden_demo_smoke_1280x720.png)
-
-- Golden demo report: `docs/GOLDEN_DEMO_SMOKE.md`, generated locally by `tools/run_showcase_golden_demo_smoke.sh`
-- [Short automated runtime video](docs/media/release/golden_demo_smoke_1280x720.mp4)
-- [Release Evidence Bundle](docs/RELEASE_EVIDENCE_BUNDLE.md)
-
-This route does not prove gameplay feel, real multiplayer peers, Steam, long sessions, packaging, manual hours, or release approval.
-
-For a real reviewed session, run `tools/run_manual_showcase_session.sh --tester NAME --input DEVICES`. Its test-only F8/Gamepad Back recorder covers 20 bounded observations and writes metadata-rich CSVs directly to `logs/manual_test_logs/`; it does not fabricate evidence.
-
-## What Exists in Source
-
-| Area | Source-backed boundary |
-| --- | --- |
-| Core lifecycle | `GameManager` and `MapGenerator` are the two project autoloads |
-| Gameplay | Player, combat, weapons, enemies, loot, effects, missions, difficulty, movement, and world systems are present |
-| Content | Weapon, enemy, item, loot, localization, and map-generator data live under `game/data/` |
-| Runtime configuration | Feature, gameplay, network, entity, item, and performance configuration live under `game/config/` |
-| Networking | ENet, server validation, RPC whitelist/rate limits, dedicated-server paths, prediction, and conditional Steam structures exist |
-| Splitscreen | Local-player, viewport, input, assignment, and session-management code exists with focused automated coverage |
-| Modding | Folder/PCK/ZIP discovery, manifests, dependencies, overrides, event hooks, and a sample SDK mod exist |
-| Editor | Shared editor core, embedded and standalone entry points, level serialization/export, prefabs, and local Workshop simulation exist |
-| Map generation | Multi-phase procedural generation, validation, export, profiling, and focused unit/integration coverage exist |
-
-“Exists in source” does not mean the complete user flow has been manually proven.
-
-## Current Evidence
-
-| Evidence | Result |
-| --- | --- |
-| Hosted CI | **PASS:** source-validation baseline quality run `36588760149` and CI/CD pipeline `36588760158` on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; formatting, lint, truth, release contracts, security scan, GUT lanes, exports, manifests and native qualification workflow completed successfully. Documentation-only commits run through the same workflows. |
-| Focused release engineering | **PASS:** archive validation, Linux lifecycle, staging, OVERZEER inventory, fleet-wrapper forwarding, ZTASH preparation, cleanup, toolchain lock and project-truth checks |
-| Authenticated dogfood deployment | **PASS:** DDJARIN Windows and CHOPPER Linux active states match build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` and retained SHA-256 metadata |
-| Golden demo runtime smoke | **PASS:** all 8 controlled framework-loop steps; automated scope only |
-| Main menu / showcase scene launch smokes | **PASS:** startup scope only; see [Current Status](docs/CURRENT_STATUS.md) for dates and boundaries |
-| Manual gameplay | **BLOCKED:** the recorder workflow is ready, but no reviewed CSV evidence has been imported |
-| Performance evidence | **PASS** for one warmed bounded 69.90-second/66-sample Showcase capture; not a display-synchronized target claim |
-| Release signing/publication | **PARTIAL / BLOCKED:** public unsigned `v0.9.5-beta` client archives exist; production signing, notarization, installer and authenticated receiver publication remain open |
-| Release-version gate | **BLOCKED** — current version remains `0.9.5-beta` |
-| Production readiness | **NOT READY:** native Windows, manual, signing, installer, Steam/WAN/Workshop and other external gates remain open |
-
-Focused green tests are listed in [Current Status](docs/CURRENT_STATUS.md). They prove only their named contracts and do not replace manual, release, or distribution evidence.
-
-The UI/UX pass now uses the supplied warrior artwork, exposes the maintained Showcase route directly, explains focused or hovered actions, preserves responsive containment and 48-pixel logical controls across shared menus/modals, localizes Showcase and Editor labels, makes options, multiplayer, host, pause, and save/load layouts shrink safely, and adds a gamepad-ready showcase welcome panel that states the evidence boundary. The mod manager now stacks on constrained screens, localizes its workflow, keeps actions disabled until selection, and explains that changes apply after reload; the skill-tree compatibility route now resolves the complete focusable UI. The test-only manual recorder adds a compact 800×600 review surface, clear Pass/Fail/Skip states, required failure notes, direct evidence export, and an F8/Gamepad Back gameplay/review handoff. Recorder/timer proof passes 2/2 with 21 assertions; captures are retained in [Release Evidence Bundle](docs/RELEASE_EVIDENCE_BUNDLE.md).
-
-The current primary-menu polish adds explicit Play/Authored/System hierarchy, a truthful local-build status strip, compact wide-layout route rows and responsive narrow stacking while retaining 48-pixel controls. Focused UI proof passes **26/26 with 153 assertions**, and an isolated 1280×720 desktop capture shows the complete route/version surface; normal-window input feel and manual gameplay evidence remain open.
-
-The latest focused source-shape/editor-registry contract passes 37/37 with 172 assertions and zero GUT orphans. It verifies canonical world/map/resource paths and instantiable built-in editor actors; it does not supply the still-missing vase, corpse-pile, hidden-stash, or weapon-rack loot scenes.
-
-The advanced-movement contract now passes 36/36 with 51 assertions in focused scope and 36/36 inside the strict aggregate. It verifies deterministic grounded bunny-hop/slide behavior, capped hop acceleration, current signal contracts, no-peer-safe dodge synchronization, and canonical rocket-jump JSON5 loading; normal-window feel and tuning remain manual proof.
-
-## Important Boundaries
-
-### Multiplayer and Steam
-
-- The `multiplayer_demo` profile launches without profile/service lookup errors.
-- Focused real-ENet lifecycle, reconnect, latency, rate-validation, and late-join checks have dated passing evidence; representative WAN sessions and real abusive-client soak remain unproven.
-- GodotSteam 4.22.1 authenticated local initialization has been observed with persona/Steam ID; two-account Steam lobbies, Workshop operations, and relay/P2P behavior remain unproven.
-- Server-authoritative hitscan uses the shared, RTT-bounded player/enemy rewind system. Focused physics and weapon tests pass; client-view/interpolation calibration and representative high-latency sessions remain unproven.
-
-See [Multiplayer Authority](docs/MULTIPLAYER_AUTHORITY_MODEL.md), [Profile Smoke](docs/MULTIPLAYER_PROFILE_SMOKE.md), [ENet Smoke](docs/ENET_LOCAL_HOST_JOIN_SMOKE.md), and [Steam Integration](docs/technical/STEAM_INTEGRATION.md).
-
-### Editor and Workshop
-
-- Historical constructed-level save/export/reload proof passes through `LevelSaveSystem`; it does not cover every embedded-editor path.
-- Local filesystem Workshop upload/download/browse/subscription simulation passes.
-- September 13 repairs embedded document replacement, nested ownership, root metadata, cursor RPC compilation and document-owned channels. Focused editor/history tests pass 36/36 with 204 assertions. Source and exported Linux editors assemble/wire three modules, play, reopen/resave and export `.mdsl`; package export now refuses an existing output without changing prior bytes. The exported Linux game completes that package without losing geometry or behavior. Graphical verification is blocked by the isolated-display pressure guard.
-
-See [Editor Round-Trip Proof](docs/EDITOR_ROUNDTRIP_PROOF.md) and [Workshop Local Simulation](docs/WORKSHOP_LOCAL_SIMULATION_PROOF.md).
-
-### Performance
-
-One compatibility-renderer showcase capture exists on Intel Arc A770/Mesa: 66.4 seconds, 130 samples, and a 108.55 ms maximum frame-time spike. The historical capture emitted extreme enemy-position warnings; current enemy runtime attempts bounded recovery for those positions. Do not use its average FPS as a player-facing target.
-
-No display-synchronized solo, splitscreen, multiplayer, low-end hardware, or long-session target has been validated. See [Performance Baseline Proof](docs/PERFORMANCE_BASELINE_PROOF.md).
-
-### Map Generator
-
-September 13 generator-correctness proof passes **55/55 focused tests with 1,319 assertions** on Godot 4.7.2. It covers seed isolation, connected layouts, retained keys/secrets, simultaneous-lock progression, collision-backed navigation, saved-scene routes and cancellation/restart. Separate 64×64 and default 128×128 source-generation smokes pass; the latter produces 1,405 navigation polygons. Historical unit/threading/export counts are not a current full-suite result.
-
-Generator revision **2** changes seed-to-content output. Saved scenes retain seed, configuration, revision and typed gameplay records; replay requires the same generator/runtime/content. Generated/authored content now carries a versioned capability manifest with runtime identity, required features and explicit fallback diagnostics; destination staging and travel admission reject unsupported or mismatched capabilities before instantiation or peer spawn. Key/lock generation publishes deterministic key, lock, objective, recovery-route, room-ID and room-edge metadata; recovery routes now start from the configured player room, use a deterministic shortest extraction path or true farthest reachable fallback, disconnected graphs, forged edges and locks not backed by actual transitions are rejected transactionally, and MissionMgr accepts valid branching edges outside the recovery route, rejects disconnected declared graphs and preserves legacy manifests without room IDs. `MissionGraphPlanner` classifies linear/branching/cyclic topology and publishes stable branch metadata before lock placement. `ModuleLayoutSolver` now publishes bounded tree and cyclic spanning-tree socket transforms, bounded breadth/depth spanning-tree alternatives, connection records, loop-closure diagnostics, deterministic least-used catalog selection and clearance checks as `spatial_plan`; valid plans are attached to generated `LevelRoot` scenes through `ModuleAssembly`, which rejects duplicate rooms, malformed transforms and empty plans before mutation. Full authored catalog placement and attachment of an eleven-room chain are covered with catalog usage/diversity diagnostics, and every authored catalog definition is exercised through single-room solve/attach coverage. Generated scenes instantiate canonical enemy, pickup, key, door and extraction actors and retain packed actor-record/count diagnostics; unsupported item records remain explicit non-realization entries. Generated gameplay retains a bounded encounter manifest with proportional weapon/ammo/health floors, resource counts, room distribution and impossible-composition refusal diagnostics; health balancing preserves those floors. Packed generated scenes reject mismatched progression/actor records before realization; focused planner/key-lock/actor/composition/spatial proof passes 14/14 with 48 assertions, 22/22 with 544 assertions, and 10/10 with 100 assertions. Runtime interaction/presentation, authored cyclic geometry and unsupported cyclic layouts remain open.
-Generated encounter placement now prevents actor/resource cell overlap and retains early/mid/late progression bands plus collision diagnostics in packed gameplay metadata. The focused placer proof passes **13/13 tests with 75 assertions**; the combined generator selection passes **85/85 with 1,025 assertions**. Full encounter tuning, runtime interaction feel, composed mission production, graphical review and audiovisual acceptance remain open.
-Runtime interaction prompts now share an actor contract: generated key, door and switch actors expose state-aware text, and the HUD resolves actor parents from collision children instead of requiring a separate `Interactable` node. Authored mission interaction proof passes **7/7 tests with 54 assertions**; the combined gameplay/editor selection passes **47/47 with 267 assertions**. Human interaction feel, full encounter tuning and graphical acceptance remain open.
-Generated secret walls and travel actors now participate in the same prompt contract: interact-triggered walls are visible to interaction rays while non-interactive secret triggers retain world/debris blocking, and travel destinations expose configured or unconfigured prompts. Focused actor discoverability proof now covers **9/9 tests with 66 assertions**; native rendered interaction and manual feel remain open.
-
-Play the built-in mission from **Breakwater Station** in the main menu, or launch `godot --path . -- --breakwater`. Launch the authoring app with `godot --path . -- --editor`; **File → Open Breakwater Station** opens the mission, while **Open Three-Room Gate** retains the smaller authoring example. See the [standalone guide](standalone/editor/README.md). The [production brief](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#mission-direction-and-quality-reference) still governs audiovisual review, pacing, cyclic generation and hubs.
-
-The shared editor now supports persistent module pins, visual-only socket ghosts (**Enter** commits, **Esc** cancels) and bounded partial replacement with complete undo/redo. Regeneration preserves module identities, poses and all graph connections; incompatible or stale plans leave the document unchanged. This does not yet generate new mission graphs or spatial layouts. See [pins and partial regeneration](standalone/editor/README.md#pins-previews-and-partial-regeneration).
-
-Persistent hub travel is available in the authored-level runtime:
-
-```bash
-godot --path . -- --hub
-godot --path . -- --hub --hub-host 7777
-godot --path . -- --hub --hub-join 127.0.0.1 7777
-```
-
-Use **E** at the departure/return consoles. Players and the transport survive destination replacement; revisits retain objectives, gates, encounters and consumed rewards. **F5/F9** save/load the visited campaign through the encrypted save service; only the host can save, load or commit travel. Peers must have matching content and supported traversal capabilities before admission. Source proof includes 40 focused tests/263 assertions and a three-process ENet refusal/travel/late-join/disconnect scenario. This does not establish host migration, Steam transport, cross-build save migration or exported-platform acceptance. See [hub persistence](docs/RELEASE_AND_WORLD_BUILDING_PLAN.md#hubs-and-persistence).
-
-## Data and Configuration
-
-Keep content and runtime configuration separate:
-
-```text
-game/data/                 content registries and map-generator data
-game/config/               runtime feature and system configuration
-user://mods/               user-installed mod packages and overrides
-mods/                      repository sample mods
-```
-
-See [JSON Schemas](docs/technical/JSON_SCHEMAS.md) for maintained ownership rules.
-
-## Modding
-
-The reference package is `mods/modus_sdk_sample/`. Focused proof covers manifest/override shape, `ModScript` inheritance, event exchange, and an enemy-spawn hook. It does not prove packaging for distribution, live multiplayer synchronization, real Workshop publication, or balance.
-
-See [Modding Guide](docs/guides/MODDING.md), [Sample Mod Proof](docs/MODDING_SAMPLE_MOD.md), and [Mod Package Validation](docs/MOD_PACKAGE_VALIDATION.md).
-
-## Verification
-
-Documentation and source-truth gates:
-
-```bash
 bash tools/check_documentation_truth.sh
-bash tools/check_project_truth.sh
-bash tools/check_headless_runner_manifest.sh
-tools/generate_provenance_ledger.py --check
 ```
 
-Automated tests:
+The complete aggregate runner is `./tests/runners/run_all_tests_headless.sh`; reserve it for explicit final verification rather than routine focused changes.
 
-```bash
-./tests/runners/run_all_tests_headless.sh
-./tests/runners/run_tests_by_category.sh --report docs/AUTOMATED_TEST_LANES_REPORT.md
+Start with [Getting Started](docs/getting_started.md), then use the [Documentation Index](docs/INDEX.md) for gameplay, modding, multiplayer, and contributor references.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Entry[Main entry and UI] --> GM[GameManager]
+    Config[Profiles, JSON5, registries] --> GM
+    GM --> Features[Gameplay feature modules]
+    GM --> Network[ENet and dedicated server]
+    GM --> Mods[Mods and content overrides]
+    Features --> Entities[Players, enemies, weapons, effects]
+    Generator[MapGenerator workers] --> World[Procedural and authored worlds]
+    Editor[Embedded and standalone editor] --> World
+    Editor --> Mods
+    Telemetry[Opt-in local validation telemetry] -. evidence .-> GM
 ```
 
-Evidence/readiness reports:
+`GameManager` owns lifecycle, configuration, events, and feature/service registration. `MapGenerator` keeps procedural generation on its own lifecycle. Optional local telemetry records validation evidence only when explicitly enabled and never requires a remote service.
 
-```bash
-tools/run_showcase_golden_demo_smoke.sh --strict
-tools/run_main_player_path_smoke.sh --strict
-tools/validate_manual_evidence.sh --strict
-tools/validate_performance_evidence.sh --strict
-tools/validate_release_readiness.sh --strict
-tools/validate_production_readiness.sh --run-godot-tests --strict
-```
+| Path | Responsibility |
+| --- | --- |
+| `game/scripts/core/` | Lifecycle, configuration, logging, and foundational runtime code |
+| `game/scripts/features/` | Optional gameplay and service modules |
+| `game/core/network/` | ENet, dedicated-server, authority, and network support |
+| `game/entities/` | Players, enemies, components, effects, and projectiles |
+| `game/world/` | Authored maps, actors, and test scenes |
+| `game/editor/`, `shared/editor_core/` | Embedded/standalone editor data and tools |
+| `shared/ui_core/` | Screens, reusable components, and UI managers |
+| `game/data/`, `game/config/` | Content registries, schemas, and feature profiles |
+| `mods/` | Redistributable sample mods |
+| `tests/` | Focused behavior, property, benchmark, and manual-evidence code |
 
-Strict validators intentionally return nonzero while their proof is blocked.
+See the [Architecture Reference](docs/architecture.md) and [JSON Schemas](docs/technical/JSON_SCHEMAS.md) for ownership and data contracts.
 
-## Repository Layout
+## Engineering priorities
 
-```text
-game/              runtime code, scenes, data, configuration, UI, and editor entry points
-shared/            shared editor and UI infrastructure
-standalone/        standalone editor and dedicated-server entry points
-mods/              repository sample mods
-tests/             GUT unit, integration, property, benchmark, and manual helpers
-tools/             reusable validators, smoke harnesses, and maintenance tooling
-docs/              maintained references, licenses, provenance, and curated evidence media
-```
+- **Authority before trust:** RPC allowlists, rate limits, validation, and server-facing ownership are explicit parts of the multiplayer model.
+- **Determinism where it matters:** procedural seeds, archive timestamps, and checksums make failures and release artifacts reproducible.
+- **Data-oriented extension:** feature profiles, registries, JSON5 configuration, and sample mods keep content changes out of global runtime code.
+- **Evidence without inflated claims:** documentation records what was observed, on which boundary, and what still needs representative testing.
+- **Tools that exercise the same model:** editor round trips and package validators target the runtime's actual content formats.
 
-## Repository Hygiene
+Watch the [25-second automated showcase smoke](docs/media/release/golden_demo_smoke_1280x720.mp4), or review the route in [Showcase Route](docs/SHOWCASE_ROUTE.md).
 
-Git tracks source, tests, CI, shared project configuration, licenses, the provenance ledger, maintained guides, and curated documentation media. Godot `.uid` and asset `.import` sidecars remain tracked because they encode resource identity and import behavior.
+## Current limits
 
-Raw `logs/`, IDE/agent state, `MEMORY.md`, `BACKLOG_ARCHIVE.md`, generated readiness reports, historical implementation notes, and completed one-off migration scripts are local-only. Existing copies remain in their original locations, ignored by Git; fresh clones regenerate outputs with the commands above. Missing evidence is not a passing readiness result. Locally retained logs are also excluded from exports.
+- No signed or notarized desktop binaries.
+- No claim of production multiplayer security, Internet-scale reliability, or broad latency tolerance.
+- No public Steam Workshop transfer proof.
+- Performance evidence is bounded; representative low-end and large-session coverage remains incomplete.
+- UI, controller, localization, and accessibility coverage are still expanding.
+- APIs and content formats may change before `1.0`.
 
-Record lasting changes in `CHANGELOG.md` and maintained guides rather than adding session transcripts or generated reports. Untracking changes the published tree without deleting local files or rewriting Git history; older commits still contain their original files.
+These are active engineering constraints, not hidden release notes. See the [Roadmap](docs/ROADMAP.md) and [Backlog](./BACKLOG.md) for priorities.
 
-## Documentation
+## Contributing
 
-- [Documentation Index](docs/INDEX.md)
-- [Documentation Truth Contract](docs/DOCUMENTATION_TRUTH.md)
-- [Current Status](docs/CURRENT_STATUS.md)
-- [Active Backlog](BACKLOG.md)
-- [Roadmap](ROADMAP.md)
-- [Architecture](docs/architecture.md)
-- [Technical Reference](docs/TECHNICAL_REFERENCE.md)
-- [Attribution](docs/ATTRIBUTION.md)
+Bug reports, focused mechanics work, documentation corrections, accessibility improvements, and reproducible platform observations are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), then use the structured [issue forms](https://github.com/rufl/MODUS/issues/new/choose).
 
-## Intended Use
+Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md). Report vulnerabilities through a [private security advisory](https://github.com/rufl/MODUS/security/advisories/new).
 
-- Suitable for source study, experimentation, and prototypes where the current limitations are acceptable.
-- Potentially useful as a framework foundation after project-specific validation and hardening.
-- Not currently supported by evidence for production deployment, a 1.0 release, public multiplayer service, or store publication.
+## License and attribution
 
-## License and Provenance
-
-The project MIT text is retained at `LICENSE` and `docs/LICENSE`; vendored GUT carries its MIT notice under `addons/gut/LICENSE.md`. Kenney, Quaternius, dip000 blood-pool material, project-owned artwork, and generated assets have retained local provenance records. The current ledger contains **318 assets: 318 cleared and 0 unverified**. See [Licensing and Provenance Inventory](docs/ATTRIBUTION.md) before redistributing the project.
+Code is available under the [MIT License](LICENSE). Third-party art, audio, fonts, and tools retain their own licenses; review [Attribution](docs/ATTRIBUTION.md) before redistributing a build or asset.

@@ -1,88 +1,123 @@
-# MODUS Framework
+<div align="center">
+  <img src="docs/media/github/modus-hero.svg" alt="MODUS — laboratório de mecânicas FPS multijogador em Godot 4" width="100%">
 
-> **Documentation status: maintained reference.** Esta é a tradução brasileira da documentação publicada. A fonte de verdade sobre prontidão continua em [`docs/DOCUMENTATION_TRUTH.md`](docs/DOCUMENTATION_TRUTH.md) e [`docs/CURRENT_STATUS.md`](docs/CURRENT_STATUS.md).
+  [![CI](https://img.shields.io/github/actions/workflow/status/rufl/MODUS/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/rufl/MODUS/actions/workflows/ci.yml)
+  [![Versão](https://img.shields.io/github/v/release/rufl/MODUS?include_prereleases&style=flat-square&label=vers%C3%A3o)](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta)
+  [![Godot](https://img.shields.io/badge/Godot-4.7.2-478CBF?logo=godot-engine&logoColor=white&style=flat-square)](https://godotengine.org/)
+  [![Licença](https://img.shields.io/github/license/rufl/MODUS?style=flat-square)](LICENSE)
 
-**Idiomas:** [English](README.md) · [Português (Brasil)](README.pt-BR.md)
+  **Movimento, armas, sistemas procedurais, rede e mods — construídos para descobrir o que resiste ao contato com um jogo real.**
 
-MODUS é um framework experimental de FPS multiplayer e um laboratório jogável de mecânicas para Godot 4.7. O projeto reúne combate, movimentação, armas, loot, IA inimiga, geração procedural, splitscreen, fundamentos multiplayer, editor de níveis e SDK de mods em uma base inspecionável.
+  [Baixar beta](#beta-público) · [Começar](#início-rápido) · [Arquitetura](#arquitetura) · [Documentação](docs/pt-BR/README.md) · [Contribuir](CONTRIBUTING.md)
 
-**Versão:** `0.9.5-beta`
-**Toolchain:** Godot 4.7.2 / GUT 9.7.1
-**Prontidão:** **NÃO PRONTO**
+  [English](./README.md)
+</div>
 
-## Estado atual
+> **Documentation status: maintained reference.** Esta página descreve o repositório público e a fronteira atual do beta.
 
-- O baseline de validação do código passou no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (CI/CD `36779150278`; qualidade `36779150276`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions.
-- A execução completa local de 29 de setembro passou 1.671/1.671 testes, com 22.982 asserções em 149 scripts; dois arquivos que exigem GUI continuam explicitamente excluídos.
-- Pacotes ZTASH enxutos do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` foram validados e implantados por HTTPS autenticado para dogfood: DDJARIN mantém Windows (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`) e CHOPPER mantém Linux (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`).
-- Esses pacotes são **não assinados**. O [prerelease público `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) fornece clientes Linux, Windows e macOS sem assinatura; instalador, aceitação nativa do Windows, evidência manual e provas externas de Steam/WAN/Workshop continuam abertas.
 
-O prerelease foi publicado pelo workflow `36779157160` a partir do build `1367b270d651b1a2588044774a15f1dbeb2b8b51`. Os archives baixados passaram `SHA256SUMS`, integridade de compressão e smoke headless Linux; o binário Windows é PE32+ x86-64 e o binário macOS é Mach-O universal com duas arquiteturas. Notarização macOS não está disponível.
+> [!IMPORTANT]
+> MODUS é um experimento em `0.9.5-beta`, não um jogo finalizado nem um framework pronto para produção. Os binários públicos não são assinados. Capacidades verificadas e lacunas de evidência estão em [Status Atual](docs/pt-BR/CURRENT_STATUS.md).
 
-## Antes de clonar
+![Menu principal do MODUS com campanha, multijogador, mods, editor, opções, créditos e saída](docs/media/release/main_menu_1280x720.png)
 
-MODUS é um projeto de desenvolvimento, não um jogo Steam pronto e não um template Godot de um clique. A primeira execução importa recursos e pode revelar diferenças de renderer, driver, plataforma ou integrações opcionais.
+## Por que MODUS existe
 
-As integrações GodotSteam/Steam e Voxel Tools não são empacotadas por padrão. Os relatórios de capacidades detectam as classes e dependências presentes; caminhos incompatíveis são recusados ou explicitamente rebaixados para ENet/CSG quando permitido.
+Mecânicas FPS são fáceis de demonstrar isoladamente e difíceis de manter coerentes quando rede, ferramentas de conteúdo, mundos procedurais, diferentes entradas e mods começam a interagir. MODUS é um laboratório executável para essas fronteiras.
 
-O Showcase é um smoke automatizado, não uma prova de que o jogo está divertido. As horas de gameplay manual revisadas continuam em `0,00`.
+O repositório prioriza sistemas funcionais e evidência explícita. A documentação separa o que foi implementado, o que foi observado e o que ainda não foi provado.
 
-## Comece aqui
+## O que funciona hoje
 
-1. Instale Godot 4.7 na linha 4.7; CI usa 4.7.2.
-2. Clone o repositório e execute `godot --editor --path .`.
-3. Aguarde a importação inicial dos recursos.
-4. Execute a cena principal `res://shared/ui_core/screens/main_menu_screen.tscn`.
-5. Use `res://game/world/maps/showcase.tscn` para o percurso Showcase mantido.
-6. Leia o [guia de início](docs/pt-BR/GETTING_STARTED.md), os [limites conhecidos](docs/pt-BR/KNOWN_LIMITS_MATRIX.md) e o [estado atual](docs/pt-BR/CURRENT_STATUS.md).
+| Área | Superfície implementada | Limite atual da evidência |
+| --- | --- | --- |
+| Movimento e combate | Movimento em primeira pessoa, dano, armas, projéteis, efeitos e serviços configuráveis | Cobertura automatizada e rota de demonstração; balanceamento e aceitação ampla ainda estão abertos |
+| Itens e encontros | Inventário, coletas, tabelas de loot, inimigos, modos, pontuação e cronômetros | Testes determinísticos e rotas autorais |
+| Construção de mundo | Geração procedural com semente, mapas autorais e ciclo de vida dos mapas | Cobertura focada; soak de mundos grandes ainda é limitado |
+| Multijogador | Hospedagem/entrada ENet, servidor dedicado, allowlist de RPC, limites de taxa, autoridade e predição | Observações locais de ciclo de vida e autoridade; Internet, clientes hostis e escala continuam abertos |
+| Criação e mods | Editor embutido, round trip `.mdsl`, dados JSON/JSON5, mods de exemplo e validação de pacotes | Fluxos locais; transferência pública pelo Workshop ainda não foi provada |
+| Entrega | Validação headless, arquivos reprodutíveis, checksums e artefatos beta para Linux/Windows/macOS | Artefatos sem assinatura e sem instaladores polidos |
 
-Verificação rápida sem abrir a interface:
+O registro datado está em [Status Atual](docs/pt-BR/CURRENT_STATUS.md). Restrições conhecidas estão na [Matriz de Limites](docs/KNOWN_LIMITS_MATRIX.md).
+
+## Beta público
+
+A versão [`v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) é uma prévia reprodutível para avaliação.
+
+| Plataforma | Download | Observação |
+| --- | --- | --- |
+| Linux x86-64 | [`tar.gz`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/modus-0.9.5-beta-linux-x86_64.tar.gz) | Extraia e execute `modus.x86_64` |
+| Windows x86-64 | [`zip`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/modus-0.9.5-beta-windows-x86_64.zip) | Extraia e execute `modus.exe` |
+| macOS universal | [`zip`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/modus-0.9.5-beta-macos-universal.zip) | Aplicativo sem assinatura e sem notarização |
+| Integridade | [`SHA256SUMS`](https://github.com/rufl/MODUS/releases/download/v0.9.5-beta/SHA256SUMS) | Verifique antes de executar |
 
 ```bash
-bash tools/check_documentation_truth.sh
-bash tools/check_project_truth.sh
-bash tools/check_headless_runner_manifest.sh
+sha256sum --check SHA256SUMS
 ```
 
-## O que existe
+## Início rápido
 
-- FPS solo, combate, armas, inimigos, loot, efeitos, missões e movimentação.
-- ENet, validação autoritativa, whitelist/rate limits de RPC, servidor dedicado e estruturas condicionais de Steam.
-- Splitscreen, editor embutido/standalone, serialização `.mdsl`, prefabs e simulação local de Workshop.
-- Geração procedural com validação, navegação, exportação, perfis e testes focados.
-- Descoberta de mods em pasta/PCK/ZIP, manifests, dependências, overrides, hooks e mod SDK de exemplo.
+Requisitos: [Godot 4.7.2](https://godotengine.org/download/archive/4.7.2-stable/), Git, Python 3 e Bash para as ferramentas de validação.
 
-“Existe no código-fonte” não significa que o fluxo completo foi provado manualmente.
+```bash
+git clone https://github.com/rufl/MODUS.git
+cd MODUS
+godot --editor --path .
+```
 
-## Artefatos e dogfood
+Para executar diretamente e verificar os contratos do repositório:
 
-A engenharia de release produz manifests com identidade, hashes SHA-256, inventários OVERZEER de quatro formatos e pacotes ZTASH `ztash-release-v1`. O smoke `--package-smoke` verifica recursos essenciais; `--capability-report` registra identidade do runtime e dependências opcionais.
+```bash
+godot --path .
+bash tools/check_project_truth.sh
+bash tools/check_documentation_truth.sh
+```
 
-O batch de dogfood do commit GUI `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` está reconciliado nos receptores:
+Consulte [Primeiros Passos](docs/getting_started.md) e o [Índice em português](docs/pt-BR/README.md).
 
-- DDJARIN / Windows: `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`
-- CHOPPER / Linux: `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`
+## Arquitetura
 
-São hashes de validação de transferência autenticada, não assinaturas de release.
+```mermaid
+flowchart LR
+    Entry[Entrada principal e UI] --> GM[GameManager]
+    Config[Perfis, JSON5 e registros] --> GM
+    GM --> Features[Módulos de gameplay]
+    GM --> Network[ENet e servidor dedicado]
+    GM --> Mods[Mods e sobrescritas de conteúdo]
+    Features --> Entities[Jogadores, inimigos, armas e efeitos]
+    Generator[Workers do MapGenerator] --> World[Mundos procedurais e autorais]
+    Editor[Editor embutido e standalone] --> World
+    Editor --> Mods
+    Telemetry[Telemetria local opt-in] -. evidência .-> GM
+```
 
-## O que ainda bloqueia a definição de pronto
+`GameManager` coordena ciclo de vida, configuração, eventos e registro de serviços. `MapGenerator` mantém a geração procedural em um ciclo separado. A telemetria local opcional só registra evidência quando habilitada explicitamente e não depende de serviço remoto.
 
-1. Assinatura Linux/arquivos e Authenticode Windows, além de política de distribuição de produção.
-2. Instalador e bundling de dependências nativas compatíveis, incluindo perfil GodotSteam/Voxel Tools quando suportado.
-3. Aceitação nativa do Windows: renderer/janela/teclas físicas, fluxo Showcase completo, save/load criptografado, mod, ENet WAN, reconnect/host-loss/soak e Steam relay/P2P quando aplicável.
-4. Gameplay manual revisado, avaliação audiovisual/pacing, editor gráfico exportado e Workshop real.
-5. Promoção de `0.9.5-beta` para a versão de release somente quando todas as evidências atuais concordarem.
+Veja a [Referência de Arquitetura](docs/architecture.md) e os [Schemas JSON](docs/technical/JSON_SCHEMAS.md).
 
-## Documentação
+## Prioridades de engenharia
 
-- [Índice português](docs/pt-BR/README.md)
-- [Estado atual](docs/pt-BR/CURRENT_STATUS.md)
-- [Matriz de limites](docs/pt-BR/KNOWN_LIMITS_MATRIX.md)
-- [Evidências de release](docs/pt-BR/RELEASE_EVIDENCE_BUNDLE.md)
-- [Roadmap](docs/pt-BR/ROADMAP.md)
-- [Backlog](docs/pt-BR/BACKLOG.md)
-- [Getting Started em inglês](docs/getting_started.md)
-- [Testes em inglês](tests/README.md)
-- [Licenças e proveniência](docs/ATTRIBUTION.md)
+- **Autoridade antes de confiança:** allowlists, limites, validação e propriedade no lado do servidor são explícitos.
+- **Determinismo:** sementes procedurais, timestamps de pacotes e checksums tornam falhas e artefatos reproduzíveis.
+- **Extensão orientada a dados:** perfis, registros, JSON5 e mods de exemplo evitam novo estado global.
+- **Evidência sem promessas infladas:** cada afirmação registra o limite observado e o que ainda exige testes representativos.
+- **Ferramentas no formato real:** round trips do editor e validadores exercitam os mesmos dados usados pelo runtime.
 
-O projeto mantém licença MIT no código. Consulte a proveniência antes de redistribuir recursos ou dependências.
+Assista ao [smoke automatizado de 25 segundos](docs/media/release/golden_demo_smoke_1280x720.mp4) ou veja a [Rota de Demonstração](docs/SHOWCASE_ROUTE.md).
+
+## Limites atuais
+
+- Binários desktop sem assinatura ou notarização.
+- Sem alegação de segurança em produção, confiabilidade em escala de Internet ou tolerância ampla a latência.
+- Sem prova de transferência pública pelo Steam Workshop.
+- Evidência limitada para hardware de entrada e sessões grandes.
+- Cobertura de interface, controles, localização e acessibilidade ainda em expansão.
+- APIs e formatos de conteúdo podem mudar antes de `1.0`.
+
+Veja o [Roadmap](docs/ROADMAP.md) e o [Backlog](./BACKLOG.md).
+
+## Contribuição, segurança e licença
+
+Relatos reproduzíveis, mecânicas focadas, correções de documentação e melhorias de acessibilidade são bem-vindos. Leia [CONTRIBUTING.md](CONTRIBUTING.md) e o [Código de Conduta](CODE_OF_CONDUCT.md). Vulnerabilidades devem ser enviadas por um [aviso de segurança privado](https://github.com/rufl/MODUS/security/advisories/new).
+
+O código usa a [Licença MIT](LICENSE). Arte, áudio, fontes e ferramentas de terceiros mantêm suas próprias licenças; consulte [Atribuição](docs/ATTRIBUTION.md) antes de redistribuir uma build ou asset.

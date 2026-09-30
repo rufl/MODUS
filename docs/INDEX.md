@@ -3,9 +3,9 @@
 > **Documentation status: maintained reference.** This index separates published references and curated evidence from local-only generated outputs and historical snapshots.
 
 **Languages:** [English](INDEX.md) · [Português (Brasil)](pt-BR/INDEX.md)
-**Updated:** September 29, 2026 · **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
+**Updated:** September 30, 2026 · **Version:** `0.9.5-beta` · **Readiness:** **EXPERIMENTAL BETA**
 
-The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (`36588760158`). Documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood deployment is active for Windows on DDJARIN and Linux on CHOPPER. The project is not signed, publicly released, or native-target accepted.
+The public-beta source baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`, quality `36779150276`). The [`v0.9.5-beta` prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) provides unsigned Linux, Windows, and macOS archives with published checksums. Signing, installers, native target acceptance, reviewed manual gameplay, and external-service proof remain open.
 
 ## Canonical Current Truth
 

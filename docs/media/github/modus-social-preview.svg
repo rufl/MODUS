@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">MODUS</title>
+  <desc id="desc">Multiplayer FPS mechanics lab for Godot 4.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050814"/>
+      <stop offset="0.55" stop-color="#0a1328"/>
+      <stop offset="1" stop-color="#071f2a"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3be3ff"/>
+      <stop offset="0.55" stop-color="#168cff"/>
+      <stop offset="1" stop-color="#3852d6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#19bfff" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#19bfff" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#79b8ff" stroke-opacity="0.07"/>
+    </pattern>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="170%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#000814" flood-opacity="0.78"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#background)"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+  <ellipse cx="236" cy="322" rx="390" ry="365" fill="url(#glow)"/>
+  <path d="M979 0h301v214l-151 151-243-243z" fill="#102b54" fill-opacity="0.36"/>
+  <path d="M1280 364v276H1002l-105-105 254-254z" fill="#06303d" fill-opacity="0.44"/>
+
+  <g filter="url(#shadow)">
+    <rect x="92" y="154" width="330" height="330" rx="68" fill="#0b101c" stroke="#284664" stroke-width="4"/>
+    <path d="M146 224h222" stroke="#32d7e8" stroke-width="10" stroke-linecap="round"/>
+    <path d="M146 415h222" stroke="#2469df" stroke-width="10" stroke-linecap="round"/>
+    <path d="M178 383V262h53l25 66 25-66h54v121h-43v-68l-25 68h-23l-25-68v68z" fill="url(#mark)"/>
+  </g>
+
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <text x="492" y="267" fill="#f8fafc" font-size="94" font-weight="760" letter-spacing="14">MODUS</text>
+    <text x="500" y="331" fill="#8edcff" font-size="27" font-weight="650" letter-spacing="2.6">BUILD. FIGHT. REWRITE THE RULES.</text>
+    <text x="500" y="393" fill="#d3deee" font-size="28">Multiplayer FPS mechanics lab</text>
+    <text x="500" y="431" fill="#d3deee" font-size="28">for Godot 4.</text>
+    <g font-size="17" font-weight="650" letter-spacing="0.5">
+      <rect x="500" y="481" width="154" height="45" rx="22.5" fill="#102744" stroke="#2d74b8"/>
+      <text x="577" y="510" fill="#b9eaff" text-anchor="middle">OPEN SOURCE</text>
+      <rect x="670" y="481" width="173" height="45" rx="22.5" fill="#102744" stroke="#2d74b8"/>
+      <text x="756.5" y="510" fill="#b9eaff" text-anchor="middle">GODOT 4.7</text>
+      <rect x="859" y="481" width="171" height="45" rx="22.5" fill="#33250f" stroke="#a16207"/>
+      <text x="944.5" y="510" fill="#ffe5a3" text-anchor="middle">BETA 0.9.5</text>
+    </g>
+  </g>
+</svg>

@@ -5,10 +5,10 @@
 ## Runtime entry points
 
 - Godot requirement: 4.7+ (`project.godot` feature tag).
-- Main scene: `shared/ui_core/screens/main_menu_screen.tscn`.
-- Autoloads: `GameManager` and `MapGenerator` only.
+- Main scene: `game/main_entry.tscn`, which routes into the shared menu and selected runtime path.
+- Autoloads: `GameManager`, `MapGenerator`, and opt-in-only `LocalValidationTelemetry`.
 - Game version constant: `0.9.5-beta` in `game/scripts/core/game_manager.gd`.
-- Export presets: Windows client, Linux dedicated server, and Windows standalone editor. A preset is build configuration, not evidence that an exported product was tested.
+- Repository export presets cover Windows and Linux clients/editors plus a Linux dedicated server; the public-beta workflow also produces a macOS universal client. A preset is build configuration, not native acceptance evidence.
 
 ## Core control plane
 

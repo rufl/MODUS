@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build deterministic unsigned MODUS OVERZEER transfer archives."""
+"""Build deterministic unsigned MODUS release archives."""
 
 from __future__ import annotations
 
@@ -180,8 +180,8 @@ def package(args: argparse.Namespace) -> None:
                 "modus.pck": args.content.absolute(),
             }
         )
-    # Older Windows receivers require README.txt; keep the canonical README.md
-    # and ship an identical compatibility name until every endpoint is upgraded.
+    # Include a plain-text compatibility name in Windows archives while keeping
+    # README.md as the canonical document.
     if args.target.startswith("windows-"):
         inputs["README.txt"] = args.readme.absolute()
     for value in args.extra:
@@ -197,7 +197,7 @@ def package(args: argparse.Namespace) -> None:
 
     root = f"modus-{args.version}-{args.target}"
     output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="modus-overzeer-", dir=output.parent) as temporary:
+    with tempfile.TemporaryDirectory(prefix="modus-release-", dir=output.parent) as temporary:
         stage = Path(temporary) / root
         stage.mkdir()
         entries: list[tuple[str, int]] = []
@@ -240,7 +240,7 @@ def package(args: argparse.Namespace) -> None:
             else:
                 compress_gzip(temporary_tar, temporary_output)
         os.replace(temporary_output, output)
-    print(f"PASS: OVERZEER archive {output}")
+    print(f"PASS: release archive {output}")
 
 
 def main() -> int:
