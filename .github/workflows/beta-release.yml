@@ -129,7 +129,6 @@ jobs:
       - name: Build pinned macOS export template
         run: |
           set -euo pipefail
-          brew list jq >/dev/null 2>&1 || brew install jq
           source_dir="$RUNNER_TEMP/godot-source"
           git clone --depth 1 --branch "${GODOT_VERSION}-stable" \
             https://github.com/godotengine/godot.git "$source_dir"
@@ -137,7 +136,27 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/scons-venv"
           "$RUNNER_TEMP/scons-venv/bin/python" -m pip install --disable-pip-version-check scons==4.9.1
           cd "$source_dir"
-          bash misc/scripts/install_vulkan_sdk_macos.sh
+          curl --fail --location --output "$RUNNER_TEMP/vulkan-sdk.zip" \
+            https://sdk.lunarg.com/sdk/download/latest/mac/vulkan-sdk.zip
+          unzip -q "$RUNNER_TEMP/vulkan-sdk.zip" -d /tmp
+          sdk_app=""
+          for candidate in /tmp/vulkansdk-macOS-*.app; do
+            if [[ -d "$candidate" ]]; then
+              sdk_app="$candidate"
+            fi
+          done
+          test -n "$sdk_app"
+          sdk_name="$(basename "$sdk_app" .app)"
+          "$sdk_app/Contents/MacOS/$sdk_name" \
+            --accept-licenses --default-answer --confirm-command install
+          vulkan_sdk=""
+          for candidate in "$HOME"/VulkanSDK/*/macOS; do
+            if [[ -d "$candidate" ]]; then
+              vulkan_sdk="$candidate"
+            fi
+          done
+          test -n "$vulkan_sdk"
+          export VULKAN_SDK="$vulkan_sdk"
           "$RUNNER_TEMP/scons-venv/bin/scons" -j "$(sysctl -n hw.ncpu)" \
             platform=macos target=template_release arch=arm64 production=yes
           "$RUNNER_TEMP/scons-venv/bin/scons" -j "$(sysctl -n hw.ncpu)" \
