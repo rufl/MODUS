@@ -106,7 +106,7 @@ jobs:
 
   macos:
     name: Build macOS beta package
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 90
     steps:
       - name: Checkout release source
