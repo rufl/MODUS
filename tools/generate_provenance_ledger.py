@@ -200,6 +200,13 @@ GODGOLDFEAR_INDUSTRIAL_NOTICE = "docs/licenses/GODGOLDFEAR_INDUSTRIAL_CC-BY-4.0.
 CHILLY_DURANGO_RETRO_PREFIX = "game/art/models/third_party/chilly_durango_retro_machinery/"
 CHILLY_DURANGO_RETRO_SOURCE = "https://chilly-durango.itch.io/3d-retro-plumbing-wiring"
 CHILLY_DURANGO_RETRO_NOTICE = "docs/licenses/CHILLY_DURANGO_RETRO_MACHINERY_CC0-1.0.txt"
+CLASSIC64_BREAKWATER_PREFIX = "game/art/models/third_party/classic64_breakwater/"
+CLASSIC64_BREAKWATER_SOURCE = (
+    "Creator-supplied Readme.txt in the uploaded Classic 64 Asset Pack 0.6 "
+    "archive; https://creativecommons.org/share-your-work/public-domain/cc0/"
+)
+CLASSIC64_BREAKWATER_NOTICE = "docs/licenses/CLASSIC64_ASSET_LIBRARY_CC0-1.0.txt"
+
 LOAFBRR_PIPES_PREFIX = "game/art/models/third_party/loafbrr_pipes/"
 LOAFBRR_PIPES_SOURCE = "https://loafbrr.itch.io/pipes-asset-pack"
 LOAFBRR_PIPES_NOTICE = "docs/licenses/LOAFBRR_PIPES_CC0-1.0.txt"
@@ -566,6 +573,22 @@ def classify(path: Path, digest: str) -> dict[str, str]:
                 "Plumbing & Wiring.zip archive. The official source page states "
                 "the models and textures are CC0; source Blender files are not "
                 "distributed."
+            ),
+        }
+    if relative.startswith(CLASSIC64_BREAKWATER_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Craig Snedeker / Classic64 Asset Library",
+            "source": CLASSIC64_BREAKWATER_SOURCE,
+            "license": "CC0-1.0",
+            "local_notice": CLASSIC64_BREAKWATER_NOTICE,
+            "notes": (
+                "Selected low-poly industrial, electrical, machinery, rail, and "
+                "confined-space sign GLB conversions from the uploaded Classic 64 "
+                "Asset Pack 0.6 archive. The creator-supplied Readme points to "
+                "CC0/public-domain dedication; source Blender files and "
+                "unselected pack contents are not distributed. The Readme's "
+                "direct-resale request is retained in the local notice."
             ),
         }
     if relative.startswith(LOAFBRR_PIPES_PREFIX):

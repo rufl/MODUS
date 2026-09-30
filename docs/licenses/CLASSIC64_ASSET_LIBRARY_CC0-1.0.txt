@@ -1,0 +1,34 @@
+Classic 64 Asset Pack 0.6
+Creator: Craig Snedeker / Classic64 Asset Library
+Source evidence: the creator-supplied Readme.txt included in the uploaded archive
+License reference supplied by the Readme: https://creativecommons.org/share-your-work/public-domain/cc0/
+
+The bundled Readme says that the asset library is released for free for personal
+and commercial projects and points to Creative Commons Zero (CC0). This record
+retains that source statement for the selected runtime imports. The Readme also
+asks users not to directly sell the asset library or its individual items and
+asks users to notify the creator when the assets are used; MODUS preserves those
+requests even though they are not represented as additional license restrictions.
+
+Import record:
+- Uploaded archive: C__Users_rafael_Desktop_assets_- Classic 64 Asset Pack 0.6.zip
+- Uploaded archive SHA-256: 30366f08993abe89477f6453db789d6bae37a13de6cc89f9453621f8e8d17e5e
+- Source archive root: - Classic 64 Asset Pack 0.6/
+- Imported runtime assets: game/art/models/third_party/classic64_breakwater/
+- Selected source Blender files were converted to six Godot-compatible GLB model
+  files. The original Blender authoring files and the rest of the source pack
+  are not distributed.
+The GLB exports embed the source materials where supported by Blender's glTF
+exporter. Godot's importer extracts seven embedded PNG maps beside the affected
+models; those derived PNGs are included under the same source record. No
+separate source texture files from the pack are distributed.
+- Review scene: game/world/test_scenes/classic64_breakwater_demo.tscn
+
+Included runtime assets:
+- Industrial/pump_station.blend -> classic64_pump_station.glb
+- Panels/panel_electrical_closed.blend -> classic64_panel_electrical_closed.glb
+- Electrical/electrical_junctionbox_small.blend -> classic64_electrical_junctionbox_small.glb
+- Units/generator.blend -> classic64_generator.glb
+- Industrial/guard_rail.blend -> classic64_guard_rail.glb; the export includes
+  the named Guardrail mesh only, not the source scene's example and curve objects.
+- Signs/sign_confined_space.blend -> classic64_sign_confined_space.glb

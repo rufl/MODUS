@@ -1,0 +1,130 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/classic64_breakwater/classic64_pump_station.glb" id="1_pump"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/classic64_breakwater/classic64_panel_electrical_closed.glb" id="2_panel"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/classic64_breakwater/classic64_electrical_junctionbox_small.glb" id="3_junction"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/classic64_breakwater/classic64_generator.glb" id="4_generator"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/classic64_breakwater/classic64_guard_rail.glb" id="5_rail"]
+[ext_resource type="PackedScene" path="res://game/art/models/third_party/classic64_breakwater/classic64_sign_confined_space.glb" id="6_sign"]
+[ext_resource type="Script" path="res://game/world/test_scenes/classic64_breakwater_demo.gd" id="7_script"]
+
+[sub_resource type="Environment" id="Environment_classic64"]
+background_mode = 1
+background_color = Color(0.018, 0.026, 0.038, 1)
+background_energy_multiplier = 0.75
+ambient_light_source = 3
+ambient_light_color = Color(0.42, 0.52, 0.62, 1)
+ambient_light_energy = 0.9
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial_classic64"]
+albedo_color = Color(0.07, 0.085, 0.1, 1)
+metallic = 0.2
+roughness = 0.86
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="FloorMesh_classic64"]
+size = Vector3(30, 0.3, 24)
+
+[sub_resource type="StandardMaterial3D" id="BackdropMaterial_classic64"]
+albedo_color = Color(0.018, 0.026, 0.038, 1)
+shading_mode = 0
+
+[sub_resource type="BoxMesh" id="BackdropMesh_classic64"]
+size = Vector3(300, 200, 0.2)
+
+[node name="Classic64BreakwaterDemo" type="Node3D"]
+script = ExtResource("7_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." groups=["world_environment"]]
+environment = SubResource("Environment_classic64")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(0.72, 0.84, 1, 1)
+light_energy = 0.8
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 6, 7)
+light_color = Color(1, 0.54, 0.3, 1)
+light_energy = 1.5
+omni_range = 24.0
+
+[node name="Backdrop" type="MeshInstance3D" parent="."]
+position = Vector3(0, 50, -80)
+mesh = SubResource("BackdropMesh_classic64")
+material_override = SubResource("BackdropMaterial_classic64")
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.15, 0)
+mesh = SubResource("FloorMesh_classic64")
+material_override = SubResource("FloorMaterial_classic64")
+
+[node name="PumpStation" parent="." instance=ExtResource("1_pump")]
+position = Vector3(-5.0, 0, -1.3)
+rotation_degrees = Vector3(0, 18, 0)
+scale = Vector3(1.25, 1.25, 1.25)
+
+[node name="Generator" parent="." instance=ExtResource("4_generator")]
+position = Vector3(0, 0, -1.0)
+rotation_degrees = Vector3(0, -14, 0)
+scale = Vector3(1.55, 1.55, 1.55)
+
+[node name="GuardRail" parent="." instance=ExtResource("5_rail")]
+position = Vector3(5.0, 0, -1.9)
+rotation_degrees = Vector3(0, 180, 0)
+scale = Vector3(0.62, 0.62, 0.62)
+
+[node name="ElectricalPanel" parent="." instance=ExtResource("2_panel")]
+position = Vector3(-4.7, 0.0, 4.0)
+rotation_degrees = Vector3(0, 12, 0)
+scale = Vector3(4.6, 4.6, 4.6)
+
+[node name="JunctionBox" parent="." instance=ExtResource("3_junction")]
+position = Vector3(-1.6, 0.8, 4.0)
+rotation_degrees = Vector3(0, -18, 0)
+scale = Vector3(8.0, 8.0, 8.0)
+
+[node name="ConfinedSpaceSign" parent="." instance=ExtResource("6_sign")]
+position = Vector3(2.3, 1.25, 4.0)
+rotation_degrees = Vector3(90, 0, 18)
+scale = Vector3(7.0, 7.0, 7.0)
+
+[node name="Title" type="Label3D" parent="."]
+position = Vector3(0, 5.6, -3.2)
+billboard = 1
+text = "CLASSIC 64  •  BREAKWATER DETAIL KIT"
+font_size = 88
+outline_size = 12
+modulate = Color(0.78, 0.9, 1, 1)
+
+[node name="Subtitle" type="Label3D" parent="."]
+position = Vector3(0, 4.75, -3.2)
+billboard = 1
+text = "CRAIG SNEDEKER  •  CC0 README  •  SELECTED GLB CONVERSIONS"
+font_size = 34
+outline_size = 8
+modulate = Color(0.56, 0.76, 0.84, 1)
+
+[node name="IndustrialLabel" type="Label3D" parent="."]
+position = Vector3(0, 3.0, -2.8)
+billboard = 1
+text = "PUMP STATION  •  GENERATOR  •  GUARD RAIL"
+font_size = 34
+outline_size = 8
+modulate = Color(1, 0.7, 0.38, 1)
+
+[node name="ControlsLabel" type="Label3D" parent="."]
+position = Vector3(-1.2, 2.15, 3.5)
+billboard = 1
+text = "ELECTRICAL PANEL  •  JUNCTION BOX  •  CONFINED SPACE SIGN"
+font_size = 27
+outline_size = 7
+modulate = Color(0.48, 0.9, 0.78, 1)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 4.8, 11.5)
+rotation_degrees = Vector3(-10, 0, 0)
+fov = 54.0
+current = true
