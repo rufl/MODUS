@@ -67,7 +67,7 @@ assert {item["target"] for item in manifest["artifacts"]} == {"x86_64-linux", "x
 assert manifest["toolchain_lock_sha256"] == expected_lock_hash
 for item in manifest["artifacts"]:
     archive = root / item["name"]
-    assert archive.stat().st_size == item["size"]
+    assert archive.stat().st_size == item["size_bytes"]
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == item["sha256"]
     if archive.suffix == ".zip":
         names = set(zipfile.ZipFile(archive).namelist())

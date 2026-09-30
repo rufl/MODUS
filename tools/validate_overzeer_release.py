@@ -184,13 +184,13 @@ def validate(args: argparse.Namespace) -> None:
                 {
                     "name": selected["linux-x86_64"]["archive"],
                     "sha256": selected["linux-x86_64"]["sha256"],
-                    "size": selected["linux-x86_64"]["bytes"],
+                    "size_bytes": selected["linux-x86_64"]["bytes"],
                     "target": "x86_64-linux",
                 },
                 {
                     "name": selected["windows-x86_64"]["archive"],
                     "sha256": selected["windows-x86_64"]["sha256"],
-                    "size": selected["windows-x86_64"]["bytes"],
+                    "size_bytes": selected["windows-x86_64"]["bytes"],
                     "target": "x86_64-windows-gnu",
                 },
             ],

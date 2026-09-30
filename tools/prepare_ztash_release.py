@@ -193,20 +193,20 @@ def prepare(args: argparse.Namespace) -> None:
                 {
                     "name": linux_output.name,
                     "sha256": digest(linux_output),
-                    "size": linux_output.stat().st_size,
+                    "size_bytes": linux_output.stat().st_size,
                     "target": "x86_64-linux",
                 },
                 {
                     "name": windows_output.name,
                     "sha256": digest(windows_output),
-                    "size": windows_output.stat().st_size,
+                    "size_bytes": windows_output.stat().st_size,
                     "target": "x86_64-windows-gnu",
                 },
             ],
             "build_id": args.build_id,
             "schema": "ztash-release-v1",
-            "version": args.version,
             "toolchain_lock_sha256": toolchain_lock_sha256,
+            "version": args.version,
         }
         (package_root / "ztash-release.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"

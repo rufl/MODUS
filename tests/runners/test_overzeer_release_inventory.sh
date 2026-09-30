@@ -80,7 +80,7 @@ ztash_data = json.loads(ztash.read_text())
 assert ztash_data["schema"] == "ztash-release-v1"
 assert ztash_data["toolchain_lock_sha256"] == lock_hash
 assert {item["target"] for item in ztash_data["artifacts"]} == {"x86_64-linux", "x86_64-windows-gnu"}
-assert all(item["size"] > 0 and len(item["sha256"]) == 64 for item in ztash_data["artifacts"])
+assert all(item["size_bytes"] > 0 and len(item["sha256"]) == 64 for item in ztash_data["artifacts"])
 bad = temporary / "bad.json"
 corrupt = release / "modus-0.9.5-beta-linux-x86_64.tar.gz"
 raw = gzip.decompress(corrupt.read_bytes()).replace(b"server payload", b"tampered payload")
