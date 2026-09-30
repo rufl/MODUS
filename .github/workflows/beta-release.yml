@@ -1,0 +1,241 @@
+name: GitHub Beta Release
+
+on:
+  push:
+    tags:
+      - "v*-beta"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing beta tag to publish
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: "4.7.2"
+  GODOT_LINUX_ARCHIVE_SHA256: "cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4"
+  GODOT_EXPORT_TEMPLATES_SHA256: "f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011"
+
+jobs:
+  linux-windows:
+    name: Build Linux and Windows beta packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          lfs: true
+
+      - name: Install Godot and export templates
+        run: |
+          set -euo pipefail
+          archive="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          release_url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          curl --fail --location --output "$RUNNER_TEMP/$archive" "$release_url/$archive"
+          printf '%s  %s\n' "$GODOT_LINUX_ARCHIVE_SHA256" "$RUNNER_TEMP/$archive" | sha256sum --check --status
+          unzip -q "$RUNNER_TEMP/$archive" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          ln -s "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$RUNNER_TEMP/godot/godot"
+          echo "$RUNNER_TEMP/godot" >> "$GITHUB_PATH"
+          curl --fail --location --output "$RUNNER_TEMP/export_templates.tpz" \
+            "$release_url/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          printf '%s  %s\n' "$GODOT_EXPORT_TEMPLATES_SHA256" "$RUNNER_TEMP/export_templates.tpz" | sha256sum --check --status
+          unzip -q "$RUNNER_TEMP/export_templates.tpz" -d "$RUNNER_TEMP/godot-templates"
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          cp -a "$RUNNER_TEMP/godot-templates/templates/." \
+            "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
+
+      - name: Verify release identity
+        run: |
+          set -euo pipefail
+          version="$(python3 -c 'import re; from pathlib import Path; print(re.search(r"GAME_VERSION := \"([^\"]+)\"", Path("game/core/constants.gd").read_text())[1])')"
+          tag="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          fi
+          test "$tag" = "v$version"
+          printf 'RELEASE_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+          printf 'RELEASE_TAG=%s\n' "$tag" >> "$GITHUB_ENV"
+
+      - name: Export Linux and Windows clients
+        run: |
+          set -euo pipefail
+          mkdir -p build/beta/linux build/beta/windows
+          godot --headless --path . --export-release "Linux Desktop" build/beta/linux/modus.x86_64
+          godot --headless --path . --export-release "Windows Desktop" build/beta/windows/modus.exe
+          test -s build/beta/linux/modus.x86_64
+          test -s build/beta/linux/modus.pck
+          test -s build/beta/windows/modus.exe
+          test -s build/beta/windows/modus.pck
+
+      - name: Package Linux and Windows archives
+        run: |
+          set -euo pipefail
+          mkdir -p build/beta/release
+          python3 tools/package_overzeer.py package \
+            --version "$RELEASE_VERSION" --target linux-x86_64 \
+            --executable build/beta/linux/modus.x86_64 \
+            --content build/beta/linux/modus.pck \
+            --readme README.md --license LICENSE \
+            --output "build/beta/release/modus-$RELEASE_VERSION-linux-x86_64.tar.gz"
+          python3 tools/package_overzeer.py package \
+            --version "$RELEASE_VERSION" --target windows-x86_64 \
+            --executable build/beta/windows/modus.exe \
+            --content build/beta/windows/modus.pck \
+            --readme README.md --license LICENSE \
+            --output "build/beta/release/modus-$RELEASE_VERSION-windows-x86_64.zip"
+          (
+            cd build/beta/release
+            sha256sum modus-* > SHA256SUMS
+          )
+          printf 'MODUS %s\nBuild commit: %s\nGodot: %s\nSigning: unsigned\n' \
+            "$RELEASE_VERSION" "$GITHUB_SHA" "$GODOT_VERSION" > build/beta/release/BUILD_INFO.txt
+
+      - name: Upload Linux and Windows release assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: beta-release-linux-windows
+          path: build/beta/release/
+          if-no-files-found: error
+          retention-days: 14
+
+  macos:
+    name: Build macOS beta package
+    runs-on: macos-14
+    timeout-minutes: 90
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          lfs: true
+
+      - name: Install Godot macOS editor
+        run: |
+          set -euo pipefail
+          archive="Godot_v${GODOT_VERSION}-stable_macos.universal.zip"
+          release_url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          curl --fail --location --output "$RUNNER_TEMP/$archive" "$release_url/$archive"
+          unzip -q "$RUNNER_TEMP/$archive" -d "$RUNNER_TEMP/godot"
+          xattr -dr com.apple.quarantine "$RUNNER_TEMP/godot/Godot.app" || true
+          chmod +x "$RUNNER_TEMP/godot/Godot.app/Contents/MacOS/Godot"
+          printf 'GODOT_BIN=%s\n' "$RUNNER_TEMP/godot/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+
+      - name: Build pinned macOS export template
+        run: |
+          set -euo pipefail
+          brew list jq >/dev/null 2>&1 || brew install jq
+          source_dir="$RUNNER_TEMP/godot-source"
+          git clone --depth 1 --branch "${GODOT_VERSION}-stable" \
+            https://github.com/godotengine/godot.git "$source_dir"
+          test "$(git -C "$source_dir" rev-parse HEAD)" = "ed1daf0bf001b61586d9930840f2f1394092c079"
+          python3 -m venv "$RUNNER_TEMP/scons-venv"
+          "$RUNNER_TEMP/scons-venv/bin/python" -m pip install --disable-pip-version-check scons==4.9.1
+          cd "$source_dir"
+          bash misc/scripts/install_vulkan_sdk_macos.sh
+          "$RUNNER_TEMP/scons-venv/bin/scons" -j "$(sysctl -n hw.ncpu)" \
+            platform=macos target=template_release arch=arm64 production=yes
+          "$RUNNER_TEMP/scons-venv/bin/scons" -j "$(sysctl -n hw.ncpu)" \
+            platform=macos target=template_release arch=x86_64 production=yes generate_bundle=yes
+          test -x bin/macos_template.app/Contents/MacOS/macos_template
+          template_dir="$HOME/Library/Application Support/Godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$template_dir"
+          (cd bin && zip -qr "$template_dir/macos.zip" macos_template.app)
+
+      - name: Verify release identity
+        run: |
+          set -euo pipefail
+          version="$(python3 -c 'import re; from pathlib import Path; print(re.search(r"GAME_VERSION := \"([^\"]+)\"", Path("game/core/constants.gd").read_text())[1])')"
+          tag="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          fi
+          test "$tag" = "v$version"
+          printf 'RELEASE_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+          printf 'RELEASE_TAG=%s\n' "$tag" >> "$GITHUB_ENV"
+
+      - name: Export macOS universal app
+        run: |
+          set -euo pipefail
+          mkdir -p build/beta/macos
+          "$GODOT_BIN" --headless --path . --export-release "macOS" build/beta/macos/MODUS.app
+          test -f build/beta/macos/MODUS.app/Contents/Info.plist
+          test -x build/beta/macos/MODUS.app/Contents/MacOS/MODUS
+
+      - name: Package macOS archive
+        run: |
+          set -euo pipefail
+          mkdir -p build/beta/release
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/beta/macos/MODUS.app \
+            "build/beta/release/modus-$RELEASE_VERSION-macos-universal.zip"
+          shasum -a 256 "build/beta/release/modus-$RELEASE_VERSION-macos-universal.zip" \
+            > build/beta/release/SHA256SUMS-macos
+          printf 'MODUS %s\nBuild commit: %s\nGodot: %s\nSigning: unsigned; notarization: unavailable\n' \
+            "$RELEASE_VERSION" "$GITHUB_SHA" "$GODOT_VERSION" > build/beta/release/BUILD_INFO-macos.txt
+
+      - name: Upload macOS release asset
+        uses: actions/upload-artifact@v7
+        with:
+          name: beta-release-macos
+          path: build/beta/release/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish GitHub beta release
+    runs-on: ubuntu-latest
+    needs: [linux-windows, macos]
+    timeout-minutes: 15
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: beta-release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          test -n "$version"
+          test -s "release-assets/modus-$version-linux-x86_64.tar.gz"
+          test -s "release-assets/modus-$version-windows-x86_64.zip"
+          test -s "release-assets/modus-$version-macos-universal.zip"
+          (
+            cd release-assets
+            sha256sum modus-* > SHA256SUMS
+            sha256sum --check SHA256SUMS
+          )
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          ## MODUS $version beta
+
+          Unsigned beta binaries for Linux x86_64, Windows x86_64, and macOS Universal 2 (Intel + Apple Silicon).
+
+          - Linux: `modus-$version-linux-x86_64.tar.gz`
+          - Windows: `modus-$version-windows-x86_64.zip`
+          - macOS: `modus-$version-macos-universal.zip`
+          - Checksums: `SHA256SUMS`
+
+          Build commit: `${GITHUB_SHA}`
+          Godot: `${GODOT_VERSION}`
+
+          This is a beta distribution. Packages are unsigned; macOS notarization is unavailable, so Gatekeeper may require user approval. Native platform acceptance, installer packaging, signing, and production release gates remain open.
+          EOF
+          gh release create "$RELEASE_TAG" \
+            release-assets/modus-* \
+            release-assets/SHA256SUMS \
+            release-assets/BUILD_INFO* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "MODUS $version beta" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --prerelease --latest=false --verify-tag
