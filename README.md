@@ -12,7 +12,7 @@ It combines fast FPS combat, movement, weapons, loot, enemy AI, procedural map g
 **Engine:** Godot 4.7+ (CI/toolchain pinned to 4.7.2)
 **Readiness:** **NOT READY**
 
-MODUS is not presented as a shipped game or production-ready SDK. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`; quality run `36588760149`); the September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts, with two GUI-required files skipped. Documentation-only commits run through the same GitHub Actions workflows. Authenticated unsigned ZTASH dogfood build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` is active on DDJARIN (Windows) and CHOPPER (Linux), but signing, public release, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
+MODUS is not presented as a shipped game or production-ready SDK. The current source-validation baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`; quality run `36779150276`); the September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts, with two GUI-required files skipped. Documentation-only commits run through the same GitHub Actions workflows. The public [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) is unsigned; signing, installer, native target acceptance, manual gameplay evidence, and external Steam/WAN/Workshop proof remain open.
 
 ## Read This Before Cloning
 
@@ -20,8 +20,8 @@ MODUS is a developer project, not a ready-to-play Steam game and not a one-click
 
 Current boundaries:
 
-- No signed or public release exists. Complete Linux/Windows client/server/editor OVERZEER archives were validated from the GUI payload commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`; lean ZTASH packages passed Linux package smoke/capability checks and were authenticated for dogfood deployment.
-- DDJARIN currently reconciles the Windows package (`45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`); CHOPPER reconciles the Linux package (`da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`). Both are unsigned validation deployments, not public release artifacts.
+- No signed production release exists. The public [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) provides unsigned Linux, Windows and macOS client archives from build `1367b270d651b1a2588044774a15f1dbeb2b8b51`. Complete Linux/Windows client/server/editor OVERZEER archives were also validated from the GUI payload commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`; lean ZTASH packages passed Linux package smoke/capability checks and were authenticated for dogfood deployment.
+- DDJARIN currently reconciles the Windows package (`45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`); CHOPPER reconciles the Linux package (`da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`). Both are unsigned validation deployments, separate from the public GitHub beta.
 - The expected environment is Godot 4.7 in the 4.7 line on a writable machine with Bash; the repository does not pin a portable editor binary.
 - First launch performs asset imports and may expose renderer, driver, or missing-integration issues before the main scene is usable.
 - Optional Steam/GodotSteam and Voxel Tools integrations may be unavailable. Fallbacks keep some paths running but do not provide feature parity.
@@ -126,7 +126,7 @@ python3 tools/validate_release_artifacts.py \
   --verify build/release/MODUS-0.9.5-beta-linux-x86_64/manifest.json
 ```
 
-Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. `tools/toolchain.lock.json` pins the recorded Godot/GUT/GDScript Toolkit/SCons inputs and archive hashes; run `python3 tools/validate_toolchain_lock.py` before candidate assembly. Public publication, signing, native runtime/dependency bundling and target acceptance remain open.
+Build each named export first; do not label older or mixed-revision binaries with the current commit. Staging verifies hashes before and after copying, refuses existing destinations, and requires commit/runtime identity. The candidate remains verifiable after relocation. Hashes and optional detached-signature metadata do **not** authenticate an unsigned candidate or prove native capabilities. `tools/toolchain.lock.json` pins the recorded Godot/GUT/GDScript Toolkit/SCons inputs and archive hashes; run `python3 tools/validate_toolchain_lock.py` before candidate assembly. Signed production publication, native runtime/dependency bundling and target acceptance remain open.
 
 The September 29 dogfood batch produced unsigned transfer archives from GUI
 payload commit `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`. Complete
@@ -139,9 +139,19 @@ DDJARIN and CHOPPER accepted the lean ZTASH packages through authenticated
 separate-endpoint deployment. Active state currently reconciles to the Windows
 hash `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363` and
 Linux hash `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
-This is unsigned dogfood validation, not signed public release publication.
+This is unsigned dogfood validation, separate from the public beta and not a signed production release.
 Native Windows execution, driver review, signing, installer packaging, and
 target acceptance remain required.
+
+The public beta package set is independently recorded in [Release Evidence Bundle](docs/RELEASE_EVIDENCE_BUNDLE.md):
+
+| Asset | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Linux `tar.gz` | 131401146 | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
+| Windows `zip` | 141246788 | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
+| macOS universal `zip` | 152177480 | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
+
+The downloaded archives passed `SHA256SUMS` and compressed-archive integrity checks; Linux headless smoke passed. The Windows archive contains a PE32+ x86-64 executable, and the macOS archive contains a two-architecture Mach-O executable. The beta is unsigned and macOS notarization is unavailable.
 
 CI and local release jobs use `tools/package_overzeer.py` to build these
 archives from verified exports:
@@ -269,7 +279,7 @@ For a real reviewed session, run `tools/run_manual_showcase_session.sh --tester 
 | Main menu / showcase scene launch smokes | **PASS:** startup scope only; see [Current Status](docs/CURRENT_STATUS.md) for dates and boundaries |
 | Manual gameplay | **BLOCKED:** the recorder workflow is ready, but no reviewed CSV evidence has been imported |
 | Performance evidence | **PASS** for one warmed bounded 69.90-second/66-sample Showcase capture; not a display-synchronized target claim |
-| Release signing/publication | **BLOCKED:** complete archives and deployed ZTASH packages remain unsigned; no public release or installer exists |
+| Release signing/publication | **PARTIAL / BLOCKED:** public unsigned `v0.9.5-beta` client archives exist; production signing, notarization, installer and authenticated receiver publication remain open |
 | Release-version gate | **BLOCKED** — current version remains `0.9.5-beta` |
 | Production readiness | **NOT READY:** native Windows, manual, signing, installer, Steam/WAN/Workshop and other external gates remain open |
 

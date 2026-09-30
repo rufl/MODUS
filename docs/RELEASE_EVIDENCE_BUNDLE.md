@@ -6,7 +6,20 @@
 **Updated:** September 30, 2026
 **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
 
-**Current publication state:** The source-validation baseline pipeline `36588760158` remains the latest published CI baseline on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows. Current complete OVERZEER archives passed strict four-format validation, and lean ZTASH packages for build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` passed local smoke/capability checks, ZEER preview, and authenticated dogfood deployment. DDJARIN reconciles Windows SHA-256 `24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`; CHOPPER reconciles Linux SHA-256 `63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`. Packages are unsigned; no signed public release, installer, native Windows acceptance, or external Steam/WAN/Workshop proof is claimed.
+**Current publication state:** The latest source-validation baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (CI/CD `36779150278`, quality `36779150276`); documentation-only commits run through the same GitHub Actions workflows. Current complete OVERZEER archives passed strict four-format validation, and lean ZTASH packages for build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` passed local smoke/capability checks, ZEER preview, and authenticated dogfood deployment. The public GitHub beta below is a separate unsigned client distribution; signed production release, installer, native target, manual and external-service gates remain open.
+
+## Public GitHub beta artifact
+
+The [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) was published by workflow `36779157160` from tag/build commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`.
+
+| Asset | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `modus-0.9.5-beta-linux-x86_64.tar.gz` | 131401146 | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
+| `modus-0.9.5-beta-windows-x86_64.zip` | 141246788 | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
+| `modus-0.9.5-beta-macos-universal.zip` | 152177480 | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
+| `SHA256SUMS` | 308 | `42346a904f4114d769c5ada42595ca9454590018fd25a558da11a05678b63d48` |
+
+The downloaded package set passed the published `SHA256SUMS`, `tar`/`unzip` integrity checks, Linux bounded headless smoke, Windows PE32+ x86-64 identification and macOS two-architecture Mach-O identification. The archives are unsigned; macOS notarization is unavailable. This proves public beta distribution and archive integrity only, not production release approval.
 
 This published index preserves dated observations and curated media; it is not a fresh verification run. Raw `logs/`, generated reports, and historical session documents remain local-only and are absent from fresh clones. The August menu images predate subsequent artwork/layout changes and do not prove the current rendered menu. Historical artifact entries below remain useful for provenance but do not override the current publication state.
 

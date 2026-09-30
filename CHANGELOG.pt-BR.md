@@ -6,6 +6,7 @@
 **Atualizado:** 30 de setembro de 2026
 
 ## Não lançado
+- 2026-09-30 `[distribution]` `[ci]` `[truth:runtime]` `[truth:test]` `[truth:blocked]`: publicado o prerelease público e sem assinatura `v0.9.5-beta` a partir do build `1367b270d651b1a2588044774a15f1dbeb2b8b51`, com clients Linux, Windows e macOS. O workflow `36779157160` passou nos builds e na publicação; downloads passaram checksums, integridade dos archives, smoke headless Linux e identificação PE32+/Mach-O universal. Assinatura, notarização, instalador, aceitação nativa, gameplay manual e serviços externos continuam abertos.
 
 ### Documentação
 
@@ -29,4 +30,4 @@
 
 ## Gates ainda abertos
 
-Assinatura, instalador, publicação pública, execução Windows nativa, WAN ENet independente, Steam de duas contas, Workshop real, editor gráfico exportado, gameplay manual revisado, aprovação audiovisual/pacing e promoção para `1.0` continuam pendentes. Consulte [`docs/pt-BR/CURRENT_STATUS.md`](docs/pt-BR/CURRENT_STATUS.md) e [`docs/pt-BR/KNOWN_LIMITS_MATRIX.md`](docs/pt-BR/KNOWN_LIMITS_MATRIX.md).
+Assinatura, instalador, publicação assinada/de produção, execução Windows nativa, WAN ENet independente, Steam de duas contas, Workshop real, editor gráfico exportado, gameplay manual revisado, aprovação audiovisual/pacing e promoção para `1.0` continuam pendentes. Consulte [`docs/pt-BR/CURRENT_STATUS.md`](docs/pt-BR/CURRENT_STATUS.md) e [`docs/pt-BR/KNOWN_LIMITS_MATRIX.md`](docs/pt-BR/KNOWN_LIMITS_MATRIX.md).

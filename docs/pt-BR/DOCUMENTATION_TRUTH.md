@@ -3,7 +3,7 @@
 > **Documentation status: maintained reference.** Este documento define a política de publicação. Resumos commitados registram observações datadas e limitadas; relatórios gerados descrevem apenas a invocação local.
 
 **Idiomas:** [English](../DOCUMENTATION_TRUTH.md) · [Português (Brasil)](DOCUMENTATION_TRUTH.md)
-**Atualizado:** 29 de setembro de 2026
+**Atualizado:** 30 de setembro de 2026
 **Versão:** `0.9.5-beta`
 **Toolchain:** Godot 4.7.2 / GUT 9.7.1
 **Prontidão:** **NÃO PRONTO**
@@ -18,7 +18,11 @@ Quando documentos divergirem, use:
 4. [Changelog raiz](../../CHANGELOG.md) para trabalho concluído e seu escopo.
 5. [Bundle de Evidências](RELEASE_EVIDENCE_BUNDLE.md) para capturas, proveniência, hashes e exclusões de release.
 
-O baseline atual de validação do código passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`). Commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. O agregado headless estrito de 29 de setembro é a última evidência publicada de suite completa: 1.671/1.671 testes, 22.982 asserções em 149 scripts em 1.103,095 segundos, com dois arquivos GUI excluídos. O dogfood ZTASH autenticado passou, mas os pacotes permanecem sem assinatura e os gates público, nativo e externo continuam abertos.
+O baseline atual de validação do código passou no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`, qualidade `36779150276`). Commits somente de documentação também passam pelos mesmos workflows do GitHub Actions. O agregado headless estrito de 29 de setembro é a última evidência publicada de suite completa: 1.671/1.671 testes, 22.982 asserções em 149 scripts em 1.103,095 segundos, com dois arquivos GUI excluídos. O dogfood ZTASH autenticado passou. O prerelease público `v0.9.5-beta` é uma distribuição de clientes sem assinatura; gates de produção, nativos, manuais e externos continuam abertos.
+
+## Limite da publicação beta pública
+
+O [prerelease público `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) é um fato de distribuição mantido, não uma afirmação de prontidão de produção. O [Bundle de Evidências de Release](RELEASE_EVIDENCE_BUNDLE.md) registra bytes, SHA-256, verificações dos archives, smoke Linux e as limitações de ausência de assinatura/notarização. Não descreva o beta como assinado, notarizado, apoiado por instalador, aprovado nativamente ou lançado.
 
 ## Retenção local
 

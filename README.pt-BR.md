@@ -12,10 +12,12 @@ MODUS é um framework experimental de FPS multiplayer e um laboratório jogável
 
 ## Estado atual
 
-- O baseline de validação do código passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`; qualidade `36588760149`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions.
+- O baseline de validação do código passou no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (CI/CD `36779150278`; qualidade `36779150276`); commits somente de documentação também passam pelos mesmos workflows do GitHub Actions.
 - A execução completa local de 29 de setembro passou 1.671/1.671 testes, com 22.982 asserções em 149 scripts; dois arquivos que exigem GUI continuam explicitamente excluídos.
 - Pacotes ZTASH enxutos do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` foram validados e implantados por HTTPS autenticado para dogfood: DDJARIN mantém Windows (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`) e CHOPPER mantém Linux (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`).
-- Esses pacotes são **não assinados** e não constituem lançamento público. Assinatura, instalador, aceitação nativa do Windows, evidência manual e provas externas de Steam/WAN/Workshop continuam abertas.
+- Esses pacotes são **não assinados**. O [prerelease público `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) fornece clientes Linux, Windows e macOS sem assinatura; instalador, aceitação nativa do Windows, evidência manual e provas externas de Steam/WAN/Workshop continuam abertas.
+
+O prerelease foi publicado pelo workflow `36779157160` a partir do build `1367b270d651b1a2588044774a15f1dbeb2b8b51`. Os archives baixados passaram `SHA256SUMS`, integridade de compressão e smoke headless Linux; o binário Windows é PE32+ x86-64 e o binário macOS é Mach-O universal com duas arquiteturas. Notarização macOS não está disponível.
 
 ## Antes de clonar
 
@@ -65,7 +67,7 @@ São hashes de validação de transferência autenticada, não assinaturas de re
 
 ## O que ainda bloqueia a definição de pronto
 
-1. Assinatura Linux/arquivos e Authenticode Windows, além de política e publicação pública.
+1. Assinatura Linux/arquivos e Authenticode Windows, além de política de distribuição de produção.
 2. Instalador e bundling de dependências nativas compatíveis, incluindo perfil GodotSteam/Voxel Tools quando suportado.
 3. Aceitação nativa do Windows: renderer/janela/teclas físicas, fluxo Showcase completo, save/load criptografado, mod, ENet WAN, reconnect/host-loss/soak e Steam relay/P2P quando aplicável.
 4. Gameplay manual revisado, avaliação audiovisual/pacing, editor gráfico exportado e Workshop real.

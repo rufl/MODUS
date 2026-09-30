@@ -3,7 +3,7 @@
 > **Documentation status: maintained reference.** This file defines publication policy. Committed summaries record dated, bounded observations; locally generated reports describe individual invocations, not checkout guarantees.
 
 **Languages:** [English](DOCUMENTATION_TRUTH.md) · [Português (Brasil)](pt-BR/DOCUMENTATION_TRUTH.md)
-**Updated:** September 29, 2026
+**Updated:** September 30, 2026
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7.2 toolchain (Godot 4.7 line)
 **Overall readiness:** **NOT READY**
@@ -18,7 +18,11 @@ Use these maintained files when documents disagree:
 4. [Root Changelog](../CHANGELOG.md) for completed or retired work and its historical proof scope.
 5. [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md) for curated captures, provenance, package hashes and release exclusions.
 
-The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (pipeline `36588760158`). Documentation-only commits run through the same GitHub Actions workflows. The September 29 strict headless aggregate is the latest published full automated result: 1,671/1,671 tests with 22,982 assertions across 149 scripts in 1,103.095 seconds, with two GUI-required files skipped. Authenticated ZTASH dogfood is current at build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` on DDJARIN Windows and CHOPPER Linux, but packages remain unsigned and public/native/external release gates remain open.
+The current source-validation baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (pipeline `36779150278`, quality `36779150276`). Documentation-only commits run through the same GitHub Actions workflows. The September 29 strict headless aggregate is the latest published full automated result: 1,671/1,671 tests with 22,982 assertions across 149 scripts in 1,103.095 seconds, with two GUI-required files skipped. Authenticated ZTASH dogfood is current at build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` on DDJARIN Windows and CHOPPER Linux. The public `v0.9.5-beta` GitHub prerelease is an unsigned client distribution; signing, installer, native, manual and external release gates remain open.
+
+## Public beta publication boundary
+
+The public [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) is a maintained distribution fact, not a production-readiness claim. Its release evidence, package bytes, SHA-256 values, archive checks, Linux smoke result and unsigned/notarization-unavailable limitations are recorded in the [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md). Do not describe the beta as signed, notarized, installer-backed, natively approved or shipped.
 
 ## Local-Only Retention
 

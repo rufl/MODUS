@@ -11,9 +11,21 @@
 
 ## Summary
 
-MODUS contains broad FPS framework code plus focused and golden-demo runtime proof. Reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts in 1,103.095 seconds; two GUI-required files remain skipped. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, quality `36588760149`); documentation-only commits run through the same GitHub Actions workflows.
+MODUS contains broad FPS framework code plus focused and golden-demo runtime proof. Reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts in 1,103.095 seconds; two GUI-required files remain skipped. The current source-validation baseline passed on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51` (CI/CD `36779150278`, quality `36779150276`); documentation-only commits run through the same GitHub Actions workflows.
 
-Authenticated unsigned ZTASH dogfood deployment is verified end-to-end at build `1f6d4faf4a80f4426f85f3a6f731689d756806ef`: DDJARIN serves the Windows package (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`, 141275566 bytes) and CHOPPER serves the Linux package (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`, 131419549 bytes). Local complete OVERZEER four-format inventory/hash validation and extracted Linux package smoke/capability checks also pass. This closes authenticated unsigned dogfood validation only. Signed/public release, installer packaging, native Windows execution, manual gameplay, Steam/WAN/Workshop, and target-platform graphical proof remain open.
+Authenticated unsigned ZTASH dogfood deployment is verified end-to-end at build `1f6d4faf4a80f4426f85f3a6f731689d756806ef`: DDJARIN serves the Windows package (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`, 141275566 bytes) and CHOPPER serves the Linux package (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`, 131419549 bytes). Local complete OVERZEER four-format inventory/hash validation and extracted Linux package smoke/capability checks also pass. This closes authenticated unsigned dogfood validation only. The public beta is unsigned and separate; signed production release, installer packaging, native Windows execution, manual gameplay, Steam/WAN/Workshop, and target-platform graphical proof remain open.
+
+### September 30 public GitHub beta
+
+The public [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) was published by workflow `36779157160` from tag/build commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`. The three downloadable client archives are:
+
+| Asset | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `modus-0.9.5-beta-linux-x86_64.tar.gz` | 131401146 | `dc6fc0cb49aecdb8a075bdc45295a61b7622f340be3acb8d109608e074efb2b3` |
+| `modus-0.9.5-beta-windows-x86_64.zip` | 141246788 | `77adbd95f005afdb0820215649b5b66b1d1c02c480a9b1b2d8c68cddfba1bd81` |
+| `modus-0.9.5-beta-macos-universal.zip` | 152177480 | `0605a65ff3feff6a4705437d297c206162442788e564603ab1f85699691a0183` |
+
+Downloaded archives passed `SHA256SUMS` and compressed-archive integrity checks. The published Linux launcher passed the bounded headless smoke; the Windows executable identifies as PE32+ x86-64 and the macOS executable as a two-architecture Mach-O universal binary. All assets are unsigned; macOS notarization is unavailable. This is a public beta distribution artifact, not production release approval.
 
 The canonical publication rules are in [Documentation Truth](DOCUMENTATION_TRUTH.md). Portuguese navigation and current summaries are available under [`docs/pt-BR/`](pt-BR/README.md).
 
@@ -25,15 +37,15 @@ Portable schema-v1 manifests cover client/server/editor executable/PCK pairs wit
 
 The Linux helper validates archive ownership/bytes/modes before extraction and replacement, supports rollback, and preserves unowned files and XDG data. Focused regressions cover manifest relocation/tampering, staging failure isolation, malicious archives, failed-upgrade rollback, save preservation, four-format package inventory, ZTASH preparation, and separate-endpoint fleet forwarding.
 
-CI builds Linux client/editor alongside existing targets, assembles versioned candidates, runs release contracts, and completes export/native-qualification workflows. The checked-in `tools/toolchain.lock.json` pins Godot/GUT/GDScript Toolkit/SCons versions, the patched Godot source revision and downloaded archive hashes. Native runtime/dependency bundling, signing/authentication, public release, installer packaging, target-Windows execution and manual acceptance remain open.
+CI builds Linux client/editor alongside existing targets, assembles versioned candidates, runs release contracts, and completes export/native-qualification workflows. The checked-in `tools/toolchain.lock.json` pins Godot/GUT/GDScript Toolkit/SCons versions, the patched Godot source revision and downloaded archive hashes. Native runtime/dependency bundling, signed production release, installer packaging, target-Windows execution and manual acceptance remain open.
 
 The Windows acceptance harness records W movement, Space jump and E interaction outcomes, ENet probes, reconnect/soak and controlled host-loss evidence, renderer/viewport/window/GPU/API/OS metadata, same-build manifest/commit/hash metadata, the copied toolchain lock and retained logs. Hosted qualification is not a substitute for approved native hardware execution or external WAN/Steam evidence.
 
-The OVERZEER contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory/hash validation passed, and extracted Linux `--package-smoke`/`--capability-report` passed. Signed/public receiver publication, signing, installer packaging, native target smoke and external release gates remain open.
+The OVERZEER contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory/hash validation passed, and extracted Linux `--package-smoke`/`--capability-report` passed. Signed/authenticated receiver publication, signing, installer packaging, native target smoke and external release gates remain open.
 
 ### September 30 current dogfood and package proof
 
-The ZTASH manifest contract now emits `size_bytes`, matching the canonical ZEER bridge. Current lean receiver archives were prepared, locally hashed, previewed and deployed with owner-private tokens; the active DDJARIN and CHOPPER metadata records reconcile to build `1f6d4faf4a80f4426f85f3a6f731689d756806ef`, target, version and byte size. The complete four-format OVERZEER inventory also passed strict digest and size validation. Artifacts are unsigned; no signing, installer, native Windows, manual gameplay, Steam, WAN or Workshop proof is implied.
+The ZTASH manifest contract now emits `size_bytes`, matching the canonical ZEER bridge. Current lean receiver archives were prepared, locally hashed, previewed and deployed with owner-private tokens; the active DDJARIN and CHOPPER metadata records reconcile to build `1f6d4faf4a80f4426f85f3a6f731689d756806ef`, target, version and byte size. The complete four-format OVERZEER inventory also passed strict digest and size validation. Those dogfood artifacts are unsigned. The separate GitHub beta archives are public and downloadable, but unsigned and not notarized; no native Windows, manual gameplay, Steam, WAN or Workshop proof is implied.
 
 ### September 29 authenticated dogfood
 
@@ -126,7 +138,7 @@ September 13 production proof: the exported Linux client completes the `.mdsl` m
 | Performance evidence | **PASS** | 2026-09-27 warmed bounded headless Showcase capture: 69.90 seconds/66 samples, 7.00 FPS minimum and 7.58ms maximum frame time; measured evidence shape only, not a production FPS claim |
 | Release-version evidence | **BLOCKED** | Project remains `0.9.5-beta` |
 | Production readiness | **NOT READY** | 3 validator-tracked blockers: filtered full suite, manual evidence and release version; provenance clearance is outside that count |
-| Release evidence bundle | **INDEX COMPLETE / RELEASE BLOCKED** | Hashed menu/welcome/mod/golden-demo captures, short automated video, bounded benchmark table, native Windows acceptance harness, known-limits matrix, provenance ledger, fresh three-preset notice checks, local Linux desktop export smoke, executable exports, local ENet/reconnect/host-loss/rate-limit proof, and authenticated Steam API initialization are retained; manual marketing review, installer, two-account Steam/Workshop, target-Windows runtime, independent WAN and rights clearance remain open |
+| Release evidence bundle | **INDEX COMPLETE / BETA PUBLISHED / PRODUCTION BLOCKED** | Hashed menu/welcome/mod/golden-demo captures, short automated video, bounded benchmark table, native Windows acceptance harness, known-limits matrix, provenance ledger, fresh three-preset notice checks, local Linux desktop export smoke, executable exports, local ENet/reconnect/host-loss/rate-limit proof, authenticated Steam API initialization, and the public unsigned `v0.9.5-beta` client archives are retained; manual marketing review, installer, signing/notarization, two-account Steam/Workshop, target-Windows runtime, independent WAN and rights clearance remain open |
 
 ## Current Focused Automated Proof
 

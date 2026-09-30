@@ -20,7 +20,7 @@ Não publicamos percentual ponderado: gates externos não são equivalentes a co
 | Gameplay manual | **BLOQUEADO / ferramenta pronta** | Recorder existe; CSV revisado `0`, horas validadas `0,00` |
 | Performance | **LIMITADA** | Capture de 69,90 s/66 samples; não é target de FPS sincronizado ao display |
 | Versão | **BLOQUEADO** | Projeto continua `0.9.5-beta`, não `1.0.0` |
-| Assinatura/distribuição | **BLOQUEADO** | Pacotes não assinados; sem instalador, release público ou certificado/chave |
+| Assinatura/distribuição | **BLOQUEADO** | Prerelease público `v0.9.5-beta` existe sem assinatura; faltam assinatura de produção, notarização, instalador e certificado/chave |
 | Runtime externo | **ABERTO** | Windows nativo, WAN, duas contas Steam, Workshop e editor gráfico não provados |
 | Proveniência | **PASS / limitada** | Ledger atual limpo; notices e política distributiva continuam gates próprios |
 

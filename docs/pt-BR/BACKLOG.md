@@ -3,16 +3,18 @@
 > **Documentation status: maintained reference.** Este resumo traduz o backlog ativo; o backlog raiz em inglês permanece a lista operacional completa.
 
 **Idiomas:** [English](../../BACKLOG.md) · [Português (Brasil)](BACKLOG.md)
-**Atualizado:** 29 de setembro de 2026 · **Versão:** `0.9.5-beta` · **Prontidão:** **NÃO PRONTO**
+**Atualizado:** 30 de setembro de 2026 · **Versão:** `0.9.5-beta` · **Prontidão:** **NÃO PRONTO**
 
 ## Snapshot atual
 
-- Baseline de validação do código: CI/CD `36588760158` e qualidade `36588760149` passaram no commit `701ead47`; commits somente de documentação passam pelos mesmos workflows do GitHub Actions.
+- Baseline de validação do código: CI/CD `36779150278` e qualidade `36779150276` passaram no commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`; commits somente de documentação passam pelos mesmos workflows do GitHub Actions.
 - Archives OVERZEER completos passaram validação estrita de quatro formatos.
 - ZTASH enxuto passou package smoke/capability report e foi implantado por HTTPS autenticado para dogfood.
 - DDJARIN reconcilia Windows `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`.
 - CHOPPER reconcilia Linux `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
-- Os artifacts continuam sem assinatura e não são publicação pública.
+- Os artifacts de dogfood continuam sem assinatura. O [prerelease público `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta) publica clients Linux, Windows e macOS sem assinatura; isso não é publicação de produção.
+
+- O workflow beta `36779157160` publicou e verificou os archives públicos; assinatura de produção, notarização, instalador e gates nativos/manuais/externos permanecem abertos.
 
 ## Tags de prova
 
@@ -38,11 +40,11 @@ Loopback, Linux, Wine, editor, input sintético, uma conta Steam ou simulação 
 
 - Importar CSV manual revisado e limpar o bloqueio de `0,00` horas.
 - Obter certificado Authenticode/chaves e implementar fluxo de assinatura verificável.
-- Definir instalador, runtime nativo empacotado e publicação pública.
+- Definir instalador, runtime nativo empacotado e publicação pública de produção assinada.
 - Executar Windows nativo, WAN, Steam de duas contas e Workshop real.
 - Fechar editor gráfico exportado, review audiovisual/pacing e primeiro mission composed de Breakwater.
 - Promover `0.9.5-beta` somente após todos os gates atuais concordarem.
 
 ## Limites
 
-Código implementado, teste focado, CI, package smoke e dogfood autenticado não equivalem a aprovação manual, target-native, Steam/WAN/Workshop, assinatura ou release.
+Código implementado, teste focado, CI, package smoke, dogfood autenticado e prerelease beta público não equivalem a aprovação manual, target-native, Steam/WAN/Workshop, assinatura ou release de produção.

@@ -3,15 +3,15 @@
 > **Documentation status: maintained reference.** Published readiness and dated test boundaries are defined by [Documentation Truth](docs/DOCUMENTATION_TRUTH.md) and [Current Status](docs/CURRENT_STATUS.md); locally generated reports describe individual runs, not fresh-clone guarantees.
 
 **Languages:** [English](BACKLOG.md) · [Português (Brasil)](docs/pt-BR/BACKLOG.md)
-**Updated:** September 29, 2026 · **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
+**Updated:** September 30, 2026 · **Version:** `0.9.5-beta` · **Readiness:** **NOT READY**
 
 ## Current release snapshot
 
-- Source-validation baseline: pipeline `36588760158` and quality run `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows.
+- Source-validation baseline: pipeline `36779150278` and quality run `36779150276` pass on commit `1367b270d651b1a2588044774a15f1dbeb2b8b51`; documentation-only commits run through the same GitHub Actions workflows.
 - Source-matched complete OVERZEER archives passed strict four-format validation.
 - Lean ZTASH packages passed Linux package smoke/capability checks and authenticated dogfood deployment.
 - DDJARIN reconciles Windows hash `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`; CHOPPER reconciles Linux hash `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
-- These artifacts are unsigned dogfood validation. Signing, installer/public release, native Windows, manual, Steam, Workshop, WAN and graphical/editor acceptance remain open.
+- These artifacts are unsigned dogfood validation. The public unsigned client beta is published separately at [`v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag/v0.9.5-beta); signed production release, installer, native Windows, manual, Steam, Workshop, WAN and graphical/editor acceptance remain open.
 
 ## Source Of Truth Policy
 
@@ -136,6 +136,8 @@ This is the finite closure contract for the native target-Windows row and its th
 - Progress 2026-09-29 authenticated dogfood deployment: source-matched lean ZTASH packages deployed successfully through separate DDJARIN/CHOPPER endpoints using owner-private tokens; active state reconciles to build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`, with Windows hash `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363` and Linux hash `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`. This is unsigned dogfood validation; signed publication remains blocked. `[truth:runtime]` `[truth:test]` `[truth:blocked]`
 - Progress 2026-09-30 ZTASH interoperability tranche: generated manifests now use `size_bytes`, matching the canonical ZEER bridge contract; focused preparer and inventory regressions pass. `[truth:test]`
 - Progress 2026-09-30 release artifact and dogfood tranche: build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` passed strict complete OVERZEER inventory/hash validation, lean Linux package smoke/capability checks, ZEER preview and authenticated DDJARIN Windows/CHOPPER Linux deployment. Signing, native target, manual gameplay and external service gates remain open. `[truth:runtime]` `[truth:test]` `[truth:blocked]`
+
+- Progress 2026-09-30 public beta publication: workflow `36779157160` published unsigned Linux, Windows and macOS client archives for tag `v0.9.5-beta` from build `1367b270d651b1a2588044774a15f1dbeb2b8b51`. Download checksums, compressed-archive integrity, Linux bounded headless smoke, Windows PE32+ identification and macOS universal Mach-O identification passed; production signing, notarization, installer, native, manual and external-service gates remain open. `[truth:runtime]` `[truth:test]` `[truth:blocked]`
 
 ## Active Queue
 
