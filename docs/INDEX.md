@@ -81,22 +81,9 @@ A PASS applies only to the scope stated in that report. Focused or simulated evi
 
 ## Historical Documents
 
-Historical files remain byte-for-byte on the originating workstation but are no longer tracked or included in fresh clones. Their bodies have not been revalidated against the current tree. Paths, APIs, scores, counts, estimates, completion claims, test outcomes, and instructions may be wrong or superseded. `BACKLOG_ARCHIVE.md` and `MEMORY.md` are also local-only; public closure summaries belong in the root changelog.
+Superseded working notes, generated reports, and raw logs are intentionally not tracked or linked from public navigation. A fresh clone contains maintained references and versioned evidence only.
 
-Historical families include:
-
-- `docs/audits/`, `docs/fixes/`, and `docs/newdocs/`;
-- phase, cleanup, session, UI-refactor, lessons-learned, and release-draft reports;
-- the old manual test plan and testing-profiler guides;
-- former component/service architecture and service-registration guides;
-- old breakable-prop compatibility/feature claims;
-- migration-tool instructions;
-- map-generator checkpoint/completion reports and old threading design notes;
-- showcase generation/fix summaries beside map scenes;
-- shader architecture, quick-start, integration, implementation, index, and changelog documents;
-- old runner-fix, type-safety, CI, and UI-audit reports.
-
-This inventory describes historical scope without modifying local-only files. Historical text never overrides live source, the truth contract, or newly reviewed observations. Raw `logs/` and generated reports are local evidence, not published navigation targets; curated `docs/media/` captures and licensing records remain tracked.
+Historical material may contain obsolete paths, APIs, counts, estimates, results, or instructions. It never overrides live source, the truth contract, or newly reviewed observations.
 
 ## Verification
 

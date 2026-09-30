@@ -56,9 +56,9 @@ Published context and curated artifacts:
 
 ## Historical Material
 
-Historical audits, fix logs, session summaries, migration instructions, release drafts, old architecture guides, `BACKLOG_ARCHIVE.md`, and subsystem “complete” reports remain byte-for-byte on the originating workstation but are untracked and absent from fresh clones. `MEMORY.md`, agent state, and raw `logs/` are also local-only. Historical bodies are not revalidated and may contain wrong paths, APIs, counts, estimates, results, or instructions. Maintained references retain their classification; do not rewrite local-only files to add banners or repair obsolete links.
+Superseded working notes, generated reports, and raw logs are not tracked or included in fresh clones. They are not revalidated and never override current source or reviewed observations.
 
-Historical text never overrides current source or reviewed observations. Curated media, licenses, maintained status/known-limits, active backlog/roadmaps, and the root changelog remain published. See the [publication policy](DOCUMENTATION_TRUTH.md#local-only-retention) for retention and evidence boundaries.
+Curated media, licenses, maintained status and known limits, active backlogs and roadmaps, and the root changelog remain published. See the [publication policy](DOCUMENTATION_TRUTH.md#local-only-retention) for retention and evidence boundaries.
 
 ## Contribution Rule
 
@@ -67,7 +67,7 @@ When changing code or evidence:
 1. Update the narrow maintained subsystem reference.
 2. Update `docs/CURRENT_STATUS.md` with dated observations and explicit exclusions, not unexecuted commands or old local PASS results.
 3. Refresh generated reports through their validators; keep reports and raw evidence local. Publish reviewed conclusions in maintained docs.
-4. Record completed/retired backlog work and its proof boundary in root `CHANGELOG.md` before removing it from the active queue. An optional local `BACKLOG_ARCHIVE.md` is not the public closure record.
+4. Record completed or retired backlog work and its proof boundary in root `CHANGELOG.md` before removing it from the active queue.
 5. Run the documentation, project, and runner-manifest truth checks.
 
 ```bash

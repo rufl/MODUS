@@ -905,7 +905,7 @@ def classify(path: Path, digest: str) -> dict[str, str]:
         return {
             "status": "cleared",
             "author": "LichForge / user-directed generated artwork",
-            "source": "Local OpenAI Codex image workflow, 2026-08-01",
+            "source": "User-directed local image-generation workflow, 2026-08-01",
             "license": "Project-owned",
             "local_notice": "LICENSE",
             "notes": (

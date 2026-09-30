@@ -26,7 +26,7 @@ O [prerelease público `v0.9.5-beta`](https://github.com/rufl/MODUS/releases/tag
 
 ## Retenção local
 
-O GitHub publica código, testes, CI, licenças, mídia curada, documentação mantida e guias. `logs/`, caches, memória de agentes, auditorias históricas, sessões antigas e relatórios gerados são locais ou ausentes de clones novos. Não force a publicação de um arquivo histórico para restaurar um link.
+O GitHub publica código, testes, CI, licenças, mídia curada, documentação mantida e guias. Logs brutos, registros de trabalho, auditorias históricas e relatórios gerados permanecem locais ou ausentes de clones novos. Não force a publicação de um arquivo histórico para restaurar um link.
 
 Um PASS histórico nunca deve ser apresentado como uma nova execução. Publique somente a conclusão curta, a data, o build, o comando e as exclusões relevantes.
 

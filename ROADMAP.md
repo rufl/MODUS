@@ -84,4 +84,4 @@ tools/validate_production_readiness.sh --run-godot-tests --strict
 
 Generated report paths above are ignored local outputs, not checkout inputs. See [report regeneration](docs/DOCUMENTATION_TRUTH.md#regenerating-local-reports) for commands and evidence prerequisites.
 
-Temporary `GODOT_BIN` paths are workstation conveniences. The maintained requirement is Godot 4.7+, not any particular local path.
+Temporary `GODOT_BIN` overrides are local developer conveniences. The maintained requirement is Godot 4.7+, not any particular local path.

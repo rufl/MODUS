@@ -26,11 +26,11 @@ The public [`v0.9.5-beta` GitHub prerelease](https://github.com/rufl/MODUS/relea
 
 ## Local-Only Retention
 
-GitHub publishes source, active tests and CI, licenses, curated documentation/media, and maintained guides. Existing local files remain byte-for-byte on the originating workstation when removed from Git tracking; a fresh clone does not contain them.
+GitHub publishes source, active tests and CI, licenses, curated documentation and media, and maintained guides. A fresh clone intentionally excludes local working material.
 
-Local-only material includes `logs/`, `.kiro/`, `.roo/`, `.agent/`, `MEMORY.md`, `.roomodes`, `BACKLOG_ARCHIVE.md`, historical audits/fix logs/session notes/checkpoint reports, retired one-off scripts, and the generated reports below. These are neither required checkout inputs nor public navigation targets. Do not force-add them to restore an old link. Current workflows must not depend on historical instructions or workstation memory.
+Untracked working notes, raw logs, generated reports, historical audits, and retired one-off scripts are neither required checkout inputs nor public navigation targets. Do not publish an obsolete file merely to restore an old link, and never make current workflows depend on material outside version control.
 
-Preserve old evidence locally without relabeling it as a fresh run. Keep concise, dated conclusions and explicit exclusions in maintained status/changelog entries. Record closure of active backlog work in the root changelog before removing it from the queue; the optional local archive is supplementary, not the published record. Local retention is not a backup guarantee: use an appropriate external backup or release-evidence store for material that must survive workstation loss.
+Preserve old evidence without relabeling it as a fresh run. Keep concise, dated conclusions and explicit exclusions in maintained status and changelog entries. Local retention is not a backup guarantee; use an appropriate external evidence store for material that must survive checkout loss.
 
 ## Regenerating Local Reports
 
@@ -85,4 +85,4 @@ tools/generate_provenance_ledger.py --check
 
 The documentation check validates Git-tracked Markdown, including staged additions. Tracked historical snapshots and generated reports fail even if force-added through ignore rules. Retained local files cannot satisfy published Markdown links. Keep local outputs out of the index rather than changing their classification to make the check pass.
 
-Set `GODOT_BIN` to an available Godot 4.7 binary when it is not on PATH; temporary workstation paths are not repository dependencies. Run the relevant runtime/evidence commands separately when refreshing an observed boundary.
+Set `GODOT_BIN` to an available Godot 4.7 binary when it is not on PATH; temporary local paths are not repository dependencies. Run the relevant runtime or evidence commands separately when refreshing an observed boundary.
