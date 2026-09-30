@@ -161,10 +161,10 @@ jobs:
             platform=macos target=template_release arch=arm64 production=yes
           "$RUNNER_TEMP/scons-venv/bin/scons" -j "$(sysctl -n hw.ncpu)" \
             platform=macos target=template_release arch=x86_64 production=yes generate_bundle=yes
-          test -x bin/macos_template.app/Contents/MacOS/macos_template
+          test -s bin/macos_template.zip
           template_dir="$HOME/Library/Application Support/Godot/export_templates/${GODOT_VERSION}.stable"
           mkdir -p "$template_dir"
-          (cd bin && zip -qr "$template_dir/macos.zip" macos_template.app)
+          cp bin/macos_template.zip "$template_dir/macos.zip"
 
       - name: Verify release identity
         run: |
