@@ -3,7 +3,7 @@
 > **Documentation status: maintained reference.** This is the consolidated published snapshot; fresh verification records are dated below. Generated reports and raw logs are local-only; each report describes its own invocation.
 
 **Languages:** [English](CURRENT_STATUS.md) · [Português (Brasil)](pt-BR/CURRENT_STATUS.md)
-**Updated:** September 29, 2026
+**Updated:** September 30, 2026
 **Version:** `0.9.5-beta`  
 **Engine:** Godot 4.7.2 toolchain (Godot 4.7 line)
 **Project status:** Alpha-quality codebase with a pre-alpha evidence boundary  
@@ -13,7 +13,7 @@
 
 MODUS contains broad FPS framework code plus focused and golden-demo runtime proof. Reviewed manual gameplay evidence is absent and the release-version gate is blocked. The September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 assertions across 149 scripts in 1,103.095 seconds; two GUI-required files remain skipped. The current source-validation baseline passed on commit `701ead4758c6e23f67a31e22587a7ef38166faff` (CI/CD `36588760158`, quality `36588760149`); documentation-only commits run through the same GitHub Actions workflows.
 
-Authenticated unsigned ZTASH dogfood deployment is now verified end-to-end: DDJARIN serves the Windows package and CHOPPER serves the Linux package, both reconciled against build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` and retained SHA-256 metadata. This closes authenticated dogfood validation only. Signed/public release, installer packaging, native Windows execution, manual gameplay, Steam/WAN/Workshop, and target-platform graphical proof remain open.
+Authenticated unsigned ZTASH dogfood deployment is verified end-to-end at build `1f6d4faf4a80f4426f85f3a6f731689d756806ef`: DDJARIN serves the Windows package (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`, 141275566 bytes) and CHOPPER serves the Linux package (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`, 131419549 bytes). Local complete OVERZEER four-format inventory/hash validation and extracted Linux package smoke/capability checks also pass. This closes authenticated unsigned dogfood validation only. Signed/public release, installer packaging, native Windows execution, manual gameplay, Steam/WAN/Workshop, and target-platform graphical proof remain open.
 
 The canonical publication rules are in [Documentation Truth](DOCUMENTATION_TRUTH.md). Portuguese navigation and current summaries are available under [`docs/pt-BR/`](pt-BR/README.md).
 
@@ -30,6 +30,10 @@ CI builds Linux client/editor alongside existing targets, assembles versioned ca
 The Windows acceptance harness records W movement, Space jump and E interaction outcomes, ENet probes, reconnect/soak and controlled host-loss evidence, renderer/viewport/window/GPU/API/OS metadata, same-build manifest/commit/hash metadata, the copied toolchain lock and retained logs. Hosted qualification is not a substitute for approved native hardware execution or external WAN/Steam evidence.
 
 The OVERZEER contract emits `README.md`; fresh Godot 4.7.2 client/server/editor exports were packaged for Linux and Windows, strict four-format inventory/hash validation passed, and extracted Linux `--package-smoke`/`--capability-report` passed. Signed/public receiver publication, signing, installer packaging, native target smoke and external release gates remain open.
+
+### September 30 current dogfood and package proof
+
+The ZTASH manifest contract now emits `size_bytes`, matching the canonical ZEER bridge. Current lean receiver archives were prepared, locally hashed, previewed and deployed with owner-private tokens; the active DDJARIN and CHOPPER metadata records reconcile to build `1f6d4faf4a80f4426f85f3a6f731689d756806ef`, target, version and byte size. The complete four-format OVERZEER inventory also passed strict digest and size validation. Artifacts are unsigned; no signing, installer, native Windows, manual gameplay, Steam, WAN or Workshop proof is implied.
 
 ### September 29 authenticated dogfood
 

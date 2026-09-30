@@ -3,7 +3,7 @@
 > **Documentation status: maintained reference.** This is a dated evidence-completeness estimate, not release approval. Published status is consolidated in [Current Status](CURRENT_STATUS.md); regenerate local gate reports using the [truth contract](DOCUMENTATION_TRUTH.md#regenerating-local-reports).
 
 **Languages:** [English](SHIP_READINESS_ESTIMATE.md) · [Português (Brasil)](pt-BR/SHIP_READINESS_ESTIMATE.md)
-**Estimated:** 2026-09-29
+**Estimated:** 2026-09-30
 **Target:** a distributable MODUS release with green automated gates, reviewed runtime evidence, signed artifacts, and bounded public claims.
 
 ## Current gateboard
@@ -16,7 +16,7 @@ This snapshot reports evidence state, not lines of code or feature volume. It de
 | Hosted CI | **PASS** | Source-validation pipeline `36588760158` and quality `36588760149` pass on commit `701ead4758c6e23f67a31e22587a7ef38166faff`; documentation-only commits run through the same GitHub Actions workflows |
 | Automated Godot aggregate | **PASS / bounded** | September 29 strict aggregate: 1,671/1,671 tests, 22,982 assertions, 149 scripts in 1,103.095 seconds; two GUI-required files skipped |
 | Focused release engineering | **PASS** | Archive validation, staging, package lifecycle, ZTASH preparation, fleet forwarding and toolchain-lock contracts pass |
-| Authenticated dogfood transfer | **PASS** | DDJARIN Windows and CHOPPER Linux active state reconciles to immutable hashes for build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` |
+| Authenticated dogfood transfer | **PASS** | DDJARIN Windows (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`) and CHOPPER Linux (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`) reconcile to immutable metadata for build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` |
 | Manual gameplay evidence | **BLOCKED / TOOLING READY** | Recorder and strict validator exist; reviewed CSV count is 0 and validated hours are 0.00 |
 | Performance evidence | **BOUNDED** | One warmed 69.90-second/66-sample Showcase capture; display-synchronized target, low-end, multiplayer and long-session evidence remain open |
 | Release version | **BLOCKED** | Project remains `0.9.5-beta`, not `1.0.0` |

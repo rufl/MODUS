@@ -3,21 +3,21 @@
 > **Documentation status: maintained reference.** Estes artefatos provam apenas o limite indicado; não são gameplay manual, performance de produção, multiplayer externo ou aprovação de release.
 
 **Idiomas:** [English](../RELEASE_EVIDENCE_BUNDLE.md) · [Português (Brasil)](RELEASE_EVIDENCE_BUNDLE.md)
-**Atualizado:** 29 de setembro de 2026
+**Atualizado:** 30 de setembro de 2026
 **Versão:** `0.9.5-beta` · **Prontidão:** **NÃO PRONTO**
 
 ## Estado atual de publicação
 
-O pipeline de baseline de validação `36588760158` passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff`; commits somente de documentação passam pelos mesmos workflows do GitHub Actions. Archives completos de cliente/servidor/editor passaram validação estrita de quatro formatos. Pacotes ZTASH enxutos passaram `--package-smoke`/`--capability-report` no Linux, capabilities autenticadas, preview e deployment dogfood.
+O pipeline de baseline de validação `36588760158` passou no commit `701ead4758c6e23f67a31e22587a7ef38166faff`; commits somente de documentação passam pelos mesmos workflows do GitHub Actions. Archives completos de cliente/servidor/editor passaram validação estrita de quatro formatos. Pacotes ZTASH enxutos do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` passaram `--package-smoke`/`--capability-report`, preview ZEER e deployment dogfood autenticado.
 
 Estado ativo reconciliado:
 
 | Receptor | Target | SHA-256 | Limite |
 | --- | --- | --- | --- |
-| DDJARIN | Windows | `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363` | Dogfood autenticado, não release assinado |
-| CHOPPER | Linux | `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667` | Dogfood autenticado, não release assinado |
+| DDJARIN | Windows | `24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b` | Dogfood autenticado, não release assinado |
+| CHOPPER | Linux | `63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64` | Dogfood autenticado, não release assinado |
 
-O payload comum é o build `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79`. Nenhuma chave de assinatura, certificado Authenticode, instalador ou publicação pública é reivindicada.
+O payload de distribuição é o build `1f6d4faf4a80f4426f85f3a6f731689d756806ef`. Nenhuma chave de assinatura, certificado Authenticode, instalador ou publicação pública é reivindicada.
 
 ## Evidência automatizada mantida
 

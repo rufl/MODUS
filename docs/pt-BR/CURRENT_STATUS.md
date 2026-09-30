@@ -3,7 +3,7 @@
 > **Documentation status: maintained reference.** Este é o snapshot publicado e consolidado; relatórios e logs gerados são locais e cada resultado vale apenas para sua própria invocação.
 
 **Idiomas:** [English](../CURRENT_STATUS.md) · [Português (Brasil)](CURRENT_STATUS.md)
-**Atualizado:** 29 de setembro de 2026
+**Atualizado:** 30 de setembro de 2026
 **Versão:** `0.9.5-beta`
 **Toolchain:** Godot 4.7.2 / GUT 9.7.1
 **Prontidão:** **NÃO PRONTO**
@@ -16,10 +16,11 @@ O baseline atual de validação do código passou no commit `701ead4758c6e23f67a
 
 ## Dogfood autenticado
 
-Pacotes ZTASH enxutos do payload GUI `6d0f781743e2dac90f0f33cd2f32c1f8c33b1f79` foram enviados por endpoints HTTPS separados e autenticados:
+Pacotes ZTASH enxutos do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` foram enviados por endpoints HTTPS separados e autenticados:
 
-- DDJARIN / Windows: SHA-256 `45fa1f81a7c154ef971daf0557efe3128dab1ad11cd730e36a92507518d77363`.
-- CHOPPER / Linux: SHA-256 `da865fa1a9f052eabcc8addf70402d660ddb984332a5c12a4f131b689b645667`.
+- DDJARIN / Windows: SHA-256 `24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b` / 141275566 bytes.
+- CHOPPER / Linux: SHA-256 `63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64` / 131419549 bytes.
+- O manifesto ZTASH usa `size_bytes`, compatível com a ponte ZEER canônica; preview e deployment passaram.
 
 O estado ativo dos receptores coincide com build, versão, target e tamanho registrados. Isto prova compatibilidade de pacote e transferência autenticada em dogfood. Os pacotes continuam sem assinatura; não há release público assinado, instalador ou aprovação nativa.
 

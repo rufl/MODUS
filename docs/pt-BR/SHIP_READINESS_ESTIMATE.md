@@ -3,7 +3,7 @@
 > **Documentation status: maintained reference.** Este é um snapshot de completude de evidências, não aprovação de release. O status publicado está no [Estado Atual](CURRENT_STATUS.md).
 
 **Idiomas:** [English](../SHIP_READINESS_ESTIMATE.md) · [Português (Brasil)](SHIP_READINESS_ESTIMATE.md)
-**Estimativa:** 29 de setembro de 2026
+**Estimativa:** 30 de setembro de 2026
 **Target:** release distributivo com gates automatizados verdes, evidência revisada, artifacts assinados e claims públicos limitados.
 
 ## Gateboard atual
@@ -16,7 +16,7 @@ Não publicamos percentual ponderado: gates externos não são equivalentes a co
 | CI hospedado | **PASS** | Pipeline `36588760158` e qualidade `36588760149` passam no commit `701ead47` |
 | Agregado Godot | **PASS / limitado** | 1.671/1.671 testes, 22.982 asserções, 149 scripts em 1.103,095 segundos; dois arquivos GUI excluídos |
 | Release engineering | **PASS** | Validation, staging, lifecycle, ZTASH, fleet forwarding e toolchain lock focados passam |
-| Dogfood autenticado | **PASS** | DDJARIN Windows e CHOPPER Linux reconciliam hashes imutáveis do build `6d0f7817` |
+| Dogfood autenticado | **PASS** | DDJARIN Windows (`24a29d3eed0510d7993c99d9a97c7ff52358165485fac7f871b8874d50948d9b`) e CHOPPER Linux (`63171873e1b7ed3cc7cd190694064e35724a03f75a38830fb121626907618f64`) reconciliam metadados imutáveis do build `1f6d4faf4a80f4426f85f3a6f731689d756806ef` |
 | Gameplay manual | **BLOQUEADO / ferramenta pronta** | Recorder existe; CSV revisado `0`, horas validadas `0,00` |
 | Performance | **LIMITADA** | Capture de 69,90 s/66 samples; não é target de FPS sincronizado ao display |
 | Versão | **BLOQUEADO** | Projeto continua `0.9.5-beta`, não `1.0.0` |
