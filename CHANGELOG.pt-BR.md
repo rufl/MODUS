@@ -17,10 +17,12 @@ As mudanças públicas importantes do MODUS são registradas aqui. O projeto seg
 - Ferramentas de empacotamento e limpeza agora usam conceitos públicos do MODUS.
 - Documentação de entrega reduzida a evidência atual, checksums, limitações e comandos reproduzíveis.
 - Telemetria local de validação descrita como opt-in e sem dependência de serviço remoto.
+- A arte de guerreiro do menu principal foi substituída pelo horizonte procedural no jogo e nas capturas públicas.
 
 ### Removido
 
 - Referências de implantação privada, estações de trabalho e integrações não publicadas da árvore pública.
+- O asset-fonte de guerreiro não utilizado e sua entrada de proveniência foram removidos.
 
 ## [0.9.5-beta] - 2026-09-30
 

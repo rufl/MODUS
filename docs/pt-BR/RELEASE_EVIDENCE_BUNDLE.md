@@ -48,7 +48,7 @@ No Windows, use `Get-FileHash`; no macOS, `shasum -a 256`.
 
 | Superfície | 1280×720 | 800×600 | Objetivo |
 | --- | --- | --- | --- |
-| Menu principal | [PNG](../media/release/main_menu_1280x720.png) | [PNG](../media/release/main_menu_800x600.png) | Navegação e identidade visual |
+| Menu principal | [PNG](../media/release/main_menu_1280x720.png) | [PNG](../media/release/main_menu_800x600.png) | Navegação principal sobre o horizonte procedural |
 | Boas-vindas do showcase | [PNG](../media/release/showcase_welcome_1280x720.png) | [PNG](../media/release/showcase_welcome_800x600.png) | Rota guiada de evidência |
 | Gerenciador de mods | [PNG](../media/release/mod_manager_1280x720.png) | [PNG](../media/release/mod_manager_800x600.png) | Descoberta e gestão de mods |
 | Gravador de evidência | [PNG](../media/release/manual_evidence_recorder_1280x720.png) | [PNG](../media/release/manual_evidence_recorder_800x600.png) | Contrato de observação manual |

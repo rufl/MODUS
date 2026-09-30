@@ -263,7 +263,6 @@ QUATERNIUS_MODEL_PATHS = {
 }
 QUATERNIUS_SOURCE = "https://quaternius.com/packs/universalanimationlibrary.html"
 QUATERNIUS_NOTICE = "docs/licenses/QUATERNIUS_CC0-1.0.txt"
-HERO_PATH = "game/art/ui/main_menu_warrior_lineup.png"
 SUNO_ID = re.compile(rb"id=([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})")
 BREAKWATER_ASSETS = {
     "game/levels/modules/breakwater/airlock.tres",
@@ -901,17 +900,6 @@ def classify(path: Path, digest: str) -> dict[str, str]:
             ),
         }
 
-    if relative == HERO_PATH:
-        return {
-            "status": "cleared",
-            "author": "LichForge / user-directed generated artwork",
-            "source": "User-directed local image-generation workflow, 2026-08-01",
-            "license": "Project-owned",
-            "local_notice": "LICENSE",
-            "notes": (
-                "Generation provenance is retained in docs/ATTRIBUTION.md and release evidence."
-            ),
-        }
 
     if relative.startswith("game/art/audio/music/") and path.suffix.lower() == ".mp3":
         match = SUNO_ID.search(path.read_bytes())

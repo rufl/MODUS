@@ -20,7 +20,7 @@
 > [!IMPORTANT]
 > MODUS is an experimental `0.9.5-beta`, not a finished game or production-ready framework. Public binaries are unsigned. Verified capabilities and open evidence gaps are tracked in [Current Status](docs/CURRENT_STATUS.md).
 
-![MODUS main menu with campaign, multiplayer, mods, editor, options, credits, and exit actions](docs/media/release/main_menu_1280x720.png)
+![MODUS main menu with current routes over a procedural skyline](docs/media/release/main_menu_1280x720.png)
 
 ## Why MODUS exists
 

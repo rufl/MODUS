@@ -50,7 +50,7 @@ Windows PowerShell provides `Get-FileHash`; macOS provides `shasum -a 256`.
 
 | Surface | 1280×720 | 800×600 | Purpose |
 | --- | --- | --- | --- |
-| Main menu | [PNG](media/release/main_menu_1280x720.png) | [PNG](media/release/main_menu_800x600.png) | Primary navigation and visual identity |
+| Main menu | [PNG](media/release/main_menu_1280x720.png) | [PNG](media/release/main_menu_800x600.png) | Primary navigation over the procedural skyline |
 | Showcase welcome | [PNG](media/release/showcase_welcome_1280x720.png) | [PNG](media/release/showcase_welcome_800x600.png) | Guided evidence route |
 | Mod manager | [PNG](media/release/mod_manager_1280x720.png) | [PNG](media/release/mod_manager_800x600.png) | Mod discovery/management surface |
 | Evidence recorder | [PNG](media/release/manual_evidence_recorder_1280x720.png) | [PNG](media/release/manual_evidence_recorder_800x600.png) | Manual observation contract |

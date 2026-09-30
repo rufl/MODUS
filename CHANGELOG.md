@@ -17,10 +17,12 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Renamed release archive and cleanup tooling around public MODUS concepts.
 - Reduced release documentation to current public evidence, checksums, limitations, and reproducible commands.
 - Clarified that local validation telemetry is opt-in and has no remote-service dependency.
+- Replaced the main-menu warrior artwork with the procedural skyline across the game and public screenshots.
 
 ### Removed
 
 - Obsolete release paths and unpublished integration references from the public tree.
+- Retired the unused main-menu warrior source asset and provenance entry.
 
 ## [0.9.5-beta] - 2026-09-30
 
