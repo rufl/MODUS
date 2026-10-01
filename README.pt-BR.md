@@ -103,7 +103,7 @@ Veja a [Referência de Arquitetura](docs/architecture.md) e os [Schemas JSON](do
 - **Evidência sem promessas infladas:** cada afirmação registra o limite observado e o que ainda exige testes representativos.
 - **Ferramentas no formato real:** round trips do editor e validadores exercitam os mesmos dados usados pelo runtime.
 
-Assista ao [smoke automatizado de 25 segundos](docs/media/release/golden_demo_smoke_1280x720.mp4) ou veja a [Rota de Demonstração](docs/SHOWCASE_ROUTE.md).
+Assista ao [smoke automatizado mais recente](docs/media/release/golden_demo_smoke_1280x720.mp4) ou veja a [Rota de Demonstração](docs/SHOWCASE_ROUTE.md).
 
 ## Limites atuais
 

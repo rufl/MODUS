@@ -130,7 +130,7 @@ See the [Architecture Reference](docs/architecture.md) and [JSON Schemas](docs/t
 - **Evidence without inflated claims:** documentation records what was observed, on which boundary, and what still needs representative testing.
 - **Tools that exercise the same model:** editor round trips and package validators target the runtime's actual content formats.
 
-Watch the [25-second automated showcase smoke](docs/media/release/golden_demo_smoke_1280x720.mp4), or review the route in [Showcase Route](docs/SHOWCASE_ROUTE.md).
+Watch the [latest automated showcase smoke](docs/media/release/golden_demo_smoke_1280x720.mp4), or review the route in [Showcase Route](docs/SHOWCASE_ROUTE.md).
 
 ## Current limits
 

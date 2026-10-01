@@ -53,7 +53,7 @@ No Windows, use `Get-FileHash`; no macOS, `shasum -a 256`.
 | Gerenciador de mods | [PNG](../media/release/mod_manager_1280x720.png) | [PNG](../media/release/mod_manager_800x600.png) | Descoberta e gestão de mods |
 | Gravador de evidência | [PNG](../media/release/manual_evidence_recorder_1280x720.png) | [PNG](../media/release/manual_evidence_recorder_800x600.png) | Contrato de observação manual |
 
-A [captura automatizada de 25 segundos](../media/release/golden_demo_smoke_1280x720.mp4) prova apenas que a rota roteirizada foi concluída.
+A [captura automatizada mais recente do showcase](../media/release/golden_demo_smoke_1280x720.mp4) prova apenas que a rota roteirizada foi concluída.
 
 ## Reprodução
 

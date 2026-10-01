@@ -55,7 +55,7 @@ Windows PowerShell provides `Get-FileHash`; macOS provides `shasum -a 256`.
 | Mod manager | [PNG](media/release/mod_manager_1280x720.png) | [PNG](media/release/mod_manager_800x600.png) | Mod discovery/management surface |
 | Evidence recorder | [PNG](media/release/manual_evidence_recorder_1280x720.png) | [PNG](media/release/manual_evidence_recorder_800x600.png) | Manual observation contract |
 
-The [25-second automated smoke capture](media/release/golden_demo_smoke_1280x720.mp4) is evidence of the scripted route completing, not proof of game feel or production rendering quality.
+The [latest automated showcase smoke capture](media/release/golden_demo_smoke_1280x720.mp4) is evidence of the scripted route completing, not proof of game feel or production rendering quality.
 
 ## Reproduction surfaces
 

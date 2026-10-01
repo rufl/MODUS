@@ -18,6 +18,7 @@ As mudanças públicas importantes do MODUS são registradas aqui. O projeto seg
 - Documentação de entrega reduzida a evidência atual, checksums, limitações e comandos reproduzíveis.
 - Telemetria local de validação descrita como opt-in e sem dependência de serviço remoto.
 - A arte de guerreiro do menu principal foi substituída pelo horizonte procedural no jogo e nas capturas públicas.
+- O vídeo público automatizado do showcase foi atualizado a partir da rota mantida mais recente.
 
 ### Removido
 
