@@ -7,7 +7,7 @@ const PICKUP_SCENE := "res://game/scenes/items/pickups/health_pickup.tscn"
 const SAMPLE_MOD_ID := "modus_sdk_sample"
 const SAMPLE_MOD_NAME := "MODUS SDK Sample"
 const SAVE_SLOT := "showcase_smoke"
-const REQUIRED_STEP_COUNT := 9
+const REQUIRED_STEP_COUNT := 10
 const GALLERY_START_POSITION := Vector3(20, 2, 55)
 const GALLERY_GAMEPLAY_TARGET := Vector3(20, 2, 28)
 const GALLERY_OVERVIEW_POSITION := Vector3(20, 8, 56)
@@ -65,6 +65,24 @@ func _run() -> void:
 		"texture_assets",
 		texture_assets_ready,
 		"Texture-backed model, material, and image exhibits loaded"
+	)
+
+	var map_scatter: Node = world.get_node_or_null("MapAssetScatter") if world else null
+	var scatter_contract: Dictionary = (
+		map_scatter.get_asset_usage_contract()
+		if map_scatter and map_scatter.has_method("get_asset_usage_contract")
+		else {}
+	)
+	var map_assets_ready: bool = (
+		bool(scatter_contract.get("valid", false))
+		and str(scatter_contract.get("profile", "")) == "showcase"
+		and int(scatter_contract.get("spawned_models", 0)) >= 24
+	)
+	_record(
+		"map_asset_scatter",
+		map_assets_ready,
+		"%d collision-free imported model props loaded across demo zones"
+		% int(scatter_contract.get("spawned_models", 0))
 	)
 	if not world or not world.has_method("spawn_player_node"):
 		_record("player", false, "Showcase world cannot spawn a player")

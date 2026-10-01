@@ -340,7 +340,7 @@ fi
 
 case "$golden_demo_status" in
   PASS)
-    add_check "PASS" "Golden demo runtime smoke" "$golden_demo_report" "All nine controlled framework-loop steps pass; manual gameplay remains separate."
+    add_check "PASS" "Golden demo runtime smoke" "$golden_demo_report" "All ten controlled framework-loop steps pass; manual gameplay remains separate."
     ;;
   FAIL)
     add_check "FAIL" "Golden demo runtime smoke" "tools/run_showcase_golden_demo_smoke.sh --strict" "Latest report status is FAIL."
@@ -535,7 +535,7 @@ mkdir -p "$(dirname "$report_path")"
       printf '%s\n' '- Run `tools/run_main_player_path_smoke.sh --strict` and record a PASS result.'
     fi
     if [[ "$golden_demo_status" != "PASS" ]]; then
-      printf '%s\n' '- Run `tools/run_showcase_golden_demo_smoke.sh --strict` and record all eight PASS steps.'
+      printf '%s\n' '- Run `tools/run_showcase_golden_demo_smoke.sh --strict` and record all ten PASS steps.'
     fi
     if [[ "$manual_evidence_status" != "PASS" ]]; then
       printf '%s\n' '- Run `tools/validate_manual_evidence.sh --strict` after recording ManualTestTimer CSV evidence.'
