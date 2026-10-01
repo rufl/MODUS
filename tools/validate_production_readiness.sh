@@ -340,7 +340,7 @@ fi
 
 case "$golden_demo_status" in
   PASS)
-    add_check "PASS" "Golden demo runtime smoke" "$golden_demo_report" "All eight controlled framework-loop steps pass; manual gameplay remains separate."
+    add_check "PASS" "Golden demo runtime smoke" "$golden_demo_report" "All nine controlled framework-loop steps pass; manual gameplay remains separate."
     ;;
   FAIL)
     add_check "FAIL" "Golden demo runtime smoke" "tools/run_showcase_golden_demo_smoke.sh --strict" "Latest report status is FAIL."

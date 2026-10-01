@@ -11,8 +11,8 @@ usage() {
 Usage: tools/run_showcase_golden_demo_smoke.sh [--headless] [--no-video] [--report PATH] [--strict]
 
 Runs the maintained showcase scene through an automated framework-loop smoke:
-player spawn, movement input, weapon fire, enemy defeat, pickup collection,
-save/load restoration, and bundled sample-mod loading.
+texture-backed asset dressing, player spawn, movement input, weapon fire, enemy
+defeat, pickup collection, save/load restoration, and bundled sample-mod loading.
 
 This is automated runtime proof, not manual gameplay or release approval.
 
@@ -60,18 +60,19 @@ json_path="logs/showcase_golden_demo_${date_stamp}.json"
 log_path="logs/showcase_golden_demo_${date_stamp}.log"
 capture_path="docs/media/release/golden_demo_smoke_1280x720.png"
 video_path="docs/media/release/golden_demo_smoke_1280x720.mp4"
+ready_path="logs/showcase_golden_demo_${date_stamp}.ready"
 runtime_data="/tmp/modus_golden_data"
 runtime_cache="/tmp/modus_golden_cache"
 runtime_config="/tmp/modus_golden_config"
 
 mkdir -p logs docs/media/release "$(dirname "$report_path")"
-rm -f "$json_path" "$capture_path"
+rm -f "$json_path" "$capture_path" "$ready_path"
 if [[ "$record_video" -eq 1 ]]; then
   rm -f "$video_path"
 fi
 rm -rf "$runtime_data" "$runtime_cache" "$runtime_config"
 mkdir -p "$runtime_data" "$runtime_cache" "$runtime_config"
-trap 'rm -rf "$runtime_data" "$runtime_cache" "$runtime_config"' EXIT
+trap 'rm -rf "$runtime_data" "$runtime_cache" "$runtime_config"; rm -f "$ready_path"' EXIT
 
 status="BLOCKED"
 note=""
@@ -114,22 +115,33 @@ else
       set -u
       godot_bin="$1"; json_path="$2"; log_path="$3"; capture_path="$4"; video_path="$5"
       runtime_data="$6"; runtime_cache="$7"; runtime_config="$8"; record_video="$9"
-      shift 9
+      ready_path="${10}"
+      shift 10
       ffmpeg_pid=""
-      if [[ "$record_video" -eq 1 ]]; then
-        ffmpeg -y -loglevel error -f x11grab -framerate 20 -video_size 1280x720 \
-          -i "$DISPLAY" -c:v libx264 -preset veryfast -crf 28 -pix_fmt yuv420p \
-          "$video_path" &
-        ffmpeg_pid=$!
-        sleep 0.5
-      fi
       env XDG_DATA_HOME="$runtime_data" XDG_CACHE_HOME="$runtime_cache" \
         XDG_CONFIG_HOME="$runtime_config" MODUS_GOLDEN_SMOKE_JSON="$json_path" \
         MODUS_GOLDEN_SMOKE_CAPTURE="$capture_path" \
+        MODUS_GOLDEN_SMOKE_VIDEO_READY="$ready_path" \
         "$godot_bin" --path . --resolution 1280x720 --position 0,0 \
         --rendering-method gl_compatibility --rendering-driver opengl3 \
         --audio-driver Dummy --script tools/showcase_golden_demo_smoke.gd \
-        >"$log_path" 2>&1
+        >"$log_path" 2>&1 &
+      godot_pid=$!
+      if [[ "$record_video" -eq 1 ]]; then
+        attempt=0
+        while [[ ! -f "$ready_path" ]] && kill -0 "$godot_pid" 2>/dev/null \
+          && ((attempt < 1800)); do
+          sleep 0.1
+          ((attempt += 1))
+        done
+        if [[ -f "$ready_path" ]]; then
+          ffmpeg -y -loglevel error -f x11grab -framerate 20 -video_size 1280x720 \
+            -i "$DISPLAY" -c:v libx264 -preset veryfast -crf 22 -pix_fmt yuv420p \
+            "$video_path" &
+          ffmpeg_pid=$!
+        fi
+      fi
+      wait "$godot_pid"
       code=$?
       if [[ -n "$ffmpeg_pid" ]]; then
         kill -INT "$ffmpeg_pid" 2>/dev/null || true
@@ -137,7 +149,7 @@ else
       fi
       exit "$code"
     ' _ "$godot_bin" "$json_path" "$log_path" "$capture_path" "$video_path" \
-      "$runtime_data" "$runtime_cache" "$runtime_config" "$record_video"
+      "$runtime_data" "$runtime_cache" "$runtime_config" "$record_video" "$ready_path"
     launch_code=$?
   fi
   set -e
@@ -152,6 +164,14 @@ PY
     if [[ "$status" == "PASS" ]] && grep -Eq 'SCRIPT ERROR:|Parse Error:' "$log_path"; then
       status="FAIL"
       note="Framework steps passed, but the runtime log contains script errors; see ${log_path}."
+    fi
+    if [[ "$status" == "PASS" && "$headless" -eq 0 && ! -s "$capture_path" ]]; then
+      status="FAIL"
+      note="Framework steps passed, but the final visible capture is missing."
+    fi
+    if [[ "$status" == "PASS" && "$record_video" -eq 1 && ! -s "$video_path" ]]; then
+      status="FAIL"
+      note="Framework steps passed, but the smoke video is missing."
     fi
   elif [[ -z "$note" ]]; then
     status="FAIL"
@@ -204,11 +224,11 @@ lines += [
     f"| `{result_path}` | {artifact(result_path)[0]} | `{artifact(result_path)[1]}` | Machine-readable step results |",
     f"| `{log_path}` | {artifact(log_path)[0]} | `{artifact(log_path)[1]}` | Godot runtime log |",
     f"| `{capture_path}` | {capture_size} | `{capture_hash}` | Final visible PASS/FAIL overlay at 1280×720 |",
-    f"| `{video_path}` | {video_size} | `{video_hash}` | Automated smoke recording; not reviewed manual gameplay |",
+    f"| `{video_path}` | {video_size} | `{video_hash}` | Automated smoke recording with texture-backed gallery views; not reviewed manual gameplay |",
     "",
     "## Approval Boundary",
     "",
-    "A PASS proves that one controlled local run loaded the maintained showcase, spawned a player, accepted movement input, fired a weapon, defeated an enemy, collected a pickup, restored an encrypted save slot, and loaded the bundled SDK sample mod. It does not prove gameplay feel, long-session stability, real peers, Steam, manual hours, packaging, provenance clearance, or release approval.",
+    "A PASS proves that one controlled local run loaded the maintained showcase and its texture-backed asset gallery, spawned a player, accepted movement input, fired a weapon, defeated an enemy, collected a pickup, restored an encrypted save slot, and loaded the bundled SDK sample mod. It does not prove gameplay feel, long-session stability, real peers, Steam, manual hours, packaging, provenance clearance, or release approval.",
     "",
 ]
 pathlib.Path(report).write_text("\n".join(lines), encoding="utf-8")

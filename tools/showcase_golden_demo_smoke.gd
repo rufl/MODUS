@@ -7,6 +7,13 @@ const PICKUP_SCENE := "res://game/scenes/items/pickups/health_pickup.tscn"
 const SAMPLE_MOD_ID := "modus_sdk_sample"
 const SAMPLE_MOD_NAME := "MODUS SDK Sample"
 const SAVE_SLOT := "showcase_smoke"
+const REQUIRED_STEP_COUNT := 9
+const GALLERY_START_POSITION := Vector3(20, 2, 55)
+const GALLERY_GAMEPLAY_TARGET := Vector3(20, 2, 28)
+const GALLERY_OVERVIEW_POSITION := Vector3(20, 8, 56)
+const GALLERY_OVERVIEW_TARGET := Vector3(20, 2, 24)
+const TEXTURED_CHARACTER_POSITION := Vector3(37.5, 1.5, 14.5)
+const TEXTURED_CHARACTER_TARGET := Vector3(35.625, 1.1, 9.375)
 
 var _results: Array[Dictionary] = []
 var _steps_box: VBoxContainer
@@ -34,11 +41,30 @@ func _run() -> void:
 	await scene_changed
 	await _wait_frames(30)
 	var world: Node = current_scene
+	_configure_capture_rendering(world)
 	_create_overlay(world)
 	_record(
 		"scene",
 		world != null and world.scene_file_path == SHOWCASE_SCENE,
 		"Maintained showcase scene loaded"
+	)
+
+	var asset_dressing: Node = world.get_node_or_null("AssetDressing") if world else null
+	var asset_contract: Dictionary = (
+		asset_dressing.get_asset_usage_contract()
+		if asset_dressing and asset_dressing.has_method("get_asset_usage_contract")
+		else {}
+	)
+	var texture_assets_ready := (
+		bool(asset_contract.get("valid", false))
+		and int(asset_contract.get("spawned_models", 0)) > 0
+		and int(asset_contract.get("spawned_materials", 0)) > 0
+		and int(asset_contract.get("spawned_textures", 0)) > 0
+	)
+	_record(
+		"texture_assets",
+		texture_assets_ready,
+		"Texture-backed model, material, and image exhibits loaded"
 	)
 	if not world or not world.has_method("spawn_player_node"):
 		_record("player", false, "Showcase world cannot spawn a player")
@@ -53,8 +79,15 @@ func _run() -> void:
 		await _finish()
 		return
 
-	player.global_position = Vector3(0, 2, 14)
+	var hud := player.get_node_or_null("HUDLayer") as CanvasLayer
+	if hud:
+		hud.visible = false
+
+	player.global_position = GALLERY_START_POSITION
+	player.camera.look_at(GALLERY_GAMEPLAY_TARGET, Vector3.UP)
 	await _wait_frames(5)
+	if _signal_video_ready():
+		await create_timer(1.0).timeout
 	var start_position: Vector3 = player.global_position
 	Input.action_press("up")
 	await _wait_frames(30)
@@ -136,6 +169,9 @@ func _run() -> void:
 	_record("mod_loading", mod_passed, "Bundled SDK sample loaded through ModLoader")
 
 	_prepare_capture_view(player)
+	await create_timer(3.0).timeout
+	player.global_position = GALLERY_OVERVIEW_POSITION
+	player.camera.look_at(GALLERY_OVERVIEW_TARGET, Vector3.UP)
 	await _finish()
 
 
@@ -153,6 +189,41 @@ func _wait_for_player() -> Node3D:
 func _wait_frames(count: int) -> void:
 	for _frame in range(count):
 		await process_frame
+
+func _configure_capture_rendering(world: Node) -> void:
+	var world_environment := world.get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if world_environment and world_environment.environment:
+		var environment := world_environment.environment.duplicate() as Environment
+		environment.background_mode = Environment.BG_COLOR
+		environment.background_color = Color(0.015, 0.02, 0.035)
+		environment.background_energy_multiplier = 0.35
+		environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+		environment.ambient_light_color = Color(0.55, 0.62, 0.72)
+		environment.ambient_light_energy = 0.15
+		environment.fog_enabled = false
+		world_environment.environment = environment
+
+		var camera_attributes := CameraAttributesPractical.new()
+		camera_attributes.exposure_multiplier = 0.1
+		camera_attributes.auto_exposure_enabled = false
+		world_environment.camera_attributes = camera_attributes
+
+	var sun := world.get_node_or_null("DirectionalLight3D") as DirectionalLight3D
+	if sun:
+		sun.light_energy = 0.35
+
+
+func _signal_video_ready() -> bool:
+	var path := OS.get_environment("MODUS_GOLDEN_SMOKE_VIDEO_READY")
+	if path.is_empty():
+		return false
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if not file:
+		return false
+	file.store_string("ready\n")
+	file.close()
+	return true
 
 
 func _record(step: String, passed: bool, note: String) -> void:
@@ -179,11 +250,6 @@ func _create_overlay(world: Node) -> void:
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(overlay)
 
-	var veil := ColorRect.new()
-	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	veil.color = Color(0.01, 0.015, 0.03, 0.58)
-	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.add_child(veil)
 
 	var panel := PanelContainer.new()
 	panel.anchor_left = 1.0
@@ -250,8 +316,8 @@ func _prepare_capture_view(player: Node3D) -> void:
 	Input.action_release("up")
 	player.set_process(false)
 	player.set_physics_process(false)
-	player.global_position = Vector3(0, 7, 18)
-	player.camera.look_at(Vector3(0, 2, 0), Vector3.UP)
+	player.global_position = TEXTURED_CHARACTER_POSITION
+	player.camera.look_at(TEXTURED_CHARACTER_TARGET, Vector3.UP)
 	player.visuals.visible = false
 	player.weapon_holder.visible = false
 	var hud: CanvasLayer = player.get_node_or_null("HUDLayer")
@@ -263,7 +329,7 @@ func _prepare_capture_view(player: Node3D) -> void:
 
 
 func _finish() -> void:
-	var passed := _results.size() == 8
+	var passed := _results.size() == REQUIRED_STEP_COUNT
 	for result: Dictionary in _results:
 		if result.status != "PASS":
 			passed = false
@@ -275,7 +341,7 @@ func _finish() -> void:
 			"font_color", Color(0.55, 0.95, 0.68) if passed else Color(1.0, 0.55, 0.55)
 		)
 
-	await _wait_frames(15)
+	await create_timer(3.0).timeout
 	_save_capture()
 	_write_result(passed)
 	print("GOLDEN_RESULT|%s" % ("PASS" if passed else "FAIL"))

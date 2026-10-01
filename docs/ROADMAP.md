@@ -31,7 +31,7 @@ See [Documentation Truth](DOCUMENTATION_TRUTH.md) and [Current Status](CURRENT_S
 
 | Area | Source status | Required proof/hardening |
 | --- | --- | --- |
-| Movement/combat/weapons/enemies | Eight-step automated golden-demo runtime smoke passes; 20-item F8 human recorder workflow is ready | Reviewed human feel, failure recovery, and tuning observations |
+| Movement/combat/weapons/enemies | Nine-step automated golden-demo runtime smoke passes, including texture-backed asset-gallery loading; 20-item F8 human recorder workflow is ready | Reviewed human feel, failure recovery, and tuning observations |
 | Showcase | Structure tests pass; localized gamepad-ready welcome/evidence panel is focused-proven and captured at wide/narrow resolutions | Manual gameplay route, video, and issue log |
 | AI/navigation | Focused tests pass in several lanes | Real map behavior, stress, and long-session stability |
 | Splitscreen | Manager/gameplay/stress contracts pass | Real controllers, viewport/UI, audio, and performance evidence |

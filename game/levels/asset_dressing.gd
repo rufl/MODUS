@@ -286,7 +286,7 @@ const MODEL_ASSETS: Array[Dictionary] = [
 		"path": "res://game/art/models/third_party/vinrax_psx_skeleton/skeleton.glb",
 		"position": Vector3(12.5, 0.0, -8.5),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
-		"scale": Vector3(0.08, 0.08, 0.08),
+		"scale": Vector3.ONE,
 	},
 	{
 		"id": "water_duck",
