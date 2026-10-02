@@ -500,7 +500,9 @@ func _validate_gltf(gltf_path: String) -> bool:
 func hash_seed(seed_str: String) -> int:
 	var hash_context := HashingContext.new()
 	hash_context.start(HashingContext.HASH_SHA256)
-	hash_context.update(seed_str.to_utf8_buffer())
+	var seed_bytes := seed_str.to_utf8_buffer()
+	if not seed_bytes.is_empty():
+		hash_context.update(seed_bytes)
 	var hash_bytes := hash_context.finish()
 
 	# Convert first 8 bytes to 64-bit integer

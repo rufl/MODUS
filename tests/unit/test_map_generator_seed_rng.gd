@@ -1,6 +1,7 @@
 extends ModusGutTestBase
 
 const TEST_SEED := 424242
+const MAP_GENERATOR = preload("res://game/scripts/map_generator/map_generator.gd")
 
 
 func _make_context(size: int = 128) -> GenerationContext:
@@ -241,3 +242,14 @@ func test_key_and_door_positions_use_cell_centers_and_floor_height() -> void:
 	for door: Dictionary in result.locked_doors:
 		var pos: Vector2i = door.grid_position
 		assert_eq(door.position, Vector3(pos.x * 2.0 + 1.0, 1.25, pos.y * 2.0 + 1.0))
+
+
+func test_empty_seed_hash_is_deterministic() -> void:
+	var generator: Node = MAP_GENERATOR.new()
+	add_child_autofree(generator)
+
+	var first: int = generator.hash_seed("")
+	var second: int = generator.hash_seed("")
+
+	assert_eq(first, second, "An empty map seed must hash deterministically")
+	assert_ne(first, generator.hash_seed("non_empty_seed"))

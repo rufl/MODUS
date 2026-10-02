@@ -11,6 +11,9 @@ const EFFECT_POOL_MANAGER = preload(
 	"res://game/scripts/features/effects/effects/effect_pool_manager.gd"
 )
 const VFX_TEXTURE_CATALOG = preload("res://game/scripts/features/effects/vfx_texture_catalog.gd")
+const SKELETAL_CHARACTER_VISUALS = preload(
+	"res://game/entities/common/skeletal_character_visuals.gd"
+)
 
 
 func before_each() -> void:
@@ -134,4 +137,54 @@ func test_pooled_muzzle_flash_uses_catalog_texture() -> void:
 
 	assert_eq(
 		material.albedo_texture, texture, "Pooled muzzle flashes should use the catalog texture"
+	)
+
+
+func test_decal_spawner_enforces_quality_active_limit() -> void:
+	var spawner: Node = DECAL_SPAWNER.new()
+	add_child_autofree(spawner)
+	spawner.set_quality(0)
+
+	for _i in range(25):
+		spawner.spawn_decal(null, Vector3.ZERO, Vector3.ZERO, Vector3.ONE, 30.0)
+
+	var stats: Dictionary = spawner.get_pool_stats()
+	assert_eq(stats["active"], 20, "Low quality should cap active decals at 20")
+	assert_lte(stats["total"], 50, "Decal pool should remain bounded")
+
+
+func test_character_color_preserves_surface_texture() -> void:
+	var visuals: Node = SKELETAL_CHARACTER_VISUALS.new()
+	add_child_autofree(visuals)
+	assert_eq(
+		visuals.skeleton.find_children("*", "PhysicalBone3D", true, false).size(),
+		0,
+		"Ragdoll physics bodies should be deferred until ragdoll activation"
+	)
+	var mannequin := Node3D.new()
+	visuals.mannequin_root = mannequin
+	visuals.add_child(mannequin)
+
+	var mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	var source_material := StandardMaterial3D.new()
+	var source_texture := GradientTexture2D.new()
+	source_material.albedo_texture = source_texture
+	box.material = source_material
+	mesh.mesh = box
+	mannequin.add_child(mesh)
+
+	visuals.character_color = Color(0.2, 0.4, 0.8)
+	visuals._apply_color()
+
+	var active_material := mesh.get_active_material(0) as StandardMaterial3D
+	assert_not_null(active_material, "Colored mesh should retain a surface material")
+	assert_eq(
+		active_material.albedo_texture,
+		source_texture,
+		"Character tinting must preserve the imported albedo texture"
+	)
+	assert_null(
+		mesh.material_override,
+		"Character tinting should not replace all surfaces with a textureless override"
 	)

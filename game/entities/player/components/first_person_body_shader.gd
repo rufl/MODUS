@@ -46,81 +46,77 @@ func _apply_shader_to_meshes() -> void:
 		push_warning("[FirstPersonBodyShader] Visuals not ready")
 		return
 
-	# Find all MeshInstance3D nodes in the mannequin
+	# Find all MeshInstance3D nodes in the mannequin.
 	var meshes := _find_all_mesh_instances(visuals.mannequin_root)
 
 	_log("[FirstPersonBodyShader] Applying shader to " + str(meshes.size()) + " meshes", "Player")
 	_log("[FirstPersonBodyShader] Character color: " + str(visuals.character_color), "Player")
+	shader_materials.clear()
 
 	for mesh_inst in meshes:
-		# Create shader material
-		var shader_mat := ShaderMaterial.new()
-		shader_mat.shader = FP_SHADER
+		var surface_count: int = mesh_inst.mesh.get_surface_count() if mesh_inst.mesh else 0
+		var uses_material_override := mesh_inst.material_override != null
+		if uses_material_override:
+			surface_count = 1
+		elif surface_count == 0:
+			surface_count = 1
 
-		# CRITICAL FIX: ALWAYS use character color from visuals (never use existing material color)
-		var char_color := visuals.character_color
+		for surface_idx in range(surface_count):
+			var shader_mat := ShaderMaterial.new()
+			shader_mat.shader = FP_SHADER
 
-		# Copy OTHER properties from existing material if present (but NOT color)
-		# Check both material_override AND the mesh's surface material
-		var existing_mat := mesh_inst.material_override
-		if not existing_mat and mesh_inst.mesh and mesh_inst.mesh.get_surface_count() > 0:
-			existing_mat = mesh_inst.mesh.surface_get_material(0)
+			var existing_mat: Material = (
+				mesh_inst.material_override
+				if uses_material_override
+				else mesh_inst.get_surface_override_material(surface_idx)
+			)
+			if not existing_mat and mesh_inst.mesh and surface_idx < mesh_inst.mesh.get_surface_count():
+				existing_mat = mesh_inst.mesh.surface_get_material(surface_idx)
 
-		if existing_mat and existing_mat is StandardMaterial3D:
-			var std_mat := existing_mat as StandardMaterial3D
-			shader_mat.set_shader_parameter("roughness", std_mat.roughness)
-			shader_mat.set_shader_parameter("metallic", std_mat.metallic)
+			if existing_mat and existing_mat is StandardMaterial3D:
+				var std_mat := existing_mat as StandardMaterial3D
+				shader_mat.set_shader_parameter("roughness", std_mat.roughness)
+				shader_mat.set_shader_parameter("metallic", std_mat.metallic)
 
-			# Copy texture if present
-			if std_mat.albedo_texture:
-				shader_mat.set_shader_parameter("texture_albedo", std_mat.albedo_texture)
-				_log(
-					(
+				if std_mat.albedo_texture:
+					shader_mat.set_shader_parameter("texture_albedo", std_mat.albedo_texture)
+					_log(
 						"[FirstPersonBodyShader] Copied texture from material for "
 						+ str(mesh_inst.name)
-					),
-					"Player"
-				)
-			else:
-				_log(
-					(
+						+ " surface "
+						+ str(surface_idx),
+						"Player"
+					)
+				else:
+					_log(
 						"[FirstPersonBodyShader] No albedo texture found in material for "
 						+ str(mesh_inst.name)
-					),
+						+ " surface "
+						+ str(surface_idx),
+						"Player"
+					)
+			else:
+				_log(
+					"[FirstPersonBodyShader] No StandardMaterial3D found for "
+					+ str(mesh_inst.name)
+					+ " surface "
+					+ str(surface_idx),
 					"Player"
 				)
-		else:
-			_log(
-				"[FirstPersonBodyShader] No StandardMaterial3D found for " + str(mesh_inst.name),
-				"Player"
-			)
 
-		# Set albedo color (CRITICAL: This must be set!)
-		shader_mat.set_shader_parameter("albedo", char_color)
-		_log(
-			(
-				"[FirstPersonBodyShader] Set albedo for "
-				+ str(mesh_inst.name)
-				+ " to "
-				+ str(char_color)
-			),
-			"Player"
-		)
+			shader_mat.set_shader_parameter("albedo", visuals.character_color)
+			if camera:
+				shader_mat.set_shader_parameter("camera_position", camera.global_position)
+			shader_mat.set_shader_parameter("enable_fp_transparency", is_first_person)
 
-		# Set initial camera position
-		if camera:
-			shader_mat.set_shader_parameter("camera_position", camera.global_position)
+			if uses_material_override:
+				mesh_inst.material_override = shader_mat
+			else:
+				mesh_inst.set_surface_override_material(surface_idx, shader_mat)
+			shader_materials.append(shader_mat)
 
-		# Enable transparency by default for first-person
-		shader_mat.set_shader_parameter("enable_fp_transparency", is_first_person)
-
-		# Apply shader material
-		mesh_inst.material_override = shader_mat
-		shader_materials.append(shader_mat)
-
-		# CRITICAL: Enable transparency in mesh rendering
-		mesh_inst.transparency = 1.0  # ALPHA blend mode
-
+		# Shader alpha controls the fade; GeometryInstance3D transparency must remain opaque.
+		mesh_inst.transparency = 0.0
 
 func _process(_delta: float) -> void:
 	if not camera or shader_materials.is_empty():

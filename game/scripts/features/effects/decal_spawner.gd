@@ -15,12 +15,13 @@ const DECAL_LIMITS: Dictionary = {
 	3: 200,  # ULTRA
 }
 
-# Pooling
 var _decal_pool: Array[Sprite3D] = []
 var _active_decals: Array[Sprite3D] = []
 const POOL_PREWARM_SIZE: int = 20
 const MAX_POOL_SIZE: int = 50
-
+const CLEANUP_TOKEN_META: StringName = &"modus_decal_cleanup_token"
+const CLEANUP_TWEEN_META: StringName = &"modus_decal_cleanup_tween"
+var _next_cleanup_token: int = 0
 
 func _ready() -> void:
 	_prewarm_pool()
@@ -50,24 +51,51 @@ func _create_new_decal() -> Sprite3D:
 
 
 func _get_decal() -> Sprite3D:
-	## Get decal from pool or create new
-	var decal: Sprite3D
+	## Get a decal from the pool without exceeding the quality budget.
+	while _active_decals.size() >= _get_active_limit():
+		_return_oldest_active_decal()
 
-	if _decal_pool.size() > 0:
+	var decal: Sprite3D = null
+	while not _decal_pool.is_empty():
 		decal = _decal_pool.pop_back()
-	else:
+		if is_instance_valid(decal):
+			break
+		decal = null
+
+	if not decal:
 		decal = _create_new_decal()
 
 	_active_decals.append(decal)
 	return decal
 
 
+func _get_active_limit() -> int:
+	var quality := clampi(current_quality, 0, 3)
+	return maxi(1, int(DECAL_LIMITS.get(quality, DECAL_LIMITS[1])))
+
+
+func _return_oldest_active_decal() -> void:
+	while not _active_decals.is_empty():
+		var oldest := _active_decals[0]
+		if not is_instance_valid(oldest):
+			_active_decals.pop_front()
+			continue
+		_return_decal(oldest)
+		return
+
+
 func _return_decal(decal: Sprite3D) -> void:
-	## Return decal to pool
+	## Return decal to pool and invalidate any delayed cleanup for its prior use.
 	if not is_instance_valid(decal):
 		return
 
-	# Remove from active list
+	decal.set_meta(CLEANUP_TOKEN_META, -1)
+	if decal.has_meta(CLEANUP_TWEEN_META):
+		var cleanup_tween := decal.get_meta(CLEANUP_TWEEN_META) as Tween
+		if cleanup_tween:
+			cleanup_tween.kill()
+		decal.remove_meta(CLEANUP_TWEEN_META)
+
 	var idx := _active_decals.find(decal)
 	if idx != -1:
 		_active_decals.remove_at(idx)
@@ -76,12 +104,10 @@ func _return_decal(decal: Sprite3D) -> void:
 	if decal.get_parent() != get_tree().root:
 		decal.reparent(get_tree().root, true)
 
-	# Reset and return to pool
 	decal.visible = false
 	decal.modulate = Color(1, 1, 1, 1)
 	decal.texture = null
 
-	# Enforce pool size limit
 	if _decal_pool.size() < MAX_POOL_SIZE:
 		_decal_pool.append(decal)
 	else:
@@ -104,8 +130,9 @@ func _resolve_surface(pos: Vector3, normal: Vector3) -> Node3D:
 
 
 func set_quality(quality: int) -> void:
-	current_quality = quality
-
+	current_quality = clampi(quality, 0, 3)
+	while _active_decals.size() > _get_active_limit():
+		_return_oldest_active_decal()
 
 func spawn_decal(
 	texture: Texture2D,
@@ -158,73 +185,71 @@ func spawn_decal(
 
 
 func _schedule_cleanup(decal: Sprite3D, lifetime: float) -> void:
-	## Schedule decal cleanup with fade-out
-	await get_tree().create_timer(lifetime * 0.8).timeout
+	## Schedule decal cleanup with fade-out.
+	_next_cleanup_token += 1
+	var cleanup_token := _next_cleanup_token
+	decal.set_meta(CLEANUP_TOKEN_META, cleanup_token)
 
-	if not is_instance_valid(decal) or not is_instance_valid(self):
+	await get_tree().create_timer(maxf(lifetime * 0.8, 0.01)).timeout
+
+	if (
+		not is_instance_valid(decal)
+		or not is_instance_valid(self)
+		or int(decal.get_meta(CLEANUP_TOKEN_META, -1)) != cleanup_token
+	):
 		return
 
-	# Fade out over remaining time
-	var fade_time := lifetime * 0.2
+	var fade_time := maxf(lifetime * 0.2, 0.01)
 	var tween := create_tween()
+	decal.set_meta(CLEANUP_TWEEN_META, tween)
 	tween.tween_property(decal, "modulate:a", 0.0, fade_time)
-	tween.tween_callback(func() -> void: _return_decal(decal))
+	tween.tween_callback(_finish_cleanup.bind(decal, cleanup_token))
 
 
-# Blood splat texture paths
-const BLOOD_SPLAT_TEXTURES: Array[String] = [
-	"res://game/art/textures/decals/blood_splat.png",
-	"res://game/art/textures/decals/mid_blood_splat.png",
-	"res://game/art/textures/decals/smol_blood_splat.png"
+func _finish_cleanup(decal: Sprite3D, cleanup_token: int) -> void:
+	if (
+		not is_instance_valid(decal)
+		or int(decal.get_meta(CLEANUP_TOKEN_META, -1)) != cleanup_token
+	):
+		return
+	_return_decal(decal)
+
+
+const BLOOD_SPLAT_TEXTURES: Array[Texture2D] = [
+	preload("res://game/art/textures/decals/blood_splat.png"),
+	preload("res://game/art/textures/decals/mid_blood_splat.png"),
+	preload("res://game/art/textures/decals/smol_blood_splat.png")
 ]
 
-const HIGH_VELOCITY_HIT_TEXTURE: String = "res://game/art/textures/decals/hivelocity_hit.png"
+const HIGH_VELOCITY_HIT_TEXTURE: Texture2D = preload(
+	"res://game/art/textures/decals/hivelocity_hit.png"
+)
 
 
 func spawn_blood_decal(pos: Vector3, normal: Vector3, is_high_velocity: bool = false) -> Sprite3D:
-	## Spawn blood decal with random texture selection
-	## Use is_high_velocity=true for railgun/sniper hits
+	## Spawn blood decal with random texture selection.
+	## Use is_high_velocity=true for railgun/sniper hits.
 
-	GameManager.get_core_system("logger").info(
-		"[DecalSpawner] spawn_blood_decal called - high_velocity: " + " " + str(is_high_velocity),
-		"Core"
-	)
 
 	var blood_texture: Texture2D
 
 	if is_high_velocity:
-		# High velocity hits (railgun, sniper) use special texture
-		GameManager.get_core_system("logger").info(
-			"[DecalSpawner] Loading high velocity texture: " + " " + str(HIGH_VELOCITY_HIT_TEXTURE),
-			"Core"
-		)
-		blood_texture = load(HIGH_VELOCITY_HIT_TEXTURE)
+		blood_texture = HIGH_VELOCITY_HIT_TEXTURE
 		if not blood_texture:
 			push_warning("[DecalSpawner] High velocity texture not found, using random blood splat")
 			blood_texture = _load_random_blood_texture()
 	else:
-		# Normal hits use random blood splat
 		blood_texture = _load_random_blood_texture()
 
-	# Fallback to procedural if textures not found
 	if not blood_texture:
 		push_warning("[DecalSpawner] Blood textures not found, using procedural")
 		blood_texture = ProceduralSplatGenerator.create_blood_splat_texture()
-		GameManager.get_core_system("logger").info(
-			"[DecalSpawner] Using procedural texture: " + " " + str(blood_texture), "Core"
-		)
-	else:
-		GameManager.get_core_system("logger").info(
-			"[DecalSpawner] Using loaded texture: " + " " + str(blood_texture), "Core"
-		)
 
-	# Size varies based on velocity
 	var size: Vector3
 	if is_high_velocity:
-		# Larger for high velocity
 		size = Vector3(randf_range(0.8, 1.2), randf_range(0.8, 1.2), 0.2)
 	else:
-		size = Vector3(randf_range(0.5, 1.0), randf_range(0.5, 1.0), 0.2)  # Normal size
+		size = Vector3(randf_range(0.5, 1.0), randf_range(0.5, 1.0), 0.2)
 
 	var decal: Sprite3D = spawn_decal(blood_texture, pos, normal, size, 60.0)
 
@@ -233,16 +258,11 @@ func spawn_blood_decal(pos: Vector3, normal: Vector3, is_high_velocity: bool = f
 	return decal
 
 
+
 func _load_random_blood_texture() -> Texture2D:
-	## Load a random blood splat texture from the available textures
-	var texture_path: String = BLOOD_SPLAT_TEXTURES.pick_random()
-	GameManager.get_core_system("logger").info(
-		"[DecalSpawner] Attempting to load blood texture: " + " " + str(texture_path), "Core"
-	)
-
-	var texture: Texture2D = load(texture_path)
-
-	return texture
+	## Return a preloaded blood texture to avoid a first-hit load hitch.
+	var texture_index := randi_range(0, BLOOD_SPLAT_TEXTURES.size() - 1)
+	return BLOOD_SPLAT_TEXTURES[texture_index]
 
 
 func spawn_bullet_hole(pos: Vector3, normal: Vector3) -> void:
@@ -293,8 +313,8 @@ func spawn_bullet_hole(pos: Vector3, normal: Vector3) -> void:
 
 
 func clear_all_decals() -> void:
-	## Clear all active decals (for scene transitions)
-	for decal in _active_decals:
+	## Clear all active decals (for scene transitions).
+	for decal in _active_decals.duplicate():
 		if is_instance_valid(decal):
 			_return_decal(decal)
 	_active_decals.clear()

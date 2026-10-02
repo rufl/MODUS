@@ -303,7 +303,7 @@ func push_modal(modal_path: String, params: Dictionary = {}, block_input: bool =
 
 	# Load modal scene
 	var scene: PackedScene = null
-	if FileAccess.file_exists(modal_path):
+	if ResourceLoader.exists(modal_path):
 		scene = load(modal_path)
 
 	var modal: Control = null

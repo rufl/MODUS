@@ -22,6 +22,7 @@ var skeleton: Skeleton3D
 var anim_player: AnimationPlayer
 var anim_tree: AnimationTree
 var dismemberment_controller: DismembermentController
+var _ragdoll_ready: bool = false
 
 
 ## Compatibility mapping retained for callers that used the pre-extraction API.
@@ -395,12 +396,13 @@ func _setup_dismemberment() -> void:
 	add_child(dismemberment_controller)
 	dismemberment_controller.setup(skeleton, mannequin_root)
 
-	# Setup ragdoll physics on the skeleton
-	call_deferred("setup_ragdoll")
+	# Ragdoll bodies are created lazily when the character actually ragdolls.
 
 
 ## Setup physical bones for ragdoll physics
 func setup_ragdoll() -> void:
+	if _ragdoll_ready:
+		return
 	if not skeleton:
 		push_error("[SkeletalVisuals] Cannot setup ragdoll - no skeleton")
 		return
@@ -561,6 +563,7 @@ func setup_ragdoll() -> void:
 		# Add to skeleton
 		skeleton.add_child(pb)
 		created_count += 1
+	_ragdoll_ready = true
 
 	_log(
 		(
@@ -577,6 +580,8 @@ func setup_ragdoll() -> void:
 func start_ragdoll(impulse_dir: Vector3 = Vector3.ZERO, impulse_force: float = 0.0) -> void:
 	if not skeleton:
 		return
+	if not _ragdoll_ready:
+		setup_ragdoll()
 
 	_log(
 		(
@@ -744,17 +749,34 @@ func _play_default_animation() -> void:
 					_log("[SkeletalVisuals] Playing first available animation: %s" % anims[0])
 
 
-## Apply color to all meshes
+## Apply color to all meshes without discarding imported surface materials.
 func _apply_color() -> void:
 	if not mannequin_root:
 		return
 
 	var meshes := _find_all_nodes_by_type(mannequin_root, MeshInstance3D)
 	for mesh_inst in meshes:
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = character_color
-		mesh_inst.material_override = mat
+		if mesh_inst.material_override:
+			if mesh_inst.material_override is StandardMaterial3D:
+				var override_mat := (mesh_inst.material_override as StandardMaterial3D).duplicate()
+				override_mat.albedo_color = character_color
+				mesh_inst.material_override = override_mat
+			continue
 
+		var surface_count: int = mesh_inst.mesh.get_surface_count() if mesh_inst.mesh else 0
+		for surface_idx in range(surface_count):
+			var source_mat: Material = mesh_inst.get_surface_override_material(surface_idx)
+			if not source_mat and mesh_inst.mesh:
+				source_mat = mesh_inst.mesh.surface_get_material(surface_idx)
+
+			if source_mat is StandardMaterial3D:
+				var surface_mat := (source_mat as StandardMaterial3D).duplicate()
+				surface_mat.albedo_color = character_color
+				mesh_inst.set_surface_override_material(surface_idx, surface_mat)
+			elif not source_mat:
+				var surface_mat := StandardMaterial3D.new()
+				surface_mat.albedo_color = character_color
+				mesh_inst.set_surface_override_material(surface_idx, surface_mat)
 
 ## Play an animation by name
 func play_animation(anim_name: String, blend_time: float = 0.1) -> void:

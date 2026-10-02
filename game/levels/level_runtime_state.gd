@@ -41,7 +41,11 @@ static func _hash_file(path: String, context: HashingContext, files: Dictionary)
 			remap.load(path + ".import")
 		physical_path = str(remap.get_value("remap", "path", path))
 	if FileAccess.file_exists(physical_path):
-		context.update(FileAccess.get_sha256(physical_path).to_utf8_buffer())
+		var file_hash := FileAccess.get_sha256(physical_path)
+		if not file_hash.is_empty():
+			context.update(file_hash.to_utf8_buffer())
+		else:
+			context.update(var_to_bytes(["unreadable_file_hash", physical_path]))
 	if not ResourceLoader.exists(path):
 		return
 	var dependencies := ResourceLoader.get_dependencies(path)
