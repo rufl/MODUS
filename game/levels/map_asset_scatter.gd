@@ -284,6 +284,73 @@ const BREAKWATER_ASSETS: Array[Dictionary] = [
 		"rotation_degrees": Vector3(0.0, -18.0, 0.0),
 		"scale": Vector3(8.0, 8.0, 8.0),
 	},
+	{
+		"id": "dock_retro_wires",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_wires.glb",
+		"position": Vector3(10.5, 0.0, -8.5),
+		"rotation_degrees": Vector3(0.0, 25.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "hub_retro_circuit_breaker",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_circuit_breaker.glb",
+		"position": Vector3(-15.5, 0.0, -30.0),
+		"rotation_degrees": Vector3(0.0, -14.0, 0.0),
+		"scale": Vector3(1.4, 1.4, 1.4),
+	},
+	{
+		"id": "pump_retro_pipes",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipes.glb",
+		"position": Vector3(-16.5, 0.0, -52.5),
+		"rotation_degrees": Vector3(0.0, -15.0, 0.0),
+		"scale": Vector3(1.0, 1.0, 1.0),
+	},
+	{
+		"id": "cavern_prildarill_locker",
+		"family": "prildarill_low_poly_assets",
+		"path": "res://game/art/models/third_party/prildarill_low_poly_assets/locker.fbx",
+		"position": Vector3(39.5, 0.0, -94.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.8, 0.8, 0.8),
+	},
+	{
+		"id": "turbine_street_trashcan",
+		"family": "kkryy_street_furniture",
+		"path": "res://game/art/models/third_party/kkryy_street_furniture/TrashCan.fbx",
+		"position": Vector3(16.5, 0.0, -101.0),
+		"rotation_degrees": Vector3(0.0, 25.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "relay_office_file_cabinet",
+		"family": "office",
+		"path": "res://game/art/models/office/file_cabinets/file_cabinet_small.glb",
+		"position": Vector3(16.5, 0.0, -110.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "return_pipe_valve_b",
+		"family": "loafbrr_pipes",
+		"path": "res://game/art/models/third_party/loafbrr_pipes/Scenes/Valves/valve_b_grp.tscn",
+		"position": Vector3(34.0, 4.0, -56.0),
+		"rotation_degrees": Vector3(0.0, -20.0, 0.0),
+		"scale": Vector3(0.55, 0.55, 0.55),
+	},
+	{
+		"id": "return_drystone_column",
+		"family": "fences",
+		"path": "res://game/art/models/fences/drystone_wall/drystone_column.glb",
+		"position": Vector3(28.0, 0.0, -108.0),
+		"rotation_degrees": Vector3(0.0, 90.0, 0.0),
+		"scale": Vector3(1.0, 1.0, 1.0),
+	},
 ]
 
 const SHOWCASE_ASSETS: Array[Dictionary] = [
@@ -548,6 +615,73 @@ const SHOWCASE_ASSETS: Array[Dictionary] = [
 		"position": Vector3(35.0, 1.25, 72.0),
 		"rotation_degrees": Vector3(90.0, 0.0, 18.0),
 		"scale": Vector3(7.0, 7.0, 7.0),
+	},
+	{
+		"id": "movement_lab_retro_wires",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_wires.glb",
+		"position": Vector3(-50.0, 0.0, -50.0),
+		"rotation_degrees": Vector3(0.0, 15.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "hazards_retro_circuit_breaker",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_circuit_breaker.glb",
+		"position": Vector3(50.0, 0.0, -50.0),
+		"rotation_degrees": Vector3(0.0, -14.0, 0.0),
+		"scale": Vector3(1.4, 1.4, 1.4),
+	},
+	{
+		"id": "interactables_prildarill_locker",
+		"family": "prildarill_low_poly_assets",
+		"path": "res://game/art/models/third_party/prildarill_low_poly_assets/locker.fbx",
+		"position": Vector3(-50.0, 0.0, 0.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.8, 0.8, 0.8),
+	},
+	{
+		"id": "interactables_office_file_cabinet",
+		"family": "office",
+		"path": "res://game/art/models/office/file_cabinets/file_cabinet_small.glb",
+		"position": Vector3(-48.0, 0.0, 6.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "enemy_zoo_street_trashcan",
+		"family": "kkryy_street_furniture",
+		"path": "res://game/art/models/third_party/kkryy_street_furniture/TrashCan.fbx",
+		"position": Vector3(50.0, 0.0, 0.0),
+		"rotation_degrees": Vector3(0.0, 25.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "projectile_retro_pipes",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipes.glb",
+		"position": Vector3(-50.0, 0.0, 56.0),
+		"rotation_degrees": Vector3(0.0, -15.0, 0.0),
+		"scale": Vector3(1.0, 1.0, 1.0),
+	},
+	{
+		"id": "traversal_pipe_set",
+		"family": "loafbrr_pipes",
+		"path": "res://game/art/models/third_party/loafbrr_pipes/Scenes/pipeSet/pipe_set_2.tscn",
+		"position": Vector3(35.0, 0.0, -72.0),
+		"rotation_degrees": Vector3(0.0, 12.0, 0.0),
+		"scale": Vector3(0.8, 0.8, 0.8),
+	},
+	{
+		"id": "visual_lab_drystone_column",
+		"family": "fences",
+		"path": "res://game/art/models/fences/drystone_wall/drystone_column.glb",
+		"position": Vector3(35.0, 0.0, 62.0),
+		"rotation_degrees": Vector3(0.0, 90.0, 0.0),
+		"scale": Vector3(1.0, 1.0, 1.0),
 	},
 ]
 
