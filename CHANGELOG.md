@@ -20,7 +20,7 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Replaced the main-menu warrior artwork with the procedural skyline across the game and public screenshots.
 - Refreshed the public automated showcase video with unobscured texture-backed scenery and character exhibits from the maintained route.
 - Restored the textured PSX skeleton exhibit to its native meter scale; the previous 0.08 scale reduced it to a nearly invisible 17 cm figure in the Showcase.
-- Expanded the maintained Showcase and Breakwater demo maps to 40 collision-free imported model placements per profile, adding retro wires, circuit breakers, pipe assemblies, lockers, office cabinets, street furniture, and stone columns alongside the existing Classic64 industrial props, retro machinery, mine modules, office, fence, plumbing, industrial, shelf, duck, and skeleton exhibits.
+- Expanded the maintained Showcase and Breakwater demo maps to 48 collision-free imported model placements per profile, adding retro wires, circuit breakers, pipe assemblies, lockers, office cabinets, street furniture, stone columns, doors, chairs, couches, keyboards, boxes, and bottles alongside the existing Classic64 industrial props, retro machinery, mine modules, office, fence, plumbing, industrial, shelf, duck, and skeleton exhibits.
 
 ### Removed
 

@@ -27,7 +27,7 @@
 
 | Área | Fonte | Prova necessária |
 | --- | --- | --- |
-| Movimento/combate/armas | Golden demo automatizado passa dez etapas, incluindo a galeria de assets com texturas e 40 props importados sem colisão no mapa Showcase | Sensação humana, recuperação de falha e tuning |
+| Movimento/combate/armas | Golden demo automatizado passa dez etapas, incluindo a galeria de assets com texturas e 48 props importados sem colisão no mapa Showcase | Sensação humana, recuperação de falha e tuning |
 | Showcase | Estrutura e welcome UI têm prova focada | Gameplay manual, vídeo revisado e issue log |
 | IA/navegação | Vários contratos focados passam | Mapa real, stress e sessão longa |
 | Splitscreen | Manager, gameplay e stress têm contratos | Controles reais, viewport, áudio e performance |
