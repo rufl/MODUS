@@ -76,7 +76,7 @@ func _run() -> void:
 	var map_assets_ready: bool = (
 		bool(scatter_contract.get("valid", false))
 		and str(scatter_contract.get("profile", "")) == "showcase"
-		and int(scatter_contract.get("spawned_models", 0)) >= 56
+		and int(scatter_contract.get("spawned_models", 0)) >= 64
 	)
 	_record(
 		"map_asset_scatter",
