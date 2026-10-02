@@ -20,7 +20,7 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Replaced the main-menu warrior artwork with the procedural skyline across the game and public screenshots.
 - Refreshed the public automated showcase video with unobscured texture-backed scenery and character exhibits from the maintained route.
 - Restored the textured PSX skeleton exhibit to its native meter scale; the previous 0.08 scale reduced it to a nearly invisible 17 cm figure in the Showcase.
-- Expanded the maintained Showcase and Breakwater demo maps to 64 collision-free imported model placements per profile, adding old locks, garbage bags, floppy disks, brick desktops, horizontal desktops, alternate computer towers, blue conference chairs, and pipe boxes alongside the previous gas masks, hammers, flashlights, mice, TVs, office, fence, plumbing, industrial, street-furniture, and other authored exhibits.
+- Expanded the maintained Showcase and Breakwater demo maps to 72 collision-free imported model placements per profile, adding crowbars, conditioners, conference chair variants, an orange office chair, metal fence variants, and pipe boxes alongside the previous gas masks, hammers, flashlights, computer hardware, and authored exhibits.
 
 ### Removed
 
