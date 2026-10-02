@@ -76,13 +76,15 @@ func _run() -> void:
 	var map_assets_ready: bool = (
 		bool(scatter_contract.get("valid", false))
 		and str(scatter_contract.get("profile", "")) == "showcase"
-		and int(scatter_contract.get("spawned_models", 0)) >= 24
+		and int(scatter_contract.get("spawned_models", 0)) >= 32
 	)
 	_record(
 		"map_asset_scatter",
 		map_assets_ready,
-		"%d collision-free imported model props loaded across demo zones"
-		% int(scatter_contract.get("spawned_models", 0))
+		(
+			"%d collision-free imported model props loaded across demo zones"
+			% int(scatter_contract.get("spawned_models", 0))
+		)
 	)
 	if not world or not world.has_method("spawn_player_node"):
 		_record("player", false, "Showcase world cannot spawn a player")
@@ -208,6 +210,7 @@ func _wait_frames(count: int) -> void:
 	for _frame in range(count):
 		await process_frame
 
+
 func _configure_capture_rendering(world: Node) -> void:
 	var world_environment := world.get_node_or_null("WorldEnvironment") as WorldEnvironment
 	if world_environment and world_environment.environment:
@@ -267,7 +270,6 @@ func _create_overlay(world: Node) -> void:
 	var overlay := Control.new()
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(overlay)
-
 
 	var panel := PanelContainer.new()
 	panel.anchor_left = 1.0

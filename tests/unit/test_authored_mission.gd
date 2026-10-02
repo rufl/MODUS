@@ -466,7 +466,7 @@ func test_authored_levels_use_imported_asset_families() -> void:
 			scatter_contract.get("model_assets", []).size(),
 			"Every map-wide scatter entry must instantiate",
 		)
-		assert_gte(scatter_contract.get("model_assets", []).size(), 24)
+		assert_gte(scatter_contract.get("model_assets", []).size(), 32)
 		assert_gt(scatter_contract.get("source_families", []).size(), 5)
 		assert_eq(
 			scatter_contract.get("profile"),

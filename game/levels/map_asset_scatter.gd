@@ -215,6 +215,75 @@ const BREAKWATER_ASSETS: Array[Dictionary] = [
 		"rotation_degrees": Vector3(0.0, -90.0, 0.0),
 		"scale": Vector3(1.2, 1.2, 1.2),
 	},
+	{
+		"id": "dock_classic64_guard_rail",
+		"family": "classic64_breakwater",
+		"path": "res://game/art/models/third_party/classic64_breakwater/classic64_guard_rail.glb",
+		"position": Vector3(-15.5, 0.0, 0.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.62, 0.62, 0.62),
+	},
+	{
+		"id": "hub_classic64_generator",
+		"family": "classic64_breakwater",
+		"path": "res://game/art/models/third_party/classic64_breakwater/classic64_generator.glb",
+		"position": Vector3(-15.5, 0.0, -22.0),
+		"rotation_degrees": Vector3(0.0, -14.0, 0.0),
+		"scale": Vector3(1.55, 1.55, 1.55),
+	},
+	{
+		"id": "pump_retro_transformer",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_transformer.glb",
+		"position": Vector3(16.5, 0.0, -44.5),
+		"rotation_degrees": Vector3(0.0, -12.0, 0.0),
+		"scale": Vector3(1.45, 1.45, 1.45),
+	},
+	{
+		"id": "intake_retro_turbine",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_turbine.glb",
+		"position": Vector3(-16.5, 0.0, -68.5),
+		"rotation_degrees": Vector3(0.0, -16.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "cavern_mine_modular",
+		"family": "elbolilloduro_mine",
+		"path": "res://game/art/models/third_party/elbolilloduro_mine/mine_modular.dae",
+		"position": Vector3(39.5, 0.0, -68.5),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.15, 0.15, 0.15),
+	},
+	{
+		"id": "turbine_retro_pipe_valve",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_pipe_valve.glb",
+		"position": Vector3(-16.5, 0.0, -88.5),
+		"rotation_degrees": Vector3(0.0, -14.0, 0.0),
+		"scale": Vector3(1.55, 1.55, 1.55),
+	},
+	{
+		"id": "relay_classic64_panel",
+		"family": "classic64_breakwater",
+		"path":
+		"res://game/art/models/third_party/classic64_breakwater/classic64_panel_electrical_closed.glb",
+		"position": Vector3(16.5, 0.0, -120.0),
+		"rotation_degrees": Vector3(0.0, 12.0, 0.0),
+		"scale": Vector3(4.6, 4.6, 4.6),
+	},
+	{
+		"id": "return_classic64_junctionbox",
+		"family": "classic64_breakwater",
+		"path":
+		"res://game/art/models/third_party/classic64_breakwater/classic64_electrical_junctionbox_small.glb",
+		"position": Vector3(35.5, 0.8, -119.0),
+		"rotation_degrees": Vector3(0.0, -18.0, 0.0),
+		"scale": Vector3(8.0, 8.0, 8.0),
+	},
 ]
 
 const SHOWCASE_ASSETS: Array[Dictionary] = [
@@ -411,6 +480,74 @@ const SHOWCASE_ASSETS: Array[Dictionary] = [
 		"position": Vector3(20.0, 0.0, 72.0),
 		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
 		"scale": Vector3(0.75, 0.75, 0.75),
+	},
+	{
+		"id": "movement_lab_classic64_guard_rail",
+		"family": "classic64_breakwater",
+		"path": "res://game/art/models/third_party/classic64_breakwater/classic64_guard_rail.glb",
+		"position": Vector3(-70.0, 0.0, -50.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.62, 0.62, 0.62),
+	},
+	{
+		"id": "hazards_retro_transformer",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_transformer.glb",
+		"position": Vector3(55.0, 0.0, -50.0),
+		"rotation_degrees": Vector3(0.0, -12.0, 0.0),
+		"scale": Vector3(1.45, 1.45, 1.45),
+	},
+	{
+		"id": "interactables_mine_modular",
+		"family": "elbolilloduro_mine",
+		"path": "res://game/art/models/third_party/elbolilloduro_mine/mine_modular.dae",
+		"position": Vector3(-35.0, 0.0, 6.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(0.15, 0.15, 0.15),
+	},
+	{
+		"id": "interactables_office_computer_monitor",
+		"family": "office",
+		"path": "res://game/art/models/office/computers/computer_monitor.glb",
+		"position": Vector3(-58.0, 1.0, 6.0),
+		"rotation_degrees": Vector3(0.0, 180.0, 0.0),
+		"scale": Vector3(1.4, 1.4, 1.4),
+	},
+	{
+		"id": "enemy_zoo_retro_turbine",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_turbine.glb",
+		"position": Vector3(55.0, 0.0, 6.0),
+		"rotation_degrees": Vector3(0.0, -16.0, 0.0),
+		"scale": Vector3(1.2, 1.2, 1.2),
+	},
+	{
+		"id": "projectile_classic64_pump_station",
+		"family": "classic64_breakwater",
+		"path": "res://game/art/models/third_party/classic64_breakwater/classic64_pump_station.glb",
+		"position": Vector3(-65.0, 0.0, 56.0),
+		"rotation_degrees": Vector3(0.0, 18.0, 0.0),
+		"scale": Vector3(1.25, 1.25, 1.25),
+	},
+	{
+		"id": "traversal_retro_switches",
+		"family": "chilly_durango_retro_machinery",
+		"path":
+		"res://game/art/models/third_party/chilly_durango_retro_machinery/models/retro_switches.glb",
+		"position": Vector3(20.0, 0.1, -72.0),
+		"rotation_degrees": Vector3(0.0, 18.0, 0.0),
+		"scale": Vector3(1.9, 1.9, 1.9),
+	},
+	{
+		"id": "visual_lab_classic64_sign",
+		"family": "classic64_breakwater",
+		"path":
+		"res://game/art/models/third_party/classic64_breakwater/classic64_sign_confined_space.glb",
+		"position": Vector3(35.0, 1.25, 72.0),
+		"rotation_degrees": Vector3(90.0, 0.0, 18.0),
+		"scale": Vector3(7.0, 7.0, 7.0),
 	},
 ]
 
