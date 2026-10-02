@@ -313,7 +313,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Generate Quality Summary
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           JOB_RESULTS: ${{ toJSON(needs) }}
         with:
@@ -350,7 +350,7 @@ jobs:
 
       - name: Comment Summary on PR
         if: ${{ !cancelled() && hashFiles('quality-summary.md') != '' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
