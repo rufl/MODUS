@@ -11,7 +11,7 @@ usage() {
 Usage: tools/run_showcase_golden_demo_smoke.sh [--headless] [--no-video] [--report PATH] [--strict]
 
 Runs the maintained showcase scene through an automated framework-loop smoke:
-texture-backed asset dressing, 48 collision-free imported map props, player
+texture-backed asset dressing, 56 collision-free imported map props, player
 spawn, movement input, weapon fire, enemy defeat, pickup collection, save/load
 restoration, and bundled sample-mod loading.
 
@@ -225,11 +225,11 @@ lines += [
     f"| `{result_path}` | {artifact(result_path)[0]} | `{artifact(result_path)[1]}` | Machine-readable step results |",
     f"| `{log_path}` | {artifact(log_path)[0]} | `{artifact(log_path)[1]}` | Godot runtime log |",
     f"| `{capture_path}` | {capture_size} | `{capture_hash}` | Final visible PASS/FAIL overlay at 1280×720 |",
-    f"| `{video_path}` | {video_size} | `{video_hash}` | Automated smoke recording with texture-backed gallery and 48-model map-scatter views; not reviewed manual gameplay |",
+    f"| `{video_path}` | {video_size} | `{video_hash}` | Automated smoke recording with texture-backed gallery and 56-model map-scatter views; not reviewed manual gameplay |",
     "",
     "## Approval Boundary",
     "",
-    "A PASS proves that one controlled local run loaded the maintained showcase, its texture-backed asset gallery, and its 48 collision-free imported map props, spawned a player, accepted movement input, fired a weapon, defeated an enemy, collected a pickup, restored an encrypted save slot, and loaded the bundled SDK sample mod. It does not prove gameplay feel, long-session stability, real peers, Steam, manual hours, packaging, provenance clearance, or release approval.",
+    "A PASS proves that one controlled local run loaded the maintained showcase, its texture-backed asset gallery, and its 56 collision-free imported map props, spawned a player, accepted movement input, fired a weapon, defeated an enemy, collected a pickup, restored an encrypted save slot, and loaded the bundled SDK sample mod. It does not prove gameplay feel, long-session stability, real peers, Steam, manual hours, packaging, provenance clearance, or release approval.",
     "",
 ]
 pathlib.Path(report).write_text("\n".join(lines), encoding="utf-8")
