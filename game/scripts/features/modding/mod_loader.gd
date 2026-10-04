@@ -3,6 +3,7 @@ extends Node
 signal mod_loaded(mod_info: Dictionary)
 signal mod_load_failed(mod_name: String, reason: String)
 signal all_mods_loaded
+signal mod_rejected(mod_path: String, errors: Array[String])
 
 const MODS_DIR: String = "user://mods"
 const RES_MODS_DIR: String = "res://mods"
@@ -15,6 +16,7 @@ const ModPackageValidatorClass: GDScript = preload(
 var _loaded_mods: Array[Dictionary] = []
 var _mod_configs: Dictionary = {}  ## mod_name -> config
 var _all_discovered_mods: Array[Dictionary] = []
+var _rejected_mods: Array[Dictionary] = []
 var _texture_overrides: Dictionary = {}
 var _audio_overrides: Dictionary = {}
 var _scene_overrides: Dictionary = {}
@@ -50,6 +52,7 @@ func _ready() -> void:
 
 func _discover_all_mods() -> void:
 	_all_discovered_mods.clear()
+	_rejected_mods.clear()
 	GameManager.get_core_system("logger").info("[ModLoader] Discovering mods...", "Core")
 
 	# Check project mods directory (bundled mods)
@@ -99,13 +102,13 @@ func _read_mod_manifest(mod_path: String) -> Dictionary:
 	# Try JSON5 load (supports comments)
 	var data: Variant = JSON5LoaderClass.load_file(manifest_path)
 	if data == null or typeof(data) != TYPE_DICTIONARY:
+		_record_mod_rejection(mod_path, ["Invalid JSON/JSON5 in mod.json"])
 		return {}
 
 	var manifest: Dictionary = data
 	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(manifest, manifest_path)
 	if not validation.valid:
-		for error in validation.errors:
-			push_warning("[ModLoader] Rejected manifest: %s" % error)
+		_record_mod_rejection(mod_path, validation.errors)
 		return {}
 	return {
 		"id": manifest.get("id", mod_path.get_file()),
@@ -125,6 +128,18 @@ func _read_mod_manifest(mod_path: String) -> Dictionary:
 		"components": manifest.get("components", {}),
 		"entities": manifest.get("entities", {})
 	}
+
+
+func _record_mod_rejection(mod_path: String, errors: Array) -> void:
+	var normalized_errors: Array[String] = []
+	for error in errors:
+		normalized_errors.append(str(error))
+	if normalized_errors.is_empty():
+		normalized_errors.append("Invalid mod package")
+	_rejected_mods.append({"path": mod_path, "errors": normalized_errors})
+	mod_rejected.emit(mod_path, normalized_errors)
+	for error in normalized_errors:
+		push_warning("[ModLoader] Rejected manifest: %s" % error)
 
 
 ## Load all enabled mods
@@ -203,13 +218,16 @@ func _try_load_mod(mod_path: String) -> void:
 	# Parse manifest (supports JSON5)
 	var data: Variant = JSON5LoaderClass.load_file(manifest_path)
 	if data == null or typeof(data) != TYPE_DICTIONARY:
-		mod_load_failed.emit(mod_path, "Invalid JSON/JSON5 in mod.json")
+		var reason := "Invalid JSON/JSON5 in mod.json"
+		_record_mod_rejection(mod_path, [reason])
+		mod_load_failed.emit(mod_path, reason)
 		return
 
 	var manifest: Dictionary = data
 
 	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(manifest, manifest_path)
 	if not validation.valid:
+		_record_mod_rejection(mod_path, validation.errors)
 		for error in validation.errors:
 			mod_load_failed.emit(mod_path, str(error))
 		return
@@ -730,6 +748,11 @@ func get_mod_info(mod_name: String) -> Dictionary:
 
 func get_installed_mods() -> Array:
 	return _all_discovered_mods.duplicate(true)
+
+
+## Get manifests rejected during the latest discovery pass.
+func get_rejected_mods() -> Array[Dictionary]:
+	return _rejected_mods.duplicate(true)
 
 
 ## Set mod enabled state

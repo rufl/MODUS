@@ -67,7 +67,7 @@ Always unsubscribe on teardown. Optional services obtained with `get_core_system
 godot --headless --path . --script tools/validate_mod_packages.gd
 ```
 
-The validator reports missing or mistyped required fields, compatibility values, type errors, missing dependencies, disabled packages, duplicate package IDs, and duplicate active override ownership. The [mod and save compatibility policy](../MOD_COMPATIBILITY_POLICY.md) defines the accepted local contract. A clean repository scan proves only the manifests scanned by that command.
+The validator reports missing or mistyped required fields, compatibility values, type errors, missing dependencies, disabled packages, duplicate package IDs, and duplicate active override ownership. The [mod and save compatibility policy](../MOD_COMPATIBILITY_POLICY.md) defines the accepted local contract. Runtime discovery exposes rejected package paths and validator errors through `ModLoader.get_rejected_mods()` and the `mod_rejected` signal. A clean repository scan proves only the manifests scanned by that command.
 
 ## Asset and package caution
 

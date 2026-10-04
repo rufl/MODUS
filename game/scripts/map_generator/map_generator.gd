@@ -516,26 +516,28 @@ func hash_seed(seed_str: String) -> int:
 ## Start threaded generation pipeline
 func _start_threaded_generation() -> void:
 	# Create and start worker thread
-	_generation_thread = Thread.new()
-	_generation_thread.start(_generation_worker_thread)
+	var generation_thread := Thread.new()
+	_generation_thread = generation_thread
+	generation_thread.start(_generation_worker_thread)
 
-	# Monitor thread progress on main thread
-	_monitor_generation_thread()
+	# Monitor this exact thread so a cancelled monitor cannot consume a replacement run.
+	_monitor_generation_thread(generation_thread)
 
 
 ## Monitor generation thread and handle completion
-func _monitor_generation_thread() -> void:
-	# Wait for thread to complete
-	while _generation_thread and _generation_thread.is_alive():
+func _monitor_generation_thread(generation_thread: Thread) -> void:
+	# Wait for this generation's thread to complete. Ownership changes on cancellation.
+	while _generation_thread == generation_thread and generation_thread.is_alive():
 		await get_tree().process_frame
 
-	# Get result from thread
-	if _generation_thread:
-		var result: Dictionary = _generation_thread.wait_to_finish()
-		_generation_thread = null
+	if _generation_thread != generation_thread:
+		return
 
-		# Handle result on main thread
-		_finalize_generation(result)
+	var result: Dictionary = generation_thread.wait_to_finish()
+	_generation_thread = null
+
+	# Handle result on main thread
+	_finalize_generation(result)
 
 
 ## Worker thread for independent generation phases

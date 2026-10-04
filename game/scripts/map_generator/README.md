@@ -23,14 +23,15 @@ Component existence does not prove that every optional phase contributes valid r
 ## Threading boundary
 
 The generator owns a worker `Thread`, cancellation flag, and explicit join on
-exit. Scene-tree work is deferred to the main thread. The threaded directory
-proof currently passes as a complete aggregate.
+exit. Each asynchronous monitor is bound to the exact worker it started, so a
+cancelled monitor cannot consume or finalize a replacement generation. Scene-tree
+work is deferred to the main thread.
 
 ## Current focused evidence
 
 - Generated boss runtime proof: 1/1 passed.
-- Threaded generator aggregate: 8/8 passed.
-- Aggregate coverage includes generation, cancellation/replacement, CSG
+- Threaded generator focused suite: 12/12 passed.
+- Coverage includes generation, immediate cancellation/replacement, CSG
   fallback, navigation baking, gameplay placement, navigation reachability,
   generated boss defeat, extraction, and export/reload.
 - Current focused and aggregate runs reported no ObjectDB teardown leak.

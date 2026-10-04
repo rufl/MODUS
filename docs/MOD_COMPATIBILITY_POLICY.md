@@ -28,6 +28,11 @@ Unknown manifest fields are ignored by the current loader. A package with an inv
 
 The package `version` is descriptive metadata. Dependency ranges and automatic package migration are not supported. A mod API or save-schema change requires a new compatible package and an explicit validator/test/doc update; there is no silent downgrade or migration path.
 
+Discovery and load failures are observable: `ModLoader` emits `mod_rejected`
+with the package path and normalized errors, and `get_rejected_mods()` returns
+the same diagnostics for the current discovery/load pass. Rejected packages
+never enter the installed-mod list or enabled load set.
+
 ## Save contract
 
 `GameStateManager` writes `version: "1.0"` into every saved world envelope. Loading, network synchronization, and direct world restoration reject a missing or different save version before destructive restoration starts. `SaveService` metadata uses the project version from `project.godot` (`0.9.5-beta`).
@@ -49,3 +54,4 @@ godot --headless --path . --script res://tools/validate_mod_packages.gd
 ```
 
 The validator behavior is covered by `tests/unit/test_mod_package_validator.gd`; save-version rejection is covered by `tests/unit/test_autoload_consolidation.gd`.
+Runtime rejection diagnostics are covered by `tests/unit/test_mod_reload.gd`.

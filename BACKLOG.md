@@ -17,7 +17,7 @@
 - [ ] Tune movement, weapon feedback, enemy readability, and encounter pacing through observed play sessions.
 - [ ] Expand authored encounters without hiding procedural-system failures behind scripted paths.
 - [ ] Sample larger procedural seed sets and record generation failures with seeds.
-- [ ] Validate large-world memory cleanup and worker cancellation during repeated transitions.
+- [ ] Validate large-world memory cleanup and worker cancellation during repeated transitions; bounded cancellation/replacement coverage exists for the generator worker.
 - [ ] Add a representative campaign loop only after save and content-versioning contracts are stable.
 
 ## Multiplayer
@@ -32,8 +32,8 @@
 
 - [ ] Complete exported embedded-editor and standalone-editor graphical acceptance.
 - [ ] Validate `.mdsl` round trips across more authored map structures.
-- [ ] Define mod dependency, conflict, versioning, and failure-reporting behavior.
-- [ ] Document safe content boundaries and the absence or presence of sandbox guarantees.
+- [x] Define mod dependency, conflict, versioning, and failure-reporting behavior.
+- [x] Document safe content boundaries and the absence or presence of sandbox guarantees.
 - [ ] Add public package examples only when their licenses and upgrade paths are clear.
 
 ## Accessibility and usability

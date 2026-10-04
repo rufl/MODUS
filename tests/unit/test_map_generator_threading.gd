@@ -807,6 +807,37 @@ func test_cancelling_prepared_geometry_cannot_abort_replacement_generation() -> 
 	assert_eq(state["failed"], [], "A cancelled continuation cannot abort the replacement")
 
 
+func test_repeated_immediate_cancellation_does_not_cross_wire_generations() -> void:
+	var config := GenerationConfig.new()
+	config.map_size = Vector2i(32, 32)
+	config.outdoor_bias = 0.0
+	config.cave_bias = 0.0
+	config.prefab_detail_level = 0.0
+	config.prop_density = 0.0
+	config.decorative_density = 0.0
+	config.enable_lod = false
+	config.enable_occlusion_culling = false
+	config.use_multimesh = false
+	config.monster_density = 0.0
+	config.minimum_monsters = 0
+	config.item_density = 0.0
+	config.enable_secrets = false
+	config.enable_key_locks = true
+	config.enable_boss_arena = true
+
+	for iteration in range(4):
+		map_generator.generate_map("cancelled-%d" % iteration, config)
+		map_generator.cancel_generation()
+		assert_false(map_generator.is_generating)
+		assert_null(map_generator.get("_generation_thread"))
+
+	# Let every cancelled monitor resume before starting a replacement generation.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var result := await _generate("after-cancel", config)
+	assert_eq(result.get("metadata", {}).get("seed"), "after-cancel")
+
+
 func test_encounter_manifest_requires_weapon_before_first_combat() -> void:
 	var context: GenerationContext = GenerationContextScript.new()
 	context.config = GenerationConfig.new()

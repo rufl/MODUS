@@ -18,6 +18,8 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Reduced release documentation to current public evidence, checksums, limitations, and reproducible commands.
 - Clarified that local validation telemetry is opt-in and has no remote-service dependency.
 - Defined and enforced the public mod-package compatibility fields and `GameStateManager` save-schema rejection contract.
+- Bound map-generation monitors to their owning worker thread, preventing rapid cancellation/replacement cycles from finalizing the wrong generation.
+- Exposed rejected mod-package paths and validation errors through the runtime `mod_rejected` signal and `ModLoader.get_rejected_mods()`.
 - Replaced the main-menu warrior artwork with the procedural skyline across the game and public screenshots.
 - Refreshed the public automated showcase video with unobscured texture-backed scenery and character exhibits from the maintained route.
 - Restored the textured PSX skeleton exhibit to its native meter scale; the previous 0.08 scale reduced it to a nearly invisible 17 cm figure in the Showcase.

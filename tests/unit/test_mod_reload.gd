@@ -13,6 +13,7 @@ class ReloadLoader:
 
 	func _discover_all_mods() -> void:
 		_all_discovered_mods.clear()
+		_rejected_mods.clear()
 		_scan_for_discovery(discovery_path)
 
 	func _load_mod_settings() -> void:
@@ -144,6 +145,26 @@ func test_reload_frees_previous_script_and_handler_before_loading_replacement() 
 	assert_eq(cleanups, 4)
 	assert_true(is_instance_valid(unrelated), "Unowned children survive reload")
 	assert_eq(_loader.get_child_count(), 1)
+
+
+func test_invalid_manifest_reports_rejection_diagnostics() -> void:
+	var path := _mod("invalid", 10)
+	var manifest := FileAccess.open(path.path_join("mod.json"), FileAccess.WRITE)
+	manifest.store_string(
+		JSON.stringify({"id": "invalid", "name": "Invalid", "version": "1.0.0"})
+	)
+	manifest.close()
+
+	_loader._discover_all_mods()
+	assert_true(_loader.get_installed_mods().is_empty())
+	var rejected := _loader.get_rejected_mods()
+	assert_eq(rejected.size(), 1)
+	assert_eq(rejected[0].get("path"), path)
+	assert_true(
+		rejected[0].get("errors", []).any(
+			func(error: String) -> bool: return "compatibility" in error
+		)
+	)
 
 
 func test_disabling_and_deleting_stacked_mods_restores_only_owned_data_and_config() -> void:
