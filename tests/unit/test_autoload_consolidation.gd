@@ -5,6 +5,9 @@ extends GutTest
 
 const GameManagerScript := preload("res://game/scripts/core/game_manager.gd")
 const LegacyConstants := preload("res://game/core/constants.gd")
+const GameStateManagerScript := preload(
+	"res://game/scripts/features/gameplay/game_state_manager.gd"
+)
 
 
 func test_gamecore_has_constants() -> void:
@@ -110,6 +113,23 @@ func test_state_manager_service_methods() -> void:
 		assert_has_method(state_manager, "save_game", "Should have save_game method")
 		assert_has_method(state_manager, "load_game", "Should have load_game method")
 		assert_has_method(state_manager, "get_save_list", "Should have get_save_list method")
+
+
+func test_state_manager_enforces_save_version() -> void:
+	var state_manager := GameStateManagerScript.new()
+	add_child_autofree(state_manager)
+	assert_false(
+		await state_manager.deserialize_world({"version": "2.0"}),
+		"Unsupported save versions must be rejected before restoration"
+	)
+	assert_false(
+		await state_manager.deserialize_world({}),
+		"Missing save versions must be rejected"
+	)
+	assert_true(
+		await state_manager.deserialize_world({"version": GameStateManagerScript.SAVE_VERSION}),
+		"Current save versions must remain loadable"
+	)
 
 
 func test_blood_effects_service_methods() -> void:

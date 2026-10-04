@@ -2,6 +2,10 @@
 	"id": "example_harder_enemies",
     "name": "Harder Enemies",
     "version": "1.0.0",
+    "compatibility": {
+        "mod_api": 1,
+        "save_version": "1.0"
+    },
     "author": "Example",
     "description": "Makes enemies tougher with more health and damage",
     "priority": 100,

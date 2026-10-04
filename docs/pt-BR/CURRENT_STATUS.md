@@ -32,7 +32,7 @@ Implementado não significa observado. Observado não significa pronto para prod
 | Multijogador ENet | Hospedagem/entrada, servidor dedicado, autoridade, allowlist de RPC, limites, predição e reconexão | Ciclo local, inventário, reconexão, late join e autoridade | Internet real, latência/perda, clientes hostis, concorrência e aceitação dedicada |
 | Steam | Adapter e inicialização condicional | Inicialização local autenticada | Duas contas, relay/P2P, serviços públicos e Workshop |
 | Editor | Editor embutido, código standalone, exportação/importação `.mdsl` e histórico | Save/export/reload e histórico focados | Fluxo gráfico completo do aplicativo exportado |
-| Mods | JSON/JSON5, registros, exemplos, sobrescritas e validação de pacotes | Sistema de arquivos local, pacotes e mod de exemplo | Distribuição pública, compatibilidade e garantias de sandbox |
+| Mods | JSON/JSON5, registros, exemplos, sobrescritas e validação de pacotes | Sistema de arquivos local, checagens de compatibilidade de mods/saves e mod de exemplo | Distribuição pública, migração de schema e garantias de sandbox |
 | UI e entrada | Menu, opções, gerenciador de mods, navegação por gamepad e showcase | Capturas smoke em 800×600 e 1280×720 | Localização, acessibilidade, proporções incomuns e matriz de controles |
 | Desempenho | Benchmarks, orçamentos, telemetria e validadores | Medidas locais limitadas | Hardware de entrada, escala multijogador e sessões longas |
 
@@ -57,9 +57,13 @@ O pacote Windows contém um executável PE x86-64. O aplicativo macOS contém sl
 4. aceitação completa do editor e do fluxo de mods exportados;
 5. validação mais ampla de acessibilidade, controles e localização;
 6. evidência em hardware de entrada e sessões longas;
-7. política de compatibilidade para formatos públicos de mods e conteúdo.
+
+## Política de compatibilidade
+
+A política de compatibilidade de mods e saves está documentada e aplicada pelo validador e pelo runtime local. Distribuição pública, migração de schema, aceitação nativa e garantias de sandbox continuam fora dessa evidência.
 
 ## Referências
+- [Política de Compatibilidade de Mods e Saves](../MOD_COMPATIBILITY_POLICY.md)
 
 - [Pacote de Evidências](./RELEASE_EVIDENCE_BUNDLE.md)
 - [Matriz de Limites](../KNOWN_LIMITS_MATRIX.md)

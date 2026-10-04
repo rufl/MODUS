@@ -10,7 +10,7 @@
 - [ ] Run representative ENet sessions across latency, jitter, packet loss, reconnects, and late joins.
 - [ ] Exercise authority validation with malformed and hostile client traffic.
 - [ ] Establish low-end CPU/GPU budgets and a repeatable long-session soak.
-- [ ] Publish a compatibility policy for mod packages, schemas, and save data.
+- [x] Publish and enforce a compatibility policy for mod packages, schemas, and save data. Native-platform, distribution, and migration evidence remain separate open work.
 
 ## Gameplay and world building
 

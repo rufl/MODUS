@@ -2,6 +2,10 @@
     "name": "Harder Enemies",
     "id": "harder_enemies",
     "version": "1.0.0",
+    "compatibility": {
+        "mod_api": 1,
+        "save_version": "1.0"
+    },
     "author": "Template Team",
     "description": "Increases enemy health, damage, and speed for a greater challenge",
     "priority": 100,

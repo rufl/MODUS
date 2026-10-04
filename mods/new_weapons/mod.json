@@ -2,6 +2,10 @@
     "name": "New Weapons Pack",
     "id": "new_weapons",
     "version": "1.0.0",
+    "compatibility": {
+        "mod_api": 1,
+        "save_version": "1.0"
+    },
     "author": "Template Team",
     "description": "Adds new weapon types with unique stats and behaviors",
     "priority": 100,

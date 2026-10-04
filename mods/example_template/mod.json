@@ -2,6 +2,10 @@
 	"id": "example_template",
     "name": "Mod Template",
     "version": "1.0.0",
+    "compatibility": {
+        "mod_api": 1,
+        "save_version": "1.0"
+    },
     "author": "Your Name",
     "description": "A complete template mod showing all features",
     "priority": 100,

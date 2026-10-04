@@ -10,6 +10,16 @@ const SAVE_DIR: String = "user://saves/"
 const QUICKSAVE_SLOT: String = "quicksave"
 const MAX_SAVED_ENEMIES: int = 128
 
+
+func _validate_save_version(data: Dictionary) -> bool:
+	var version: Variant = data.get("version")
+	if not version is String or version != SAVE_VERSION:
+		push_warning("[GameStateManager] Unsupported save version: %s" % str(version))
+		return false
+	return true
+
+
+
 var save_slots: Array[String] = [QUICKSAVE_SLOT, "slot1", "slot2", "slot3"]
 
 # Session time tracking
@@ -69,10 +79,10 @@ func save_game(slot: String = QUICKSAVE_SLOT) -> bool:
 		return false
 
 	var save_data: Dictionary = serialize_world()
+	save_data["version"] = SAVE_VERSION
 	if session and not _validate_world_data(save_data):
 		save_failed.emit("Invalid campaign state")
 		return false
-	save_data["version"] = SAVE_VERSION
 	save_data["timestamp"] = Time.get_datetime_string_from_system(true)
 	save_data["slot"] = slot
 
@@ -121,6 +131,9 @@ func load_game(slot: String = QUICKSAVE_SLOT) -> bool:
 	if save_data.is_empty():
 		load_failed.emit("Load failed or empty data")
 		return false
+	if not _validate_save_version(save_data):
+		load_failed.emit("Unsupported save version")
+		return false
 
 	# Validate every destructive section before changing live nodes.
 	if not _validate_world_data(save_data):
@@ -146,6 +159,9 @@ func load_game(slot: String = QUICKSAVE_SLOT) -> bool:
 func _sync_load_to_clients(save_data: Dictionary) -> void:
 	# Clients receive world state from server
 	if save_data.has("level_campaign"):
+		return
+	if not _validate_save_version(save_data):
+		load_failed.emit("Unsupported synchronized save version")
 		return
 	if not _validate_world_data(save_data):
 		load_failed.emit("Invalid synchronized save data")
@@ -469,6 +485,8 @@ func serialize_world() -> Dictionary:
 
 
 func deserialize_world(data: Dictionary) -> bool:
+	if not _validate_save_version(data):
+		return false
 	if not _validate_world_data(data):
 		return false
 	if data.has("level_campaign"):

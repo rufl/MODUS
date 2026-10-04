@@ -2,6 +2,10 @@
     "name": "Alien Blood",
     "id": "alien_blood",
     "version": "1.0.0",
+    "compatibility": {
+        "mod_api": 1,
+        "save_version": "1.0"
+    },
     "author": "Template Team",
     "description": "Changes blood to green alien blood with increased particle count",
     "priority": 100,

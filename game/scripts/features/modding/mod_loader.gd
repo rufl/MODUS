@@ -8,6 +8,9 @@ const MODS_DIR: String = "user://mods"
 const RES_MODS_DIR: String = "res://mods"
 const JSON5LoaderClass: GDScript = preload("res://game/core/json5_loader.gd")
 const ModOverrideState = preload("res://game/scripts/features/modding/mod_override_state.gd")
+const ModPackageValidatorClass: GDScript = preload(
+	"res://game/scripts/features/modding/mod_package_validator.gd"
+)
 
 var _loaded_mods: Array[Dictionary] = []
 var _mod_configs: Dictionary = {}  ## mod_name -> config
@@ -99,13 +102,16 @@ func _read_mod_manifest(mod_path: String) -> Dictionary:
 		return {}
 
 	var manifest: Dictionary = data
-	if not manifest.has("name") or not manifest.has("version"):
+	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(manifest, manifest_path)
+	if not validation.valid:
+		for error in validation.errors:
+			push_warning("[ModLoader] Rejected manifest: %s" % error)
 		return {}
-
 	return {
 		"id": manifest.get("id", mod_path.get_file()),
 		"name": manifest.get("name", "Unknown"),
 		"version": manifest.get("version", "1.0.0"),
+		"compatibility": manifest.get("compatibility", {}),
 		"author": manifest.get("author", "Unknown"),
 		"description": manifest.get("description", ""),
 		"priority": manifest.get("priority", 100),
@@ -202,15 +208,17 @@ func _try_load_mod(mod_path: String) -> void:
 
 	var manifest: Dictionary = data
 
-	# Validate required fields
-	if not manifest.has("name") or not manifest.has("version"):
-		mod_load_failed.emit(mod_path, "Missing required fields (name, version)")
+	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(manifest, manifest_path)
+	if not validation.valid:
+		for error in validation.errors:
+			mod_load_failed.emit(mod_path, str(error))
 		return
 
 	# Create mod info
 	var mod_info: Dictionary = {
 		"name": manifest.get("name", "Unknown"),
 		"version": manifest.get("version", "1.0.0"),
+		"compatibility": manifest.get("compatibility", {}),
 		"author": manifest.get("author", "Unknown"),
 		"description": manifest.get("description", ""),
 		"priority": manifest.get("priority", 100),

@@ -28,6 +28,7 @@ The generated reports are ignored local outputs, absent from a fresh clone. See 
 - [Workshop Local Simulation Proof](WORKSHOP_LOCAL_SIMULATION_PROOF.md)
 - [Sample Mod Proof](MODDING_SAMPLE_MOD.md)
 - [Mod Package Validation](MOD_PACKAGE_VALIDATION.md)
+- [Mod and Save Compatibility Policy](MOD_COMPATIBILITY_POLICY.md)
 - [Showcase Route](SHOWCASE_ROUTE.md)
 - [Release Evidence Bundle](RELEASE_EVIDENCE_BUNDLE.md)
 - [Known-Limits Matrix](KNOWN_LIMITS_MATRIX.md)

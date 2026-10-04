@@ -2,6 +2,10 @@
 	"id": "example_more_loot",
 	"name": "More Loot",
 	"version": "1.0.0",
+	"compatibility": {
+		"mod_api": 1,
+		"save_version": "1.0"
+	},
 	"author": "Example",
 	"description": "Increases loot drop rates by 50%",
 	"priority": 100,

@@ -3,6 +3,10 @@
   "name": "MODUS SDK Sample",
   "version": "1.0.0",
   "author": "MODUS Team",
+  "compatibility": {
+    "mod_api": 1,
+    "save_version": "1.0"
+  },
   "description": "Reference sample showing data overrides, a script hook, and event exchange.",
   "priority": 100,
   "enabled": true,

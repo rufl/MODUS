@@ -86,6 +86,7 @@ func _mod(id: String, priority: int, overrides: Dictionary = {}) -> String:
 				"id": id,
 				"name": id,
 				"version": "1",
+				"compatibility": {"mod_api": 1, "save_version": "1.0"},
 				"priority": priority,
 				"config_overrides": overrides
 			}
@@ -116,7 +117,13 @@ func test_reload_frees_previous_script_and_handler_before_loading_replacement() 
 	var manifest := FileAccess.open(path.path_join("mod.json"), FileAccess.WRITE)
 	manifest.store_string(
 		JSON.stringify(
-			{"id": "script", "name": "script", "version": "1", "scripts": ["handler.gd"]}
+			{
+				"id": "script",
+				"name": "script",
+				"version": "1",
+				"compatibility": {"mod_api": 1, "save_version": "1.0"},
+				"scripts": ["handler.gd"]
+			}
 		)
 	)
 	manifest.close()
@@ -213,6 +220,7 @@ func test_resource_reload_restores_engine_cache_and_preexisting_asset_mapping() 
 					"id": id,
 					"name": id,
 					"version": "1",
+					"compatibility": {"mod_api": 1, "save_version": "1.0"},
 					"priority": 10 if id == "low" else 20,
 					"assets": {"materials": {original_path: "replacement.tres"}}
 				}

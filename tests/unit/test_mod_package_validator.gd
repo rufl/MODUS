@@ -27,7 +27,15 @@ func test_missing_fields_and_disabled_state_are_reported() -> void:
 func test_missing_dependency_is_reported() -> void:
 	var validator := Validator.new()
 	var result: Dictionary = validator.validate_packages(
-		[{"id": "dependent", "name": "Dependent", "version": "1.0.0", "dependencies": ["missing"]}]
+		[
+			{
+				"id": "dependent",
+				"name": "Dependent",
+				"version": "1.0.0",
+				"compatibility": {"mod_api": 1, "save_version": "1.0"},
+				"dependencies": ["missing"]
+			}
+		]
 	)
 	assert_false(result.valid)
 	assert_true(
@@ -43,6 +51,7 @@ func test_duplicate_override_is_reported() -> void:
 				"id": "first",
 				"name": "First",
 				"version": "1.0.0",
+				"compatibility": {"mod_api": 1, "save_version": "1.0"},
 				"enabled": true,
 				"config_overrides": {"weapons": {"pistol": {"damage": 12}}}
 			},
@@ -50,6 +59,7 @@ func test_duplicate_override_is_reported() -> void:
 				"id": "second",
 				"name": "Second",
 				"version": "1.0.0",
+				"compatibility": {"mod_api": 1, "save_version": "1.0"},
 				"enabled": true,
 				"config_overrides": {"weapons": {"pistol": {"damage": 20}}}
 			}
@@ -57,3 +67,38 @@ func test_duplicate_override_is_reported() -> void:
 	)
 	assert_false(result.valid)
 	assert_true(result.errors.any(func(error: String) -> bool: return "override conflict" in error))
+
+
+func test_duplicate_ids_and_invalid_dependency_types_are_reported() -> void:
+	var validator := Validator.new()
+	var first := {
+		"id": "same",
+		"name": "First",
+		"version": "1.0.0",
+		"compatibility": {"mod_api": 1, "save_version": "1.0"},
+		"enabled": true
+	}
+	var second := first.duplicate(true)
+	second["dependencies"] = [42]
+	var result: Dictionary = validator.validate_packages([first, second])
+	assert_false(result.valid)
+	assert_true(result.errors.any(func(error: String) -> bool: return "duplicate package id" in error))
+	assert_true(
+		result.errors.any(func(error: String) -> bool: return "valid package ids" in error)
+	)
+
+
+func test_unsupported_compatibility_is_rejected() -> void:
+	var validator := Validator.new()
+	var result: Dictionary = validator.validate_manifest(
+		{
+			"id": "future_mod",
+			"name": "Future Mod",
+			"version": "1.0.0",
+			"compatibility": {"mod_api": 2, "save_version": "2.0"}
+		},
+		"future_mod"
+	)
+	assert_false(result.valid)
+	assert_true(result.errors.any(func(error: String) -> bool: return "compatibility.mod_api" in error))
+	assert_true(result.errors.any(func(error: String) -> bool: return "compatibility.save_version" in error))

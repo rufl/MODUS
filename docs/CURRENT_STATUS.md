@@ -32,7 +32,7 @@ Implemented does not imply observed. Observed does not imply production-ready.
 | ENet multiplayer | Host/join paths, dedicated-server code, authority checks, RPC allowlisting, rate limits, prediction, and reconnection support | Focused local lifecycle, inventory, reconnect, late-join, and authority observations | Representative Internet latency/loss, hostile clients, concurrency, and dedicated-client acceptance |
 | Steam integration | Adapter and conditional initialization paths | Authenticated local initialization only | Two-account sessions, relay/P2P, public services, and Workshop transfer |
 | Editor tooling | Embedded editor, standalone editor code, `.mdsl` export/import, and history operations | Focused save/export/reload and runtime-history checks | Full exported-app graphical workflow and wider content authoring acceptance |
-| Modding | JSON/JSON5 data, registries, sample mods, override rules, and package validation | Local filesystem/package validation and sample-mod checks | Public distribution, compatibility policy, sandbox/security guarantees |
+| Modding | JSON/JSON5 data, registries, sample mods, override rules, and package validation | Local filesystem/package validation, enforced mod/save compatibility checks, and sample-mod checks | Public distribution, schema migration, sandbox/security guarantees |
 | UI and input | Main menu, settings, mod manager, gamepad-aware navigation, and showcase surfaces | Automated smoke captures at 800×600 and 1280×720 | Localization, broader accessibility review, unusual aspect ratios, full controller matrix |
 | Performance | Benchmarks, budgets, telemetry hooks, and evidence validators | Bounded local measurements recorded by the maintained proof tools | Representative low-end hardware, multiplayer scale, and long-run telemetry |
 
@@ -59,11 +59,12 @@ MODUS is not release-ready while these boundaries remain open:
 4. full exported editor/mod workflow acceptance;
 5. broader accessibility, controller, and localization validation;
 6. low-end hardware and long-session performance evidence;
-7. a documented compatibility policy for public mod/content formats.
 
+The public mod-package and save-data compatibility policy is now documented and enforced by the repository validator, runtime manifest paths, and save restoration guard. This closes the format-policy blocker only; distribution and native/runtime acceptance boundaries remain open.
 ## Evidence surfaces
 
 - [Release Evidence Bundle](./RELEASE_EVIDENCE_BUNDLE.md)
+- [Mod and Save Compatibility Policy](./MOD_COMPATIBILITY_POLICY.md)
 - [Known Limits Matrix](./KNOWN_LIMITS_MATRIX.md)
 - [Multiplayer Authority Model](./MULTIPLAYER_AUTHORITY_MODEL.md)
 - [Performance Baseline Proof](./PERFORMANCE_BASELINE_PROOF.md)

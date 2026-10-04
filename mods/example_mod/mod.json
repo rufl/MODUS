@@ -2,6 +2,10 @@
 	"id": "example_mod",
 	"name": "Example Mod",
 	"version": "1.0.0",
+	"compatibility": {
+		"mod_api": 1,
+		"save_version": "1.0"
+	},
 	"author": "Thauma",
 	"description": "A sample mod demonstrating config overrides and script injection.",
 	"priority": 100,

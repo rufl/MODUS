@@ -10,7 +10,7 @@
 - [ ] Executar sessões ENet com latência, jitter, perda de pacotes, reconexão e late join representativos.
 - [ ] Exercitar validação de autoridade com tráfego malformado e hostil.
 - [ ] Definir orçamentos para CPU/GPU de entrada e soak repetível de sessão longa.
-- [ ] Publicar política de compatibilidade para mods, schemas e saves.
+- [x] Publicar e aplicar política de compatibilidade para mods, schemas e saves. Distribuição nativa, pública e migração continuam pendentes.
 
 ## Gameplay e mundos
 
