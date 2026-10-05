@@ -37,8 +37,14 @@ work is deferred to the main thread.
 - Current focused and aggregate runs reported no ObjectDB teardown leak.
 - Procedural seed matrix: 8 bounded 64×64 seeds run twice; failures report
   the seed and pass number.
-- Reproduce with:
+- Bounded large-world soak: a 128×128 warmup plus two cancellation/replacement
+  transitions and a final generation report static-memory and object-count
+  telemetry; cancellation releases the generation context and worker-owned
+  managers.
+- Reproduce the seed matrix with:
   `godot --headless --path . --script res://tools/validate_procedural_seed_matrix.gd`
+- Reproduce the bounded soak with:
+  `godot --headless --path . --script res://tools/validate_large_world_soak.gd`
 
 These results support the implemented generator contracts, but do not support
 the old “all 40 tasks complete” or “production ready” conclusions.

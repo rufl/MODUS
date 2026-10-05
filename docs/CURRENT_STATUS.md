@@ -1,6 +1,6 @@
 # MODUS Current Status
 
-> **Documentation status: maintained reference.** Updated 2026-09-30. This document separates source availability, focused observations, and release readiness. A passing check proves only the boundary it exercises.
+> **Documentation status: maintained reference.** Updated 2026-10-05. This document separates source availability, focused observations, and release readiness. A passing check proves only the boundary it exercises.
 
 ## Baseline
 
@@ -28,7 +28,7 @@ Implemented does not imply observed. Observed does not imply production-ready.
 | First-person movement and combat | Movement states, weapons, damage, projectiles, effects, and physics services | Focused unit/property checks and the automated showcase route | Balance, broad hardware acceptance, long-session regressions |
 | Inventory and loot | Item registries, pickups, drops, inventory operations, and loot tables | Deterministic focused tests and authored demo paths | Broader content progression and economy tuning |
 | Enemies and matches | Enemy behaviors, match state, scores, timers, and authored encounters | Focused behavior checks and demo-world smoke paths | Representative encounter variety and extended sessions |
-| Procedural worlds | Seeded generation, worker lifecycle, layout contracts, and authored world integration | Seed determinism, bounded generation, repeated cancellation/replacement checks, and an eight-seed matrix with explicit failure reporting | Large-world soak, memory pressure, and cross-runtime determinism |
+| Procedural worlds | Seeded generation, worker lifecycle, layout contracts, and authored world integration | Seed determinism, bounded generation, repeated cancellation/replacement checks, an eight-seed matrix with explicit failure reporting, and a bounded 128×128 soak covering two cancellation/replacement transitions with static-memory/object telemetry | Production-scale and low-end memory pressure, and cross-runtime determinism |
 | ENet multiplayer | Host/join paths, dedicated-server code, authority checks, RPC allowlisting, rate limits, prediction, and reconnection support | Focused local lifecycle, inventory, reconnect, late-join, and authority observations | Representative Internet latency/loss, hostile clients, concurrency, and dedicated-client acceptance |
 | Steam integration | Adapter and conditional initialization paths | Authenticated local initialization only | Two-account sessions, relay/P2P, public services, and Workshop transfer |
 | Editor tooling | Embedded editor, standalone editor code, `.mdsl` export/import, and history operations | Focused save/export/reload and runtime-history checks | Full exported-app graphical workflow and wider content authoring acceptance |

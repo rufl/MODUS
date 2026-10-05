@@ -1,6 +1,6 @@
 # MODUS Backlog
 
-> **Documentation status: maintained reference.** Priorities updated 2026-09-30 and ordered by release risk. Completed history belongs in the changelog; implemented code is not marked complete until its acceptance boundary is named.
+> **Documentation status: maintained reference.** Priorities updated 2026-10-05 and ordered by release risk. Completed history belongs in the changelog; implemented code is not marked complete until its acceptance boundary is named.
 
 ## Stable beta blockers
 
@@ -17,7 +17,7 @@
 - [ ] Tune movement, weapon feedback, enemy readability, and encounter pacing through observed play sessions.
 - [ ] Expand authored encounters without hiding procedural-system failures behind scripted paths.
 - [x] Sample eight bounded 64×64 procedural seeds twice and record generation failures with seed and pass; large-world soak remains open.
-- [ ] Validate large-world memory cleanup and worker cancellation during repeated transitions; bounded cancellation/replacement coverage exists for the generator worker.
+- [x] Validate bounded 128×128 generation cleanup and worker cancellation across two cancel/replacement transitions with memory/object telemetry; low-end and production-scale soak remain open.
 - [ ] Add a representative campaign loop only after save and content-versioning contracts are stable.
 
 ## Multiplayer

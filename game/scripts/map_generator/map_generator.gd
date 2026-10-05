@@ -2075,16 +2075,30 @@ func _build_map_scene(metadata: Dictionary) -> PackedScene:
 
 ## Release generated nodes on cancellation, failure, or owner teardown.
 func _release_generated_nodes() -> void:
-	if generation_context:
-		var geometry := generation_context.csg_root
-		var navigation := generation_context.navigation_region
-		generation_context.csg_root = null
-		generation_context.navigation_region = null
-		generation_context.prefab_instances.clear()
+	# Cancellation and failed generation must release the complete context, not
+	# only scene-tree nodes. A cancelled grid can retain thousands of Cell
+	# objects until the next generation replaces the context.
+	var context := generation_context
+	generation_context = null
+	if context:
+		var geometry := context.csg_root
+		var navigation := context.navigation_region
+		context.csg_root = null
+		context.navigation_region = null
+		context.prefab_instances.clear()
 		if is_instance_valid(geometry):
 			geometry.free()
 		if is_instance_valid(navigation):
 			navigation.free()
+	if grid_manager:
+		grid_manager.grid.clear()
+		grid_manager.grid_size = Vector2i.ZERO
+	# These managers retain the active context internally. Replace them only
+	# after the worker has joined and generated nodes have been released.
+	csg_builder = CSGGeometryBuilder.new()
+	navmesh_baker = NavigationMeshBaker.new()
+	lod_manager = MapLODManager.new()
+	occlusion_culling_manager = OcclusionCullingManager.new()
 	if is_instance_valid(_generation_viewport):
 		_generation_viewport.free()
 	_generation_viewport = null

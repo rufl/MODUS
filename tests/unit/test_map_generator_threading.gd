@@ -830,6 +830,14 @@ func test_repeated_immediate_cancellation_does_not_cross_wire_generations() -> v
 		map_generator.cancel_generation()
 		assert_false(map_generator.is_generating)
 		assert_null(map_generator.get("_generation_thread"))
+		assert_null(
+			map_generator.generation_context,
+			"Cancellation must release the complete generation context"
+		)
+		assert_true(
+			map_generator.grid_manager.grid.is_empty(),
+			"Cancellation must clear retained grid cells"
+		)
 
 	# Let every cancelled monitor resume before starting a replacement generation.
 	await get_tree().process_frame

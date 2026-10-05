@@ -21,6 +21,7 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Bound map-generation monitors to their owning worker thread, preventing rapid cancellation/replacement cycles from finalizing the wrong generation.
 - Exposed rejected mod-package paths and validation errors through the runtime `mod_rejected` signal and `ModLoader.get_rejected_mods()`.
 - Added a headless procedural seed matrix validator covering eight bounded seeds across two deterministic passes with seed-specific failure reporting.
+- Fixed cancelled map generations retaining the grid/context and worker-owned managers, and added a bounded 128×128 cancellation/replacement soak with memory/object telemetry.
 - Replaced the main-menu warrior artwork with the procedural skyline across the game and public screenshots.
 - Refreshed the public automated showcase video with unobscured texture-backed scenery and character exhibits from the maintained route.
 - Restored the textured PSX skeleton exhibit to its native meter scale; the previous 0.08 scale reduced it to a nearly invisible 17 cm figure in the Showcase.
