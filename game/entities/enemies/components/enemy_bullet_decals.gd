@@ -115,10 +115,7 @@ func _schedule_fade_out(decal: Sprite3D, delay: float) -> void:
 
 
 func _finish_fade_out(decal: Sprite3D, fade_token: int) -> void:
-	if (
-		not is_instance_valid(decal)
-		or int(decal.get_meta(FADE_TOKEN_META, -1)) != fade_token
-	):
+	if not is_instance_valid(decal) or int(decal.get_meta(FADE_TOKEN_META, -1)) != fade_token:
 		return
 	_return_decal(decal)
 

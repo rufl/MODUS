@@ -123,8 +123,7 @@ func test_state_manager_enforces_save_version() -> void:
 		"Unsupported save versions must be rejected before restoration"
 	)
 	assert_false(
-		await state_manager.deserialize_world({}),
-		"Missing save versions must be rejected"
+		await state_manager.deserialize_world({}), "Missing save versions must be rejected"
 	)
 	assert_true(
 		await state_manager.deserialize_world({"version": GameStateManagerScript.SAVE_VERSION}),

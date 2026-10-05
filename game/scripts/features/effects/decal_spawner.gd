@@ -23,6 +23,7 @@ const CLEANUP_TOKEN_META: StringName = &"modus_decal_cleanup_token"
 const CLEANUP_TWEEN_META: StringName = &"modus_decal_cleanup_tween"
 var _next_cleanup_token: int = 0
 
+
 func _ready() -> void:
 	_prewarm_pool()
 
@@ -134,6 +135,7 @@ func set_quality(quality: int) -> void:
 	while _active_decals.size() > _get_active_limit():
 		_return_oldest_active_decal()
 
+
 func spawn_decal(
 	texture: Texture2D,
 	pos: Vector3,
@@ -207,10 +209,7 @@ func _schedule_cleanup(decal: Sprite3D, lifetime: float) -> void:
 
 
 func _finish_cleanup(decal: Sprite3D, cleanup_token: int) -> void:
-	if (
-		not is_instance_valid(decal)
-		or int(decal.get_meta(CLEANUP_TOKEN_META, -1)) != cleanup_token
-	):
+	if not is_instance_valid(decal) or int(decal.get_meta(CLEANUP_TOKEN_META, -1)) != cleanup_token:
 		return
 	_return_decal(decal)
 
@@ -229,7 +228,6 @@ const HIGH_VELOCITY_HIT_TEXTURE: Texture2D = preload(
 func spawn_blood_decal(pos: Vector3, normal: Vector3, is_high_velocity: bool = false) -> Sprite3D:
 	## Spawn blood decal with random texture selection.
 	## Use is_high_velocity=true for railgun/sniper hits.
-
 
 	var blood_texture: Texture2D
 
@@ -256,7 +254,6 @@ func spawn_blood_decal(pos: Vector3, normal: Vector3, is_high_velocity: bool = f
 	# Note: Blood drip feature was removed (not critical for gameplay)
 
 	return decal
-
 
 
 func _load_random_blood_texture() -> Texture2D:

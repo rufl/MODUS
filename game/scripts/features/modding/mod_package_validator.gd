@@ -29,9 +29,17 @@ func validate_manifest(manifest: Dictionary, source: String = "<memory>") -> Dic
 		var value: Variant = manifest[field]
 		if not value is String or value.strip_edges().is_empty():
 			errors.append("%s: field '%s' must be a non-empty string" % [source, field])
-	if manifest.has("id") and manifest.id is String and not _matches(IDENTIFIER_PATTERN, manifest.id):
+	if (
+		manifest.has("id")
+		and manifest.id is String
+		and not _matches(IDENTIFIER_PATTERN, manifest.id)
+	):
 		errors.append("%s: id must match %s" % [source, IDENTIFIER_PATTERN])
-	if manifest.has("version") and manifest.version is String and not _matches(VERSION_PATTERN, manifest.version):
+	if (
+		manifest.has("version")
+		and manifest.version is String
+		and not _matches(VERSION_PATTERN, manifest.version)
+	):
 		errors.append("%s: version must be a simple release identifier" % source)
 
 	if not manifest.has("compatibility") or not manifest.compatibility is Dictionary:
@@ -41,21 +49,36 @@ func validate_manifest(manifest: Dictionary, source: String = "<memory>") -> Dic
 		for field in REQUIRED_COMPATIBILITY_FIELDS:
 			if not compatibility.has(field):
 				errors.append("%s: compatibility is missing '%s'" % [source, field])
-		if compatibility.has("mod_api") and (
-			not (compatibility.mod_api is int or compatibility.mod_api is float)
-			or float(compatibility.mod_api) != CURRENT_MOD_API_VERSION
+		if (
+			compatibility.has("mod_api")
+			and (
+				not (compatibility.mod_api is int or compatibility.mod_api is float)
+				or float(compatibility.mod_api) != CURRENT_MOD_API_VERSION
+			)
 		):
-			errors.append("%s: compatibility.mod_api must be %d" % [source, CURRENT_MOD_API_VERSION])
-		if compatibility.has("save_version") and (
-			not compatibility.save_version is String or compatibility.save_version != CURRENT_SAVE_VERSION
+			errors.append(
+				"%s: compatibility.mod_api must be %d" % [source, CURRENT_MOD_API_VERSION]
+			)
+		if (
+			compatibility.has("save_version")
+			and (
+				not compatibility.save_version is String
+				or compatibility.save_version != CURRENT_SAVE_VERSION
+			)
 		):
-			errors.append("%s: compatibility.save_version must be '%s'" % [source, CURRENT_SAVE_VERSION])
+			errors.append(
+				"%s: compatibility.save_version must be '%s'" % [source, CURRENT_SAVE_VERSION]
+			)
 
 	if manifest.has("dependencies") and not manifest.dependencies is Array:
 		errors.append("%s: dependencies must be an array" % source)
 	elif manifest.has("dependencies"):
 		for dependency in manifest.dependencies:
-			if not dependency is String or dependency.strip_edges().is_empty() or not _matches(IDENTIFIER_PATTERN, dependency):
+			if (
+				not dependency is String
+				or dependency.strip_edges().is_empty()
+				or not _matches(IDENTIFIER_PATTERN, dependency)
+			):
 				errors.append("%s: dependencies must contain valid package ids" % source)
 	if manifest.has("config_overrides") and not manifest.config_overrides is Dictionary:
 		errors.append("%s: config_overrides must be an object" % source)

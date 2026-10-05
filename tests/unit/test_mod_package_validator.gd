@@ -82,10 +82,10 @@ func test_duplicate_ids_and_invalid_dependency_types_are_reported() -> void:
 	second["dependencies"] = [42]
 	var result: Dictionary = validator.validate_packages([first, second])
 	assert_false(result.valid)
-	assert_true(result.errors.any(func(error: String) -> bool: return "duplicate package id" in error))
 	assert_true(
-		result.errors.any(func(error: String) -> bool: return "valid package ids" in error)
+		result.errors.any(func(error: String) -> bool: return "duplicate package id" in error)
 	)
+	assert_true(result.errors.any(func(error: String) -> bool: return "valid package ids" in error))
 
 
 func test_unsupported_compatibility_is_rejected() -> void:
@@ -100,5 +100,9 @@ func test_unsupported_compatibility_is_rejected() -> void:
 		"future_mod"
 	)
 	assert_false(result.valid)
-	assert_true(result.errors.any(func(error: String) -> bool: return "compatibility.mod_api" in error))
-	assert_true(result.errors.any(func(error: String) -> bool: return "compatibility.save_version" in error))
+	assert_true(
+		result.errors.any(func(error: String) -> bool: return "compatibility.mod_api" in error)
+	)
+	assert_true(
+		result.errors.any(func(error: String) -> bool: return "compatibility.save_version" in error)
+	)

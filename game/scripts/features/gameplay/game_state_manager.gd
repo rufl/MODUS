@@ -19,7 +19,6 @@ func _validate_save_version(data: Dictionary) -> bool:
 	return true
 
 
-
 var save_slots: Array[String] = [QUICKSAVE_SLOT, "slot1", "slot2", "slot3"]
 
 # Session time tracking

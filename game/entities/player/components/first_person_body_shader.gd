@@ -70,7 +70,11 @@ func _apply_shader_to_meshes() -> void:
 				if uses_material_override
 				else mesh_inst.get_surface_override_material(surface_idx)
 			)
-			if not existing_mat and mesh_inst.mesh and surface_idx < mesh_inst.mesh.get_surface_count():
+			if (
+				not existing_mat
+				and mesh_inst.mesh
+				and surface_idx < mesh_inst.mesh.get_surface_count()
+			):
 				existing_mat = mesh_inst.mesh.surface_get_material(surface_idx)
 
 			if existing_mat and existing_mat is StandardMaterial3D:
@@ -81,26 +85,32 @@ func _apply_shader_to_meshes() -> void:
 				if std_mat.albedo_texture:
 					shader_mat.set_shader_parameter("texture_albedo", std_mat.albedo_texture)
 					_log(
-						"[FirstPersonBodyShader] Copied texture from material for "
-						+ str(mesh_inst.name)
-						+ " surface "
-						+ str(surface_idx),
+						(
+							"[FirstPersonBodyShader] Copied texture from material for "
+							+ str(mesh_inst.name)
+							+ " surface "
+							+ str(surface_idx)
+						),
 						"Player"
 					)
 				else:
 					_log(
-						"[FirstPersonBodyShader] No albedo texture found in material for "
-						+ str(mesh_inst.name)
-						+ " surface "
-						+ str(surface_idx),
+						(
+							"[FirstPersonBodyShader] No albedo texture found in material for "
+							+ str(mesh_inst.name)
+							+ " surface "
+							+ str(surface_idx)
+						),
 						"Player"
 					)
 			else:
 				_log(
-					"[FirstPersonBodyShader] No StandardMaterial3D found for "
-					+ str(mesh_inst.name)
-					+ " surface "
-					+ str(surface_idx),
+					(
+						"[FirstPersonBodyShader] No StandardMaterial3D found for "
+						+ str(mesh_inst.name)
+						+ " surface "
+						+ str(surface_idx)
+					),
 					"Player"
 				)
 
@@ -117,6 +127,7 @@ func _apply_shader_to_meshes() -> void:
 
 		# Shader alpha controls the fade; GeometryInstance3D transparency must remain opaque.
 		mesh_inst.transparency = 0.0
+
 
 func _process(_delta: float) -> void:
 	if not camera or shader_materials.is_empty():

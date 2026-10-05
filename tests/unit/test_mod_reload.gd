@@ -150,9 +150,7 @@ func test_reload_frees_previous_script_and_handler_before_loading_replacement() 
 func test_invalid_manifest_reports_rejection_diagnostics() -> void:
 	var path := _mod("invalid", 10)
 	var manifest := FileAccess.open(path.path_join("mod.json"), FileAccess.WRITE)
-	manifest.store_string(
-		JSON.stringify({"id": "invalid", "name": "Invalid", "version": "1.0.0"})
-	)
+	manifest.store_string(JSON.stringify({"id": "invalid", "name": "Invalid", "version": "1.0.0"}))
 	manifest.close()
 
 	_loader._discover_all_mods()

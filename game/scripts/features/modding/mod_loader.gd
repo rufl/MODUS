@@ -106,7 +106,9 @@ func _read_mod_manifest(mod_path: String) -> Dictionary:
 		return {}
 
 	var manifest: Dictionary = data
-	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(manifest, manifest_path)
+	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(
+		manifest, manifest_path
+	)
 	if not validation.valid:
 		_record_mod_rejection(mod_path, validation.errors)
 		return {}
@@ -225,7 +227,9 @@ func _try_load_mod(mod_path: String) -> void:
 
 	var manifest: Dictionary = data
 
-	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(manifest, manifest_path)
+	var validation: Dictionary = ModPackageValidatorClass.new().validate_manifest(
+		manifest, manifest_path
+	)
 	if not validation.valid:
 		_record_mod_rejection(mod_path, validation.errors)
 		for error in validation.errors:

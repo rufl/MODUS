@@ -778,6 +778,7 @@ func _apply_color() -> void:
 				surface_mat.albedo_color = character_color
 				mesh_inst.set_surface_override_material(surface_idx, surface_mat)
 
+
 ## Play an animation by name
 func play_animation(anim_name: String, blend_time: float = 0.1) -> void:
 	_log(
