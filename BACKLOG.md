@@ -16,7 +16,7 @@
 
 - [ ] Tune movement, weapon feedback, enemy readability, and encounter pacing through observed play sessions.
 - [ ] Expand authored encounters without hiding procedural-system failures behind scripted paths.
-- [ ] Sample larger procedural seed sets and record generation failures with seeds.
+- [x] Sample eight bounded 64×64 procedural seeds twice and record generation failures with seed and pass; large-world soak remains open.
 - [ ] Validate large-world memory cleanup and worker cancellation during repeated transitions; bounded cancellation/replacement coverage exists for the generator worker.
 - [ ] Add a representative campaign loop only after save and content-versioning contracts are stable.
 

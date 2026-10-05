@@ -838,6 +838,63 @@ func test_repeated_immediate_cancellation_does_not_cross_wire_generations() -> v
 	assert_eq(result.get("metadata", {}).get("seed"), "after-cancel")
 
 
+func test_representative_seed_matrix_is_deterministic() -> void:
+	var config := GenerationConfig.new()
+	config.map_size = Vector2i(64, 64)
+	config.outdoor_bias = 0.0
+	config.cave_bias = 0.0
+	config.prefab_detail_level = 0.0
+	config.prop_density = 0.0
+	config.decorative_density = 0.0
+	config.enable_lod = false
+	config.enable_occlusion_culling = false
+	config.use_multimesh = false
+	config.monster_density = 0.0
+	config.minimum_monsters = 0
+	config.item_density = 0.0
+	config.enable_secrets = false
+	config.enable_key_locks = true
+	config.enable_boss_arena = true
+	var seeds: Array[String] = [
+		"breakwater-01",
+		"breakwater-02",
+		"breakwater-03",
+		"breakwater-04",
+	]
+	var signatures: Dictionary = {}
+	var failures: Array[String] = []
+
+	for map_seed: String in seeds:
+		var first := await _generate(map_seed, config)
+		if not first.has("scene"):
+			failures.append("%s first pass: %s" % [map_seed, first.get("error", "no result")])
+			continue
+		var first_metadata: Dictionary = first.get("metadata", {})
+		signatures[map_seed] = {
+			"seed": first_metadata.get("seed", ""),
+			"gameplay": first_metadata.get("gameplay", {}).duplicate(true),
+		}
+
+	for map_seed: String in seeds:
+		if not signatures.has(map_seed):
+			continue
+		var second := await _generate(map_seed, config)
+		if not second.has("scene"):
+			failures.append("%s second pass: %s" % [map_seed, second.get("error", "no result")])
+			continue
+		var second_metadata: Dictionary = second.get("metadata", {})
+		assert_eq(
+			{
+				"seed": second_metadata.get("seed", ""),
+				"gameplay": second_metadata.get("gameplay", {}).duplicate(true),
+			},
+			signatures[map_seed],
+			"Seed %s must keep a deterministic gameplay signature" % map_seed
+		)
+
+	assert_true(failures.is_empty(), "Seed matrix failures: %s" % [str(failures)])
+
+
 func test_encounter_manifest_requires_weapon_before_first_combat() -> void:
 	var context: GenerationContext = GenerationContextScript.new()
 	context.config = GenerationConfig.new()

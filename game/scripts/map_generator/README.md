@@ -30,11 +30,15 @@ work is deferred to the main thread.
 ## Current focused evidence
 
 - Generated boss runtime proof: 1/1 passed.
-- Threaded generator focused suite: 12/12 passed.
+- Threaded generator focused suite: 13/13 passed.
 - Coverage includes generation, immediate cancellation/replacement, CSG
   fallback, navigation baking, gameplay placement, navigation reachability,
   generated boss defeat, extraction, and export/reload.
 - Current focused and aggregate runs reported no ObjectDB teardown leak.
+- Procedural seed matrix: 8 bounded 64×64 seeds run twice; failures report
+  the seed and pass number.
+- Reproduce with:
+  `godot --headless --path . --script res://tools/validate_procedural_seed_matrix.gd`
 
 These results support the implemented generator contracts, but do not support
 the old “all 40 tasks complete” or “production ready” conclusions.
