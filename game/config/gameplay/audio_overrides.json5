@@ -32,12 +32,63 @@
   "energy_loop": "",
   "saw_loop": "",
 
-  // Movement
-  "footstep_concrete": "",
-  "footstep_metal": "",
-  "footstep_wood": "",
-  "footstep_grass": "",
-  "footstep_dirt": "",
+  // Movement banks: one random clip is selected per playback; bank overrides are not cached.
+  "footstep_concrete": [
+    "psx_footsteps/concrete/concrete_01.ogg",
+    "psx_footsteps/concrete/concrete_02.ogg",
+    "psx_footsteps/concrete/concrete_03.ogg",
+    "psx_footsteps/concrete/concrete_04.ogg",
+    "psx_footsteps/concrete/concrete_05.ogg"
+  ],
+  "footstep_metal": [
+    "psx_footsteps/metal/metal_01.ogg",
+    "psx_footsteps/metal/metal_02.ogg",
+    "psx_footsteps/metal/metal_03.ogg",
+    "psx_footsteps/metal/metal_04.ogg",
+    "psx_footsteps/metal/metal_05.ogg"
+  ],
+  "footstep_wood": [
+    "psx_footsteps/wood/wood_01.ogg",
+    "psx_footsteps/wood/wood_02.ogg",
+    "psx_footsteps/wood/wood_03.ogg",
+    "psx_footsteps/wood/wood_04.ogg",
+    "psx_footsteps/wood/wood_05.ogg"
+  ],
+  "footstep_grass": [
+    "psx_footsteps/grass/grass_01.ogg",
+    "psx_footsteps/grass/grass_02.ogg",
+    "psx_footsteps/grass/grass_03.ogg",
+    "psx_footsteps/grass/grass_04.ogg",
+    "psx_footsteps/grass/grass_05.ogg",
+    "psx_footsteps/grass/grass_06.ogg"
+  ],
+  "footstep_dirt": [
+    "psx_footsteps/dirt/dirt_01.ogg",
+    "psx_footsteps/dirt/dirt_02.ogg",
+    "psx_footsteps/dirt/dirt_03.ogg",
+    "psx_footsteps/dirt/dirt_04.ogg",
+    "psx_footsteps/dirt/dirt_05.ogg"
+  ],
+  "footstep_gravel": [
+    "psx_footsteps/gravel/gravel_01.ogg",
+    "psx_footsteps/gravel/gravel_02.ogg",
+    "psx_footsteps/gravel/gravel_03.ogg",
+    "psx_footsteps/gravel/gravel_04.ogg",
+    "psx_footsteps/gravel/gravel_05.ogg"
+  ],
+  "footstep_stairs": [
+    "psx_footsteps/stairs/stairs_01.ogg",
+    "psx_footsteps/stairs/stairs_02.ogg",
+    "psx_footsteps/stairs/stairs_03.ogg",
+    "psx_footsteps/stairs/stairs_04.ogg",
+    "psx_footsteps/stairs/stairs_05.ogg"
+  ],
+  "footstep_stone": [
+    "psx_footsteps/stone/stone_01.ogg",
+    "psx_footsteps/stone/stone_02.ogg",
+    "psx_footsteps/stone/stone_03.ogg",
+    "psx_footsteps/stone/stone_04.ogg"
+  ],
   "jump": "",
   "land": "",
   "dash": "",

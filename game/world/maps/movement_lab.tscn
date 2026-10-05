@@ -3,8 +3,13 @@
 [ext_resource type="Script" uid="uid://bhmn2liu3levx" path="res://game/world/maps/movement_lab_controller.gd" id="1_movlab"]
 
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
+albedo_color = Color(0.22, 0.24, 0.28, 1)
+metadata/surface_type = "concrete"
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ramp"]
 albedo_color = Color(0.3, 0.3, 0.35, 1)
+metadata/surface_type = "stairs"
 
 [node name="MovementLab" type="Node3D"]
 script = ExtResource("1_movlab")
@@ -13,6 +18,8 @@ script = ExtResource("1_movlab")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 use_collision = true
 size = Vector3(30, 1, 20)
+material = SubResource("StandardMaterial3D_floor")
+metadata/surface_type = "concrete"
 
 [node name="TitleLabel" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -9)

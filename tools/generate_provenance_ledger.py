@@ -223,6 +223,9 @@ LOOMING_LANDMARKS_NOTICE = "docs/licenses/3DEXTER_LOOMING_LANDMARKS_CC-BY-4.0.tx
 LUKA_ALEKSIC_SOUND_PREFIX = "game/art/audio/sfx/luka_aleksic/"
 LUKA_ALEKSIC_SOUND_SOURCE = "https://aleksicluka.itch.io/various-sound-effects"
 LUKA_ALEKSIC_SOUND_NOTICE = "docs/licenses/LUKA_ALEKSIC_SOUND_EFFECTS_CC0-1.0.txt"
+HAZARD_PAY_FOOTSTEPS_PREFIX = "game/art/audio/sfx/psx_footsteps/"
+HAZARD_PAY_FOOTSTEPS_SOURCE = "https://hazardpay.itch.io/40-free-psx-crunchy-footsteps"
+HAZARD_PAY_FOOTSTEPS_NOTICE = "docs/licenses/HAZARD_PAY_PSX_FOOTSTEPS_GAME_USE.txt"
 COOLER11_WAVES_PREFIX = "game/art/audio/breakwater/ocean_waves/"
 COOLER11_WAVES_SOURCE = (
     "Very Simple Waves Pack/README.txt (creator cooler11; official itch.io URL "
@@ -783,6 +786,20 @@ def classify(path: Path, digest: str) -> dict[str, str]:
                 "Luka Aleksic public-domain sound effect WAV imported from "
                 "the uploaded sounds.zip archive. The source page states CC0; "
                 "the creator's optional credit request is retained in the local notice."
+            ),
+        }
+    if relative.startswith(HAZARD_PAY_FOOTSTEPS_PREFIX):
+        return {
+            "status": "cleared",
+            "author": "Hazard Pay",
+            "source": HAZARD_PAY_FOOTSTEPS_SOURCE,
+            "license": "Free Use (game use; no standalone redistribution)",
+            "local_notice": HAZARD_PAY_FOOTSTEPS_NOTICE,
+            "notes": (
+                "Hazard Pay PSX footstep OGG imported from the supplied archive. "
+                "The source page permits commercial and non-commercial game use, "
+                "does not require credit, and prohibits repackaging or selling "
+                "the clips as a standalone collection."
             ),
         }
     if relative.startswith(COOLER11_WAVES_PREFIX):

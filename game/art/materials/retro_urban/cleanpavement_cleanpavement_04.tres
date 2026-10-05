@@ -9,6 +9,7 @@
 
 [resource]
 resource_name = "RetroUrban / CleanPavement / CleanPavement 04"
+metadata/surface_type = "concrete"
 albedo_texture = ExtResource("1_basecolor")
 metallic_texture = ExtResource("2_metallic")
 roughness_texture = ExtResource("3_roughness")

@@ -298,8 +298,8 @@ func play_land(pos: Vector3) -> void:
 	play_event("land", pos)
 
 
-func play_footstep(material: String, pos: Vector3, _vol: float = 0.0) -> void:
-	play_event("footstep_" + material, pos)
+func play_footstep(material: String, pos: Vector3, volume: float = 0.0) -> void:
+	play_event("footstep_" + material, pos, false, volume)
 
 
 func play_weapon_switch() -> void:
@@ -430,6 +430,12 @@ func _init_generator_map() -> void:
 		func() -> AudioStream: return SoundGeneratorScript.generate_footstep_sound("wood"),
 		"footstep_metal":
 		func() -> AudioStream: return SoundGeneratorScript.generate_footstep_sound("metal"),
+		"footstep_gravel":
+		func() -> AudioStream: return SoundGeneratorScript.generate_footstep_sound("gravel"),
+		"footstep_stairs":
+		func() -> AudioStream: return SoundGeneratorScript.generate_footstep_sound("stairs"),
+		"footstep_stone":
+		func() -> AudioStream: return SoundGeneratorScript.generate_footstep_sound("stone"),
 		"footstep_jump": func() -> AudioStream: return SoundGeneratorScript.generate_jump_sound(),
 		"footstep_landing_light":
 		func() -> AudioStream: return SoundGeneratorScript.generate_land_sound(),
@@ -455,7 +461,8 @@ func _get_event_stream(event_name: String) -> AudioStream:
 		return _stream_cache[event_name]
 	var override_stream := AudioOverrideCatalog.load_stream(_audio_overrides, event_name)
 	if override_stream:
-		_stream_cache[event_name] = override_stream
+		if not AudioOverrideCatalog.is_randomized_override(_audio_overrides, event_name):
+			_stream_cache[event_name] = override_stream
 		return override_stream
 	if _generator_map.has(event_name):
 		var callable: Callable = _generator_map[event_name]

@@ -270,6 +270,12 @@ func _init_generator_map() -> void:
 		func() -> AudioStream: return SoundGenerator.generate_footstep_sound("wood"),
 		"footstep_metal":
 		func() -> AudioStream: return SoundGenerator.generate_footstep_sound("metal"),
+		"footstep_gravel":
+		func() -> AudioStream: return SoundGenerator.generate_footstep_sound("gravel"),
+		"footstep_stairs":
+		func() -> AudioStream: return SoundGenerator.generate_footstep_sound("stairs"),
+		"footstep_stone":
+		func() -> AudioStream: return SoundGenerator.generate_footstep_sound("stone"),
 		"ui_click": func() -> AudioStream: return SoundGenerator.generate_ui_sound("click"),
 		"ui_back": func() -> AudioStream: return SoundGenerator.generate_ui_sound("back"),
 		"pain": func() -> AudioStream: return SoundGenerator.generate_vocal_pain_sound(false),
@@ -283,8 +289,10 @@ func _get_event_stream(event_name: String) -> AudioStream:
 		return _stream_cache[event_name]
 	var override_stream := AudioOverrideCatalog.load_stream(_audio_overrides, event_name)
 	if override_stream:
-		_stream_cache[event_name] = override_stream
+		if not AudioOverrideCatalog.is_randomized_override(_audio_overrides, event_name):
+			_stream_cache[event_name] = override_stream
 		return override_stream
+
 	if _generator_map.has(event_name):
 		var callable: Callable = _generator_map[event_name]
 		var stream: AudioStream = callable.call()
@@ -294,6 +302,11 @@ func _get_event_stream(event_name: String) -> AudioStream:
 	if event_name.begins_with("fire_"):
 		return _get_event_stream("shoot")
 	return null
+
+
+## Play a material-specific footstep with optional volume override.
+func play_footstep(material: String, pos: Vector3, volume: float = 0.0) -> void:
+	play_event("footstep_" + material, pos, false, volume)
 
 
 ## Initialize audio player pools

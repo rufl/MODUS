@@ -11,6 +11,7 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Branded repository landing page with direct beta downloads, architecture, evidence boundaries, and contribution paths.
 - Structured bug and feature issue forms, pull-request checklist, Code of Conduct, contributor guide, security advisory path, ownership rules, and automated GitHub Actions dependency updates.
 - Repository secret-scanning configuration with documented false-positive exclusions.
+- Imported Hazard Pay's 40 PSX footstep recordings under a retained game-use notice, with eight surface banks and random per-playback override selection.
 
 ### Changed
 
@@ -26,6 +27,7 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Refreshed the public automated showcase video with unobscured texture-backed scenery and character exhibits from the maintained route.
 - Restored the textured PSX skeleton exhibit to its native meter scale; the previous 0.08 scale reduced it to a nearly invisible 17 cm figure in the Showcase.
 - Expanded the maintained Showcase and Breakwater demo maps to 72 collision-free imported model placements per profile, adding crowbars, conditioners, conference chair variants, an orange office chair, metal fence variants, and pipe boxes alongside the previous gas masks, hammers, flashlights, computer hardware, and authored exhibits.
+- Expanded the Showcase demo's authored surface metadata so movement resolves concrete, metal, wood, grass, dirt, gravel, stairs, and stone footstep banks from scene materials.
 
 ### Removed
 

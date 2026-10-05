@@ -30,6 +30,7 @@
 | `VINRAX_PSX_SKELETON_FREE_USE.txt` | Vinrax PSX Skeleton Character canonical GLB, supplied texture, and Godot-extracted embedded texture | <https://vinrax.itch.io/psx-skeleton-character> |
 | `LUKA_ALEKSIC_SOUND_EFFECTS_CC0-1.0.txt` | Luka Aleksic's 27 public-domain sound-effect WAV files | <https://aleksicluka.itch.io/various-sound-effects> and <https://creativecommons.org/publicdomain/zero/1.0/> |
 | `VERY_SIMPLE_WAVES_PACK_GAME_USE.txt` | cooler11's four Very Simple Waves Pack ocean-wave WAV files; game-use permission only, with standalone/asset-pack redistribution prohibited | Archive README included in the supplied upload; no official source URL was included |
+| `HAZARD_PAY_PSX_FOOTSTEPS_GAME_USE.txt` | Hazard Pay's 40 PSX crunchy footstep OGG files; game-use permission only, with standalone/asset-pack redistribution prohibited | <https://hazardpay.itch.io/40-free-psx-crunchy-footsteps> |
 | `DIP000_BLOODY_POOL_MIT.txt` | Blood-pool implementation derived from dip000's repository at commit `7a3e9bc685255d37f489e25b509fb56e185aa9fb` | <https://github.com/dip000/my-godotshaders/blob/7a3e9bc685255d37f489e25b509fb56e185aa9fb/LICENSE> |
 
 The project-owned MIT text is retained at both `LICENSE` and `docs/LICENSE` so source archives and exported notice bundles have a conventional root license.

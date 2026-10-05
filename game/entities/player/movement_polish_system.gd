@@ -1,5 +1,15 @@
 class_name MovementPolishSystem
 extends Node
+const FOOTSTEP_SURFACE_TYPES: Array[String] = [
+	"concrete",
+	"metal",
+	"wood",
+	"grass",
+	"dirt",
+	"gravel",
+	"stairs",
+	"stone",
+]
 
 signal landing_impact(velocity: float)
 signal footstep_played(surface_type: String)
@@ -220,9 +230,12 @@ func _detect_surface_type() -> void:
 	if result:
 		var collider: Object = result.get("collider")
 
-		# Try to get material from collider metadata or group
-		if collider.has_meta("surface_type"):
-			current_surface_type = collider.get_meta("surface_type")
+		# Material metadata is the primary authored surface contract.
+		var material_surface := _get_material_surface_type(collider)
+		if not material_surface.is_empty():
+			current_surface_type = material_surface
+		elif collider.has_meta("surface_type"):
+			current_surface_type = str(collider.get_meta("surface_type")).to_lower()
 		elif collider.is_in_group("wood"):
 			current_surface_type = "wood"
 		elif collider.is_in_group("metal"):
@@ -237,6 +250,18 @@ func _detect_surface_type() -> void:
 			current_surface_type = "concrete"  # Default fallback
 	else:
 		current_surface_type = "concrete"
+
+
+func _get_material_surface_type(collider: Object) -> String:
+	var material: Material
+	if collider is CSGShape3D:
+		material = (collider as CSGShape3D).material
+	elif collider is MeshInstance3D:
+		material = (collider as MeshInstance3D).get_active_material(0)
+	if material == null or not material.has_meta("surface_type"):
+		return ""
+	var surface_type := str(material.get_meta("surface_type")).strip_edges().to_lower()
+	return surface_type if surface_type in FOOTSTEP_SURFACE_TYPES else ""
 
 
 func _play_footstep_sound() -> void:

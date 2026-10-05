@@ -1,0 +1,14 @@
+Hazard Pay 40 FREE PSX Crunchy Footsteps
+
+Source: https://hazardpay.itch.io/40-free-psx-crunchy-footsteps
+Author: Hazard Pay
+License: Free use in commercial and non-commercial projects; attribution is not required but appreciated.
+
+The source page describes 40 royalty-free OGG footstep recordings grouped across
+Concrete, Dirt, Grass, Gravel, Metal, Stairs, Stone, and Wood. The creator's
+published clarification permits use in a project but prohibits repackaging or
+selling the sound files as a standalone collection. MODUS includes the clips as
+embedded game content under game/art/audio/sfx/psx_footsteps/ and does not
+redistribute the source archive or offer the clips as a standalone asset pack.
+
+Suggested credit: "40 FREE PSX Crunchy Footsteps by Hazard Pay"
