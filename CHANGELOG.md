@@ -29,6 +29,17 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Expanded the maintained Showcase and Breakwater demo maps to 72 collision-free imported model placements per profile, adding crowbars, conditioners, conference chair variants, an orange office chair, metal fence variants, and pipe boxes alongside the previous gas masks, hammers, flashlights, computer hardware, and authored exhibits.
 - Expanded the Showcase demo's authored surface metadata so movement resolves concrete, metal, wood, grass, dirt, gravel, stairs, and stone footstep banks from scene materials.
 
+- Replaced dummy save slots with SaveService/PlayerProgression discovery and canonical slot metadata.
+- Made boot checks validate live memory, audio buses, ENet transport, and the maintained player scene, with explicit failure signaling.
+- Replaced false-green HUD integration branches with awaited player-scene setup and authored HUD/service contract assertions.
+- Added procedural wood-panel crack decals and removed the missing-asset TODO path.
+- Removed the archived adapter property suite that only exercised placeholder classes; tightened movement, configuration, and undo/redo tests to fail on missing required behavior.
+- Fixed TimerUtils.wait() to retain an awaitable active-tree fallback and renamed generated map materials from placeholder to procedural.
+- Implemented optional hazard-entry 3D audio instead of leaving the body-entered callback inert.
+- Fixed backpack retrieval to merge serialized slot/equipment data atomically, persist the authoritative inventory, and emit explicit ownership-denied feedback instead of silently returning.
+- Converted recoverable splitscreen lifecycle, configuration, viewport, performance, controller-assignment, RPC-rate-limit, and server-tick diagnostics to typed runtime signals, preserving failure observability without polluting the engine warning/error channels.
+- Removed test-suite orphaned-object and leaked `UndoRedo` instances, and added focused telemetry coverage for bounded server-tick overruns.
+
 ### Removed
 
 - Obsolete release paths and unpublished integration references from the public tree.

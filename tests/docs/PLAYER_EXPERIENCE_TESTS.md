@@ -11,7 +11,7 @@ Two integration files inspect player/HUD structure and behavior:
 
 Both are listed in `tests/runners/headless_gui_required_tests.txt`. The default headless suite deliberately omits them because they depend on GUI/full player-scene services. There is no `tests/runners/run_player_experience_tests.gd` runner in this checkout.
 
-The tests contain a mixture of assertions, optional-component checks, and `pending()` branches. A file being present does not prove a complete HUD, visual quality, input behavior, audio playback, accessibility, or a playable game loop.
+The HUD file now awaits player-scene setup and asserts required authored nodes, signals, service APIs, layout containers, and readable font sizes. It no longer treats absent required elements, optional branches, or an unimplemented visual contrast check as a passing result.
 
 ## What the files inspect
 
@@ -24,7 +24,7 @@ The tests contain a mixture of assertions, optional-component checks, and `pendi
 - initialization and null-reference checks;
 - limited weapon-switching and ammo-update behavior.
 
-`test_hud_visual_feedback.gd` inspects selected HUD, crosshair, health, ammo, damage indicator, minimap, pause, theme, contrast, and text-size surfaces. Several elements are optional or become pending when required services are unavailable.
+`test_hud_visual_feedback.gd` asserts the authored HUD layer, centered crosshair, health/ammo/damage feedback, player signals, minimap tracking API, layout containers, and effects/audio/UI service contracts. It does not claim pixel-level contrast or full input usability.
 
 ## How to run
 

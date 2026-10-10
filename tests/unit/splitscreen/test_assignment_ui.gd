@@ -107,8 +107,9 @@ func test_assignment_ui_prevents_duplicate_assignments() -> void:
 	assert_eq(gamepad_controller.get_assigned_device(0), 0)
 
 	# Second claim to same device fails
+	watch_signals(gamepad_controller)
 	assignment_ui.emit_signal("device_claimed", 1, 0)
-	assert_push_error("already assigned")
+	assert_signal_emitted(gamepad_controller, "gamepad_assignment_failed")
 	assert_eq(
 		gamepad_controller.get_assigned_device(1),
 		-1,

@@ -292,9 +292,9 @@ func test_6_player_maximum_capacity() -> void:
 	splitscreen_manager.start_session(6)
 	await _complete_device_assignment(6)
 
-	# Try to add 7th player (should fail)
+	watch_signals(splitscreen_manager)
 	var result: int = splitscreen_manager.add_player(6)
-	assert_push_error("maximum player count")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 
 	assert_eq(result, -1, "Should not allow 7th player (exceeds max)")
 	assert_eq(splitscreen_manager.get_player_count(), 6, "Should still have 6 players")
@@ -393,9 +393,9 @@ func test_multiple_gamepad_assignments() -> void:
 func test_gamepad_assignment_validation() -> void:
 	_simulate_connected_gamepads(2)
 
-	# Try to assign non-existent gamepad
+	watch_signals(splitscreen_manager.gamepad_controller)
 	var result: bool = splitscreen_manager.gamepad_controller.assign_gamepad(0, 5)
-	assert_push_error("non-existent device")
+	assert_signal_emitted(splitscreen_manager.gamepad_controller, "gamepad_assignment_failed")
 
 	assert_false(result, "Should not assign non-existent gamepad")
 
@@ -424,17 +424,34 @@ func test_viewport_destruction() -> void:
 
 ## Test: Viewport arrangement for different player counts
 func test_viewport_arrangement_different_counts() -> void:
-	# Test 2 players
-	splitscreen_manager.viewport_manager.arrange_viewports(2)
-	assert_true(true, "Should arrange viewports for 2 players")
+	for player_id in range(4):
+		splitscreen_manager.viewport_manager.create_viewport(player_id, null)
 
-	# Test 4 players
 	splitscreen_manager.viewport_manager.arrange_viewports(4)
-	assert_true(true, "Should arrange viewports for 4 players")
+	assert_eq(
+		splitscreen_manager.viewport_manager.get_layout_type(), ViewportManager.LayoutType.GRID_2X2
+	)
+	assert_eq(splitscreen_manager.viewport_manager.get_viewport_rects().size(), 4)
 
-	# Test 6 players
+	splitscreen_manager.viewport_manager.cleanup_all_viewports()
+	for player_id in range(6):
+		splitscreen_manager.viewport_manager.create_viewport(player_id, null)
+
 	splitscreen_manager.viewport_manager.arrange_viewports(6)
-	assert_true(true, "Should arrange viewports for 6 players")
+	assert_eq(
+		splitscreen_manager.viewport_manager.get_layout_type(), ViewportManager.LayoutType.GRID_2X3
+	)
+	assert_eq(splitscreen_manager.viewport_manager.get_viewport_rects().size(), 6)
+
+
+## Test: Viewport rendering quality adjustment
+func test_viewport_rendering_quality_adjustment() -> void:
+	splitscreen_manager.viewport_manager.create_viewport(0, null)
+
+	splitscreen_manager.viewport_manager.set_rendering_quality(0.5)
+
+	assert_eq(splitscreen_manager.viewport_manager.msaa_mode, Viewport.MSAA_2X)
+	assert_eq(splitscreen_manager.viewport_manager.shadow_quality, "medium")
 
 
 ## Test: Viewport cleanup
@@ -450,15 +467,6 @@ func test_viewport_cleanup() -> void:
 		0,
 		"All viewports should be cleaned up"
 	)
-
-
-## Test: Viewport rendering quality adjustment
-func test_viewport_rendering_quality_adjustment() -> void:
-	splitscreen_manager.viewport_manager.create_viewport(0, null)
-
-	splitscreen_manager.viewport_manager.set_rendering_quality(0.5)
-
-	assert_true(true, "Should adjust rendering quality without errors")
 
 
 ## Test: Viewport count tracking
@@ -550,6 +558,7 @@ func test_player_left_signal_emission() -> void:
 	splitscreen_manager.remove_player(0)
 
 	assert_signal_emitted(splitscreen_manager, "player_left")
+	assert_signal_emitted(splitscreen_manager, "session_below_minimum")
 
 
 ## Test: Session pause and resume

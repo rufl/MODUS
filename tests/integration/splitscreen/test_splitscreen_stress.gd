@@ -348,8 +348,9 @@ func test_stress_validation_under_corruption() -> void:
 	for i in range(100):
 		# Corrupt
 		splitscreen_manager.session_state.player_count = 999
+		watch_signals(splitscreen_manager.session_state)
 		assert_false(splitscreen_manager.session_state.validate())
-		assert_push_error("Player count mismatch")
+		assert_signal_emitted(splitscreen_manager.session_state, "operation_rejected")
 
 		# Fix
 		splitscreen_manager.session_state.player_count = 1

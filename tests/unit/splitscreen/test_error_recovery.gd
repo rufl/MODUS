@@ -242,9 +242,10 @@ func test_configuration_validation_rejects_invalid():
 		"max_players": 2
 	}
 
+	watch_signals(manager)
 	var result = manager._validate_configuration(invalid_config)
 	assert_false(result, "Should reject invalid configuration")
-	assert_push_error("Invalid config: min_players > max_players")
+	assert_signal_emitted(manager, "diagnostic_emitted")
 
 
 func test_configuration_validation_accepts_valid():

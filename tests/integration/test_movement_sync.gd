@@ -32,45 +32,49 @@ func test_bunny_hop_config() -> void:
 	assert_gamecore_subsystem_exists("config")
 
 	var gm: Node = get_node_or_null("/root/GameManager")
-	if not gm or not gm.get_core_system("config"):
+	var config: Node = gm.get_core_system("config") if gm else null
+	assert_not_null(config, "Configuration service should be available")
+	if not config:
 		return
 
-	var movement_cfg: Dictionary = gm.get_core_system("config").get_value("gameplay.movement", {})
-
+	var movement_cfg: Dictionary = config.get_value("gameplay.movement", {})
 	assert_false(movement_cfg.is_empty(), "gameplay.movement config section should be found")
 
-	# Check for bunny hop related settings
-	var bhop_settings: Array = ["bhop_enabled", "bhop_speed_gain", "bhop_timing_window"]
-	var found_count: int = 0
+	var advanced_cfg: Dictionary = movement_cfg.get("advanced_movement", {})
+	assert_true(advanced_cfg.get("enabled", false), "Advanced movement should be enabled")
 
-	for setting: String in bhop_settings:
-		if movement_cfg.has(setting):
-			found_count += 1
-
-	if found_count == 0:
-		# Check nested advanced_movement section
-		var adv_cfg: Dictionary = movement_cfg.get("advanced_movement", {})
-		for setting: String in bhop_settings:
-			if adv_cfg.has(setting):
-				found_count += 1
-
-	# Config structure may vary, pass if accessible
-	pass_test("Bunny hop config check completed")
+	var bhop_cfg: Dictionary = advanced_cfg.get("bunny_hop", {})
+	assert_false(bhop_cfg.is_empty(), "Bunny hop configuration should be present")
+	assert_true(bhop_cfg.get("enabled", false), "Bunny hop should be enabled")
+	assert_gt(float(bhop_cfg.get("speed_cap", 0.0)), 0.0, "Bunny hop speed cap should be positive")
+	assert_gt(
+		float(bhop_cfg.get("timing_window", 0.0)), 0.0, "Bunny hop timing window should be positive"
+	)
 
 
 func test_double_jump_properties() -> void:
-	## Verify double jump sync properties pattern
-	var script_path: String = "res://game/entities/player/player.gd"
+	## Verify double jump state is represented by the movement component
+	var script_path: String = "res://game/entities/player/components/player_movement_component.gd"
 
-	assert_true(ResourceLoader.exists(script_path), "player.gd should exist")
-
+	assert_true(ResourceLoader.exists(script_path), "player_movement_component.gd should exist")
 	if not ResourceLoader.exists(script_path):
 		return
 
-	# Check if player has expected movement-related properties
-	# We verify the script loads without checking actual instance
 	var script: Script = load(script_path)
-	assert_not_null(script, "Should be able to load player.gd")
+	assert_not_null(script, "Should be able to load player_movement_component.gd")
+	if not script:
+		return
+
+	var source_code: String = script.source_code
+	assert_true(source_code.contains("has_double_jump"), "Movement should expose double-jump state")
+	assert_true(source_code.contains("jump_count"), "Movement should track jump count")
+	assert_true(
+		source_code.contains("elif has_double_jump and jump_count < 2"),
+		"Movement should contain the double-jump branch"
+	)
+	assert_true(
+		source_code.contains("func _perform_jump(is_double"), "Movement should expose jump helper"
+	)
 
 
 func test_air_strafe_config() -> void:
@@ -78,21 +82,26 @@ func test_air_strafe_config() -> void:
 	assert_gamecore_subsystem_exists("config")
 
 	var gm: Node = get_node_or_null("/root/GameManager")
-	if not gm or not gm.get_core_system("config"):
+	var config: Node = gm.get_core_system("config") if gm else null
+	assert_not_null(config, "Configuration service should be available")
+	if not config:
 		return
 
-	var movement_cfg: Dictionary = gm.get_core_system("config").get_value("gameplay.movement", {})
+	var movement_cfg: Dictionary = config.get_value("gameplay.movement", {})
 	var advanced_cfg: Dictionary = movement_cfg.get("advanced_movement", {})
+	var air_cfg: Dictionary = advanced_cfg.get("air_movement", {})
 
-	# Air strafe should be configurable
-	var _has_air_control: bool = (
-		movement_cfg.has("air_control")
-		or movement_cfg.has("air_strafe_enabled")
-		or advanced_cfg.has("enabled")
+	assert_false(air_cfg.is_empty(), "Air movement configuration should be present")
+	assert_gt(
+		float(air_cfg.get("air_acceleration", 0.0)), 0.0, "Air acceleration should be positive"
 	)
-
-	# Config structure may vary
-	pass_test("Air strafe config check completed")
+	assert_gt(
+		float(air_cfg.get("air_strafe_speed", 0.0)), 0.0, "Air strafe speed should be positive"
+	)
+	assert_gt(float(air_cfg.get("max_air_speed", 0.0)), 0.0, "Maximum air speed should be positive")
+	assert_gt(
+		float(air_cfg.get("air_control_power", 0.0)), 0.0, "Air control power should be positive"
+	)
 
 
 func test_slide_config() -> void:
@@ -100,22 +109,21 @@ func test_slide_config() -> void:
 	assert_gamecore_subsystem_exists("config")
 
 	var gm: Node = get_node_or_null("/root/GameManager")
-	if not gm or not gm.get_core_system("config"):
+	var config: Node = gm.get_core_system("config") if gm else null
+	assert_not_null(config, "Configuration service should be available")
+	if not config:
 		return
 
-	var movement_cfg: Dictionary = gm.get_core_system("config").get_value("gameplay.movement", {})
-	var slide_cfg: Dictionary = movement_cfg.get("slide", {})
+	var movement_cfg: Dictionary = config.get_value("gameplay.movement", {})
+	var advanced_cfg: Dictionary = movement_cfg.get("advanced_movement", {})
+	var slide_cfg: Dictionary = advanced_cfg.get("slide", {})
 
-	# Slide should have duration and cooldown
-	var expected_keys: Array = ["enabled", "duration", "cooldown", "speed_boost"]
-	var _found: int = 0
-
-	for key: String in expected_keys:
-		if slide_cfg.has(key):
-			_found += 1
-
-	# Config structure may vary
-	pass_test("Slide config check completed")
+	assert_false(slide_cfg.is_empty(), "Slide configuration should be present")
+	assert_true(slide_cfg.get("enabled", false), "Slide should be enabled")
+	assert_gt(float(slide_cfg.get("speed", 0.0)), 0.0, "Slide speed should be positive")
+	assert_gt(float(slide_cfg.get("duration", 0.0)), 0.0, "Slide duration should be positive")
+	assert_gt(float(slide_cfg.get("cooldown", 0.0)), 0.0, "Slide cooldown should be positive")
+	assert_gt(float(slide_cfg.get("friction", 0.0)), 0.0, "Slide friction should be positive")
 
 
 func test_movement_sync_rpc_pattern() -> void:

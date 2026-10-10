@@ -23,6 +23,36 @@ class_name BreakableWoodPanel
 @export var max_crack_decals: int = 3
 
 var _crack_count: int = 0
+var _crack_texture: Texture2D
+
+
+func _get_crack_texture() -> Texture2D:
+	if _crack_texture:
+		return _crack_texture
+
+	var image := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	var crack_color := Color(0.08, 0.04, 0.015, 0.9)
+	_draw_crack_segment(image, Vector2(32, 6), Vector2(30, 22), crack_color)
+	_draw_crack_segment(image, Vector2(30, 22), Vector2(35, 38), crack_color)
+	_draw_crack_segment(image, Vector2(35, 38), Vector2(31, 58), crack_color)
+	_draw_crack_segment(image, Vector2(31, 25), Vector2(17, 35), crack_color)
+	_draw_crack_segment(image, Vector2(35, 38), Vector2(49, 47), crack_color)
+	_draw_crack_segment(image, Vector2(31, 17), Vector2(42, 10), crack_color)
+	_crack_texture = ImageTexture.create_from_image(image)
+	return _crack_texture
+
+
+func _draw_crack_segment(image: Image, start: Vector2, finish: Vector2, color: Color) -> void:
+	var distance: float = start.distance_to(finish)
+	var steps: int = maxi(1, ceili(distance * 2.0))
+	for step in range(steps + 1):
+		var point: Vector2 = start.lerp(finish, float(step) / float(steps))
+		for offset_x in range(-1, 2):
+			for offset_y in range(-1, 2):
+				var pixel := Vector2i(roundi(point.x) + offset_x, roundi(point.y) + offset_y)
+				if Rect2i(0, 0, image.get_width(), image.get_height()).has_point(pixel):
+					image.set_pixel(pixel.x, pixel.y, color)
 
 
 func _ready() -> void:
@@ -65,21 +95,13 @@ func _spawn_crack_decal() -> void:
 	if not gm:
 		return
 	var effects: Node = gm.get_core_system("effects")
-	if not effects:
+	if not effects or not effects.has_method("spawn_decal"):
 		return
 
-	# Spawn crack decal on wood surface
-	var _decal_pos := (
-		global_position + Vector3(randf_range(-0.3, 0.3), randf_range(-0.3, 0.3), 0.01)
+	var decal_pos := global_position + Vector3(randf_range(-0.3, 0.3), randf_range(-0.3, 0.3), 0.01)
+	effects.spawn_decal(
+		_get_crack_texture(), decal_pos, Vector3.FORWARD, Vector3(0.3, 0.3, 0.1), 30.0
 	)
-
-	# TODO: Use actual crack texture
-	# if effects.has_method("spawn_decal"):
-	#     var crack_texture = load("res://game/assets/textures/decals/wood_crack.png")
-	#     effects.spawn_decal(
-	#         crack_texture, _decal_pos, Vector3.FORWARD,
-	#         Vector3(0.3, 0.3, 0.1), 30.0
-	#     )
 
 
 @rpc("authority", "call_local", "reliable")

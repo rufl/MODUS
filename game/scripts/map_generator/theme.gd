@@ -54,38 +54,38 @@ static func create_default_theme(p_theme_type: GenerationConfig.ThemeType) -> Ma
 	# Create deterministic procedural fallback materials for themes without assets.
 	match p_theme_type:
 		GenerationConfig.ThemeType.TECH:
-			theme.wall_material = _create_placeholder_material(Color(0.4, 0.5, 0.6))
-			theme.floor_material = _create_placeholder_material(Color(0.3, 0.3, 0.35))
-			theme.ceiling_material = _create_placeholder_material(Color(0.35, 0.35, 0.4))
+			theme.wall_material = _create_procedural_material(Color(0.4, 0.5, 0.6))
+			theme.floor_material = _create_procedural_material(Color(0.3, 0.3, 0.35))
+			theme.ceiling_material = _create_procedural_material(Color(0.35, 0.35, 0.4))
 			theme.ambient_color = Color(0.4, 0.5, 0.6)
 			theme.directional_color = Color(0.9, 0.95, 1.0)
 
 		GenerationConfig.ThemeType.HELL:
-			theme.wall_material = _create_placeholder_material(Color(0.5, 0.2, 0.1))
-			theme.floor_material = _create_placeholder_material(Color(0.3, 0.1, 0.05))
-			theme.ceiling_material = _create_placeholder_material(Color(0.4, 0.15, 0.08))
+			theme.wall_material = _create_procedural_material(Color(0.5, 0.2, 0.1))
+			theme.floor_material = _create_procedural_material(Color(0.3, 0.1, 0.05))
+			theme.ceiling_material = _create_procedural_material(Color(0.4, 0.15, 0.08))
 			theme.ambient_color = Color(0.6, 0.2, 0.1)
 			theme.directional_color = Color(1.0, 0.5, 0.3)
 
 		GenerationConfig.ThemeType.URBAN:
-			theme.wall_material = _create_placeholder_material(Color(0.6, 0.6, 0.55))
-			theme.floor_material = _create_placeholder_material(Color(0.4, 0.4, 0.4))
-			theme.ceiling_material = _create_placeholder_material(Color(0.5, 0.5, 0.5))
+			theme.wall_material = _create_procedural_material(Color(0.6, 0.6, 0.55))
+			theme.floor_material = _create_procedural_material(Color(0.4, 0.4, 0.4))
+			theme.ceiling_material = _create_procedural_material(Color(0.5, 0.5, 0.5))
 			theme.ambient_color = Color(0.5, 0.5, 0.5)
 			theme.directional_color = Color(1.0, 0.95, 0.9)
 
 		GenerationConfig.ThemeType.CAVE:
-			theme.wall_material = _create_placeholder_material(Color(0.3, 0.25, 0.2))
-			theme.floor_material = _create_placeholder_material(Color(0.25, 0.2, 0.15))
-			theme.ceiling_material = _create_placeholder_material(Color(0.28, 0.23, 0.18))
+			theme.wall_material = _create_procedural_material(Color(0.3, 0.25, 0.2))
+			theme.floor_material = _create_procedural_material(Color(0.25, 0.2, 0.15))
+			theme.ceiling_material = _create_procedural_material(Color(0.28, 0.23, 0.18))
 			theme.ambient_color = Color(0.2, 0.2, 0.25)
 			theme.directional_color = Color(0.8, 0.8, 0.9)
 
 		GenerationConfig.ThemeType.JUMBLED:
 			# Jumbled uses random mix - start with tech as base
-			theme.wall_material = _create_placeholder_material(Color(0.5, 0.5, 0.5))
-			theme.floor_material = _create_placeholder_material(Color(0.4, 0.4, 0.4))
-			theme.ceiling_material = _create_placeholder_material(Color(0.45, 0.45, 0.45))
+			theme.wall_material = _create_procedural_material(Color(0.5, 0.5, 0.5))
+			theme.floor_material = _create_procedural_material(Color(0.4, 0.4, 0.4))
+			theme.ceiling_material = _create_procedural_material(Color(0.45, 0.45, 0.45))
 			theme.ambient_color = Color(0.4, 0.4, 0.4)
 			theme.directional_color = Color(1.0, 1.0, 1.0)
 
@@ -93,7 +93,7 @@ static func create_default_theme(p_theme_type: GenerationConfig.ThemeType) -> Ma
 
 
 ## Create a simple procedural fallback material with the given color.
-static func _create_placeholder_material(color: Color) -> StandardMaterial3D:
+static func _create_procedural_material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.roughness = 0.8
@@ -106,7 +106,7 @@ static func _create_placeholder_material(color: Color) -> StandardMaterial3D:
 func get_cave_material() -> Material:
 	if theme_type == GenerationConfig.ThemeType.CAVE:
 		return (
-			wall_material if wall_material else _create_placeholder_material(Color(0.3, 0.25, 0.2))
+			wall_material if wall_material else _create_procedural_material(Color(0.3, 0.25, 0.2))
 		)
 	if _generated_cave_material:
 		return _generated_cave_material

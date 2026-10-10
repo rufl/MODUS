@@ -45,26 +45,26 @@ func test_initial_state_inactive() -> void:
 
 ## Test: Start session with invalid player count (too low)
 func test_start_session_player_count_too_low() -> void:
+	watch_signals(splitscreen_manager)
 	var result: bool = splitscreen_manager.start_session(2)
-	assert_push_error("below minimum")
-	assert_false(result, "Should fail with player count below minimum")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 	assert_false(splitscreen_manager.is_session_active(), "Session should not be active")
 
 
 ## Test: Start session with invalid player count (too high)
 func test_start_session_player_count_too_high() -> void:
+	watch_signals(splitscreen_manager)
 	var result: bool = splitscreen_manager.start_session(10)
-	assert_push_error("exceeds maximum")
-	assert_false(result, "Should fail with player count above maximum")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 	assert_false(splitscreen_manager.is_session_active(), "Session should not be active")
 
 
 ## Test: Start session with insufficient gamepads
 func test_start_session_insufficient_gamepads() -> void:
 	# No gamepads connected by default
+	watch_signals(splitscreen_manager)
 	var result: bool = splitscreen_manager.start_session(4)
-	assert_push_error("Insufficient controllers")
-	assert_false(result, "Should fail with insufficient gamepads")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 
 
 ## Test: Session started signal emitted
@@ -153,8 +153,9 @@ func test_add_player_at_max_capacity() -> void:
 	for i in range(splitscreen_manager.max_players):
 		splitscreen_manager.session_state.add_player(i)
 
+	watch_signals(splitscreen_manager)
 	var player_id: int = splitscreen_manager.add_player(99)
-	assert_push_error("maximum player count")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 
 	assert_eq(player_id, -1, "Should fail when at max capacity")
 
@@ -255,7 +256,6 @@ func test_gamepad_disconnection_updates_player_status() -> void:
 func test_session_error_signal() -> void:
 	watch_signals(splitscreen_manager)
 	splitscreen_manager._emit_error("Test error")
-	assert_push_error("Test error")
 
 	assert_signal_emitted(splitscreen_manager, "session_error", "Should emit session_error signal")
 

@@ -21,6 +21,9 @@ signal gamepad_assigned(player_id: int, device_id: int)
 ## Emitted when a gamepad is unassigned from a player
 signal gamepad_unassigned(player_id: int, device_id: int)
 
+## Emitted when a gamepad assignment is rejected.
+signal gamepad_assignment_failed(player_id: int, device_id: int, reason: String)
+
 ## Emitted when all players have assigned gamepads
 signal assignment_complete
 
@@ -140,14 +143,18 @@ func _on_device_disconnected(device_id: int) -> void:
 func assign_gamepad(player_id: int, device_id: int) -> bool:
 	# Check if device exists
 	if device_id not in _connected_devices:
-		push_error("Cannot assign non-existent device %d" % device_id)
+		var reason := "Cannot assign non-existent device %d" % device_id
+		gamepad_assignment_failed.emit(player_id, device_id, reason)
 		return false
 
 	# Check if device is already assigned to another player
 	if _device_to_player.has(device_id):
 		var existing_player: int = _device_to_player[device_id]
 		if existing_player != player_id:
-			push_error("Device %d is already assigned to player %d" % [device_id, existing_player])
+			var reason := (
+				"Device %d is already assigned to player %d" % [device_id, existing_player]
+			)
+			gamepad_assignment_failed.emit(player_id, device_id, reason)
 			return false
 
 	# Unassign any previous device from this player

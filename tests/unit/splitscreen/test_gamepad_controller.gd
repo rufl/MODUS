@@ -49,8 +49,9 @@ func test_assign_gamepad_success() -> void:
 
 ## Test: Assign non-existent device fails
 func test_assign_nonexistent_device_fails() -> void:
+	watch_signals(gamepad_controller)
 	var result = gamepad_controller.assign_gamepad(0, 99)
-	assert_push_error("Cannot assign non-existent device 99")
+	assert_signal_emitted(gamepad_controller, "gamepad_assignment_failed")
 	assert_false(result, "Assignment should fail for non-existent device")
 	assert_eq(gamepad_controller.get_assigned_device(0), -1, "Player 0 should have no device")
 
@@ -60,8 +61,9 @@ func test_assign_duplicate_device_fails() -> void:
 	gamepad_controller._connected_devices.append(0)
 
 	gamepad_controller.assign_gamepad(0, 0)
+	watch_signals(gamepad_controller)
 	var result = gamepad_controller.assign_gamepad(1, 0)
-	assert_push_error("Device 0 is already assigned to player 0")
+	assert_signal_emitted(gamepad_controller, "gamepad_assignment_failed")
 
 	assert_false(result, "Assignment should fail for already assigned device")
 	assert_eq(gamepad_controller.get_assigned_device(1), -1, "Player 1 should have no device")

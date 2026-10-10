@@ -20,6 +20,7 @@ func _ready() -> void:
 	_boot_sequence.log_message.connect(_on_log_message)
 	_boot_sequence.progress_updated.connect(_on_progress_updated)
 	_boot_sequence.boot_complete.connect(_on_boot_complete)
+	_boot_sequence.boot_failed.connect(_on_boot_failed)
 
 	# Small delay before starting
 	await get_tree().create_timer(1.0).timeout
@@ -99,3 +100,8 @@ func _on_boot_complete() -> void:
 		GameManager.get_core_system("logger").info(
 			"Error: " + " " + str(next_scene_path) + " " + " not found.", "UI"
 		)
+
+
+func _on_boot_failed(reason: String) -> void:
+	_log_label.append_text("[b][color=red]INIT FAILED:[/color][/b] %s\n" % reason)
+	_progress_bar.value = 0.0

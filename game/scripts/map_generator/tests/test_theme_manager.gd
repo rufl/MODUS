@@ -197,6 +197,7 @@ func test_apply_lighting_creates_world_environment() -> void:
 	theme_manager.set_theme(GenerationConfig.ThemeType.TECH)
 
 	var root_node := Node3D.new()
+	add_child_autofree(root_node)
 	theme_manager.apply_lighting_to_scene(root_node)
 
 	# Check WorldEnvironment was created
@@ -209,15 +210,13 @@ func test_apply_lighting_creates_world_environment() -> void:
 	assert_not_null(world_env, "WorldEnvironment should be created")
 	assert_not_null(world_env.environment, "Environment should be set")
 
-	# Cleanup
-	root_node.queue_free()
-
 
 ## Test: Apply lighting to scene creates DirectionalLight3D
 func test_apply_lighting_creates_directional_light() -> void:
 	theme_manager.set_theme(GenerationConfig.ThemeType.HELL)
 
 	var root_node := Node3D.new()
+	add_child_autofree(root_node)
 	theme_manager.apply_lighting_to_scene(root_node)
 
 	# Check DirectionalLight3D was created
@@ -230,15 +229,13 @@ func test_apply_lighting_creates_directional_light() -> void:
 	assert_not_null(directional_light, "DirectionalLight3D should be created")
 	assert_true(directional_light.shadow_enabled, "Shadows should be enabled")
 
-	# Cleanup
-	root_node.queue_free()
-
 
 ## Test: Apply lighting sets theme-specific colors
 func test_apply_lighting_sets_theme_colors() -> void:
 	theme_manager.set_theme(GenerationConfig.ThemeType.HELL)
 
 	var root_node := Node3D.new()
+	add_child_autofree(root_node)
 	theme_manager.apply_lighting_to_scene(root_node)
 
 	# Find WorldEnvironment
@@ -257,9 +254,6 @@ func test_apply_lighting_sets_theme_colors() -> void:
 	assert_almost_eq(actual_ambient.r, expected_ambient.r, 0.01, "Ambient red should match")
 	assert_almost_eq(actual_ambient.g, expected_ambient.g, 0.01, "Ambient green should match")
 	assert_almost_eq(actual_ambient.b, expected_ambient.b, 0.01, "Ambient blue should match")
-
-	# Cleanup
-	root_node.queue_free()
 
 
 ## Test: Get material for surface type

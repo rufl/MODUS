@@ -11,9 +11,9 @@ The September 29 strict headless aggregate passed 1,671/1,671 tests with 22,982 
 
 The retained source inventory contains:
 
-- 71 unit test scripts;
+- 74 unit test scripts;
 - 18 integration test scripts;
-- 29 property test scripts;
+- 28 property test scripts;
 - 2 GUI-required integration entries excluded from the default headless selection;
 - benchmark and manual tooling outside the default GUT selection.
 

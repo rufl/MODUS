@@ -4,26 +4,40 @@ extends Node
 signal log_message(text: String)
 signal progress_updated(percent: float)
 signal boot_complete
+signal boot_failed(reason: String)
 
-@warning_ignore("unused_signal")
-signal boot_failed(reason: String)  # Reserved for future error handling
+const PLAYER_SCENE_PATH: String = "res://game/entities/player/player.tscn"
+const REQUIRED_AUDIO_BUSES: Array[String] = ["Master", "SFX", "Music", "Ambient"]
+
+var _started: bool = false
 
 
 func start_sequence() -> void:
-	# Run checks sequentially
+	if _started:
+		return
+	_started = true
+
 	_log("Initializing System...")
 	await get_tree().create_timer(0.5).timeout
 
-	await _check_memory()
+	if not await _check_memory():
+		_fail("Memory telemetry is unavailable.")
+		return
 	progress_updated.emit(0.25)
 
-	await _check_audio()
+	if not await _check_audio():
+		_fail("Audio subsystem is unavailable.")
+		return
 	progress_updated.emit(0.5)
 
-	await _check_network()
+	if not await _check_network():
+		_fail("ENet multiplayer transport is unavailable.")
+		return
 	progress_updated.emit(0.75)
 
-	await _check_resources()
+	if not await _check_resources():
+		_fail("Required game resources are unavailable.")
+		return
 	progress_updated.emit(1.0)
 
 	_log("System Ready.")
@@ -33,54 +47,89 @@ func start_sequence() -> void:
 
 func _log(text: String) -> void:
 	log_message.emit(text)
-	# Also print to console for debugging
-	var logger: Node = GameManager.get_core_system("logger")
+	var game_manager: Node = get_node_or_null("/root/GameManager")
+	var logger: Node = (
+		game_manager.get_core_system("logger")
+		if game_manager and game_manager.has_method("get_core_system")
+		else null
+	)
 	if logger and logger.has_method("info"):
 		logger.info("[BOOT] " + text, "BootSequence")
 
 
-func _check_memory() -> void:
-	_log("Checking Memory Integrity...")
+func _fail(reason: String) -> void:
+	_log("System check failed: " + reason)
+	boot_failed.emit(reason)
+
+
+func _check_memory() -> bool:
+	_log("Checking Memory Telemetry...")
 	await get_tree().create_timer(0.2).timeout
-	# Fake check using OS
-	var mem: int = OS.get_static_memory_usage()
-	_log("  Memory Usage: " + String.humanize_size(mem))
-	_log("  Memory OK.")
+
+	var memory_usage: int = OS.get_static_memory_usage()
+	if memory_usage < 0:
+		_log("  Static memory telemetry unavailable")
+		return false
+
+	_log("  Static memory: " + String.humanize_size(memory_usage))
+	return true
 
 
-func _check_audio() -> void:
-	_log("Initializing Audio Interface...")
+func _check_audio() -> bool:
+	_log("Checking Audio Interface...")
 	await get_tree().create_timer(0.3).timeout
-	# Check if AudioManager is present (assuming autoload)
-	if get_tree().root.has_node("AudioManager"):
-		_log("  AudioManager: DETECTED")
-	else:
-		_log("  AudioManager: WARNING (Not found)")
-	_log("  Audio Subsystem OK.")
+
+	var game_manager: Node = get_node_or_null("/root/GameManager")
+	var audio_service: Node = (
+		game_manager.get_core_system("audio")
+		if game_manager and game_manager.has_method("get_core_system")
+		else null
+	)
+	if not audio_service:
+		_log("  Audio service: NOT FOUND")
+		return false
+
+	var missing_buses: Array[String] = []
+	for bus_name: String in REQUIRED_AUDIO_BUSES:
+		if AudioServer.get_bus_index(bus_name) < 0:
+			missing_buses.append(bus_name)
+	if not missing_buses.is_empty():
+		_log("  Missing audio buses: " + ", ".join(missing_buses))
+		return false
+
+	_log("  Audio buses ready: " + str(AudioServer.bus_count))
+	return true
 
 
-func _check_network() -> void:
-	_log("Binding Network Ports...")
+func _check_network() -> bool:
+	_log("Checking Network Transport...")
 	await get_tree().create_timer(0.4).timeout
-	# Check ENet capability (informative only)
-	var peer: ENetMultiplayerPeer = ENetMultiplayerPeer.new()
-	if peer:
-		_log("  ENet Driver: AVAILABLE")
-	else:
-		_log("  create_timerENet Driver: FAILED")
-	_log("  Network Interface OK.")
+
+	if not ClassDB.class_exists("ENetMultiplayerPeer"):
+		_log("  ENet Driver: NOT AVAILABLE")
+		return false
+
+	var peer := ENetMultiplayerPeer.new()
+	if not peer:
+		_log("  ENet Driver: FAILED TO INITIALIZE")
+		return false
+	peer.close()
+	_log("  ENet Driver: AVAILABLE")
+	return true
 
 
-func _check_resources() -> void:
-	_log("Verifying Asset Integrity...")
+func _check_resources() -> bool:
+	_log("Verifying Core Resources...")
 	await get_tree().create_timer(0.5).timeout
-	# Preload a critical resource as a test
-	# e.g., the player scene
-	var player_path: String = "res://game/scenes/entities/player/player.tscn"
-	if ResourceLoader.exists(player_path):
-		var _p: Resource = load(player_path)
-		_log("  Core Assets: OK")
-	else:
-		_log("  Core Assets: WARNING (Player scene not found)")
 
-	_log("  Asset System OK.")
+	if not ResourceLoader.exists(PLAYER_SCENE_PATH):
+		_log("  Player scene missing: " + PLAYER_SCENE_PATH)
+		return false
+
+	var player_scene: PackedScene = ResourceLoader.load(PLAYER_SCENE_PATH) as PackedScene
+	if not player_scene:
+		_log("  Player scene failed to load")
+		return false
+
+	_log("  Core Assets: OK")
+	return true

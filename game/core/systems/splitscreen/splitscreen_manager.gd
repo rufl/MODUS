@@ -24,6 +24,14 @@ signal player_left(player_id: int)
 ## Emitted when a session error occurs
 signal session_error(error_message: String)
 
+## Emitted when an active session falls below its configured player minimum
+signal session_below_minimum(player_count: int, minimum_players: int)
+
+## Emitted when a controller disconnect causes an automatic session pause
+signal session_paused_for_disconnect(player_id: int, device_id: int)
+## Emitted for recoverable diagnostics that should not enter Godot's global channels.
+signal diagnostic_emitted(level: String, message: String)
+
 ## Component references
 var viewport_manager: ViewportManager = null
 var gamepad_controller: GamepadController = null
@@ -71,6 +79,10 @@ func _get_logger() -> Node:
 	if gm:
 		return gm.get_core_system("logger")
 	return null
+
+
+func _emit_diagnostic(level: String, message: String) -> void:
+	diagnostic_emitted.emit(level, message)
 
 
 func _ready() -> void:
@@ -159,13 +171,17 @@ func _load_configuration() -> void:
 			if _validate_configuration(config):
 				_apply_configuration()
 			else:
-				push_error("[SplitscreenManager] Configuration validation failed, using defaults")
+				_emit_diagnostic(
+					"error", "[SplitscreenManager] Configuration validation failed, using defaults"
+				)
 				_use_default_configuration()
 		else:
-			push_error("[SplitscreenManager] Failed to parse configuration file")
+			_emit_diagnostic("error", "[SplitscreenManager] Failed to parse configuration file")
 			_use_default_configuration()
 	else:
-		push_warning("[SplitscreenManager] Configuration file not found, using defaults")
+		_emit_diagnostic(
+			"warning", "[SplitscreenManager] Configuration file not found, using defaults"
+		)
 		_use_default_configuration()
 
 
@@ -175,13 +191,15 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 
 	# Check required fields
 	if not cfg.has("enabled"):
-		push_error("[SplitscreenManager] Missing required field: enabled")
+		_emit_diagnostic("error", "[SplitscreenManager] Missing required field: enabled")
 		valid = false
 
 	# Validate player count settings
 	if cfg.has("min_players"):
 		if not _is_integer_number(cfg["min_players"]) or cfg["min_players"] < 2:
-			push_error("[SplitscreenManager] Invalid min_players: must be integer >= 2")
+			_emit_diagnostic(
+				"error", "[SplitscreenManager] Invalid min_players: must be integer >= 2"
+			)
 			valid = false
 
 	if cfg.has("max_players"):
@@ -190,17 +208,23 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 			or cfg["max_players"] < 2
 			or cfg["max_players"] > 8
 		):
-			push_error("[SplitscreenManager] Invalid max_players: must be integer between 2 and 8")
+			_emit_diagnostic(
+				"error", "[SplitscreenManager] Invalid max_players: must be integer between 2 and 8"
+			)
 			valid = false
 
 	if cfg.has("min_players") and cfg.has("max_players"):
 		if cfg["min_players"] > cfg["max_players"]:
-			push_error("[SplitscreenManager] Invalid config: min_players > max_players")
+			_emit_diagnostic(
+				"error", "[SplitscreenManager] Invalid config: min_players > max_players"
+			)
 			valid = false
 
 	if cfg.has("default_player_count"):
 		if not _is_integer_number(cfg["default_player_count"]):
-			push_error("[SplitscreenManager] Invalid default_player_count: must be integer")
+			_emit_diagnostic(
+				"error", "[SplitscreenManager] Invalid default_player_count: must be integer"
+			)
 			valid = false
 		elif (
 			cfg.has("min_players")
@@ -210,7 +234,9 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 				or cfg["default_player_count"] > cfg["max_players"]
 			)
 		):
-			push_error("[SplitscreenManager] Invalid default_player_count: outside player bounds")
+			_emit_diagnostic(
+				"error", "[SplitscreenManager] Invalid default_player_count: outside player bounds"
+			)
 			valid = false
 
 	# Validate performance settings
@@ -222,7 +248,9 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 				not (perf["target_fps"] is float or perf["target_fps"] is int)
 				or perf["target_fps"] <= 0
 			):
-				push_error("[SplitscreenManager] Invalid target_fps: must be positive number")
+				_emit_diagnostic(
+					"error", "[SplitscreenManager] Invalid target_fps: must be positive number"
+				)
 				valid = false
 
 		if perf.has("fps_variance_threshold"):
@@ -231,11 +259,9 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 				or perf["fps_variance_threshold"] < 0
 				or perf["fps_variance_threshold"] > 1
 			):
-				push_error(
-					(
-						"[SplitscreenManager] Invalid fps_variance_threshold: "
-						+ "must be between 0 and 1"
-					)
+				_emit_diagnostic(
+					"error",
+					"[SplitscreenManager] Invalid fps_variance_threshold: must be between 0 and 1"
 				)
 				valid = false
 
@@ -246,7 +272,8 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 		if vp.has("default_layout"):
 			var valid_layouts: Array = ["auto", "2x2", "2x3", "3x2"]
 			if not vp["default_layout"] in valid_layouts:
-				push_error(
+				_emit_diagnostic(
+					"error",
 					(
 						"[SplitscreenManager] Invalid default_layout: must be one of %s"
 						% str(valid_layouts)
@@ -257,7 +284,10 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 		if vp.has("msaa"):
 			var valid_msaa: Array = ["disabled", "2x", "4x", "8x"]
 			if not vp["msaa"] in valid_msaa:
-				push_error("[SplitscreenManager] Invalid msaa: must be one of %s" % str(valid_msaa))
+				_emit_diagnostic(
+					"error",
+					"[SplitscreenManager] Invalid msaa: must be one of %s" % str(valid_msaa)
+				)
 				valid = false
 
 	# Validate input settings
@@ -270,7 +300,9 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 				or inp["analog_deadzone"] < 0
 				or inp["analog_deadzone"] > 1
 			):
-				push_error("[SplitscreenManager] Invalid analog_deadzone: must be between 0 and 1")
+				_emit_diagnostic(
+					"error", "[SplitscreenManager] Invalid analog_deadzone: must be between 0 and 1"
+				)
 				valid = false
 
 		if inp.has("trigger_threshold"):
@@ -279,7 +311,8 @@ func _validate_configuration(cfg: Dictionary) -> bool:
 				or inp["trigger_threshold"] < 0
 				or inp["trigger_threshold"] > 1
 			):
-				push_error(
+				_emit_diagnostic(
+					"error",
 					"[SplitscreenManager] Invalid trigger_threshold: must be between 0 and 1"
 				)
 				valid = false
@@ -649,12 +682,7 @@ func remove_player(player_id: int) -> void:
 		session_state.player_count < min_players
 		and session_state.current_state == SessionState.State.ACTIVE
 	):
-		push_warning(
-			(
-				"[SplitscreenManager] Player count dropped below minimum. "
-				+ "Session will continue but may be unstable."
-			)
-		)
+		session_below_minimum.emit(session_state.player_count, min_players)
 
 	# Rearrange viewports
 	if session_state.player_count > 0:
@@ -696,10 +724,9 @@ func _on_gamepad_disconnected(device_id: int) -> void:
 	# Update player connection status
 	session_state.update_player_data(player_id, null, null, -1, false)
 
-	# Auto-pause if configured
 	if auto_pause_on_disconnect and session_state.current_state == SessionState.State.ACTIVE:
 		pause_session()
-		push_warning("[SplitscreenManager] Session paused due to controller disconnect")
+		session_paused_for_disconnect.emit(player_id, device_id)
 
 
 ## Handle gamepad reconnection
@@ -789,9 +816,8 @@ func _apply_quality_level(quality_level: String) -> void:
 	viewport_manager.set_rendering_quality(quality_value)
 
 
-## Emit an error signal
+## Emit a session error signal without writing to the engine error channel.
 func _emit_error(message: String) -> void:
-	push_error("[SplitscreenManager] " + message)
 	session_error.emit(message)
 
 
@@ -819,12 +845,12 @@ func set_player_scene(scene: PackedScene) -> void:
 
 ## Handle performance warnings
 func _on_performance_warning(message: String) -> void:
-	push_warning("[SplitscreenManager] Performance Warning: %s" % message)
+	_emit_diagnostic("warning", "[SplitscreenManager] Performance Warning: %s" % message)
 
 
 ## Handle performance critical issues
 func _on_performance_critical(message: String) -> void:
-	push_error("[SplitscreenManager] Performance Critical: %s" % message)
+	_emit_diagnostic("critical", "[SplitscreenManager] Performance Critical: %s" % message)
 
 	# Consider automatic quality reduction
 	if adaptive_quality_enabled and _current_quality_level != "low":
@@ -861,7 +887,9 @@ func _execute_with_retry(
 
 	# Check circuit breaker
 	if _is_circuit_breaker_open(operation_name):
-		push_error("[SplitscreenManager] Circuit breaker open for operation: %s" % operation_name)
+		_emit_diagnostic(
+			"error", "[SplitscreenManager] Circuit breaker open for operation: %s" % operation_name
+		)
 		return null
 
 	var attempts: int = max_attempts if max_attempts > 0 else _max_retry_attempts
@@ -882,7 +910,8 @@ func _execute_with_retry(
 			await get_tree().create_timer(_retry_delay_seconds).timeout
 
 	# All attempts failed
-	push_error(
+	_emit_diagnostic(
+		"error",
 		"[SplitscreenManager] Operation '%s' failed after %d attempts" % [operation_name, attempts]
 	)
 	return null
@@ -925,7 +954,9 @@ func _is_circuit_breaker_open(operation_name: String) -> bool:
 ## Open circuit breaker for an operation
 func _open_circuit_breaker(operation_name: String) -> void:
 	_circuit_breaker_open_time[operation_name] = Time.get_ticks_msec() / 1000.0
-	push_warning("[SplitscreenManager] Circuit breaker opened for operation: %s" % operation_name)
+	_emit_diagnostic(
+		"warning", "[SplitscreenManager] Circuit breaker opened for operation: %s" % operation_name
+	)
 
 
 ## Close circuit breaker for an operation
@@ -939,7 +970,7 @@ func _close_circuit_breaker(operation_name: String) -> void:
 
 ## Graceful degradation: Try to recover from error state
 func _attempt_graceful_recovery() -> bool:
-	push_warning("[SplitscreenManager] Attempting graceful recovery...")
+	_emit_diagnostic("warning", "[SplitscreenManager] Attempting graceful recovery...")
 
 	var logger: Node = _get_logger()
 
@@ -996,7 +1027,7 @@ func enable_feature() -> bool:
 
 	# Check if feature is enabled in config
 	if not config.get("enabled", true):
-		push_warning("[SplitscreenManager] Feature is disabled in configuration")
+		_emit_diagnostic("warning", "[SplitscreenManager] Feature is disabled in configuration")
 		return false
 
 	# Reinitialize components if needed

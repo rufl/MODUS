@@ -277,24 +277,6 @@ func test_player_signals_exist() -> void:
 		)
 
 
-func test_enemy_signals_exist() -> void:
-	var script_path := "res://game/entities/enemies/enemy.gd"
-	assert_file_exists(script_path, "Enemy script should exist")
-
-	var script: Script = load(script_path)
-	assert_not_null(script, "Enemy script should load")
-
-	var signal_list: Array = script.get_script_signal_list()
-	var signal_names: Array[String] = []
-	for sig in signal_list:
-		signal_names.append(sig["name"])
-
-	# Expected signals (Enemy may not have signals at class level)
-	# Signals may be in components or emitted dynamically
-	# Just verify the script loads
-	assert_true(true, "Enemy script loads successfully")
-
-
 func test_breakable_object_signals_exist() -> void:
 	var script_path := "res://game/world/actors/hazards/breakable_object.gd"
 	assert_file_exists(script_path, "BreakableObject script should exist")

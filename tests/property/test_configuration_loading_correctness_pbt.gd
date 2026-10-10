@@ -37,8 +37,8 @@ func _test_config_values_accessible(test_data: Dictionary) -> bool:
 
 	# Check if file exists
 	if not FileAccess.file_exists(config_file):
-		push_warning("[Property Test] Config file not found: %s" % config_file)
-		return true  # Skip if file doesn't exist
+		push_error("[Property Test] Required config file not found: %s" % config_file)
+		return false
 
 	# Load configuration
 	var config_mgr: ConfigurationManager = add_child_autofree(ConfigurationManager.new())
@@ -82,7 +82,8 @@ func _test_config_type_correctness(test_data: Dictionary) -> bool:
 	var config_file: String = CONFIG_FILES[config_index]
 
 	if not FileAccess.file_exists(config_file):
-		return true  # Skip if file doesn't exist
+		push_error("[Property Test] Required config file not found: %s" % config_file)
+		return false
 
 	# Load configuration
 	var config_mgr: ConfigurationManager = add_child_autofree(ConfigurationManager.new())
@@ -118,7 +119,8 @@ func _test_config_reload_consistency(test_data: Dictionary) -> bool:
 	var config_file: String = CONFIG_FILES[config_index]
 
 	if not FileAccess.file_exists(config_file):
-		return true  # Skip if file doesn't exist
+		push_error("[Property Test] Required config file not found: %s" % config_file)
+		return false
 
 	# Load configuration twice
 	var config_mgr1: ConfigurationManager = add_child_autofree(ConfigurationManager.new())
@@ -156,7 +158,8 @@ func _test_config_nested_access(test_data: Dictionary) -> bool:
 	var config_file: String = "res://game/config/network/network_config.json5"
 
 	if not FileAccess.file_exists(config_file):
-		return true  # Skip if file doesn't exist
+		push_error("[Property Test] Required config file not found: %s" % config_file)
+		return false
 
 	# Load configuration
 	var config_mgr: ConfigurationManager = add_child_autofree(ConfigurationManager.new())

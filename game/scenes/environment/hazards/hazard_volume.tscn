@@ -18,24 +18,7 @@ material = SubResource("ShaderMaterial_lava")
 size = Vector3(10, 1, 10)
 
 [sub_resource type="GDScript" id="GDScript_hazard"]
-script/source = "extends Area3D
-
-@export var damage_per_second: float = 20.0
-@export var damage_type: DamageInfo.DamageType = DamageInfo.DamageType.VOID
-
-func _ready() -> void:
-	body_entered.connect(_on_body_entered)
-
-func _process(delta: float) -> void:
-	for body in get_overlapping_bodies():
-		if body.has_method(\"take_damage\"):
-			var damage_info: DamageInfo = DamageInfo.create(damage_per_second * delta, damage_type, self)
-			body.take_damage(damage_info)
-
-func _on_body_entered(body: Node3D) -> void:
-	# Optional: Play sound effect when entering hazard
-	pass
-"
+script/source = "extends Area3D\n\n@export var damage_per_second: float = 20.0\n@export var damage_type: DamageInfo.DamageType = DamageInfo.DamageType.VOID\n@export var enter_sound: AudioStream\n@export var enter_sound_bus: StringName = &\"SFX\"\n\nfunc _ready() -> void:\n\tbody_entered.connect(_on_body_entered)\n\nfunc _process(delta: float) -> void:\n\tfor body in get_overlapping_bodies():\n\t\tif body.has_method(\"take_damage\"):\n\t\t\tvar damage_info: DamageInfo = DamageInfo.create(damage_per_second * delta, damage_type, self)\n\t\t\tbody.take_damage(damage_info)\n\nfunc _on_body_entered(body: Node3D) -> void:\n\tif not enter_sound:\n\t\treturn\n\n\tvar player := AudioStreamPlayer3D.new()\n\tplayer.stream = enter_sound\n\tif AudioServer.get_bus_index(enter_sound_bus) >= 0:\n\t\tplayer.bus = enter_sound_bus\n\tadd_child(player)\n\tplayer.global_position = body.global_position\n\tplayer.finished.connect(player.queue_free)\n\tplayer.play()\n"
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hazard"]
 size = Vector3(10, 1, 10)

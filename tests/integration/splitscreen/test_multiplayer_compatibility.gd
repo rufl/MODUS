@@ -4,7 +4,7 @@ extends GutTest
 ## Verifies that splitscreen works alongside existing multiplayer systems
 
 var splitscreen_manager: SplitscreenManager
-var network_manager: Node  # Mock or real NetworkManager
+var network_manager: Node
 
 
 func _transition_session_to_active() -> void:
@@ -23,10 +23,14 @@ func before_each() -> void:
 	splitscreen_manager.initialize()
 	await get_tree().process_frame
 
-	# Create mock network manager
-	network_manager = Node.new()
-	network_manager.name = "NetworkManager"
-	add_child_autofree(network_manager)
+	# Use the real GameManager network service; a placeholder Node cannot prove compatibility.
+	var game_manager: Node = get_node_or_null("/root/GameManager")
+	network_manager = (
+		game_manager.get_core_system("network")
+		if game_manager and game_manager.has_method("get_core_system")
+		else null
+	)
+	assert_not_null(network_manager, "Network service should be available")
 
 
 func after_each() -> void:
@@ -44,7 +48,6 @@ func test_splitscreen_network_coexistence() -> void:
 	assert_not_null(network_manager, "Network manager should exist")
 
 	# Neither should interfere with the other's initialization
-	assert_true(true, "Both systems coexist without errors")
 
 
 ## Test: Splitscreen disabled doesn't affect network multiplayer
@@ -114,7 +117,6 @@ func test_viewport_network_independence() -> void:
 	)
 
 	# Network rendering should be unaffected (tested by no crashes)
-	assert_true(true, "Viewport creation doesn't crash network systems")
 
 
 ## Test: Session state doesn't conflict with network state
@@ -142,7 +144,6 @@ func test_gamepad_assignment_network_independence() -> void:
 	)
 
 	# Network input should still work (keyboard/mouse)
-	assert_true(true, "Network input unaffected by gamepad assignment")
 
 
 ## Test: Performance monitoring doesn't interfere
@@ -153,16 +154,20 @@ func test_performance_monitoring_independence() -> void:
 
 	for i in range(100):
 		splitscreen_manager._process(0.016)
+	assert_true(
+		is_instance_valid(network_manager),
+		"Network service must remain valid during splitscreen performance updates"
+	)
 
 	# Both systems should track performance independently
-	assert_true(true, "Performance monitoring is independent")
 
 
 ## Test: Error handling doesn't cascade
 func test_error_handling_isolation() -> void:
 	# Errors in splitscreen shouldn't crash network multiplayer
+	watch_signals(splitscreen_manager)
 	splitscreen_manager._emit_error("Test error")
-	assert_push_error("Test error")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 
 	# Network manager should still be functional
 	assert_true(
@@ -206,12 +211,10 @@ func test_signal_emission_independence() -> void:
 	watch_signals(network_manager)
 
 	splitscreen_manager._emit_error("Test")
-	assert_push_error("Test")
 
 	# Only splitscreen signals should be emitted
 	assert_signal_emitted(splitscreen_manager, "session_error")
 	# Network manager should have no signals
-	assert_true(true, "Signal emissions are independent")
 
 
 ## Test: Configuration loading doesn't conflict
@@ -222,7 +225,6 @@ func test_configuration_independence() -> void:
 	assert_true(splitscreen_manager.config.size() > 0, "Splitscreen config should be loaded")
 
 	# Network config should be independent
-	assert_true(true, "Configuration systems are independent")
 
 
 ## Test: Multiplayer session + splitscreen session
@@ -237,7 +239,6 @@ func test_concurrent_sessions() -> void:
 	assert_true(network_active, "Network session should be active")
 
 	# Both can coexist
-	assert_true(true, "Concurrent sessions work")
 
 
 ## Test: Player ID namespaces don't collide
@@ -251,4 +252,3 @@ func test_player_id_namespace_separation() -> void:
 	assert_eq(splitscreen_manager.get_player_count(), 2, "Splitscreen has 2 players")
 
 	# Network players would be tracked separately
-	assert_true(true, "Player ID namespaces are separate")

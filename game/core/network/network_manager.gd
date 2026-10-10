@@ -32,6 +32,10 @@ signal reconnection_success
 signal tick_completed
 signal pre_tick
 signal post_tick
+## Emitted once per contiguous overrun while stale server ticks are discarded.
+signal server_tick_budget_exceeded
+## Emitted when a peer is rejected by the RPC rate limiter.
+signal rpc_rate_limit_exceeded(peer_id: int, method: String)
 
 const MAX_PREDICTION_BUFFER_SIZE: int = 64
 const MAX_SERVER_TICKS_PER_FRAME: int = 8
@@ -66,7 +70,7 @@ var _max_players: int = 16
 var _steam_manager: Node = null
 var _tick_accumulator: float = 0.0
 var _tick_timer: float = 0.0
-var _tick_overrun_warning_active: bool = false
+var _tick_overrun_active: bool = false
 var _current_tick: int = 0
 var _prediction_buffer: Array[Dictionary] = []
 
@@ -467,7 +471,7 @@ func validate_rpc(peer_id: int, method: String, args: Array = []) -> bool:
 
 	# Rate limit check
 	if not _check_rate_limit(peer_id, method):
-		push_warning("[Network] Rate limit exceeded for peer %d, method %s" % [peer_id, method])
+		rpc_rate_limit_exceeded.emit(peer_id, method)
 		return false
 
 	# Additional validation if required by whitelist
@@ -580,14 +584,12 @@ func _run_server_tick(delta: float) -> void:
 	# Drop stale whole-tick backlog after the bounded catch-up budget. Keeping
 	# only the fractional remainder prevents a permanent runaway catch-up loop.
 	if ticks_to_process == MAX_SERVER_TICKS_PER_FRAME and _tick_accumulator >= tick_duration:
-		if not _tick_overrun_warning_active:
-			push_warning(
-				"[Network] Server tick catch-up budget exceeded; dropping stale tick backlog"
-			)
-			_tick_overrun_warning_active = true
+		if not _tick_overrun_active:
+			server_tick_budget_exceeded.emit()
+			_tick_overrun_active = true
 		_tick_accumulator = fmod(_tick_accumulator, tick_duration)
 	else:
-		_tick_overrun_warning_active = false
+		_tick_overrun_active = false
 
 
 func _validate_movement(_delta: float) -> void:

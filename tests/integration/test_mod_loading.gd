@@ -23,15 +23,14 @@ func before_each():
 
 
 func test_mod_system_initializes():
-	# Test that mod system is available
-	var mod_system = game_manager.get_core_system("mod_loader")
+	# Mod support is a required GameManager service, not an optional future feature.
+	var mod_system: Node = game_manager.get_core_system("mod_loader")
 
-	# Mod system might not be implemented yet, so we check gracefully
-	if mod_system:
-		assert_not_null(mod_system, "Mod system should be available")
-	else:
-		# If not implemented, this test passes (future feature)
-		assert_true(true, "Mod system not yet implemented")
+	assert_not_null(mod_system, "Mod system should be available")
+	assert_true(
+		mod_system.has_method("get_installed_mods"),
+		"Mod system should expose installed-mod discovery",
+	)
 
 
 func test_mods_can_register_with_game_manager():

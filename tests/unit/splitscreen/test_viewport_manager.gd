@@ -50,8 +50,9 @@ func test_create_multiple_viewports() -> void:
 ## Test: Create duplicate viewport returns existing
 func test_create_duplicate_viewport_returns_existing() -> void:
 	var viewport1: SubViewport = viewport_manager.create_viewport(0, null)
+	watch_signals(viewport_manager)
 	var viewport2: SubViewport = viewport_manager.create_viewport(0, null)
-	assert_push_error("already exists")
+	assert_signal_emitted(viewport_manager, "diagnostic_emitted")
 
 	assert_eq(viewport1, viewport2, "Should return the same viewport instance")
 	assert_eq(viewport_manager.get_viewport_count(), 1, "Should still have only 1 viewport")
@@ -84,9 +85,9 @@ func test_destroy_viewport() -> void:
 
 ## Test: Destroy non-existent viewport does nothing
 func test_destroy_nonexistent_viewport() -> void:
+	watch_signals(viewport_manager)
 	viewport_manager.destroy_viewport(99)
-	# Should not crash
-	assert_true(true, "Should handle gracefully")
+	assert_signal_emitted(viewport_manager, "diagnostic_emitted")
 
 
 ## Test: 2x2 grid layout for 4 players

@@ -17,6 +17,8 @@ signal viewport_destroyed(player_id: int)
 
 ## Emitted when the viewport layout changes
 signal layout_changed(layout_type: LayoutType)
+## Emitted for recoverable viewport lifecycle diagnostics.
+signal diagnostic_emitted(level: String, message: String)
 
 ## Layout types for viewport arrangement
 # 4 players in 2x2 grid, 5-6 players in 2x3 or 3x2 grid
@@ -52,11 +54,15 @@ func _ready() -> void:
 	_precalculate_layouts()
 
 
+func _emit_diagnostic(level: String, message: String) -> void:
+	diagnostic_emitted.emit(level, message)
+
+
 ## Create a viewport for a player
 ## Returns the created SubViewport
 func create_viewport(player_id: int, player_scene: PackedScene) -> SubViewport:
 	if _viewports.has(player_id):
-		push_error("Viewport for player %d already exists" % player_id)
+		_emit_diagnostic("error", "Viewport for player %d already exists" % player_id)
 		return _viewports[player_id]
 
 	# Create SubViewportContainer
@@ -100,7 +106,7 @@ func create_viewport(player_id: int, player_scene: PackedScene) -> SubViewport:
 ## Destroy a viewport for a player
 func destroy_viewport(player_id: int) -> void:
 	if not _viewports.has(player_id):
-		push_warning("Viewport for player %d does not exist" % player_id)
+		_emit_diagnostic("warning", "Viewport for player %d does not exist" % player_id)
 		return
 
 	# Clean up player instance

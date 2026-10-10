@@ -97,8 +97,9 @@ func test_valid_transition_ending_to_inactive() -> void:
 
 ## Test: Invalid state transition from INACTIVE to ACTIVE
 func test_invalid_transition_inactive_to_active() -> void:
+	watch_signals(session_state)
 	var result = session_state.transition_to(SessionState.State.ACTIVE)
-	assert_push_error("Invalid state transition from INACTIVE to ACTIVE")
+	assert_signal_emitted(session_state, "operation_rejected")
 	assert_false(result, "Transition should fail")
 	assert_eq(
 		session_state.current_state, SessionState.State.INACTIVE, "State should remain INACTIVE"
@@ -108,8 +109,9 @@ func test_invalid_transition_inactive_to_active() -> void:
 ## Test: Invalid state transition from INITIALIZING to ACTIVE
 func test_invalid_transition_initializing_to_active() -> void:
 	session_state.transition_to(SessionState.State.INITIALIZING)
+	watch_signals(session_state)
 	var result = session_state.transition_to(SessionState.State.ACTIVE)
-	assert_push_error("Invalid state transition from INITIALIZING to ACTIVE")
+	assert_signal_emitted(session_state, "operation_rejected")
 	assert_false(result, "Transition should fail")
 	assert_eq(
 		session_state.current_state,
@@ -123,8 +125,9 @@ func test_invalid_transition_active_to_initializing() -> void:
 	session_state.transition_to(SessionState.State.INITIALIZING)
 	session_state.transition_to(SessionState.State.ASSIGNING_DEVICES)
 	session_state.transition_to(SessionState.State.ACTIVE)
+	watch_signals(session_state)
 	var result = session_state.transition_to(SessionState.State.INITIALIZING)
-	assert_push_error("Invalid state transition from ACTIVE to INITIALIZING")
+	assert_signal_emitted(session_state, "operation_rejected")
 	assert_false(result, "Transition should fail")
 	assert_eq(session_state.current_state, SessionState.State.ACTIVE, "State should remain ACTIVE")
 
@@ -151,8 +154,9 @@ func test_add_multiple_players() -> void:
 ## Test: Add duplicate player fails
 func test_add_duplicate_player_fails() -> void:
 	session_state.add_player(0)
+	watch_signals(session_state)
 	var result = session_state.add_player(0)
-	assert_push_error("Player 0 already exists in session")
+	assert_signal_emitted(session_state, "operation_rejected")
 	assert_false(result, "Adding duplicate player should fail")
 	assert_eq(session_state.player_count, 1, "Player count should remain 1")
 
@@ -168,8 +172,9 @@ func test_remove_player_success() -> void:
 
 ## Test: Remove non-existent player fails
 func test_remove_nonexistent_player_fails() -> void:
+	watch_signals(session_state)
 	var result = session_state.remove_player(99)
-	assert_push_error("Player 99 does not exist in session")
+	assert_signal_emitted(session_state, "operation_rejected")
 	assert_false(result, "Removing non-existent player should fail")
 
 
@@ -211,8 +216,9 @@ func test_assign_duplicate_gamepad_fails() -> void:
 	session_state.add_player(0)
 	session_state.add_player(1)
 	session_state.assign_gamepad(0, 1)
+	watch_signals(session_state)
 	var result = session_state.assign_gamepad(1, 1)
-	assert_push_error("Gamepad device 1 is already assigned to player 0")
+	assert_signal_emitted(session_state, "operation_rejected")
 	assert_false(result, "Assigning duplicate gamepad should fail")
 
 

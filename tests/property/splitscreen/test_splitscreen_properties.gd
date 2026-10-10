@@ -50,17 +50,10 @@ func test_property_state_machine_validity() -> void:
 		for to_state: SessionState.State in all_states:
 			session_state.current_state = from_state
 			var is_valid: bool = session_state.is_valid_transition(from_state, to_state)
+			watch_signals(session_state)
 			var result: bool = session_state.transition_to(to_state)
 			if not is_valid:
-				assert_push_error(
-					(
-						"Invalid state transition from %s to %s"
-						% [
-							SessionState.State.keys()[from_state],
-							SessionState.State.keys()[to_state]
-						]
-					)
-				)
+				assert_signal_emitted(session_state, "operation_rejected")
 
 			assert_eq(
 				result,
@@ -275,13 +268,15 @@ func test_property_player_count_bounds() -> void:
 	await get_tree().process_frame
 
 	# Test below minimum
+	watch_signals(splitscreen_manager)
 	var result_low: bool = splitscreen_manager.start_session(2)
-	assert_push_error("below minimum")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 	assert_false(result_low, "Must reject player count below minimum")
 
 	# Test above maximum
+	watch_signals(splitscreen_manager)
 	var result_high: bool = splitscreen_manager.start_session(10)
-	assert_push_error("exceeds maximum")
+	assert_signal_emitted(splitscreen_manager, "session_error")
 	assert_false(result_high, "Must reject player count above maximum")
 
 
@@ -314,8 +309,9 @@ func test_property_validation_consistency() -> void:
 
 	# Invalid state - manually corrupt
 	session_state.player_count = 999
+	watch_signals(session_state)
 	assert_false(session_state.validate(), "Invalid state must fail validation")
-	assert_push_error("Player count mismatch")
+	assert_signal_emitted(session_state, "operation_rejected")
 
 
 ## PROPERTY 17: Performance Metrics Freshness

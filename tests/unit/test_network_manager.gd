@@ -232,6 +232,21 @@ func test_movement_input_burst_is_bounded_per_peer_without_idle_credit() -> void
 	assert_false(limiter.validate_rpc(42, "sync_position"), "Idle time cannot bank extra bursts")
 
 
+func test_server_tick_budget_overrun_emits_telemetry() -> void:
+	var probe := NetworkManager.new()
+	probe.config = NetworkConfig.new()
+	add_child_autofree(probe)
+	watch_signals(probe)
+
+	probe._run_server_tick(1.0)
+
+	assert_signal_emitted(
+		probe,
+		"server_tick_budget_exceeded",
+		"Stale tick backlog should emit telemetry instead of an engine warning"
+	)
+
+
 func test_semantic_validation_rejects_forged_status_and_chat_payloads() -> void:
 	if not _network_manager:
 		var ns := NetworkSvc.get_service()

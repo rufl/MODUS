@@ -10,6 +10,7 @@ extends RefCounted
 ## State enum representing the lifecycle of a splitscreen session
 # No session is active, being set up, assigning devices, running, paused, or ending
 enum State { INACTIVE, INITIALIZING, ASSIGNING_DEVICES, ACTIVE, PAUSED, ENDING }
+signal operation_rejected(message: String)
 
 
 ## Inner class containing data for a single player in the session
@@ -70,6 +71,11 @@ func _init() -> void:
 	reset()
 
 
+func _reject(message: String) -> bool:
+	operation_rejected.emit(message)
+	return false
+
+
 ## Reset the session state to initial values
 func reset() -> void:
 	current_state = State.INACTIVE
@@ -85,13 +91,12 @@ func reset() -> void:
 ## Returns true if the transition is valid and successful, false otherwise
 func transition_to(new_state: SessionState.State) -> bool:
 	if not is_valid_transition(current_state, new_state):
-		push_error(
+		return _reject(
 			(
 				"Invalid state transition from %s to %s"
 				% [SessionState.State.keys()[current_state], SessionState.State.keys()[new_state]]
 			)
 		)
-		return false
 
 	current_state = new_state
 	return true
@@ -132,8 +137,7 @@ func add_player(
 	gamepad_device: int = -1
 ) -> bool:
 	if active_players.has(player_id):
-		push_error("Player %d already exists in session" % player_id)
-		return false
+		return _reject("Player %d already exists in session" % player_id)
 
 	var player_data = PlayerData.new(
 		player_id, player_instance, viewport, gamepad_device, gamepad_device != -1
@@ -151,8 +155,7 @@ func add_player(
 ## Returns true if the player was removed successfully
 func remove_player(player_id: int) -> bool:
 	if not active_players.has(player_id):
-		push_error("Player %d does not exist in session" % player_id)
-		return false
+		return _reject("Player %d does not exist in session" % player_id)
 
 	active_players.erase(player_id)
 	gamepad_assignments.erase(player_id)
@@ -177,8 +180,7 @@ func update_player_data(
 	p_connected: bool = true
 ) -> bool:
 	if not active_players.has(player_id):
-		push_error("Player %d does not exist in session" % player_id)
-		return false
+		return _reject("Player %d does not exist in session" % player_id)
 
 	var player_data: PlayerData = active_players[player_id]
 
@@ -199,14 +201,12 @@ func update_player_data(
 ## Returns true if the assignment was successful
 func assign_gamepad(player_id: int, device_id: int) -> bool:
 	if not active_players.has(player_id):
-		push_error("Player %d does not exist in session" % player_id)
-		return false
+		return _reject("Player %d does not exist in session" % player_id)
 
 	# Check if device is already assigned to another player
 	for pid in gamepad_assignments:
 		if gamepad_assignments[pid] == device_id and pid != player_id:
-			push_error("Gamepad device %d is already assigned to player %d" % [device_id, pid])
-			return false
+			return _reject("Gamepad device %d is already assigned to player %d" % [device_id, pid])
 
 	gamepad_assignments[player_id] = device_id
 	var player_data: PlayerData = active_players[player_id]
@@ -220,8 +220,7 @@ func assign_gamepad(player_id: int, device_id: int) -> bool:
 ## Returns true if the unassignment was successful
 func unassign_gamepad(player_id: int) -> bool:
 	if not active_players.has(player_id):
-		push_error("Player %d does not exist in session" % player_id)
-		return false
+		return _reject("Player %d does not exist in session" % player_id)
 
 	gamepad_assignments.erase(player_id)
 	var player_data: PlayerData = active_players[player_id]
@@ -294,21 +293,18 @@ func get_performance_metric(metric_name: String) -> Variant:
 func validate() -> bool:
 	# Check player count matches active players
 	if player_count != active_players.size():
-		push_error("Player count mismatch: %d != %d" % [player_count, active_players.size()])
-		return false
+		return _reject("Player count mismatch: %d != %d" % [player_count, active_players.size()])
 
 	# Check gamepad assignments are valid
 	for player_id in gamepad_assignments:
 		if not active_players.has(player_id):
-			push_error("Gamepad assigned to non-existent player %d" % player_id)
-			return false
+			return _reject("Gamepad assigned to non-existent player %d" % player_id)
 
 	# Check for duplicate gamepad assignments
 	var assigned_devices: Array[int] = []
 	for device_id in gamepad_assignments.values():
 		if device_id in assigned_devices:
-			push_error("Duplicate gamepad assignment: device %d" % device_id)
-			return false
+			return _reject("Duplicate gamepad assignment: device %d" % device_id)
 		assigned_devices.append(device_id)
 
 	return true

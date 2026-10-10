@@ -7,36 +7,23 @@ extends ModusGutTestBase
 
 const ITERATIONS = 100
 
-var editor_main: Node = null
 var undo_redo: UndoRedo = null
 
 
 func before_each() -> void:
-	# This file exercises the deterministic action-state contract. The standalone
-	# editor currently exposes runtime UndoRedo through EditorGlobals, but does not
-	# expose the retired _setup_undo_redo hook checked by the legacy smoke below.
-	editor_main = null
 	_blocks.clear()
 	undo_redo = UndoRedo.new()
 
 
 func after_each() -> void:
-	editor_main = null
 	_blocks.clear()
+	if undo_redo:
+		undo_redo.free()
 	undo_redo = null
 
 
 ## Property: Undo/Redo round trip returns to original state
 func test_property_undo_redo_round_trip() -> void:
-	if not editor_main:
-		pass_test("Editor not available for testing")
-		return
-
-	# Check if editor has undo/redo methods
-	if not editor_main.has_method("_setup_undo_redo"):
-		pass_test("_setup_undo_redo method not yet implemented")
-		return
-
 	for i in range(ITERATIONS):
 		# Generate random action
 		var action_type: String = _random_action_type()

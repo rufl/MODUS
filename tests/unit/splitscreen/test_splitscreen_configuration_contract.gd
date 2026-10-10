@@ -23,8 +23,9 @@ func test_fractional_player_counts_are_rejected() -> void:
 		"default_player_count": 5.0,
 	}
 
+	watch_signals(manager)
 	assert_false(manager._validate_configuration(invalid_config))
-	assert_push_error("Invalid min_players")
+	assert_signal_emitted(manager, "diagnostic_emitted")
 	manager.free()
 
 

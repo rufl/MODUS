@@ -2,6 +2,7 @@ class_name Backpack
 extends RigidBody3D
 
 signal collected(by_peer_id: int)
+signal interaction_denied(by_peer_id: int, reason: String)
 
 @export var owner_uuid: String = ""
 @export var owner_peer_id: int = 0
@@ -14,7 +15,6 @@ var interaction_text: String = "Retrieve Backpack"
 
 @onready var interaction_area: Area3D = $InteractionArea
 @onready var label_3d: Label3D = $Label3D
-@onready var visual_node: Node3D = $Visuals
 
 
 func _ready() -> void:
@@ -27,9 +27,6 @@ func _ready() -> void:
 
 	# Only server needs to process physics logic for pickup?
 	# Actually, client initiates interaction.
-
-	# Visual flare
-	_spawn_effect()
 
 
 func setup(uuid: String, peer_id: int, name_str: String, inv: Dictionary, xp: int) -> void:
@@ -63,18 +60,21 @@ func interact(interactor: Node) -> void:
 	if "uuid" in interactor:
 		interactor_uuid = interactor.uuid
 	else:
-		var gs := GameManager.get_core_system("gameplay") as GameplaySvc
+		var gs := _get_gameplay_service()
 		if gs and gs.player:
 			# Fallback to looking up UUID by peer ID if available
 			var pid: int = interactor.get_multiplayer_authority()
 			interactor_uuid = gs.player.get_player_uuid(pid)
 
-	if interactor_uuid == owner_uuid:
+	var interactor_peer_id: int = interactor.get_multiplayer_authority()
+	if (
+		(owner_peer_id > 0 and interactor_peer_id == owner_peer_id)
+		or (not owner_uuid.is_empty() and interactor_uuid == owner_uuid)
+	):
 		is_owner = true
 
 	if not is_owner:
-		# Show feedback: "Not your backpack"
-		# (Implementation dep on HUD messaging system)
+		interaction_denied.emit(interactor_peer_id, "Not your backpack")
 		return
 
 	# Request retrieval
@@ -102,60 +102,32 @@ func _request_retrieve() -> void:
 		return
 
 	# Double check ownership on server
-	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
-	if gs and gs.player:
-		var p_uuid: String = gs.player.get_player_uuid(sender_id)
-		if p_uuid == owner_uuid:
-			_retrieve(player)
+	var gs := _get_gameplay_service()
+	var p_uuid: String = gs.player.get_player_uuid(sender_id) if gs and gs.player else ""
+	if sender_id == owner_peer_id or (not owner_uuid.is_empty() and p_uuid == owner_uuid):
+		_retrieve(player)
 
 
 func _retrieve(player: Node) -> void:
-	# 1. Restore Inventory
-	# We need to MERGE or REPLACE?
-	# Implementation: Merge contents back.
-	# If player has items, we add to them.
-	# Actually, dead player spawns empty, so this fills it up.
-
-	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
+	var peer_id: int = player.get_multiplayer_authority()
+	var gs := _get_gameplay_service()
 	var player_inv: Inventory = null
 	if gs and gs.inventory:
-		player_inv = gs.inventory.get_inventory(player.get_multiplayer_authority())
-	if player_inv:
-		var saved_inv: Inventory = Inventory.new()
-		saved_inv.from_dict(inventory_data)
+		player_inv = gs.inventory.get_inventory(peer_id)
+	if not player_inv or not _restore_inventory(player_inv):
+		push_warning("[Backpack] Cannot restore inventory for peer %d" % peer_id)
+		return
 
-		# Transfer all items from slots
-		for slot_item: InventoryItem in saved_inv.slots:
-			if slot_item:
-				player_inv.add_item(slot_item)
-
-		# Sync update
-		# If we wanted to SWAP inventory (e.g. finding a bigger backpack):
-		# gs.inventory.register_inventory(player.get_multiplayer_authority(), player_inv)
-		# Trigger visual update on client? gs.inventory handles this via signals?
-		# Actually we might need to explicit sync.
-		# But gs.inventory.register_inventory just sets local ref.
-		# We should probably force a save/load or sync.
-		# Use gs.inventory logic? It doesn't have a "replace whole inventory"
-		# RPC publicly exposed easily.
-		# We'll rely on PlayerService saving and syncing?
-
-		# Let's assume we modified the server-side inventory object directly.
-		# We need to tell the client to refresh.
-		_sync_inventory_restored.rpc_id(player.get_multiplayer_authority(), inventory_data)
-
-	# 2. Restore XP
 	if "progression" in player and player.progression:
 		player.progression.add_xp(xp_amount)
 
-	# 3. Emit collected signal for tracking/stats
-	collected.emit(player.get_multiplayer_authority())
+	if gs and gs.inventory and gs.inventory.has_method("sync_inventory"):
+		gs.inventory.sync_inventory(peer_id)
 
-	# 4. Destroy Backpack
+	collected.emit(peer_id)
 	queue_free()
 
 
-@rpc("authority", "call_local", "reliable")
 func _sync_backpack_data(uuid: String, peer_id: int, name_str: String, xp: int) -> void:
 	owner_uuid = uuid
 	owner_peer_id = peer_id
@@ -164,27 +136,42 @@ func _sync_backpack_data(uuid: String, peer_id: int, name_str: String, xp: int) 
 	update_label()
 
 
-@rpc("authority", "call_local", "reliable")
-func _sync_inventory_restored(data_dict: Dictionary) -> void:
-	# Client side refresh
-	# Re-import data into local inventory view
-	var gs := GameManager.get_core_system("gameplay") as GameplaySvc
-	var local_inv: Inventory = (
-		gs.inventory.get_inventory(multiplayer.get_unique_id()) if gs and gs.inventory else null
-	)
-	if local_inv:
-		# This is a bit brute force, merging might be valid if they picked up stuff since respawn.
-		# But 'data_dict' is the backpack contents. We should ADD them.
-		var pack_inv: Inventory = Inventory.new()
-		pack_inv.from_dict(data_dict)
-		for slot: String in pack_inv.items:
-			local_inv.add_item(pack_inv.items[slot])
-		local_inv.inventory_changed.emit()
+func _restore_inventory(target: Inventory) -> bool:
+	if not target:
+		return false
 
+	var saved_inventory := Inventory.new()
+	saved_inventory.from_dict(inventory_data)
 
-func _spawn_effect() -> void:
-	# Optional logic for spawn particle
-	pass
+	# Merge into a copy first so a full inventory cannot partially consume the
+	# backpack. The target changes only after every item fits.
+	var merged_inventory := Inventory.new()
+	merged_inventory.from_dict(target.to_dict())
+	for slot_item: InventoryItem in saved_inventory.slots:
+		if (
+			slot_item
+			and not merged_inventory.add_item(
+				slot_item.duplicate_with_stack(slot_item.current_stack)
+			)
+		):
+			return false
+
+	for slot_name: String in Inventory.EQUIPMENT_SLOTS:
+		var equipped_item: InventoryItem = saved_inventory.equipment.get(slot_name)
+		if not equipped_item:
+			continue
+		if merged_inventory.equipment.get(slot_name):
+			if not merged_inventory.add_item(
+				equipped_item.duplicate_with_stack(equipped_item.current_stack)
+			):
+				return false
+		else:
+			merged_inventory.equip_item(
+				equipped_item.duplicate_with_stack(equipped_item.current_stack), slot_name
+			)
+
+	target.from_dict(merged_inventory.to_dict())
+	return true
 
 
 func _get_player_by_id(pid: int) -> Node:
@@ -192,3 +179,8 @@ func _get_player_by_id(pid: int) -> Node:
 		if node.get_multiplayer_authority() == pid:
 			return node
 	return null
+
+
+func _get_gameplay_service() -> GameplaySvc:
+	var gm: Node = get_node_or_null("/root/GameManager")
+	return gm.get_core_system("gameplay") as GameplaySvc if gm else null

@@ -396,6 +396,17 @@ func clear_inventory(peer_id: int) -> void:
 		_save_inventory(peer_id, inv)
 
 
+## Synchronize and persist an authoritative inventory after an external update.
+func sync_inventory(peer_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var inv: Inventory = _inventories.get(peer_id)
+	if not inv:
+		return
+	_sync_inventory_owner(peer_id, inv)
+	_save_inventory(peer_id, inv)
+
+
 # ============================================================================
 # DEBUG / CHEATS
 # ============================================================================

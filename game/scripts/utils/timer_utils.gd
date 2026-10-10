@@ -31,10 +31,12 @@ static func auto_cleanup(tree: SceneTree, node: Node, time: float) -> void:
 ## Await a timer with proper cleanup
 ## Use this instead of: await get_tree().create_timer(X).timeout
 static func wait(tree: SceneTree, time: float) -> Signal:
-	if not is_instance_valid(tree):
-		# Return a dummy signal that completes immediately
-		var dummy := Node.new()
-		dummy.tree_exited.emit()
-		dummy.free()
-		return dummy.tree_exited
-	return tree.create_timer(time).timeout
+	var target_tree: SceneTree = tree
+	if not is_instance_valid(target_tree):
+		target_tree = Engine.get_main_loop() as SceneTree
+
+	if is_instance_valid(target_tree):
+		return target_tree.create_timer(time).timeout
+
+	push_error("[TimerUtils] Cannot wait without an active SceneTree")
+	return Signal()
