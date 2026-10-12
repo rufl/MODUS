@@ -46,6 +46,15 @@ static func get_service() -> NetworkSvc:
 	return null
 
 
+## Validate a remote RPC through the authoritative network manager.
+##
+## Callers must skip this for trusted local server-side events (peer 0).
+func validate_rpc(peer_id: int, method: String, args: Array = []) -> bool:
+	if peer_id <= 0 or not network_manager or not network_manager.has_method("validate_rpc"):
+		return false
+	return network_manager.validate_rpc(peer_id, method, args)
+
+
 func _ready() -> void:
 	name = "NetworkService"
 

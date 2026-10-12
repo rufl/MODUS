@@ -102,11 +102,11 @@ func _send_input_to_server(epoch: int, input_bytes: PackedByteArray) -> void:
 	if not input_cmd or input_cmd.sequence_number <= last_processed_sequence:
 		return
 
-	# Validate input (anti-cheat)
-	var ns: Node = GameManager.get_core_system("network")
-	if ns and ns.network_manager:
-		if not ns.network_manager.validate_rpc(sender_id, "sync_position", []):
-			return
+	# Movement input is a remote client request and must fail closed if the
+	# network validation service is unavailable.
+	var ns: NetworkSvc = GameManager.get_core_system("network") as NetworkSvc
+	if sender_id <= 0 or not ns or not ns.validate_rpc(sender_id, "sync_position", []):
+		return
 
 	last_processed_sequence = input_cmd.sequence_number
 	apply_movement(input_cmd)

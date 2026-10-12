@@ -250,11 +250,12 @@ func request_pickup(pickup_path: NodePath) -> void:
 		peer_id = multiplayer.get_unique_id()
 
 	var network_service := NetworkSvc.get_service()
-	var network_manager: Node = network_service.network_manager if network_service else null
-	if network_manager and peer_id != multiplayer.get_unique_id():
-		if not network_manager.validate_rpc(peer_id, "request_pickup", [pickup_path]):
+	if peer_id != multiplayer.get_unique_id():
+		if (
+			not network_service
+			or not network_service.validate_rpc(peer_id, "request_pickup", [pickup_path])
+		):
 			return
-
 	# Validate pickup exists
 	if not _active_pickups.has(pickup_path):
 		return

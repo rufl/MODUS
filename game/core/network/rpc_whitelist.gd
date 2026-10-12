@@ -191,6 +191,24 @@ const ALLOWED_RPCS: Dictionary = {
 		"requires_validation": false,
 		"description": "Set player mode (spectator, editor)"
 	},
+	"request_assist_downed":
+	{
+		"calls_per_second": 1.0,
+		"requires_validation": false,
+		"description": "Request assistance while downed"
+	},
+	"request_spectate_target":
+	{
+		"calls_per_second": 2.0,
+		"requires_validation": false,
+		"description": "Request a spectate target"
+	},
+	"request_reconnect":
+	{
+		"calls_per_second": 1.0,
+		"requires_validation": false,
+		"description": "Request session reconnection"
+	},
 	# ========================================================================
 	# NETWORK EDITOR RPCS (Critical #12)
 	# ========================================================================

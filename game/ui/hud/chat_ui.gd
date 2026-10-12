@@ -20,7 +20,6 @@ func _ready() -> void:
 
 	input_line.text_submitted.connect(_on_text_submitted)
 	input_line.focus_entered.connect(_on_focus_entered)
-	input_line.focus_exited.connect(_on_focus_exited)
 
 	# Initial state
 	input_line.release_focus()
@@ -86,7 +85,3 @@ func _process(delta: float) -> void:
 
 func _on_focus_entered() -> void:
 	panel.modulate.a = 1.0
-
-
-func _on_focus_exited() -> void:
-	pass  # Handle elsewhere

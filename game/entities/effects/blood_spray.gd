@@ -33,13 +33,6 @@ func spawn_at(pos: Vector3, dir: Vector3, intensity: float = 1.0) -> void:
 	start_cleanup()
 
 
-func _ready() -> void:
-	# Particles configured in scene
-	# one_shot = true
-	# emitting = false (initially, triggered by spawn_at)
-	pass
-
-
 func start_cleanup() -> void:
 	# Ensure emitting is true
 	emitting = true

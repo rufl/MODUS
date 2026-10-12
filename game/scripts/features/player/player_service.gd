@@ -196,14 +196,11 @@ func _request_reconnect_rpc(token: String) -> void:
 
 	var new_peer_id: int = multiplayer.get_remote_sender_id()
 
-	# Rate limit reconnection attempts
+	# Reconnect attempts must be rate-limited and fail closed.
 	var gm: Node = get_node_or_null("/root/GameManager")
-	if gm:
-		var ns: Variant = gm.get_core_system("network")
-		if ns and ns is NetworkSvc:
-			if ns.network_manager and ns.network_manager.has_method("validate_rpc"):
-				if not ns.network_manager.validate_rpc(new_peer_id, "request_reconnect", []):
-					return
+	var ns := gm.get_core_system("network") as NetworkSvc if gm else null
+	if not ns or not ns.validate_rpc(new_peer_id, "request_reconnect", []):
+		return
 
 	if not _pending_sessions.has(token):
 		_reconnect_result.rpc_id(new_peer_id, false, "Invalid or expired session")

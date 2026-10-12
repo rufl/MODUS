@@ -490,16 +490,16 @@ func register_kill(killer_id: int, victim_id: int, damage_source: String = "") -
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 
-	# Validate RPC
 	var sender_id: int = multiplayer.get_remote_sender_id()
 
-	# RPC Rate Limiting Validation
+	# Validate remote RPCs through the network service; peer 0 is a local
+	# server-side event and does not need the remote validator.
 	var gm: Node = get_node_or_null("/root/GameManager")
-	var network_mgr: Node = gm.get_core_system("network") if gm else null
-	if network_mgr and network_mgr.has_method("validate_rpc"):
+	var network_svc := gm.get_core_system("network") as NetworkSvc if gm else null
+	if sender_id > 0:
 		var args: Array = [killer_id, victim_id, damage_source]
-		if not network_mgr.validate_rpc(sender_id, "register_kill", args):
-			push_warning("[Match] Rate limit exceeded for peer %d" % sender_id)
+		if not network_svc or not network_svc.validate_rpc(sender_id, "register_kill", args):
+			push_warning("[Match] RPC validation rejected peer %d" % sender_id)
 			return
 
 	# sender_id=0 is valid for local server calls (event handlers)
@@ -610,15 +610,20 @@ func update_player_status(peer_id: int, health: int, state: int) -> void:
 		push_warning("Peer %d tried to update status for %d - denied" % [sender_id, peer_id])
 		return
 
-	# RPC Rate Limiting Validation
+	# RPC validation is mandatory for remote status updates.
 	var gm: Node = get_node_or_null("/root/GameManager")
-	var network_mgr: Node = gm.get_core_system("network") if gm else null
-	if sender_id != 0 and network_mgr and network_mgr.has_method("validate_rpc"):
-		if not network_mgr.validate_rpc(
-			sender_id, "update_player_status", [peer_id, health, state]
-		):
-			push_warning("[Match] Rate limit exceeded for peer %d" % sender_id)
-			return
+	var network_svc := gm.get_core_system("network") as NetworkSvc if gm else null
+	if (
+		sender_id != 0
+		and (
+			not network_svc
+			or not network_svc.validate_rpc(
+				sender_id, "update_player_status", [peer_id, health, state]
+			)
+		)
+	):
+		push_warning("[Match] RPC validation rejected peer %d" % sender_id)
+		return
 
 	_update_local_player_status(peer_id, health, state)
 

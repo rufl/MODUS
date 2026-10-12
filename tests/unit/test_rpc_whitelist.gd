@@ -109,6 +109,17 @@ func test_critical_issue_12_rpcs_present() -> void:
 	# Player State Manager RPCs
 	assert_true(RPCWhitelist.is_allowed("set_player_state"), "set_player_state should be allowed")
 	assert_true(RPCWhitelist.is_allowed("set_player_mode"), "set_player_mode should be allowed")
+	assert_true(
+		RPCWhitelist.is_allowed("request_assist_downed"),
+		"request_assist_downed should be rate limited"
+	)
+	assert_true(
+		RPCWhitelist.is_allowed("request_spectate_target"),
+		"request_spectate_target should be rate limited"
+	)
+	assert_true(
+		RPCWhitelist.is_allowed("request_reconnect"), "request_reconnect should be rate limited"
+	)
 
 	# Network Editor RPCs
 	assert_true(RPCWhitelist.is_allowed("place_block"), "place_block should be allowed")

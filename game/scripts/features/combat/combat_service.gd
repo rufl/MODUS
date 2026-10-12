@@ -191,13 +191,26 @@ func request_damage(
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 
-	# Validate via NetworkService.network_manager
+	# Validate remote requests through NetworkService. Local server-side calls use peer 0.
 	var gm_net: Node = get_node_or_null("/root/GameManager")
 	if not gm_net:
 		return
 	var ns := gm_net.get_core_system("network") as NetworkSvc
-	var mgr: Node = ns.network_manager if ns else null
-	if mgr and not mgr.validate_rpc(sender_id, "request_damage", [25.0, sender_id, _source_pos]):
+	if (
+		sender_id > 0
+		and (
+			not ns
+			or not ns.validate_rpc(sender_id, "request_damage", [amount, sender_id, _source_pos])
+		)
+	):
+		return
+
+	# Security: Cap maximum damage and reject malformed floating-point payloads.
+	if not is_finite(amount) or amount > MAX_DAMAGE:
+		push_warning("[Combat] Rejected excessive or non-finite val from %d" % sender_id)
+		return
+	if amount < 0:
+		push_warning("[Combat] Rejected negative val: %.1f from %d" % [amount, sender_id])
 		return
 
 	# Validate sender state (Spectators/Dead players can't deal damage)
@@ -211,14 +224,6 @@ func request_damage(
 			)
 		return
 
-	# Security: Cap maximum damage
-	if amount > MAX_DAMAGE:
-		push_warning("[Combat] Rejected excessive val: %.1f from %d" % [amount, sender_id])
-		return
-	if amount < 0:
-		push_warning("[Combat] Rejected negative val: %.1f from %d" % [amount, sender_id])
-		return
-
 	# Find entities
 	var target_node: Node = instance_from_id(target_id)
 	var source_node: Node = _find_player_by_id(sender_id)
@@ -230,18 +235,12 @@ func request_damage(
 		return
 	# This endpoint serves the unarmed melee input, never client-authored damage.
 	amount = 25.0
-	if (
-		target_node is not Node3D
-		or source_node.global_position.distance_to(target_node.global_position) > 3.5
-	):
+	if not is_instance_valid(target_node) or not target_node is Node3D:
+		var logger_target: Node = gm_net.get_core_system("logger")
+		if logger_target:
+			logger_target.warning("[Combat] Invalid target ID: %d" % target_id, "Combat")
 		return
-
-	if not is_instance_valid(target_node):
-		var gm_target: Node = get_node_or_null("/root/GameManager")
-		if gm_target:
-			var logger_check: Node = gm_target.get_core_system("logger")
-			if logger_check:
-				logger_check.warning("[Combat] Invalid target ID: %d" % target_id, "Combat")
+	if source_node.global_position.distance_to(target_node.global_position) > 3.5:
 		return
 
 	# Apply damage on server
@@ -402,7 +401,7 @@ func request_melee_hit(target_name: String) -> void:
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 
-	# Rate Limit via NetworkManager
+	# Rate limit remote requests through NetworkService.
 	var gm_rate: Node = get_node_or_null("/root/GameManager")
 	var ns := gm_rate.get_core_system("network") as NetworkSvc if gm_rate else null
 
@@ -417,10 +416,12 @@ func request_melee_hit(target_name: String) -> void:
 	if knife_index != -1:
 		damage = weapons.inventory.weapons[knife_index].damage
 	if (
-		ns
-		and ns.network_manager
-		and not ns.network_manager.validate_rpc(
-			sender_id, "request_damage", [damage, sender_id, player.global_position]
+		sender_id > 0
+		and (
+			not ns
+			or not ns.validate_rpc(
+				sender_id, "request_damage", [damage, sender_id, player.global_position]
+			)
 		)
 	):
 		return
@@ -483,16 +484,21 @@ func request_fire(origin: Vector3, direction: Vector3, weapon_index: int) -> voi
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 
-	# Validation via NetworkService.network_manager
+	# Validate remote requests through NetworkService.
 	var gm_fire: Node = get_node_or_null("/root/GameManager")
 	if not gm_fire:
 		return
 	var ns_inst := gm_fire.get_core_system("network") as NetworkSvc
-	if ns_inst and ns_inst.network_manager:
-		if not ns_inst.network_manager.validate_rpc(
-			sender_id, "request_shoot", [origin, direction, weapon_index]
-		):
-			return
+	if (
+		sender_id > 0
+		and (
+			not ns_inst
+			or not ns_inst.validate_rpc(
+				sender_id, "request_shoot", [origin, direction, weapon_index]
+			)
+		)
+	):
+		return
 
 	# Validate sender state
 	if _is_player_in_special_mode(sender_id):

@@ -25,7 +25,6 @@ func _ready() -> void:
 	var ui_svc: Node = GameManager.get_core_system("ui")
 	if ui_svc:
 		ui_svc.hud_settings_changed.connect(_on_hud_settings_changed)
-		ui_svc.theme_changed.connect(_on_theme_changed)
 
 	# Auto-find local player after scene is ready
 	call_deferred("_find_and_setup_player")
@@ -39,8 +38,6 @@ func _exit_tree() -> void:
 	if ui_svc:
 		if ui_svc.hud_settings_changed.is_connected(_on_hud_settings_changed):
 			ui_svc.hud_settings_changed.disconnect(_on_hud_settings_changed)
-		if ui_svc.theme_changed.is_connected(_on_theme_changed):
-			ui_svc.theme_changed.disconnect(_on_theme_changed)
 
 	# 2. EventBus subscriptions - unsubscribe from GameManager events
 	if _ammo_changed_callback.is_valid():
@@ -76,12 +73,6 @@ func _setup_ui_from_config() -> void:
 
 func _on_hud_settings_changed() -> void:
 	_setup_ui_from_config()
-
-
-func _on_theme_changed() -> void:
-	# ThemeManager updates shared theme resources; this HUD has no local styling.
-	if weapon_label:
-		pass
 
 
 func _update_visibility() -> void:

@@ -164,15 +164,13 @@ func request_revive_start(reviver: NodePath) -> void:
 			or reviver_node.get_multiplayer_authority() != sender_id
 		):
 			return
-		var gm: Node = get_node_or_null("/root/GameManager")
-		var network_svc: Node = gm.get_core_system("network") if gm else null
-		if network_svc and network_svc.has_method("get"):
-			var network_mgr: Node = network_svc.network_manager
-			if (
-				network_mgr
-				and not network_mgr.validate_rpc(sender_id, "request_revive_start", [reviver])
-			):
-				return
+		var network_svc := GameManager.get_core_system("network") as NetworkSvc
+		if (
+			not network_svc
+			or not network_svc.validate_rpc(sender_id, "request_revive_start", [victim.get_path()])
+		):
+			return
+
 	elif multiplayer.has_multiplayer_peer():
 		return
 
@@ -215,15 +213,13 @@ func request_revive_stop() -> void:
 		var reviver_node := get_node_or_null(reviver_path)
 		if not reviver_node or reviver_node.get_multiplayer_authority() != sender_id:
 			return
-		var network_svc: Node = GameManager.get_core_system("network")
+		var network_svc := GameManager.get_core_system("network") as NetworkSvc
 		if (
-			network_svc
-			and network_svc.network_manager
-			and not network_svc.network_manager.validate_rpc(
-				sender_id, "request_revive_stop", [get_path()]
-			)
+			not network_svc
+			or not network_svc.validate_rpc(sender_id, "request_revive_stop", [get_path()])
 		):
 			return
+
 	is_being_revived = false
 	reviver_path = NodePath()
 	_revive_in_progress = false
@@ -266,13 +262,10 @@ func request_bleedout_immediate() -> void:
 	if sender_id > 0:
 		if not victim or victim.get_multiplayer_authority() != sender_id:
 			return
-		var network_svc: Node = GameManager.get_core_system("network")
+		var network_svc := GameManager.get_core_system("network") as NetworkSvc
 		if (
-			network_svc
-			and network_svc.network_manager
-			and not network_svc.network_manager.validate_rpc(
-				sender_id, "request_bleedout_immediate", [get_path()]
-			)
+			not network_svc
+			or not network_svc.validate_rpc(sender_id, "request_bleedout_immediate", [get_path()])
 		):
 			return
 	elif multiplayer.has_multiplayer_peer():

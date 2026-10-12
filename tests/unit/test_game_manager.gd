@@ -82,6 +82,17 @@ func test_register_event() -> void:
 	assert_true(true, "Event registration should succeed")
 
 
+func test_core_loot_events_are_registered() -> void:
+	assert_true(
+		game_manager._event_listeners.has("corpse_looted"),
+		"Corpse loot events should be registered before gameplay emits them"
+	)
+	assert_true(
+		game_manager._event_listeners.has("stash_discovered"),
+		"Stash discovery events should be registered before gameplay emits them"
+	)
+
+
 func test_subscribe_and_emit_event() -> void:
 	var test_result: Dictionary = {"called": false, "data": {}}
 

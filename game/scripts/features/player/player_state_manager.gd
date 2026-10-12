@@ -218,14 +218,13 @@ func request_set_mode(new_mode: int) -> void:
 	if sender_id <= 0:
 		return
 
-	# RPC Rate Limiting Validation
-	var network_mgr: Node = GameManager.get_core_system("network")
-	if network_mgr and network_mgr.has_method("validate_rpc"):
-		if not network_mgr.validate_rpc(sender_id, "set_player_mode", [new_mode]):
-			GameManager.get_core_system("logger").warn(
-				"[PlayerState] Rate limit exceeded for peer %d" % sender_id, "PlayerState"
-			)
-			return
+	# Remote state changes must fail closed when network validation is unavailable.
+	var network_svc := GameManager.get_core_system("network") as NetworkSvc
+	if not network_svc or not network_svc.validate_rpc(sender_id, "set_player_mode", [new_mode]):
+		GameManager.get_core_system("logger").warn(
+			"[PlayerState] RPC validation rejected peer %d" % sender_id, "PlayerState"
+		)
+		return
 
 	set_player_mode(sender_id, new_mode)
 
@@ -244,14 +243,13 @@ func request_set_state(new_state: int) -> void:
 		return
 
 	# RPC rate limiting validation
-	var network_mgr: Node = GameManager.get_core_system("network")
-	if network_mgr and network_mgr.has_method("validate_rpc"):
-		if not network_mgr.validate_rpc(sender_id, "set_player_state", [new_state]):
-			GameManager.get_core_system("logger").warn(
-				"[PlayerState] Rate limit exceeded for peer %d" % sender_id, "PlayerState"
-			)
-			return
-
+	# Remote state changes must fail closed when network validation is unavailable.
+	var network_svc := GameManager.get_core_system("network") as NetworkSvc
+	if not network_svc or not network_svc.validate_rpc(sender_id, "set_player_state", [new_state]):
+		GameManager.get_core_system("logger").warn(
+			"[PlayerState] RPC validation rejected peer %d" % sender_id, "PlayerState"
+		)
+		return
 	set_player_state(sender_id, new_state)
 
 
@@ -262,13 +260,10 @@ func request_assist_downed() -> void:
 	var sender_id: int = multiplayer.get_remote_sender_id()
 	if sender_id <= 0 or get_player_state(sender_id) != Enums.PlayerState.DOWNED:
 		return
-	var network_mgr: Node = GameManager.get_core_system("network")
-	if (
-		network_mgr
-		and network_mgr.has_method("validate_rpc")
-		and not network_mgr.validate_rpc(sender_id, "request_assist_downed", [])
-	):
+	var network_svc := GameManager.get_core_system("network") as NetworkSvc
+	if not network_svc or not network_svc.validate_rpc(sender_id, "request_assist_downed", []):
 		return
+
 	GameManager.get_core_system("logger").info(
 		"Player %d requested assistance!" % sender_id, "PlayerState"
 	)
@@ -281,11 +276,10 @@ func request_spectate_target(target_id: int) -> void:
 	var sender_id: int = multiplayer.get_remote_sender_id()
 	if sender_id <= 0 or not _player_states.has(target_id):
 		return
-	var network_mgr: Node = GameManager.get_core_system("network")
+	var network_svc := GameManager.get_core_system("network") as NetworkSvc
 	if (
-		network_mgr
-		and network_mgr.has_method("validate_rpc")
-		and not network_mgr.validate_rpc(sender_id, "request_spectate_target", [target_id])
+		not network_svc
+		or not network_svc.validate_rpc(sender_id, "request_spectate_target", [target_id])
 	):
 		return
 	GameManager.get_core_system("logger").info(

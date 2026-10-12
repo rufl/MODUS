@@ -405,6 +405,8 @@ func _register_core_events() -> void:
 	register_event("item_picked_up")
 	register_event("loot_spawned")
 	register_event("xp_gained")
+	register_event("corpse_looted")
+	register_event("stash_discovered")
 
 	# Weapon events
 	register_event("ammo_changed")

@@ -65,11 +65,9 @@ func _validate_inventory_rpc(sender_id: int, method: String, args: Array) -> boo
 	if not multiplayer.is_server() or sender_id <= 0:
 		return false
 	var network_svc := GameManager.get_core_system("network") as NetworkSvc
-	return (
-		not network_svc
-		or not network_svc.network_manager
-		or network_svc.network_manager.validate_rpc(sender_id, method, args)
-	)
+	if not network_svc:
+		return false
+	return network_svc.validate_rpc(sender_id, method, args)
 
 
 ## Give item to another player (client request)
@@ -294,11 +292,8 @@ func _request_use_consumable(from_slot: int) -> void:
 
 	var peer_id: int = multiplayer.get_remote_sender_id()
 
-	# Apply the existing item-use whitelist and rate limit.
-	var ns := GameManager.get_core_system("network") as NetworkSvc
-	if ns and ns.network_manager:
-		if not ns.network_manager.validate_rpc(peer_id, "request_use_item", []):
-			return
+	if not _validate_inventory_rpc(peer_id, "request_use_item", []):
+		return
 
 	_process_use_consumable(peer_id, from_slot)
 
@@ -466,9 +461,9 @@ func _process_give_debug_items(peer_id: int) -> void:
 			item.id = weapon_id
 			item.display_name = w_data.get("name", weapon_id)
 			item.item_type = InventoryItem.ItemType.WEAPON
-			# Hacky: Try to determine slot
-			var slot: String = w_data.get("slot_type", "weapon_primary")
-			item.equip_slot = slot
+			# Leave untyped weapons flexible; authored slot metadata remains authoritative.
+			var slot_type: String = str(w_data.get("slot_type", "")).strip_edges()
+			item.equip_slot = slot_type if slot_type in Inventory.EQUIPMENT_SLOTS else ""
 
 			inv.add_item(item)
 
@@ -527,11 +522,8 @@ func _request_move_item(from_slot: int, to_slot: int) -> void:
 
 	var sender_id: int = multiplayer.get_remote_sender_id()
 
-	# Rate Limit
-	var ns := GameManager.get_core_system("network") as NetworkSvc
-	if ns and ns.network_manager:
-		if not ns.network_manager.validate_rpc(sender_id, "move_item", []):
-			return
+	if not _validate_inventory_rpc(sender_id, "move_item", []):
+		return
 
 	_process_move_item(sender_id, from_slot, to_slot)
 

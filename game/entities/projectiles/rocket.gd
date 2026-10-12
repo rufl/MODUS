@@ -174,10 +174,6 @@ func explode(hit_pos: Vector3, impact_normal: Vector3 = Vector3.ZERO) -> void:
 					if "damage_source_id" in exp_instance:
 						exp_instance.damage_source_id = shooter_id
 					exp_instance.explode(hit_pos, impact_normal, -1.0)
-	else:
-		# Client prediction or just wait for server RPC?
-		# Usually best to wait for server-authoritative explosion to avoid ghosts.
-		pass
 
 	# Wait for trails to finish then delete
 	set_physics_process(false)

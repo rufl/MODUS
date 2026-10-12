@@ -488,7 +488,7 @@ func validate_rpc(peer_id: int, method: String, args: Array = []) -> bool:
 			"_validate_shoot_request":
 				return _validate_shoot_request(peer_id, args)
 			"_validate_damage_request":
-				return _validate_damage_request(args)
+				return _validate_damage_request(peer_id, args)
 			"_validate_weapon_switch":
 				return _validate_weapon_switch(peer_id, args)
 			"_validate_pickup_request":
@@ -892,7 +892,7 @@ func _validate_weapon_switch(peer_id: int, args: Array) -> bool:
 ## Validate damage request
 
 
-func _validate_damage_request(args: Array) -> bool:
+func _validate_damage_request(peer_id: int, args: Array) -> bool:
 	# Server should handle damage, not clients
 	if not multiplayer.is_server():
 		return false
@@ -920,13 +920,9 @@ func _validate_damage_request(args: Array) -> bool:
 		return false
 
 	# 2. Attacker Validation
-	# Ensure the peer sending the request is the one claiming to be the attacker
-	# OR the server is the one sending it (peer_id 1)
-	var sender_id: int = multiplayer.get_remote_sender_id()
-
-	if sender_id != 1 and sender_id != attacker_id:
-		# Client tried to damage on behalf of someone else?
-		push_warning("[Network] Peer %d tried to claim damage from %d" % [sender_id, attacker_id])
+	# Ensure the peer sending the request is the one claiming to be the attacker.
+	if peer_id != 1 and peer_id != attacker_id:
+		push_warning("[Network] Peer %d tried to claim damage from %d" % [peer_id, attacker_id])
 		return false
 
 	# 3. Entity Existence Check
@@ -1052,7 +1048,6 @@ func _validate_pickup_request(peer_id: int, args: Array) -> bool:
 	return true
 
 
-
 ## Validate revive request (CRITICAL #7 - Revive Exploit Fix)
 ## This prevents the race condition where players can revive from across the map
 
@@ -1071,7 +1066,6 @@ func _validate_revive_request(peer_id: int, args: Array) -> bool:
 		return false
 	if not reviver is Node3D:
 		return false
-
 
 	# Check if reviver is alive
 	if reviver.has_method("is_dead") and reviver.is_dead:
@@ -1104,7 +1098,6 @@ func _validate_revive_request(peer_id: int, args: Array) -> bool:
 	if not downed_player or not downed_player is Node3D:
 		push_warning("[Network] Revive target is missing or not 3D: %s" % downed_player_path)
 		return false
-
 
 	# SECURITY FIX: Use server-authoritative position only, no tolerance for "lag"
 	# Server knows the truth - client position claims cannot be trusted

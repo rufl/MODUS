@@ -40,15 +40,10 @@ func request_weapon_switch(index: int) -> void:
 
 	var ns := GameManager.get_core_system("network") as NetworkSvc
 
-	# CRITICAL: Validate RPC with correct method name
-	if (
-		ns
-		and ns.network_manager
-		and not ns.network_manager.validate_rpc(sender_id, "request_weapon_switch", [index])
-	):
-		# Rate limit exceeded - reject
+	# Weapon switches are remote client requests; missing validation is a reject.
+	if sender_id <= 0 or not ns or not ns.validate_rpc(sender_id, "request_weapon_switch", [index]):
 		reject_weapon_switch.rpc_id(
-			sender_id, _weapon_inventory.current_weapon_index, "Rate limit exceeded"
+			sender_id, _weapon_inventory.current_weapon_index, "Rate limit or validation failed"
 		)
 		_switch_in_progress = false
 		return

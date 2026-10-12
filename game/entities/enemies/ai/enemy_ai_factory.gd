@@ -40,6 +40,10 @@ static func _resolve_behavior(data: Dictionary) -> String:
 	var ai_config: Dictionary = data.get("ai_config", {})
 	var behavior := str(ai_config.get("behavior", "")).strip_edges().to_lower()
 	var role := str(data.get("role", "")).strip_edges().to_lower()
+	var abilities: Dictionary = data.get("abilities", {})
+
+	if abilities.get("rally_allies", false):
+		return "rally"
 
 	# EnemyData historically emits "aggressive" for every role. Prefer the
 	# authored support role in that case so support enemies do not attack by
@@ -116,9 +120,8 @@ static func _add_behavior_states(
 			# idle or patrol rather than an implicit aggressive state.
 			pass
 		"rally":
-			push_error(
-				"[EnemyAIFactory] Rally behavior is unsupported: no rally state exists; using idle"
-			)
+			# RallyState is configured from rally_allies in _add_ability_states.
+			pass
 		_:
 			push_error("[EnemyAIFactory] Unsupported enemy behavior '%s'; using idle" % behavior)
 
@@ -161,9 +164,11 @@ static func _add_ability_states(controller: EnemyAIController, abilities: Dictio
 		controller.add_child(specials)
 
 	if abilities.get("rally_allies", false):
-		push_error(
-			"[EnemyAIFactory] rally_allies is unsupported: no rally state exists; ally buffs disabled"
-		)
+		var rally := EnemyRallyState.new()
+		rally.name = "RallyState"
+		rally.rally_radius = clampf(float(abilities.get("rally_radius", 10.0)), 0.0, 50.0)
+		rally.damage_multiplier = clampf(float(abilities.get("damage_buff", 1.25)), 1.0, 4.0)
+		controller.add_child(rally)
 
 
 static func _add_flee_state(controller: EnemyAIController, _flee_threshold: float) -> void:
@@ -174,6 +179,9 @@ static func _add_flee_state(controller: EnemyAIController, _flee_threshold: floa
 
 
 static func _set_initial_state(controller: EnemyAIController, behavior: String) -> void:
+	if behavior == "rally" and controller.has_node("RallyState"):
+		controller.initial_state = controller.get_node("RallyState")
+		return
 	if behavior in ["healer", "support"] and controller.has_node("HealerState"):
 		controller.initial_state = controller.get_node("HealerState")
 		return

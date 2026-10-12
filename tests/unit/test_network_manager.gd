@@ -29,7 +29,6 @@ class RateLimitProbe:
 		return now_usec
 
 
-
 class ValidationProbe:
 	extends NetworkManager
 
@@ -37,7 +36,6 @@ class ValidationProbe:
 
 	func _get_player_by_peer_id(_peer_id: int) -> Node:
 		return player
-
 
 
 func before_each():
@@ -64,6 +62,25 @@ func test_service_exists():
 	# Test that NetworkService is accessible
 	var ns := NetworkSvc.get_service()
 	assert_not_null(ns, "NetworkSvc.get_service() should return valid service")
+
+
+func test_network_service_forwards_validation_and_fails_closed() -> void:
+	var network_svc := NetworkSvc.get_service()
+	assert_not_null(network_svc, "NetworkSvc should be available")
+	if not network_svc:
+		return
+
+	assert_true(
+		network_svc.validate_rpc(65432, "request_reconnect", []),
+		"NetworkSvc should forward known RPC validation to NetworkManager"
+	)
+
+	var unavailable := NetworkSvc.new()
+	assert_false(
+		unavailable.validate_rpc(65432, "request_reconnect", []),
+		"NetworkSvc should reject remote RPCs without a NetworkManager"
+	)
+	unavailable.free()
 
 
 func test_autoload_exists():
@@ -338,8 +355,16 @@ func test_malformed_authority_payloads_fail_closed() -> void:
 		"Pickup validation must reject non-NodePath payloads"
 	)
 	assert_false(
-		probe._validate_damage_request([NAN, 0, Vector3.ZERO]),
+		probe._validate_damage_request(2, [NAN, 0, Vector3.ZERO]),
 		"Damage validation must reject non-finite amounts"
+	)
+	assert_false(
+		probe.validate_rpc(3, "request_damage", [25.0, 2, Vector3.ZERO]),
+		"Damage validation must bind the claimed attacker to the requesting peer"
+	)
+	assert_true(
+		probe.validate_rpc(2, "request_damage", [25.0, 2, Vector3.ZERO]),
+		"Damage validation should accept the requesting peer's own claim"
 	)
 	assert_false(
 		probe._validate_revive_request(2, [plain_target.get_path()]),

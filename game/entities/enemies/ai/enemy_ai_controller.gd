@@ -121,6 +121,10 @@ func _on_target_lost(old_target: Node3D) -> void:
 	target = null
 
 	# Return to appropriate default state
+	var behavior := str(get_meta("configured_behavior", "aggressive"))
+	if behavior == "rally" and has_node("RallyState"):
+		change_state(get_node("RallyState"))
+		return
 	# Priority: Patrol > Idle > stay in current state
 	if has_node("PatrolState"):
 		change_state(get_node("PatrolState"))

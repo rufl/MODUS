@@ -24,9 +24,6 @@ const PROP_SCENES: Dictionary = {
 @export var loot_table_override: String = ""  # Override prop's default loot table
 @export var health_multiplier: float = 1.0
 @export var weapon_type: String = "pistol"  # For weapon racks
-@export_group("Debug")
-@export var show_spawn_point: bool = true
-@export var spawn_point_color: Color = Color(0.0, 1.0, 0.0, 0.5)
 
 var spawned_prop: Node3D = null
 var _startup_pending: bool = false
@@ -202,22 +199,6 @@ func _on_spawned_prop_tree_exiting(prop: Node3D) -> void:
 # =============================================================================
 # EDITOR VISUALIZATION
 # =============================================================================
-
-
-func _draw() -> void:
-	# Editor gizmos own visualization; this node has no custom draw primitive.
-	pass
-
-
-func _process(_delta: float) -> void:
-	if not Engine.is_editor_hint():
-		return
-
-	if not show_spawn_point:
-		return
-
-	# Editor would use a debug draw or gizmo here
-	# This is just a placeholder for editor visibility
 
 
 func _get_configuration_warnings() -> PackedStringArray:

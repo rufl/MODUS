@@ -94,14 +94,13 @@ func _server_receive_message(message: String) -> void:
 	if sender_id == 0:
 		sender_id = 1  # Local host
 
-	# RPC Rate Limiting Validation
-	var network_mgr: Node = GameManager.get_core_system("network")
-	if network_mgr and network_mgr.has_method("validate_rpc"):
-		if not network_mgr.validate_rpc(sender_id, "send_chat_message", [message]):
-			GameManager.get_core_system("logger").warn(
-				"[Chat] Rate limit exceeded for peer %d" % sender_id, "Chat"
-			)
-			return
+	# Chat requests must fail closed if the network validation service is unavailable.
+	var network_svc := GameManager.get_core_system("network") as NetworkSvc
+	if not network_svc or not network_svc.validate_rpc(sender_id, "send_chat_message", [message]):
+		GameManager.get_core_system("logger").warn(
+			"[Chat] RPC validation rejected peer %d" % sender_id, "Chat"
+		)
+		return
 
 	# Get player name via GameplayService.match_service.
 	var sender_name: String = "Unknown"

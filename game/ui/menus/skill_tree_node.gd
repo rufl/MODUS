@@ -15,7 +15,6 @@ const COLOR_MAXED = Color(0.9, 0.6, 0.2)  # For multi-point skills if we had the
 @export var is_circle: bool = true
 
 var _bg_rect: Control  # Changed from ColorRect to Panel (Control)
-var _border: ReferenceRect
 var _icon: TextureRect
 var _label: Label
 var _current_state: int = 0  # 0=locked, 1=available, 2=unlocked
@@ -92,12 +91,6 @@ func _setup_visuals() -> void:
 	_icon.offset_bottom = -16
 	add_child(_icon)
 
-	# Selection/Hover Border (Ring)
-	_border = ReferenceRect.new()  # Using RefRect as placeholder or switch to another Panel
-	# Better to use a separate Panel for ring or just modify style border
-	# Let's use the style border for state, and a separate highlight for selection
-	# Keeping _border variable but using it as a Highlight Ring
-
 	_label = Label.new()
 	_label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	_label.offset_top = 5
@@ -148,10 +141,6 @@ func set_state(unlocked: bool, available: bool) -> void:
 		style.border_width_bottom = 1
 		_current_state = 0
 		_label.modulate = Color(1, 1, 1, 0.5)
-
-
-func _draw() -> void:
-	pass  # No custom draw needed with StyleBox
 
 
 func _on_mouse_entered() -> void:

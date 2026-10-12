@@ -116,11 +116,6 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	# Check for shift key to split stack
 	var is_split: bool = Input.is_key_pressed(KEY_SHIFT) and item.current_stack > 1
 
-	if is_split:
-		# We don't actually modify the inventory yet, just the drag data
-		# But visually we should show half stack
-		pass  # Logic handled in drop or specific split handler
-
 	is_dragging = true
 
 	# Create drag preview

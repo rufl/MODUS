@@ -109,6 +109,48 @@ func test_ai_controller_has_initial_state() -> void:
 	assert_not_null(ai_controller.current_state, "AI controller should have current state set")
 
 
+func test_rally_enemy_buffs_nearby_allies_and_restores_on_exit() -> void:
+	var ally_combat := combat_component
+	assert_not_null(ally_combat, "Baseline enemy should have a combat component")
+	if not ally_combat:
+		return
+	var base_damage: float = ally_combat.attack_damage
+
+	var rally_enemy := Enemy.new()
+	rally_enemy.name = "RallyTestEnemy"
+	rally_enemy.enemy_id = "rally"
+	rally_enemy.position = Vector3(2.0, 0.0, 0.0)
+	add_child_autofree(rally_enemy)
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var rally_controller := rally_enemy.get_node_or_null("EnemyAIController") as EnemyAIController
+	assert_not_null(rally_controller, "Rally enemy should have an AI controller")
+	if not rally_controller:
+		return
+	assert_not_null(
+		rally_controller.get_node_or_null("RallyState"),
+		"Rally enemy should build a concrete RallyState"
+	)
+	assert_eq(
+		rally_controller.current_state.name, "RallyState", "Rally enemy should start in RallyState"
+	)
+	assert_almost_eq(
+		ally_combat.attack_damage,
+		base_damage * 1.25,
+		0.01,
+		"Nearby allies should receive the configured rally damage buff"
+	)
+
+	rally_controller.change_state(rally_controller.get_node("IdleState"))
+	assert_almost_eq(
+		ally_combat.attack_damage,
+		base_damage,
+		0.01,
+		"Leaving RallyState should remove its temporary buff"
+	)
+
+
 func test_ai_controller_can_change_state() -> void:
 	assert_not_null(ai_controller, "AI controller should exist")
 

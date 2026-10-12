@@ -2,9 +2,9 @@
 > **Documentation status: maintained reference.** This page records a dated local invocation boundary; published readiness remains consolidated in [Current Status](CURRENT_STATUS.md).
 
 **Generated:** 2026-10-12
-**Started:** 2026-10-12T10:11:33Z
+**Started:** 2026-10-12T10:58:43Z
 **Status:** PASS
-**Port:** 47189
+**Port:** 53475
 
 ## Result
 
