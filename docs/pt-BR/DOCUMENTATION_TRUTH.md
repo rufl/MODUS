@@ -65,3 +65,5 @@ bash tools/check_project_truth.sh
 bash tools/check_headless_runner_manifest.sh
 tools/generate_provenance_ledger.py --check
 ```
+
+`tools/check_project_truth.sh` também valida o lock do toolchain e as referências de recursos Godot versionadas; um clone limpo pode verificar esses contratos sem importar o cache `.godot`.

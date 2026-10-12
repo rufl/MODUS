@@ -15,7 +15,7 @@ const RPC_WHITELIST = preload("res://game/core/network/rpc_whitelist.gd")
 const MAX_PLAYER_SPEED: float = 10.0  # Maximum player movement speed (m/s)
 const MAX_REVIVE_DISTANCE: float = 3.0  # Maximum distance for reviving (meters)
 const AIM_SNAP_THRESHOLD_DEG: float = 30.0  # Aim snap detection threshold (degrees)
-const MAX_WEAPON_INDEX: int = 8  # Maximum weapon slot index (0-8 = 9 weapons)
+const MAX_WEAPON_INDEX: int = 10  # Exclusive upper bound for the ten configured weapon slots
 const MAX_DAMAGE_AMOUNT: float = 1000.0  # Hard cap on damage per hit
 const MAX_PICKUP_DISTANCE: float = 5.0  # Maximum distance for item pickup (meters)
 
@@ -434,6 +434,10 @@ func add_rate_limit(method_name: String, calls_per_second: float, burst_capacity
 
 
 func validate_rpc(peer_id: int, method: String, args: Array = []) -> bool:
+	if peer_id <= 0:
+		push_warning("[Security] Invalid peer ID %d for RPC '%s'" % [peer_id, method])
+		return false
+
 	# SECURITY FIX: Only allow disabling validation in debug builds
 	if not _validation_enabled:
 		if OS.is_debug_build() and OS.has_feature("editor"):
@@ -756,7 +760,7 @@ func _validate_shoot_request(peer_id: int, args: Array) -> bool:
 		push_error("[Security] Invalid shoot request: direction too short")
 		return false
 
-	if weapon_index < 0 or weapon_index >= MAX_WEAPON_INDEX:  # Max 9 weapons (0-8)
+	if weapon_index < 0 or weapon_index >= MAX_WEAPON_INDEX:
 		push_error("[Security] Invalid shoot request: weapon_index out of range")
 		return false
 
@@ -866,6 +870,9 @@ func _validate_shoot_request(peer_id: int, args: Array) -> bool:
 func _validate_weapon_switch(peer_id: int, args: Array) -> bool:
 	if args.size() < 1:
 		return false
+	if not args[0] is int:
+		return false
+
 	var index: int = args[0]
 
 	var player: Node = _get_player_by_peer_id(peer_id)
@@ -903,6 +910,9 @@ func _validate_damage_request(args: Array) -> bool:
 		return false
 
 	var amount: float = float(args[0])
+	if not is_finite(amount):
+		return false
+
 	var attacker_id: int = args[1]
 	# 1. Damage Cap Check
 	if amount < 0 or amount > MAX_DAMAGE_AMOUNT:  # Hard cap
@@ -1018,25 +1028,29 @@ func _validate_interaction_throw(args: Array) -> bool:
 
 
 func _validate_pickup_request(peer_id: int, args: Array) -> bool:
-	var player: Node = _get_player_by_peer_id(peer_id)
-	if not player:
+	if args.size() != 1 or not args[0] is NodePath:
 		return false
 
-	# Check if player is close enough to item
-	if args.size() > 0:
-		var object_path: NodePath = args[0]
-		var obj: Node = get_node_or_null(object_path)
-		if obj and obj is Node3D:
-			if player.global_position.distance_to(obj.global_position) > MAX_PICKUP_DISTANCE:
-				push_warning(
-					(
-						"[Network] Peer %d pickup too far: %.2fm"
-						% [peer_id, player.global_position.distance_to(obj.global_position)]
-					)
-				)
-				return false
+	var player: Node = _get_player_by_peer_id(peer_id)
+	if not player or not player is Node3D:
+		return false
+
+	var object_path: NodePath = args[0]
+	var obj: Node = get_node_or_null(object_path)
+	if not obj or not obj is Node3D:
+		return false
+
+	if player.global_position.distance_to(obj.global_position) > MAX_PICKUP_DISTANCE:
+		push_warning(
+			(
+				"[Network] Peer %d pickup too far: %.2fm"
+				% [peer_id, player.global_position.distance_to(obj.global_position)]
+			)
+		)
+		return false
 
 	return true
+
 
 
 ## Validate revive request (CRITICAL #7 - Revive Exploit Fix)
@@ -1055,6 +1069,9 @@ func _validate_revive_request(peer_id: int, args: Array) -> bool:
 	if not reviver:
 		push_warning("[Network] Revive request from non-existent peer %d" % peer_id)
 		return false
+	if not reviver is Node3D:
+		return false
+
 
 	# Check if reviver is alive
 	if reviver.has_method("is_dead") and reviver.is_dead:
@@ -1084,9 +1101,10 @@ func _validate_revive_request(peer_id: int, args: Array) -> bool:
 		return false
 
 	var downed_player: Node = get_node_or_null(downed_player_path)
-	if not downed_player:
-		push_warning("[Network] Revive target not found: %s" % downed_player_path)
+	if not downed_player or not downed_player is Node3D:
+		push_warning("[Network] Revive target is missing or not 3D: %s" % downed_player_path)
 		return false
+
 
 	# SECURITY FIX: Use server-authoritative position only, no tolerance for "lag"
 	# Server knows the truth - client position claims cannot be trusted

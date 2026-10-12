@@ -29,6 +29,17 @@ class RateLimitProbe:
 		return now_usec
 
 
+
+class ValidationProbe:
+	extends NetworkManager
+
+	var player: Node3D
+
+	func _get_player_by_peer_id(_peer_id: int) -> Node:
+		return player
+
+
+
 func before_each():
 	await modus_setup()
 	# Get NetworkManager via NetworkService
@@ -63,6 +74,21 @@ func test_autoload_exists():
 			_network_manager = ns.network_manager
 
 	assert_not_null(_network_manager, "NetworkManager should be found via NetworkSvc.get_service()")
+
+
+func test_invalid_peer_ids_are_rejected_before_rpc_validation() -> void:
+	assert_not_null(_network_manager)
+	if not _network_manager:
+		return
+
+	assert_false(
+		_network_manager.validate_rpc(0, "send_chat_message", ["hello"]),
+		"Peer zero is not a valid remote authority"
+	)
+	assert_false(
+		_network_manager.validate_rpc(-1, "send_chat_message", ["hello"]),
+		"Negative peer IDs are not valid remote authorities"
+	)
 
 
 func test_validate_rpc_server_trusted():
@@ -290,6 +316,46 @@ func test_semantic_validation_rejects_forged_status_and_chat_payloads() -> void:
 			13, "_request_pickup_object", [NodePath("/root/UnknownObject")]
 		),
 		"Pickup requests must reject unknown objects"
+	)
+
+
+func test_malformed_authority_payloads_fail_closed() -> void:
+	var probe := ValidationProbe.new()
+	add_child_autofree(probe)
+	probe.player = Node3D.new()
+	probe.player.name = "ValidationPlayer"
+	probe.add_child(probe.player)
+	var plain_target := Node.new()
+	plain_target.name = "PlainTarget"
+	probe.add_child(plain_target)
+
+	assert_false(
+		probe._validate_weapon_switch(2, ["0"]),
+		"Weapon selection must reject string indices instead of coercing hostile payloads"
+	)
+	assert_false(
+		probe._validate_pickup_request(2, ["PlainTarget"]),
+		"Pickup validation must reject non-NodePath payloads"
+	)
+	assert_false(
+		probe._validate_damage_request([NAN, 0, Vector3.ZERO]),
+		"Damage validation must reject non-finite amounts"
+	)
+	assert_false(
+		probe._validate_revive_request(2, [plain_target.get_path()]),
+		"Revive validation must reject non-3D targets before reading positions"
+	)
+
+
+func test_shoot_validation_accepts_last_configured_weapon_slot() -> void:
+	var probe := ValidationProbe.new()
+	add_child_autofree(probe)
+	probe.player = Node3D.new()
+	probe.add_child(probe.player)
+
+	assert_true(
+		probe._validate_shoot_request(2, [Vector3.ZERO, Vector3.FORWARD, 9]),
+		"The tenth configured weapon slot must remain reachable by authoritative shooting"
 	)
 
 

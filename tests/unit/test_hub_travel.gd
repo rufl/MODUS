@@ -24,6 +24,7 @@ func before_each() -> void:
 
 func after_each() -> void:
 	_session.free()
+	await get_tree().process_frame
 	multiplayer.multiplayer_peer = _previous_peer
 	_peer.close()
 	modus_teardown()

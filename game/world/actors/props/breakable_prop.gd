@@ -123,12 +123,13 @@ func _request_damage(amount: float, damage_type: String) -> void:
 		return
 
 	var peer_id: int = multiplayer.get_remote_sender_id()
-	# Validate through NetworkService.network_manager if available
+	# A direct server-side invocation has no remote sender; the local server
+	# already passed the typed amount and damage-type checks above.
 	var gm: Node = get_node_or_null("/root/GameManager")
 	if gm:
 		var ns: Node = gm.get_core_system("network")
 		var network_manager: Node = ns.network_manager if ns else null
-		if network_manager and network_manager.has_method("validate_rpc"):
+		if peer_id > 0 and network_manager and network_manager.has_method("validate_rpc"):
 			if not network_manager.validate_rpc(peer_id, "_request_damage", [damage]):
 				return
 

@@ -85,4 +85,6 @@ tools/generate_provenance_ledger.py --check
 
 The documentation check validates Git-tracked Markdown, including staged additions. Tracked historical snapshots and generated reports fail even if force-added through ignore rules. Retained local files cannot satisfy published Markdown links. Keep local outputs out of the index rather than changing their classification to make the check pass.
 
+`tools/check_project_truth.sh` includes the toolchain lock and source-controlled Godot resource-reference checks, so a clean clone can validate those contracts without generated `.godot` imports.
+
 Set `GODOT_BIN` to an available Godot 4.7 binary when it is not on PATH; temporary local paths are not repository dependencies. Run the relevant runtime or evidence commands separately when refreshing an observed boundary.

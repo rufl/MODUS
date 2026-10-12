@@ -248,7 +248,6 @@ func commit_staged_travel() -> bool:
 	)
 	if is_instance_valid(old_document):
 		old_document.runtime_player = null
-		remove_child(old_viewport)
 	document = stage.document
 	navigation_region = stage.navigation
 	# Share the committed World3D without exiting/re-entering the staged subtree:
@@ -291,7 +290,7 @@ func commit_staged_travel() -> bool:
 	NavigationServer3D.region_set_use_async_iterations(navigation_region.get_rid(), false)
 	NavigationServer3D.map_force_update(navigation_map)
 	if is_instance_valid(old_viewport):
-		old_viewport.free()
+		old_viewport.queue_free()
 	GameManager.change_state(GameManager.State.RUNNING)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	set_travel_frozen(_frozen)

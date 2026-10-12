@@ -100,6 +100,8 @@ require_file "tests/runners/test_performance_evidence_validator.sh"
 require_file "tools/validate_performance_evidence.sh"
 require_file "tools/toolchain.lock.json"
 require_file "tools/validate_toolchain_lock.py"
+require_file "tools/validate_asset_integrity.py"
+
 require_file "tests/runners/test_toolchain_lock.sh"
 require_file "tools/validate_windows_acceptance_metadata.ps1"
 require_file "tests/runners/test_windows_acceptance_metadata.sh"
@@ -171,6 +173,10 @@ fi
 
 if ! python3 tools/validate_toolchain_lock.py; then
   fail "release toolchain lock check failed"
+fi
+
+if ! python3 tools/validate_asset_integrity.py --root .; then
+  fail "source asset reference integrity check failed"
 fi
 
 reject_text "README.md" "res://tests/run_tests.gd"

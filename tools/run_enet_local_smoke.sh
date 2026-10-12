@@ -78,6 +78,7 @@ write_report() {
   mkdir -p "$(dirname "$report_path")"
   cat >"$report_path" <<EOF
 # MODUS ENet Local Host/Join Smoke
+> **Documentation status: maintained reference.** This page records a dated local invocation boundary; published readiness remains consolidated in [Current Status](CURRENT_STATUS.md).
 
 **Generated:** $(date +%Y-%m-%d)
 **Started:** $started_at

@@ -39,6 +39,13 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Fixed backpack retrieval to merge serialized slot/equipment data atomically, persist the authoritative inventory, and emit explicit ownership-denied feedback instead of silently returning.
 - Converted recoverable splitscreen lifecycle, configuration, viewport, performance, controller-assignment, RPC-rate-limit, and server-tick diagnostics to typed runtime signals, preserving failure observability without polluting the engine warning/error channels.
 - Removed test-suite orphaned-object and leaked `UndoRedo` instances, and added focused telemetry coverage for bounded server-tick overruns.
+- Extended the clean-clone project truth gate to verify source-controlled Godot resource references without relying on generated import caches.
+- Deferred retired level viewports through the engine queue so repeated destination travel does not tear down renderer resources during the commit boundary.
+
+### Security
+
+- Rejected invalid peer IDs and malformed non-finite, typed weapon, pickup, damage, and revive payloads before authority state lookup; aligned authoritative shooting with all ten configured weapon slots and added focused hostile-payload coverage.
+
 
 ### Removed
 
