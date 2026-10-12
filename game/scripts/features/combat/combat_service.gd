@@ -271,7 +271,8 @@ func apply_damage(
 	is_critical: bool = false,
 	source_id_override: int = -1,
 	hit_position: Vector3 = Vector3.ZERO,
-	hit_normal: Vector3 = Vector3.UP
+	hit_normal: Vector3 = Vector3.UP,
+	trigger_on_hit_effects: bool = true
 ) -> void:
 	# Server authority (in singleplayer, we ARE the server)
 	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
@@ -322,6 +323,8 @@ func apply_damage(
 			target.take_damage(amount, DamageInfo.DamageType.keys()[damage_type].to_lower(), source)
 		else:
 			target.take_damage(damage_info)
+		if trigger_on_hit_effects and source and source.has_method("apply_on_hit_effects"):
+			source.apply_on_hit_effects(target, amount)
 
 		# Emit damage_dealt event for stats tracking
 		if gm_dmg:
@@ -375,6 +378,8 @@ func apply_damage(
 		target.receive_damage(
 			int(amount), damage_info.source_id, source.global_position if source else Vector3.ZERO
 		)
+		if trigger_on_hit_effects and source and source.has_method("apply_on_hit_effects"):
+			source.apply_on_hit_effects(target, amount)
 
 		if gm_recv:
 			gm_recv.emit_event(

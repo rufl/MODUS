@@ -41,6 +41,10 @@ Notable public changes to MODUS are recorded here. The project follows [Keep a C
 - Removed test-suite orphaned-object and leaked `UndoRedo` instances, and added focused telemetry coverage for bounded server-tick overruns.
 - Extended the clean-clone project truth gate to verify source-controlled Godot resource references without relying on generated import caches.
 - Deferred retired level viewports through the engine queue so repeated destination travel does not tear down renderer resources during the commit boundary.
+- Wired EnemyModifier elemental, ghostly, electrified, vampiric, and on-hit
+  behavior into authoritative damage/status-effect paths with focused coverage.
+- Made production-readiness validation regenerate its source-driven manual and
+  release reports before evaluating their statuses.
 
 ### Security
 

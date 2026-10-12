@@ -168,6 +168,8 @@ func _perform_melee(target: Node3D) -> void:
 				damage_info.source_id = _parent_body.get_instance_id()
 				damage_info.damage_type = DamageInfo.DamageType.MELEE
 				target.take_damage(damage_info)
+				if _parent_body and _parent_body.has_method("apply_on_hit_effects"):
+					_parent_body.apply_on_hit_effects(target, attack_damage)
 	elif target.has_method("take_damage"):
 		# Non-player entities (enemies, destructibles)
 		var damage_info: DamageInfo = DamageInfo.new()
@@ -176,6 +178,8 @@ func _perform_melee(target: Node3D) -> void:
 		damage_info.source_id = _parent_body.get_instance_id()
 		damage_info.damage_type = DamageInfo.DamageType.MELEE
 		target.take_damage(damage_info)
+		if _parent_body and _parent_body.has_method("apply_on_hit_effects"):
+			_parent_body.apply_on_hit_effects(target, attack_damage)
 
 
 func _spawn_projectile(target: Node3D) -> void:

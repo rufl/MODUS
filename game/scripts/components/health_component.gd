@@ -245,25 +245,28 @@ func die(killer_id: int) -> void:
 	# This prevents duplicate kill counting
 
 
-func heal(amount: float) -> void:
-	if _is_dead:
-		return
+func heal(amount: float, source_id: int = -1) -> bool:
+	if (
+		_is_dead
+		or (multiplayer.has_multiplayer_peer() and not multiplayer.is_server())
+		or not is_finite(amount)
+		or amount <= 0.0
+	):
+		return false
 
-	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
-		return
+	var actual_heal: float = minf(amount, max_health - current_health)
+	if actual_heal <= 0.0:
+		return false
 
-	var actual_heal: float = min(amount, max_health - current_health)
-	if actual_heal <= 0:
-		return
-
-	current_health = min(current_health + amount, max_health)
+	current_health += actual_heal
 	health_changed.emit(current_health, max_health)
 	_emit_bus_update(true, false)
 
 	if parent is Node3D:
 		_sync_heal_visual.rpc(parent.global_position, actual_heal)
 
-	_sync_health_state.rpc(current_health, current_armor)
+	_sync_health_state.rpc(current_health, current_armor, source_id)
+	return true
 
 
 @rpc("any_peer", "call_local", "reliable")

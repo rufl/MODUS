@@ -19,6 +19,11 @@ enum ModifierType { STAT_BOOST, ELEMENTAL, UTILITY }
 @export_group("Effects")
 @export var on_hit_effect: StatusEffect = null
 @export var visual_effect: PackedScene = null
+@export_group("Runtime Effects")
+@export_range(0.0, 1.0, 0.05) var ghostly_alpha: float = 1.0
+@export var chain_damage: float = 0.0
+@export var chain_radius: float = 0.0
+@export_range(0.0, 1.0, 0.05) var lifesteal_fraction: float = 0.0
 
 
 func apply_to(enemy: Node3D) -> void:
@@ -29,15 +34,8 @@ func apply_to(enemy: Node3D) -> void:
 		enemy.apply_stat_multiplier("speed", speed_mult)
 		enemy.apply_stat_multiplier("scale", scale_mult)
 
-	# There is no enemy on-hit dispatch hook yet. Do not silently advertise
-	# an effect that can never reach a victim.
-	if on_hit_effect:
-		push_error(
-			(
-				"[EnemyModifier] On-hit effect '%s' is unsupported for enemy modifiers; effect disabled"
-				% on_hit_effect.effect_name
-			)
-		)
+	if ghostly_alpha < 1.0 and enemy.has_method("apply_ghostly_visual"):
+		enemy.apply_ghostly_visual(ghostly_alpha)
 
 	# Apply visuals
 	if visual_effect:
@@ -45,6 +43,84 @@ func apply_to(enemy: Node3D) -> void:
 		enemy.add_child(vfx)
 	# Apply name prefix (if label exists)
 	# (Logic to be handled by enemy wrapper)
+
+
+## Apply status, chain, and lifesteal effects after a confirmed hit.
+func apply_on_hit(source: Node3D, target: Node3D, damage_dealt: float) -> void:
+	if not is_instance_valid(source) or not is_instance_valid(target) or source == target:
+		return
+	var target_health := target.get_node_or_null("HealthComponent") as HealthComponent
+	if (
+		("is_dead" in target and target.is_dead)
+		or (
+			target_health
+			and (
+				target_health.is_dead
+				or target_health.current_health <= 0.0
+				or target_health.invincible
+			)
+		)
+	):
+		return
+
+	if on_hit_effect:
+		var status_manager := target.get_node_or_null("StatusEffectManager") as StatusEffectManager
+		if status_manager:
+			var effect := on_hit_effect.create_copy()
+			effect.source_id = source.get_instance_id()
+			status_manager.apply_effect(effect)
+
+	if is_finite(chain_damage) and chain_damage > 0.0:
+		_apply_chain_damage(source, target)
+
+	if (
+		is_finite(damage_dealt)
+		and damage_dealt > 0.0
+		and is_finite(lifesteal_fraction)
+		and lifesteal_fraction > 0.0
+	):
+		var health := source.get_node_or_null("HealthComponent") as HealthComponent
+		if health:
+			health.heal(
+				damage_dealt * clampf(lifesteal_fraction, 0.0, 1.0), source.get_instance_id()
+			)
+
+
+func _apply_chain_damage(source: Node3D, primary_target: Node3D) -> void:
+	var combat_service := CombatSvc.get_instance()
+	if not combat_service or not source.get_tree():
+		return
+
+	var radius: float = maxf(chain_radius, 0.0)
+	if radius <= 0.0:
+		return
+	var radius_squared: float = radius * radius
+	for candidate: Node in source.get_tree().get_nodes_in_group("player"):
+		if (
+			candidate == primary_target
+			or candidate == source
+			or not candidate is Node3D
+			or not is_instance_valid(candidate)
+		):
+			continue
+		var candidate_3d := candidate as Node3D
+		if (
+			source.global_position.distance_squared_to(candidate_3d.global_position)
+			> radius_squared
+		):
+			continue
+		combat_service.apply_damage(
+			candidate_3d,
+			chain_damage,
+			source,
+			DamageInfo.DamageType.ENERGY,
+			null,
+			false,
+			-1,
+			candidate_3d.global_position,
+			Vector3.UP,
+			false
+		)
 
 
 # Factory methods for common affixes
@@ -75,8 +151,14 @@ static func create_tank() -> EnemyModifier:
 
 
 static func create_ghostly() -> EnemyModifier:
-	push_error("[EnemyModifier] Ghostly is disabled: no safe enemy transparency/phase hook exists")
-	return null
+	var m: EnemyModifier = EnemyModifier.new()
+	m.modifier_name = "Ghostly"
+	m.prefix = "Ghostly"
+	m.color = Color(0.65, 0.8, 1.0)
+	m.type = ModifierType.UTILITY
+	m.ghostly_alpha = 0.35
+	m.speed_mult = 1.1
+	return m
 
 
 ## Elemental Affixes - Apply status effects on hit
@@ -111,7 +193,7 @@ static func create_freezing() -> EnemyModifier:
 	freeze.effect_name = "Freeze"
 	freeze.effect_type = StatusEffect.EffectType.FREEZE
 	freeze.duration = 2.0
-	freeze.slow_percent = 0.5
+	freeze.movement_speed_modifier = 0.5
 	m.on_hit_effect = freeze
 	return m
 
@@ -136,18 +218,46 @@ static func create_poisonous() -> EnemyModifier:
 
 
 static func create_electrified() -> EnemyModifier:
-	push_error("[EnemyModifier] Electrified is disabled: no safe chain-damage hook exists")
-	return null
+	var m: EnemyModifier = EnemyModifier.new()
+	m.modifier_name = "Electrified"
+	m.prefix = "Electrified"
+	m.color = Color.CYAN
+	m.type = ModifierType.ELEMENTAL
+	m.damage_mult = 1.15
+	m.chain_damage = 8.0
+	m.chain_radius = 4.0
+	var shock: StatusEffect = StatusEffect.new()
+	shock.effect_name = "Electrified"
+	shock.effect_type = StatusEffect.EffectType.STUN
+	shock.duration = 0.35
+	shock.tick_interval = 0.0
+	shock.can_act = false
+	shock.effect_color = Color.CYAN
+	m.on_hit_effect = shock
+	return m
 
 
 static func create_vampiric() -> EnemyModifier:
-	push_error("[EnemyModifier] Vampiric is disabled: no safe damage-dealt/lifesteal hook exists")
-	return null
+	var m: EnemyModifier = EnemyModifier.new()
+	m.modifier_name = "Vampiric"
+	m.prefix = "Vampiric"
+	m.color = Color.DARK_RED
+	m.type = ModifierType.UTILITY
+	m.damage_mult = 1.1
+	m.lifesteal_fraction = 0.25
+	return m
 
 
 ## Get a random supported modifier for elite enemies.
 static func get_random_modifier() -> EnemyModifier:
 	var options: Array[Callable] = [
-		create_frenzied, create_tank, create_burning, create_freezing, create_poisonous
+		create_frenzied,
+		create_tank,
+		create_burning,
+		create_freezing,
+		create_poisonous,
+		create_ghostly,
+		create_electrified,
+		create_vampiric
 	]
 	return options[randi() % options.size()].call()

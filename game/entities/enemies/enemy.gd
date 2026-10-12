@@ -1236,6 +1236,57 @@ func apply_modifier(mod: EnemyModifier) -> void:
 	_build_display_name()
 
 
+func apply_on_hit_effects(target: Node3D, damage_dealt: float) -> void:
+	if (
+		not is_instance_valid(target)
+		or (multiplayer.has_multiplayer_peer() and not multiplayer.is_server())
+	):
+		return
+	for modifier: EnemyModifier in applied_modifiers:
+		if modifier:
+			modifier.apply_on_hit(self, target, damage_dealt)
+
+
+func apply_ghostly_visual(alpha: float) -> void:
+	var ghost_alpha: float = clampf(alpha, 0.05, 1.0)
+	set_meta("ghostly_alpha", ghost_alpha)
+	_apply_ghostly_visual_to_node(self, ghost_alpha)
+
+
+func _apply_ghostly_visual_to_node(root: Node, alpha: float) -> void:
+	if not root:
+		return
+	for child: Node in root.get_children():
+		if child is MeshInstance3D:
+			_apply_ghostly_material(child as MeshInstance3D, alpha)
+		_apply_ghostly_visual_to_node(child, alpha)
+
+
+func _apply_ghostly_material(mesh: MeshInstance3D, alpha: float) -> void:
+	if mesh.material_override is StandardMaterial3D:
+		var override_material := (mesh.material_override as StandardMaterial3D).duplicate()
+		override_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		var override_color: Color = override_material.albedo_color
+		override_color.a = minf(override_color.a, alpha)
+		override_material.albedo_color = override_color
+		mesh.material_override = override_material
+		return
+
+	var surface_count: int = mesh.mesh.get_surface_count() if mesh.mesh else 0
+	for surface_idx in range(surface_count):
+		var source_material: Material = mesh.get_surface_override_material(surface_idx)
+		if not source_material and mesh.mesh:
+			source_material = mesh.mesh.surface_get_material(surface_idx)
+		if not source_material is StandardMaterial3D:
+			continue
+		var surface_material := (source_material as StandardMaterial3D).duplicate()
+		surface_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		var surface_color: Color = surface_material.albedo_color
+		surface_color.a = minf(surface_color.a, alpha)
+		surface_material.albedo_color = surface_color
+		mesh.set_surface_override_material(surface_idx, surface_material)
+
+
 ## Apply stat multiplier (called by EnemyModifier.apply_to)
 
 

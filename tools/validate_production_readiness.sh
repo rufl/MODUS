@@ -364,6 +364,12 @@ else
   add_check "BLOCKED" "Automated lane report" "tests/runners/run_tests_by_category.sh --report ${automated_lanes_report}" "No automated lane report exists."
 fi
 
+# Refresh source-driven evidence reports before evaluating their statuses. The
+# validators intentionally return success for a BLOCKED report unless strict
+# mode is requested; their reports are local generated outputs.
+tools/validate_manual_evidence.sh --report "$manual_evidence_report" >/dev/null
+tools/validate_release_readiness.sh --report "$release_readiness_report" >/dev/null
+
 manual_evidence_status="MISSING"
 if [[ -f "$manual_evidence_report" ]]; then
   manual_evidence_status="$(extract_report_status "$manual_evidence_report")"
